@@ -49,7 +49,8 @@ export function listFiles(root: string, extraSkipDirs: readonly string[] = []): 
       const path = join(dir, entry.name);
       if (entry.isDirectory()) {
         if (!skip.has(entry.name)) walk(path);
-      } else if (entry.isFile() && !entry.name.endsWith(".tsbuildinfo")) {
+      } else if (entry.isFile() && !skip.has(entry.name) && !entry.name.endsWith(".tsbuildinfo")) {
+        // Skipped names apply to files too: a git worktree's `.git` is a file with an absolute path.
         files.push(path);
       }
     }

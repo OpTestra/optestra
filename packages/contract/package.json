@@ -1,21 +1,33 @@
 {
   "name": "@testament/contract",
   "version": "0.1.0",
-  "description": "Versioned results contract: run events, results and artifact layout (FND-3).",
+  "description": "Versioned results contract: run events, results and artifact layout.",
   "license": "MIT",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "default": "./dist/node/index.js"
+    },
+    "./schema/run.json": "./dist/schema/run.schema.json",
+    "./schema/test-result.json": "./dist/schema/test-result.schema.json",
+    "./schema/event.json": "./dist/schema/event.schema.json"
   },
   "files": [
     "dist",
-    "!dist/**/*.test.*"
+    "!dist/**/*.test.*",
+    "fixtures"
   ],
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b && node dist/write-schema.js",
+    "gen:fixtures": "node scripts/gen-fixtures.ts"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
   },
   "engines": {
     "node": ">=24"

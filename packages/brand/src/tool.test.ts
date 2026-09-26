@@ -60,6 +60,12 @@ describe("brand-sync", () => {
     expect(checkBrand(fixture(), brandFor("Alpha"))).toEqual([]);
   });
 
+  it("ignores the .git file of a linked worktree", () => {
+    const root = fixture();
+    write(root, ".git", "gitdir: /work/alpha/.git/worktrees/alpha-2\n");
+    expect(checkBrand(root, brandFor("Alpha"))).toEqual([]);
+  });
+
   it("renames scope, bin, app name and marked lines", () => {
     const root = fixture();
     apply(root, "Beta");

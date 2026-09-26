@@ -8,6 +8,7 @@
   "references": [
     { "path": "../brand" },
     { "path": "../config" },
+    { "path": "../contract" },
     { "path": "../core" },
     { "path": "../models" }
   ]

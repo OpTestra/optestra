@@ -1,0 +1,42 @@
+{
+  "contractVersion": "1.0",
+  "runId": "01M3EHBYC0C7ENE9ZXSBRYMCYS",
+  "testId": "tests__admin__refund-order",
+  "file": "tests/admin/refund-order.md",
+  "name": "Admin can refund an order",
+  "tags": [
+    "admin"
+  ],
+  "matrix": {
+    "target": "web",
+    "browser": "chromium",
+    "device": null
+  },
+  "verdict": "blocked",
+  "decidedBy": [
+    {
+      "kind": "blocked",
+      "reason": "missing_secret",
+      "message": "Secret ADMIN_PASSWORD is not set for environment 'staging'. Add ADMIN_PASSWORD=<value> to .env.staging."
+    }
+  ],
+  "failureCause": "blocked",
+  "failureEvidence": [],
+  "headline": "Blocked: secret ADMIN_PASSWORD is not set for staging",
+  "checkedSummary": [],
+  "startedAt": "2026-09-26T09:40:00.030Z",
+  "durationMs": 5,
+  "ai": {
+    "calls": 0,
+    "costUsd": 0,
+    "unpricedCalls": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "cacheWrite": 0
+    },
+    "recent": null
+  },
+  "attempts": []
+}

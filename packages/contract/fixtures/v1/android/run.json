@@ -1,0 +1,51 @@
+{
+  "contractVersion": "1.0",
+  "runId": "01M3EJGJ80CW0YWY81PDJ70RB6",
+  "engineVersion": "0.1.0",
+  "project": "demo-shop",
+  "environment": "staging",
+  "target": "android",
+  "trigger": "cloud",
+  "mode": "normal",
+  "startedAt": "2026-09-26T10:00:00.000Z",
+  "finishedAt": "2026-09-26T10:00:06.205Z",
+  "durationMs": 6205,
+  "blocked": null,
+  "totals": {
+    "tests": 1,
+    "passed": 1,
+    "healed": 0,
+    "failed": 0,
+    "flaky": 0,
+    "blocked": 0
+  },
+  "cost": {
+    "usd": 0,
+    "unpricedCalls": 0,
+    "aiCalls": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "cacheWrite": 0
+    }
+  },
+  "git": null,
+  "tests": [
+    {
+      "testId": "tests__android__login",
+      "name": "Log in and see the home feed",
+      "file": "tests/android/login.md",
+      "verdict": "passed",
+      "headline": null,
+      "durationMs": 6125,
+      "attempts": 1,
+      "aiCalls": 0,
+      "costUsd": 0,
+      "result": "tests/tests__android__login/result.json"
+    }
+  ],
+  "modelCalls": [],
+  "decisions": [],
+  "artifacts": []
+}
