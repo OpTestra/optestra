@@ -140,6 +140,51 @@ describe("authorTest (no browser)", () => {
     expect(report.totals.costUsd).toBeGreaterThan(0);
   });
 
+  it("templates page text with values bound anywhere in the test, not just this step", async () => {
+    const test = await expanded(
+      `1. Fill "Email" with {{data.email}}\n2. Click "Log in"`,
+      "name: T\nstart: /login\ndata:\n  email: ada.king@example.com",
+    );
+    const { models } = scriptedModels(
+      agentScript([
+        [
+          /Fill/,
+          [
+            {
+              name: "fill",
+              on: { role: "textbox", name: "Email" },
+              input: { value: "ada.king@example.com" },
+            },
+          ],
+        ],
+        [/Click/, [{ name: "click", on: { role: "button", name: "Log in" } }]],
+      ]),
+    );
+    const session = fakeSession(loginPage, (action) => ({
+      post: {
+        changed: true,
+        removed:
+          action.type === "click"
+            ? [{ role: "textbox", name: "Email", text: "ada.king@example.com" }]
+            : [],
+        added: [{ role: "status", name: "", text: "Signed in as ada.king@example.com" }],
+      },
+    }));
+    const { recording } = await authorTest(test, {
+      session,
+      models,
+      timeoutMs: 30_000,
+      meta,
+      screenshots: false,
+      openStart: false,
+    });
+    const text = serializeRecording(recording);
+    expect(text).not.toContain("ada.king@example.com");
+    expect(recording.steps[1]?.commands[0]?.expectPost.removed).toEqual([
+      { role: "textbox", name: "Email", text: "{{data.email}}" },
+    ]);
+  });
+
   it("fails a step whose actions changed nothing, even when the model says done (VER-5)", async () => {
     const test = await expanded(`1. Click "Log in"`);
     const { models } = scriptedModels(
@@ -156,6 +201,68 @@ describe("authorTest (no browser)", () => {
     expect(report.outcome).toBe("failed");
     expect(report.steps[0]).toMatchObject({ status: "failed", reason: "no_visible_effect" });
     expect(recording.steps).toEqual([]);
+  });
+
+  it("counts a reordering of the page (a sort) as a visible change", async () => {
+    const test = await expanded(`1. Click "Log in"`);
+    const { models, calls } = scriptedModels(
+      agentScript([[/Click/, [{ name: "click", on: { role: "button", name: "Log in" } }]]]),
+    );
+    const base = fakeSession(loginPage, () => ({ post: { changed: false } }));
+    let observed = 0;
+    const reordered = [...loginPage].reverse();
+    const session = {
+      ...base,
+      get url() {
+        return base.url;
+      },
+      observe: async () => {
+        const page = await base.observe();
+        return ++observed >= 2 ? { ...page, elements: reordered } : page;
+      },
+    };
+    const { report } = await authorTest(test, {
+      session,
+      models,
+      timeoutMs: 30_000,
+      meta,
+      screenshots: false,
+      openStart: false,
+    });
+    expect(report.steps[0]).toMatchObject({ status: "recorded" });
+    expect(report.steps[0]?.actions[0]).toMatchObject({ changed: true });
+  });
+
+  it("accepts an upload that changes nothing visible, but not a click", async () => {
+    const test = await expanded(`1. Upload files/a.png to "Choose an image"`);
+    const page = [element("e1", "button", "Choose an image")];
+    const { models } = scriptedModels(
+      agentScript([
+        [
+          /Upload/,
+          [
+            {
+              name: "upload",
+              on: { role: "button", name: "Choose an image" },
+              input: { file: "files/a.png" },
+            },
+          ],
+        ],
+      ]),
+    );
+    const { report, recording } = await authorTest(test, {
+      session: fakeSession(page, () => ({ post: { changed: false } })),
+      models,
+      timeoutMs: 30_000,
+      meta,
+      screenshots: false,
+      openStart: false,
+    });
+    expect(report.steps[0]).toMatchObject({ status: "recorded" });
+    expect(recording.steps[0]?.commands[0]?.action).toMatchObject({
+      type: "upload",
+      files: ["files/a.png"],
+    });
   });
 
   it("refuses a Never: guard before acting and says why", async () => {

@@ -74,7 +74,7 @@ There are no verdicts and no contract run folder (LOOP-4 adds those).
 
 **VER-5.** `step_done` is accepted only if at least one action the harness ran
 reported `changed: true`. The exception: every action was of a kind that
-legitimately changes nothing (hover, scroll, waitFor, press). Otherwise the step
+legitimately changes nothing (hover, scroll, waitFor, press, upload: a chosen file often shows only when the form is sent). A change in the order of the page's elements counts as a change too (the harness compares elements as a set, so a table sort would otherwise look like nothing happened). Otherwise the step
 fails with `no_visible_effect`, whatever the model says. The shop's
 `broken-silent-click` variant fails here. `step_done` with no action at all gets
 one nudge ("perform the step's action"), then fails.
@@ -90,7 +90,7 @@ tools complete the set: `look`, `step_done { visible_effect }` and
 
 ### Prompt
 
-The prompt lives in `src/author/planner-prompt.json` (`planner-v1`), which is
+The prompt lives in `src/author/planner-prompt.json` (`planner-v2`), which is
 data, not code. Bump its `version` on any change; the version is recorded in the
 recording and the report, so evals can compare prompts (LRN-10). Key rules:
 - only this step; never later steps or expectations;
@@ -163,7 +163,7 @@ the value (SEC-1). Everything else is scrubbed along the way:
 - the model's notes, where values become templates and `[secret:X]` becomes
   `{{secret.X}}`.
 
-Tests plant a secret and scan the recording, the report, every prompt and the
+Page text in a recording (expectPost, the model's notes) is templated with every value bound anywhere in the test, not only the current step's, so a later page that still shows an earlier step's email records `{{params.email}}`. Tests plant a secret and scan the recording, the report, every prompt and the
 evidence for it.
 
 ## CLI

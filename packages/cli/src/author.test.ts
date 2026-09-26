@@ -1,4 +1,7 @@
 import { spawnSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -8,9 +11,11 @@ import { describe, expect, it } from "vitest";
 
 const bin = fileURLToPath(new URL("../bin/cli.js", import.meta.url));
 const shop = fileURLToPath(new URL("../../../bench/fixtures/shop/", import.meta.url));
-const noKeys = Object.fromEntries(
-  Object.entries(process.env).filter(([name]) => !/_API_KEY$/.test(name)),
-);
+// No keys, and an empty PATH so an installed subscription CLI (claude, codex) isn't found either.
+const noKeys = {
+  ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !/_API_KEY$/.test(name))),
+  PATH: mkdtempSync(join(tmpdir(), "no-cli-")),
+};
 const run = (...args: string[]) =>
   spawnSync(process.execPath, [bin, ...args], { cwd: shop, encoding: "utf8", env: noKeys });
 

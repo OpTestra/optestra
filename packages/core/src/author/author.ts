@@ -504,6 +504,6 @@ async function runExactOp(
       message: "The action had no visible effect: the page didn't change after it.",
     };
   }
-  const command: Command = commandOf(recorded, null, outcome, variables.list);
+  const command: Command = commandOf(recorded, null, outcome, variables.pageList);
   return { ...result, status: "recorded", commands: [command] };
 }

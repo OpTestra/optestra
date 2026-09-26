@@ -10,9 +10,11 @@ const dir = mkdtempSync(join(tmpdir(), "cli-models-"));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 const KEY_VARS = ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"];
-const baseEnv = Object.fromEntries(
-  Object.entries(process.env).filter(([key]) => !KEY_VARS.includes(key)),
-);
+// PATH is emptied so a subscription CLI installed on this machine (claude, codex) can't make a role usable.
+const baseEnv = {
+  ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !KEY_VARS.includes(key))),
+  PATH: dir,
+};
 const run = (env: Record<string, string>, ...args: string[]) =>
   spawnSync(process.execPath, [bin, "models", ...args], {
     cwd: dir,
