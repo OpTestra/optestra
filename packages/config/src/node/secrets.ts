@@ -2,7 +2,15 @@ import type { Diagnostic } from "../diagnostics.js";
 import type { Config } from "../schema.js";
 import { readDotenvFile } from "./dotenv.js";
 import type { Redactor } from "./redactor.js";
-import { createSecretValue, type SecretValue, withDomains } from "./secret-value.js";
+import { secretType } from "./secret-types.js";
+import {
+  asDynamicSecret,
+  createSecretValue,
+  readSecretValue,
+  registerSensitive,
+  type SecretValue,
+  withDomains,
+} from "./secret-value.js";
 
 /**
  * Where secret values come from. The desktop keychain and the cloud vault will
@@ -87,6 +95,8 @@ export interface ResolvedSecrets {
   secrets: Record<string, SecretValue>;
   /** Declared secrets that no source provides. */
   missing: string[];
+  /** Declared secrets whose value doesn't fit their type (e.g. a bad TOTP seed). */
+  invalid: string[];
   diagnostics: Diagnostic[];
 }
 
@@ -106,7 +116,7 @@ export function resolveSecrets(
   sources: readonly SecretSource[],
   options: ResolveSecretsOptions = {},
 ): ResolvedSecrets {
-  const result: ResolvedSecrets = { secrets: {}, missing: [], diagnostics: [] };
+  const result: ResolvedSecrets = { secrets: {}, missing: [], invalid: [], diagnostics: [] };
   const { environment } = options;
   for (const [name, declaration] of Object.entries(config.secrets ?? {})) {
     let found: SecretValue | undefined;
@@ -115,7 +125,34 @@ export function resolveSecrets(
       if (found) break;
     }
     if (found) {
-      result.secrets[name] = withDomains(found, declaration.domains);
+      const secret = withDomains(found, declaration.domains);
+      const type = declaration.type ?? "text";
+      if (type === "text") {
+        result.secrets[name] = secret;
+        continue;
+      }
+      const definition = secretType(type);
+      const check = definition
+        ? definition.check(readSecretValue(secret))
+        : {
+            ok: false as const,
+            problem: `nothing that can type ${type} secrets is loaded`,
+            fix: `This is an engine bug: the package that registers the "${type}" secret type was not imported.`,
+          };
+      if (!definition || !check.ok) {
+        result.invalid.push(name);
+        result.diagnostics.push({
+          code: "SECRET_INVALID",
+          severity: "error",
+          path: `secrets.${name}`,
+          ...(options.file && { file: options.file }),
+          message: `Secret ${name} (type ${type}, from ${found.origin}) can't be used: ${check.ok ? "" : check.problem}.`,
+          fix: check.ok ? "" : check.fix,
+        });
+        continue;
+      }
+      if (check.sensitive) registerSensitive(secret, check.sensitive);
+      result.secrets[name] = asDynamicSecret(secret, type, definition.producer({ name, config }));
       continue;
     }
     result.missing.push(name);

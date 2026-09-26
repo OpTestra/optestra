@@ -1,0 +1,38 @@
+{
+  "name": "@testament/auth",
+  "version": "0.1.0",
+  "description": "Login building blocks: auth profiles with saved sessions, TOTP secrets and test email inboxes.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./extract": {
+      "types": "./dist/inbox/extract.d.ts",
+      "default": "./dist/inbox/extract.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test:browser": "tsc -b . ../browser ../../bench/fixtures/shop && vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@testament/brand": "workspace:^",
+    "@testament/config": "workspace:^",
+    "@testament/spec": "workspace:^",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@testament/browser": "workspace:*",
+    "@testament/fixture-shop": "workspace:*"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

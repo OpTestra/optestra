@@ -1,7 +1,7 @@
 import { SECRET_NAME } from "@testament/config";
 import { opTemplates } from "./exact.js";
 import type { GeneratorRegistry } from "./generators.js";
-import { NAMESPACES, type Template, type TestSpec } from "./model.js";
+import { INBOX_MEMBERS, NAMESPACES, type Template, type TestSpec } from "./model.js";
 import { templateRefs } from "./template.js";
 import type { Reporter } from "./text.js";
 
@@ -50,6 +50,16 @@ export function checkTemplate(template: Template, scope: RefScope, where: Where,
               .members(ref.ns)
               .map((m) => `{{${ref.ns}.${m}}}`)
               .join(", ")}.`,
+          );
+        }
+        break;
+      case "inbox":
+        if (!(INBOX_MEMBERS as readonly string[]).includes(ref.name)) {
+          report.error(
+            "VAR_MEMBER_UNKNOWN",
+            range,
+            `{{${full}}} is not an inbox value.`,
+            `Use one of: ${INBOX_MEMBERS.map((m) => `{{inbox.${m}}}`).join(", ")}.`,
           );
         }
         break;

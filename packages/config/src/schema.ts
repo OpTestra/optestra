@@ -31,6 +31,12 @@ export const secretDeclarationSchema = z.strictObject({
     .array(domainSchema)
     .describe("Domains this secret may be typed into. Typing it anywhere else is refused."),
   description: z.string().optional().describe("What the secret is for."),
+  type: z
+    .enum(["text", "totp"])
+    .optional()
+    .describe(
+      "text (default): typed as it is. totp: the value is a TOTP seed (base32 or an otpauth:// URI); typing it types the current one-time code.",
+    ),
 });
 
 export const secretsSchema = z

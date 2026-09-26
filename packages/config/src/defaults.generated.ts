@@ -106,4 +106,32 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
       ttlSeconds: 604800,
     },
   },
+  auth: {
+    profiles: {
+      "*": {
+        params: {},
+        reuse: "per-worker",
+        ttlMinutes: 60,
+      },
+    },
+    totp: {
+      minRemainingSeconds: 5,
+    },
+  },
+  inbox: {
+    provider: "none",
+    timeoutSeconds: 60,
+    mailpit: {
+      url: "http://127.0.0.1:8025",
+      domain: "example.test",
+    },
+    mailosaur: {
+      baseUrl: "https://mailosaur.com",
+      keySecret: "MAILOSAUR_API_KEY",
+    },
+    mailslurp: {
+      baseUrl: "https://api.mailslurp.com",
+      keySecret: "MAILSLURP_API_KEY",
+    },
+  },
 };

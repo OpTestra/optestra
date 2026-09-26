@@ -15,6 +15,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/spec` | The test file format: `.test.md` parser, typed model, variables and generators, flow expansion, step keys (`textKey`), canonical printer, diagnostics with ranges; lint rules, `checkTest` and the editor language service; registers the `tests` and `lint` config sections. Browser-safe main entry + `/node` (project loading) | SPEC-0, SPEC-1 |
 | `packages/decide` | The decision layer: typed decision tasks (choice / score / noul), rules first → decision model → escalate below threshold, hard time limits, racing (during-run) and batching (after-run), decision cache, metrics, labelled examples; registers the `decisions` config section. Browser-safe main entry + `/node` (disk cache, label store) | DEC-0 |
 | `packages/browser` | The browser harness: fresh isolated Playwright sessions behind the allowlist guard, a closed set of typed actions with post-state and settle, accessibility observations with refs and locator candidates, secret typing, screenshots and scrubbed evidence. Node only; no AI. The agent (LOOP-1) and the replayer (LOOP-4) both drive pages through it | LOOP-0 |
+| `packages/auth` | Login building blocks: auth profiles and the saved-session store (`ensureProfile` with an injected login flow), the `totp` secret type, test inboxes (Mailpit, Mailosaur, MailSlurp) with code/link extraction and `InboxValues` for `{{inbox.…}}`; registers the `auth` and `inbox` config sections. Node only (+ browser-safe `/extract`) | AUTH-0 |
 | `packages/recording` | The recording format: per test, the commands for each step (locators, fingerprints, templates, learned waits) and the typed checks; keys (`routeOf`, `stepKey`, `RECORDING_EPOCH`). Browser-safe + `/node` reader/writer | LOOP-1 |
 | `packages/core` | The engine: run, record, replay, heal, verdicts. Today the author (`authorTest`: agent loop, guards, VER-5 check, authoring report; `/node` `saveAuthoring`); re-exports the redacting `logger` | LOOP-1 onward |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
@@ -32,6 +33,7 @@ cli ──► core ──► config ──► brand
  ├──► decide ──► config, contract  (main entry: no network; /node: System One backends, DEC-1)
  ├──► browser ──► config, contract (+ playwright; never imports core, models or spec)
  ├──► recording ──► spec, brand    (browser-safe; no AI, no network)
+ ├──► auth ──► config, spec, brand (never imports core or browser; /inbox/transport.ts: inboxes, AUTH-0)
  core ──► browser, models, spec, recording, contract, config
  └──► contract                     (cli reads run folders through the contract)
 mcp, action ──► core, contract (later)
@@ -40,11 +42,15 @@ contract ──► zod only (bottom of the graph)
 
 - The engine is self-contained. It never imports or references the apps repo;
   the arrow only points apps → engine (`test/guards.test.ts` enforces this).
-- No telemetry. **Two network exceptions in engine code**, one file each:
+- No telemetry. **Three network exceptions in engine code**, one file each:
   `packages/models/src/transport.ts` (AI models: sends only to configured provider
-  hosts, only when a caller asks for a completion or key check) and
+  hosts, only when a caller asks for a completion or key check),
   `packages/decide/src/node/systemone/transport.ts` (decision models Jev, Kev and
-  Laya: sends only to the configured backend's host; the state is redacted first).
+  Laya: sends only to the configured backend's host; the state is redacted first) and
+  `packages/auth/src/inbox/transport.ts` (test inboxes Mailpit, Mailosaur and
+  MailSlurp: sends only to the configured inbox host, never follows redirects).
+  Secret values are revealed (`@testament/config/reveal`) only in the browser
+  driver and these transports' key handling (guard-tested).
   Only `packages/models` may depend on the AI SDK. `test/guards.test.ts` enforces all of this.
 - The browser harness drives a browser through Playwright; the page's traffic is
   the browser's, filtered by the allowlist guard. It makes no calls of its own. Its
@@ -143,6 +149,18 @@ contract ──► zod only (bottom of the graph)
   `groupFailures` and `classifyHeal`. Eval sets live in `packages/decide/evals/`
   with a committed rules-only baseline, and `decisions --eval` scores them.
   DEC-3 adds the during-run `same_element` and `miss_action`.
+
+- AUTH-0 (done): `packages/auth`. Profiles (`auth.profiles`, a test's `auth: name`)
+  and `SessionStore` / `ensureProfile(name, { store, auth, environment, worker, runFlow,
+  validate })`: saved Playwright storage state per environment, profile and worker in
+  `<project>/<data dir>/auth/` (owner-only, git-ignored, values redacted). TOTP: secrets
+  declared `type: totp` resolve to dynamic `SecretValue`s; the browser's secret fill awaits
+  `prepareSecret` (config `/reveal`), which types the current code. Inboxes: `createInbox`
+  → `Inbox` (`address`, `waitForMessage`, `check`), `extractCode` / `extractLinks`
+  (allowed hosts only), and `createInboxValues` / `inboxSecret` for the spec's new
+  `{{inbox.code|link|subject}}` namespace (bound `unresolved`). CLI `auth [--clear]`,
+  `inbox check`, `inbox last`. The Mailpit e2e runs in the `fixtures` CI job with a
+  Mailpit service. AUTH-1 wires it all into runs. See `packages/auth/README.md`.
 
 ## Results contract (`packages/contract`)
 

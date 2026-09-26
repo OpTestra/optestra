@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { Redactor } from "@testament/config/node";
+import { asDynamicSecret, Redactor } from "@testament/config/node";
 import {
   type ActionOutcome,
   launchBrowser,
@@ -166,6 +166,46 @@ describe("secrets", () => {
     expect(outcome.message).toContain("127.0.0.1");
     expect(find(await session.observe(), "textbox", "Password").text).toBeUndefined();
     await session.close();
+  });
+
+  it("types a dynamic secret's value produced at the moment of the fill (TOTP, AUTH-0)", async () => {
+    const evil = await hostile();
+    try {
+      let produced = 0;
+      const dynamic = asDynamicSecret(
+        secret("OTP", "seed-value-5150", ["127.0.0.1"]),
+        "test",
+        async (stored) => `${stored.slice(0, 4)}-code-${++produced}`,
+        new Redactor(), // not the session's: the session must scrub the code itself
+      );
+      const session = await open(evil.url, {
+        browser,
+        secrets: { OTP: dynamic },
+        redact: (text) => text,
+        evidence: { console: true },
+      });
+      expect(produced).toBe(0); // nothing is produced when the session opens
+      await session.act({ type: "goto", url: "/console" });
+      const page = await session.observe();
+      const filled = await session.act({
+        type: "fill",
+        target: { ref: find(page, "textbox", "Secret field").ref },
+        value: { secret: "OTP" },
+      });
+      expect(filled.status).toBe("ok");
+      expect(produced).toBe(1);
+      const closed = await session.close();
+      const log = readFileSync(
+        closed.evidence.find((f) => f.kind === "console")?.path ?? "",
+        "utf8",
+      );
+      // The page logged what was typed: the produced code, scrubbed to the label.
+      expect(log).toContain("typed: [secret:OTP]");
+      expect(log).not.toContain("seed-code-1");
+      expect(log).not.toContain("seed-value-5150");
+    } finally {
+      await evil.stop();
+    }
   });
 
   it("refuses a secret that wasn't provided (Blocked: missing_secret)", async () => {

@@ -249,6 +249,10 @@ class Expander {
         case "secret":
           out.push({ kind: "secret", name: s.name });
           return;
+        case "inbox":
+          // Read from the test inbox at run time (the auth package's InboxValues).
+          out.push({ kind: "unresolved", ref });
+          return;
         case "data":
         case "params": {
           const value = (s.ns === "data" ? bindings.data : bindings.params).get(s.name);

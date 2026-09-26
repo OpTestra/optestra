@@ -174,6 +174,7 @@ Write `\{{` for literal braces.
 | `params.x` | Flows only: a param of this flow. |
 | `unique.email`, `unique.id`, `unique.name` | Fresh values per run (ENV-3). `unique.email` uses `example.test` unless `emailDomain` is set. |
 | `faker.name`, `faker.firstName`, `faker.lastName`, `faker.email`, `faker.company`, `faker.phone`, `faker.city` | Realistic values from small built-in word lists. |
+| `inbox.code`, `inbox.link`, `inbox.subject` | From the latest email to the test's address in the test inbox (SEC-5): the one-time code, the verify / magic link (only on an allowed domain) and the subject. **Never resolved by this package**: they always bind as `unresolved` (`{ kind: "unresolved", ref: "inbox.code" }`) and are read at run time by the auth package's `InboxValues`, so a recording keeps the template, never the one-time value. Codes and links are typed like secrets. Other members are `VAR_MEMBER_UNKNOWN`. |
 
 Generated values are deterministic: each depends on the run `seed`, the test id
 and where it is used (the data key, or the step's key). Same seed, same values;
@@ -621,7 +622,7 @@ positions matching the model. Browser-safe; no server or AI.
 | Function | Returns |
 |---|---|
 | `diagnostics(text, path)` | the `checkTest` findings |
-| `completions(text, path, position)` | after `{{`: namespaces, then members (data keys, declared secret names, flow params, generator members, env var names); at a line start: the next step number, `Expect:`, `Soft:`, `Never:`, `Use:`, `Exact:`; after `Use:`: flow paths; after `Exact:`: ops, keywords, locator kinds and roles; in frontmatter: missing keys and enum values (kind, heal, auth profiles, allowDestructive, hook types, HTTP methods, environment keys). Nothing inside a fenced code block. |
+| `completions(text, path, position)` | after `{{`: namespaces, then members (data keys, declared secret names, flow params, generator members, env var names, inbox values); at a line start: the next step number, `Expect:`, `Soft:`, `Never:`, `Use:`, `Exact:`; after `Use:`: flow paths; after `Exact:`: ops, keywords, locator kinds and roles; in frontmatter: missing keys and enum values (kind, heal, auth profiles, allowDestructive, hook types, HTTP methods, environment keys). Nothing inside a fenced code block. |
 | `hover(text, path, position)` | field docs; variable info (data: its template; unique/faker: generated per run; secret: name, domains, set or missing, **never the value**); flow summary (name, params with defaults and what this step passes); exact-op docs; rule docs for a finding there |
 | `codeActions(text, path, range)` | the fixes of findings in the range, with `safe` |
 | `format(text, path)` | edits to the canonical `printTest` text (none when already canonical) |

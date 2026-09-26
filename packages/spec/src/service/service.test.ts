@@ -80,8 +80,10 @@ describe("completions", () => {
       "secret",
       "unique",
       "faker",
+      "inbox",
     ]);
     expect(await complete(withLine("5. Type {{ se|"))).toEqual(["secret"]);
+    expect(await complete(withLine("5. Type {{inbox.|"))).toEqual(["code", "link", "subject"]);
     expect(await complete(withLine("5. Type {{secret.|"))).toEqual(
       ["SHOP_PASSWORD", "ADMIN_TOKEN"].sort(),
     );
@@ -193,6 +195,18 @@ describe("hover", () => {
     expect(JSON.stringify(secret)).not.toContain(PLANTED);
     expect((await hoverAt("{{data.email}}"))?.contents).toContain("{{unique.email}}");
     expect((await hoverAt('"{{unique.email}}"', 4))?.contents).toContain("generated per run");
+  });
+
+  it("explains inbox values", async () => {
+    const text = withLine('5. Fill "Verification code" with {{inbox.code}}');
+    const lines = text.split("\n");
+    const line = lines.findIndex((l) => l.includes("{{inbox.code}}"));
+    const hover = await service.hover(text, PATH, {
+      line: line + 1,
+      column: (lines[line] ?? "").indexOf("{{inbox.code}}") + 4,
+    });
+    expect(hover?.contents).toContain("**inbox.code**");
+    expect(hover?.contents).toContain("never the value");
   });
 
   it("documents frontmatter fields, flows, exact ops and findings", async () => {

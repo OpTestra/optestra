@@ -11,6 +11,7 @@ import type { LintWords } from "../lint/words.js";
 import {
   DESTRUCTIVE_ACTIONS,
   HTTP_METHODS,
+  INBOX_MEMBERS,
   type Position,
   type Range,
   type Step,
@@ -20,7 +21,16 @@ import {
 } from "../model.js";
 import { type ParseResult, parseTest } from "../parse.js";
 import { printTest } from "../print.js";
-import { FIELD_DOCS, KEYS, LOCATORS, NAMESPACE_DOCS, OP_DOCS, PREFIX_DOCS, ROLES } from "./docs.js";
+import {
+  FIELD_DOCS,
+  INBOX_MEMBER_DOCS,
+  KEYS,
+  LOCATORS,
+  NAMESPACE_DOCS,
+  OP_DOCS,
+  PREFIX_DOCS,
+  ROLES,
+} from "./docs.js";
 
 /*
  * The editor language service (APP-5): plain functions over (text, path,
@@ -266,6 +276,8 @@ export function createLanguageService(options: LanguageServiceOptions): Language
       case "unique":
       case "faker":
         return generators.members(ns).map((m) => [m, "generated per run"]);
+      case "inbox":
+        return INBOX_MEMBERS.map((m) => [m, INBOX_MEMBER_DOCS[m] ?? "from the test inbox"]);
       default:
         return [];
     }
@@ -603,6 +615,10 @@ export function createLanguageService(options: LanguageServiceOptions): Language
           .filter(Boolean)
           .join("\n\n");
       }
+      case "inbox":
+        return INBOX_MEMBER_DOCS[name]
+          ? `**inbox.${name}**: ${INBOX_MEMBER_DOCS[name]}\n\nRead from the test inbox (the project's \`inbox\` settings) when the step runs; a recording keeps \`{{inbox.${name}}}\`, never the value.`
+          : `**inbox.${name}**: not an inbox value. Use inbox.code, inbox.link or inbox.subject.`;
       case "unique":
       case "faker":
         return `**${ns}.${name}**: generated per run. Each run and worker gets a new value, so parallel runs don't collide. To use the same value twice, put it in data.`;

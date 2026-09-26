@@ -25,7 +25,19 @@ export {
   saveProject,
 } from "./project.js";
 export { defaultRedactor, Redactor, secretVariants } from "./redactor.js";
-export { type CreateSecretOptions, createSecretValue, SecretValue } from "./secret-value.js";
+export {
+  registerSecretType,
+  type SecretTypeCheck,
+  type SecretTypeDefinition,
+  secretType,
+} from "./secret-types.js";
+export {
+  asDynamicSecret,
+  type CreateSecretOptions,
+  createSecretValue,
+  type SecretProducer,
+  SecretValue,
+} from "./secret-value.js";
 export {
   dotenvSource,
   memorySource,
