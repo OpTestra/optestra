@@ -1,4 +1,5 @@
-// THE ONLY FILE IN THE ENGINE THAT TOUCHES THE NETWORK (see test/guards.test.ts).
+// ONE OF THE TWO ENGINE FILES THAT TOUCH THE NETWORK (see test/guards.test.ts; the other
+// is the decision models' System One transport in packages/decide).
 // Every provider request goes through `guardedFetch`, which only talks to the
 // provider's own host, so a key can never be sent anywhere else.
 

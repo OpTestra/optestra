@@ -1,0 +1,11 @@
+{
+  "error": "questions.a.noul.criteria: Input should be a valid dictionary",
+  "code": "INVALID_REQUEST",
+  "detail": [
+    {
+      "loc": ["body", "questions", "a", "noul", "criteria"],
+      "msg": "Input should be a valid dictionary",
+      "type": "dict_type"
+    }
+  ]
+}

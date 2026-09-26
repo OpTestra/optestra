@@ -75,8 +75,33 @@ models:
 
 # The decision layer (LRN-6..8). The decide package registers this section.
 decisions:
-  # Decision model behind the rules. none = rules only; unclear cases escalate.
-  backend: none
+  # Decision model behind the rules (LRN-7):
+  #   auto = Jev when JEV_API_KEY is set, otherwise rules only (no network)
+  #   none = rules only; unclear cases escalate
+  #   jev | kev | laya = that model (Kev and Laya are only used when chosen)
+  backend: auto
+  # Jev, hosted by TypeSafe AI. Billed per input token.
+  jev:
+    baseUrl: https://api.typesafe.ai
+    model: jev-latest
+    keySecret: JEV_API_KEY
+    priceUsdPerMillionInputTokens: 0.042
+  # Kev, open models you run yourself (python -m kev.serve ... --port 8009).
+  kev:
+    baseUrl: http://127.0.0.1:8009
+    model: kev-latest
+    # keySecret: KEV_API_KEY   # if your Kev server requires a key
+    priceUsdPerMillionInputTokens: 0
+  # Laya, run locally through Ollaya (ollaya.dev). Recommended after training.
+  laya:
+    baseUrl: http://127.0.0.1:11435
+    model: "laya:typed-decisions"
+    # keySecret: OLLAYA_API_KEY   # if your Ollaya requires a key
+    priceUsdPerMillionInputTokens: 0
+    # Keep the model loaded between decisions.
+    keepAlive: 30m
+    # The first decision loads the model (about 2 s); the run warms it up first.
+    warmUpTimeoutMs: 15000
   # Minimum confidence to act on a decision; below it the decision escalates.
   threshold: 0.8
   # Per-task overrides, e.g. page_is_error: { threshold: 0.9, timeLimitMs: 150, enabled: true }

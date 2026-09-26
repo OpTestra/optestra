@@ -1,4 +1,7 @@
-/** Node entry: the decision cache and labelled examples on disk, under the project data folder. */
+/**
+ * Node entry: the decision cache and labelled examples on disk, and the System One
+ * backends (Jev, Kev, Laya via Ollaya) with setup, checks and bench.
+ */
 export { decisionsDir, fileCache } from "./file-cache.js";
 export {
   createLabelStore,
@@ -8,3 +11,4 @@ export {
   type LabelStoreOptions,
   labelsDir,
 } from "./labels.js";
+export * from "./systemone/index.js";
