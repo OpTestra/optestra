@@ -4,6 +4,7 @@ import { createInterface } from "node:readline/promises";
 import { Command } from "commander";
 import { type AuthorCommandOptions, runAuthorCommand } from "./commands/author.js";
 import { registerBrowserCommands } from "./commands/browser.js";
+import { runLoginCommand } from "./commands/login.js";
 import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
 import { type DeciderSetupOptions, runDeciderSetup } from "./commands/decider.js";
 import { type DecisionsCommandOptions, runDecisionsCommand } from "./commands/decisions.js";
@@ -191,6 +192,19 @@ export function createProgram(): Command {
     .option("-C, --dir <path>", "project folder (default: the test's nearest project)")
     .action(async (file: string, options: AuthorCommandOptions) => {
       process.exitCode = await runAuthorCommand(file, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("login")
+    .description(
+      "show which AI subscription tools (Claude Code, Codex) are ready, and how to sign in to them",
+    )
+    .action(async () => {
+      process.exitCode = await runLoginCommand({
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),

@@ -310,10 +310,19 @@ export async function authorTest(
       },
       costUsd: calls.reduce((s, c) => s + (c.costUsd ?? 0), 0),
       unknownCostCalls: calls.filter((c) => c.costUsd === null).length,
+      billing: billingOf(calls),
     },
     evidence: [],
   };
   return { recording, report, screenshots };
+}
+
+function billingOf(
+  calls: readonly { billing?: "api" | "subscription" | undefined }[],
+): AuthoringReport["totals"]["billing"] {
+  if (calls.length === 0) return null;
+  const subscription = calls.filter((c) => c.billing === "subscription").length;
+  return subscription === 0 ? "api" : subscription === calls.length ? "subscription" : "mixed";
 }
 
 /** Steps in test order: this run's recording, else the previous one for the same key. */

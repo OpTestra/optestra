@@ -8,9 +8,21 @@ export const PROVIDER_KINDS = [
   "openai-compatible",
   "azure",
   "bedrock",
+  "claude-code",
+  "codex",
 ] as const;
 
 export type ProviderKind = (typeof PROVIDER_KINDS)[number];
+
+/**
+ * MOD-6: the user's own AI subscription, through the vendor's official CLI that
+ * the user installed and signed in to. No key, no network from us: we run the
+ * binary, locked down, as a model.
+ */
+export const DELEGATED_KINDS = ["claude-code", "codex"] as const;
+export type DelegatedKind = (typeof DELEGATED_KINDS)[number];
+export const isDelegatedKind = (kind: string): kind is DelegatedKind =>
+  (DELEGATED_KINDS as readonly string[]).includes(kind);
 
 /** Roles in FND-2. The decider (DEC phase) has its own protocol and is added there. */
 export const MODEL_ROLES = ["planner", "fixer"] as const;
@@ -41,6 +53,11 @@ export const providerSchema = z.strictObject({
     .record(z.string(), z.string())
     .optional()
     .describe("Provider-specific settings: azure resourceName/apiVersion, bedrock region."),
+  binary: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("claude-code / codex: path to the CLI. Default: found on PATH (claude, codex)."),
 });
 
 export const poolEntrySchema = z.strictObject({
@@ -68,6 +85,18 @@ export const modelsSchema = z
       .record(z.string(), priceSchema)
       .describe("Price overrides by model id, USD per million tokens."),
     timeoutSeconds: z.number().positive().describe("Maximum time for one model request."),
+    allowDelegated: z
+      .boolean()
+      .describe(
+        "Allow claude-code / codex (your own AI subscription through its CLI). The cloud sets false.",
+      ),
+    delegatedCallsPerRun: z
+      .number()
+      .int()
+      .positive()
+      .describe(
+        "Most calls one run may make through each subscription CLI (plans assume ordinary individual use).",
+      ),
   })
   .describe("AI models.");
 

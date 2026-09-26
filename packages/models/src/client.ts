@@ -20,7 +20,8 @@ import {
   type ToolSet,
 } from "ai";
 import { BudgetMeter } from "./budget.js";
-import type { ModelRole } from "./config.js";
+import { isDelegatedKind, type ModelRole } from "./config.js";
+import { type ProbeResult, probeBinary, runDelegated } from "./delegated/run.js";
 import { addUsage, computeCost, priceFor, reportedCost, ZERO_USAGE } from "./cost.js";
 import { classifyError, RETRYABLE } from "./errors.js";
 import { type PoolEntry, type ResolvedProvider, resolvePools, resolveProviders } from "./keys.js";
@@ -65,6 +66,8 @@ export interface ModelsOptions {
   /** Test hook: build the model for an entry instead of using a real provider. */
   languageModel?: (entry: PoolEntry, apiKey: string | undefined) => LanguageModel;
   now?: () => number;
+  /** Environment for finding and running subscription CLIs (PATH, HOME…). Default: process.env. */
+  env?: Readonly<Record<string, string | undefined>>;
 }
 
 export interface Models {
@@ -146,11 +149,17 @@ export function createModels(options: ModelsOptions): Models {
   const store = options.usageStore ?? new MemoryUsageStore();
   const now = options.now ?? Date.now;
   const backoff = options.backoffMs ?? 250;
+  const parentEnv = options.env ?? process.env;
   const providers: Map<string, ResolvedProvider> = resolveProviders(
     config,
     options.sources ?? [processEnvSource()],
     options.environment,
+    parentEnv,
   );
+  // Delegated CLIs: probed once per client (version + lock-down flags), and capped per run.
+  const probes = new Map<string, Promise<ProbeResult>>();
+  const delegatedCalls = new Map<string, number>();
+  const callCap = config.models?.delegatedCallsPerRun ?? 300;
   const pools = resolvePools(config, providers);
   const disabled = new Set<string>();
   const warnedPrices = new Set<string>();
@@ -163,6 +172,8 @@ export function createModels(options: ModelsOptions): Models {
     messages: SdkMessage[],
   ): Promise<AttemptResult<T>> {
     const provider = providers.get(entry.provider) as ResolvedProvider;
+    if (isDelegatedKind(provider.settings.kind))
+      return delegatedAttempt(entry, provider, tryNumber, request, messages);
     let providerCost: number | undefined;
     const fetch = guardedFetch(provider.host ?? "", {
       base: options.fetch ?? platformFetch,
@@ -270,6 +281,86 @@ export function createModels(options: ModelsOptions): Models {
     }
   }
 
+  /** One call through the user's own subscription CLI (MOD-6). Cost 0 to budgets. */
+  async function delegatedAttempt<T>(
+    entry: PoolEntry,
+    provider: ResolvedProvider,
+    tryNumber: number,
+    request: CompletionRequest<T>,
+    messages: SdkMessage[],
+  ): Promise<AttemptResult<T>> {
+    const kind = provider.settings.kind as "claude-code" | "codex";
+    const base = {
+      provider: entry.provider,
+      model: entry.model,
+      attempt: tryNumber,
+      billing: "subscription" as const,
+    };
+    const started = now();
+    const binary = provider.binary;
+    if (!binary) {
+      return {
+        attempt: {
+          ...base,
+          outcome: "cli_unavailable",
+          latencyMs: 0,
+          message: provider.problem ?? "not installed",
+        },
+      };
+    }
+    let probe = probes.get(entry.provider);
+    if (!probe) {
+      probe = probeBinary(kind, binary, parentEnv);
+      probes.set(entry.provider, probe);
+    }
+    const probed = await probe;
+    if (!probed.installed || !probed.meetsMinimum) {
+      return {
+        attempt: {
+          ...base,
+          outcome: "cli_unavailable",
+          latencyMs: now() - started,
+          message: redactor.redact(probed.problem ?? "unavailable"),
+        },
+      };
+    }
+    delegatedCalls.set(entry.provider, (delegatedCalls.get(entry.provider) ?? 0) + 1);
+    const result = await runDelegated(
+      kind,
+      binary,
+      {
+        system: request.system,
+        messages,
+        tools: request.tools,
+        output: request.output as never,
+        model: entry.model,
+        timeoutMs: request.timeoutMs ?? timeoutDefault,
+        signal: request.signal,
+      },
+      parentEnv,
+    );
+    const attempt: Attempt = {
+      ...base,
+      outcome: result.outcome,
+      latencyMs: now() - started,
+      ...(result.message !== undefined ? { message: redactor.redact(result.message) } : {}),
+      ...(result.usage ? { usage: result.usage, costUsd: 0 } : {}),
+      ...(result.reportedCostUsd !== undefined ? { reportedCostUsd: result.reportedCostUsd } : {}),
+    };
+    if (result.outcome !== "ok") {
+      return {
+        attempt,
+        ...(result.invalidText !== undefined ? { invalidText: result.invalidText } : {}),
+      };
+    }
+    return {
+      attempt: { ...attempt, usage: result.usage ?? ZERO_USAGE, costUsd: 0 },
+      text: result.text ?? "",
+      toolCalls: result.toolCalls ?? [],
+      object: result.object as T | undefined,
+    };
+  }
+
   async function nearCap(entry: PoolEntry): Promise<string | undefined> {
     const caps = providers.get(entry.provider)?.settings.caps;
     if (!caps) return undefined;
@@ -304,6 +395,7 @@ export function createModels(options: ModelsOptions): Models {
         costUsd: unknown ? null : withUsage.reduce((sum, a) => sum + (a.costUsd ?? 0), 0),
         attempts: [...attempts],
         tags: { ...(request.tags ?? {}) },
+        billing: (answered ?? attempts.filter((a) => a.attempt > 0).at(-1))?.billing ?? "api",
       };
       options.onCall?.(rec);
       log.debug(`model call ${role} ${outcome}`, { record: rec });
@@ -354,7 +446,20 @@ export function createModels(options: ModelsOptions): Models {
         continue;
       }
       if (disabled.has(entry.provider)) {
-        skip("skipped_disabled", `${entry.provider} was disabled after an authentication failure`);
+        skip(
+          "skipped_disabled",
+          `${entry.provider} was disabled earlier in this run (not signed in, rejected key, or unavailable)`,
+        );
+        continue;
+      }
+      if (
+        isDelegatedKind(providers.get(entry.provider)?.settings.kind ?? "") &&
+        (delegatedCalls.get(entry.provider) ?? 0) >= callCap
+      ) {
+        skip(
+          "skipped_call_cap",
+          `${entry.provider} reached this run's ${callCap} calls (models.delegatedCallsPerRun)`,
+        );
         continue;
       }
       const capped = await nearCap(entry);
@@ -404,10 +509,12 @@ export function createModels(options: ModelsOptions): Models {
             "This is a bug in the request, not a provider outage. Report it with the call record.",
           );
         }
-        if (attempt.outcome === "auth_failed") {
+        if (attempt.outcome === "auth_failed" || attempt.outcome === "cli_unavailable") {
           disabled.add(entry.provider);
           break;
         }
+        // The subscription's usage limit: no point retrying this entry; move on.
+        if (attempt.outcome === "plan_limit") break;
         if (attempt.outcome === "invalid_output") {
           if (retriedInvalid) break;
           retriedInvalid = true;
@@ -446,8 +553,15 @@ export function createModels(options: ModelsOptions): Models {
     if (tried.every((a) => a.outcome === "auth_failed")) {
       return fail(
         "auth_failed",
-        `Every provider for the ${role} role rejected its API key: ${summary}.`,
-        "Check the keys (run the models key check) and replace any that are invalid or expired.",
+        `Every provider for the ${role} role rejected its credentials (API key, or not signed in to the subscription CLI): ${summary}.`,
+        "Check the keys (run the models key check) and replace any that are invalid or expired. For a subscription CLI, sign in with its own command (claude auth login, codex login).",
+      );
+    }
+    if (tried.some((a) => a.outcome === "plan_limit") && tried.every((a) => a.outcome !== "ok")) {
+      return fail(
+        "all_providers_failed",
+        `Plan limit reached: your AI subscription's usage limit was hit, and no other provider answered: ${summary}.`,
+        "Wait for the plan's limit to reset, or add an API key as another provider in the pool (models.roles).",
       );
     }
     const lastPerEntry = new Map(tried.map((a) => [`${a.provider}/${a.model}`, a.outcome]));

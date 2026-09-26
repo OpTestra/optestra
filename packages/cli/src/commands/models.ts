@@ -11,6 +11,7 @@ import {
   type CapUsage,
   capUsage,
   checkProviders,
+  isDelegatedKind,
   MODEL_ROLES,
   type ModelRole,
   type PoolEntry,
@@ -18,6 +19,7 @@ import {
   projectUsageStore,
   resolvePools,
   resolveProviders,
+  VENDOR_LABEL,
 } from "@testament/models";
 import type { CommandIo } from "./config.js";
 
@@ -63,14 +65,14 @@ export async function runModelsCommand(
   const diagnostics = projectFound ? loaded.diagnostics : [];
   const environment = loaded.environment?.name;
   const sources = [processEnvSource(io.env), dotenvSource(dir)];
-  const providers = resolveProviders(loaded.config, sources, environment);
+  const providers = resolveProviders(loaded.config, sources, environment, io.env);
   const pools = resolvePools(loaded.config, providers);
   const store = projectUsageStore(dir);
   const caps: Record<string, CapUsage[]> = {};
   for (const [id, provider] of providers)
     caps[id] = await capUsage(store, id, provider.settings.caps);
   const checks: ProviderCheck[] | undefined = options.check
-    ? await checkProviders(loaded.config, { sources, environment })
+    ? await checkProviders(loaded.config, { sources, environment, env: io.env })
     : undefined;
 
   const unusable = MODEL_ROLES.filter((role) => !pools[role].some((entry) => entry.usable));
@@ -121,11 +123,14 @@ export async function runModelsCommand(
       ...MODEL_ROLES.map((role: ModelRole) => {
         const rows = pools[role].map((entry: PoolEntry, i) => {
           const provider = providers.get(entry.provider);
-          const key = provider?.settings.keySecret
-            ? `${provider.settings.keySecret} ${entry.keyStatus === "not_allowed" ? "not allowed" : entry.keyStatus}`
-            : entry.keyStatus === "not_needed"
-              ? "no key needed"
-              : "-";
+          const key =
+            provider && isDelegatedKind(provider.settings.kind)
+              ? "your subscription"
+              : provider?.settings.keySecret
+                ? `${provider.settings.keySecret} ${entry.keyStatus === "not_allowed" ? "not allowed" : entry.keyStatus}`
+                : entry.keyStatus === "not_needed"
+                  ? "no key needed"
+                  : "-";
           return [
             String(i + 1),
             entry.provider,
@@ -135,7 +140,12 @@ export async function runModelsCommand(
             entry.usable ? "ready" : `unusable: ${entry.problem}`,
           ];
         });
-        return `Role ${role}\n${rows.length ? table([["#", "PROVIDER", "MODEL", "KEY", "CAP USAGE", "STATUS"], ...rows]) : "  (no entries)"}`;
+        const first = pools[role].find((entry) => entry.usable);
+        const firstKind = first ? providers.get(first.provider)?.settings.kind : undefined;
+        const resolved = first
+          ? `  Resolves to ${first.provider} / ${first.model}${firstKind && isDelegatedKind(firstKind) ? ` (via your ${VENDOR_LABEL[firstKind]})` : ""}`
+          : "  Resolves to nothing: no usable entry";
+        return `Role ${role}\n${rows.length ? table([["#", "PROVIDER", "MODEL", "KEY", "CAP USAGE", "STATUS"], ...rows]) : "  (no entries)"}\n${resolved}`;
       }),
     ];
     if (checks) {

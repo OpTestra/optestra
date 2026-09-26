@@ -39,6 +39,12 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
         kind: "google",
         keySecret: "GEMINI_API_KEY",
       },
+      "claude-code": {
+        kind: "claude-code",
+      },
+      codex: {
+        kind: "codex",
+      },
     },
     roles: {
       planner: [
@@ -54,6 +60,14 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
           provider: "google",
           model: "gemini-3.8-flash",
         },
+        {
+          provider: "claude-code",
+          model: "sonnet",
+        },
+        {
+          provider: "codex",
+          model: "default",
+        },
       ],
       fixer: [
         {
@@ -68,10 +82,20 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
           provider: "google",
           model: "gemini-3.5-flash-lite",
         },
+        {
+          provider: "claude-code",
+          model: "haiku",
+        },
+        {
+          provider: "codex",
+          model: "default",
+        },
       ],
     },
     prices: {},
     timeoutSeconds: 120,
+    allowDelegated: true,
+    delegatedCallsPerRun: 300,
   },
   decisions: {
     backend: "auto",
