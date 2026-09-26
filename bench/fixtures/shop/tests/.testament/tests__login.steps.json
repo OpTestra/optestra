@@ -1,0 +1,542 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__login",
+  "testPath": "tests/login.test.md",
+  "target": "web",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "chromium",
+    "device": "desktop",
+    "environment": "local",
+    "model": "claude-code/sonnet",
+    "promptVersion": "planner-v2"
+  },
+  "updatedAt": "2026-09-26T17:48:38.448Z",
+  "steps": [
+    {
+      "key": "1082882d40e5ab53",
+      "textKey": "10b3d1c2f0e23649",
+      "route": "/login",
+      "text": "Fill \"Email\" with ada@example.com",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "ada@example.com"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#login-email"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "input",
+            "attributes": {
+              "id": "login-email",
+              "name": "email",
+              "type": "email"
+            },
+            "anchorText": "Log in",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 199.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "ada@example.com"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Email field now contains ada@example.com",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:48:24.784Z"
+    },
+    {
+      "key": "ce9ca3f30753fe39",
+      "textKey": "d017b6bd3576bb4f",
+      "route": "/login",
+      "text": "Fill \"Password\" with {{secret.SHOP_PASSWORD}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#login-password"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "input",
+            "attributes": {
+              "id": "login-password",
+              "name": "password",
+              "type": "password"
+            },
+            "anchorText": "Log in",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 285.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Password field now contains the entered password",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:48:27.302Z"
+    },
+    {
+      "key": "7e031a34ba5f0975",
+      "textKey": "0fe721c063ff84ea",
+      "route": "/login",
+      "text": "Click \"Log in\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Log in",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Log in",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#login-form > button"
+              },
+              {
+                "kind": "text",
+                "text": "Log in",
+                "exact": true
+              }
+            ],
+            "role": "button",
+            "name": "Log in",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Log in",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 343.4375,
+              "width": 77.8125,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "urlChange": "/dashboard",
+            "appeared": [
+              {
+                "role": "link",
+                "name": "Dashboard"
+              },
+              {
+                "role": "link",
+                "name": "Orders"
+              },
+              {
+                "role": "link",
+                "name": "Billing"
+              },
+              {
+                "role": "link",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Log out"
+              },
+              {
+                "role": "heading",
+                "name": "Dashboard"
+              },
+              {
+                "role": "region",
+                "name": ""
+              },
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "Create project"
+              },
+              {
+                "role": "listitem",
+                "name": "",
+                "text": "No projects yet."
+              }
+            ],
+            "removed": [
+              {
+                "role": "link",
+                "name": "Pricing"
+              },
+              {
+                "role": "link",
+                "name": "Log in"
+              },
+              {
+                "role": "link",
+                "name": "Sign up"
+              },
+              {
+                "role": "heading",
+                "name": "Log in"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Email"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "ada@example.com"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Password"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              },
+              {
+                "role": "button",
+                "name": "Log in"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "New here?"
+              }
+            ],
+            "requests": [
+              {
+                "method": "POST",
+                "route": "/login",
+                "status": 303
+              },
+              {
+                "method": "GET",
+                "route": "/dashboard",
+                "status": 200
+              },
+              {
+                "method": "GET",
+                "route": "/api/projects",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 988,
+            "waitedFor": {
+              "network": 600,
+              "dom": 624,
+              "busy": 622
+            }
+          }
+        }
+      ],
+      "reasoning": "Logged in; navigated to Dashboard page with Log out button visible",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:48:33.077Z"
+    },
+    {
+      "key": "ceabe5dc2dc2f05b",
+      "textKey": "05180c41e19cc5fd",
+      "route": "/dashboard",
+      "text": "Click \"Log out\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Log out",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Log out",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Log out",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "html > body > header > nav > ul > li:nth-of-type(5) > form > button"
+              }
+            ],
+            "role": "button",
+            "name": "Log out",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn"
+            },
+            "anchorText": "Main",
+            "framePath": [],
+            "box": {
+              "x": 1799.1875,
+              "y": 12,
+              "width": 88.8125,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "urlChange": "/",
+            "appeared": [
+              {
+                "role": "link",
+                "name": "Pricing"
+              },
+              {
+                "role": "link",
+                "name": "Log in"
+              },
+              {
+                "role": "link",
+                "name": "Sign up"
+              },
+              {
+                "role": "heading",
+                "name": "Acme Shop"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "Simple project tracking for small teams."
+              },
+              {
+                "role": "link",
+                "name": "See pricing"
+              }
+            ],
+            "removed": [
+              {
+                "role": "link",
+                "name": "Dashboard"
+              },
+              {
+                "role": "link",
+                "name": "Orders"
+              },
+              {
+                "role": "link",
+                "name": "Billing"
+              },
+              {
+                "role": "link",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Log out"
+              },
+              {
+                "role": "heading",
+                "name": "Dashboard"
+              },
+              {
+                "role": "region",
+                "name": ""
+              },
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "Create project"
+              },
+              {
+                "role": "listitem",
+                "name": "",
+                "text": "No projects yet."
+              }
+            ],
+            "requests": [
+              {
+                "method": "POST",
+                "route": "/logout",
+                "status": 303
+              },
+              {
+                "method": "GET",
+                "route": "/",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 347,
+            "waitedFor": {
+              "network": 295,
+              "dom": 295,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Logged out; now on home page with Pricing/Log in/Sign up links",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:48:38.448Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "4e19e68bc93dcac0",
+      "textKey": "b67f863f0801c70e",
+      "text": "the page heading is \"Dashboard\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:27:58.211Z"
+    },
+    {
+      "key": "6e90a80a89e956ad",
+      "textKey": "a6d140b00086d6fc",
+      "text": "the URL contains /dashboard",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:27:58.211Z"
+    },
+    {
+      "key": "164659ba40bce75e",
+      "textKey": "0fb41730f030ed98",
+      "text": "the page heading is \"Acme Shop\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:27:58.211Z"
+    }
+  ]
+}

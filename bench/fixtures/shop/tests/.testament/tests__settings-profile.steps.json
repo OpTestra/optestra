@@ -1,0 +1,873 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__settings-profile",
+  "testPath": "tests/settings-profile.test.md",
+  "target": "web",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "chromium",
+    "device": "desktop",
+    "environment": "local",
+    "model": "claude-code/sonnet",
+    "promptVersion": "planner-v2"
+  },
+  "updatedAt": "2026-09-26T17:50:04.344Z",
+  "steps": [
+    {
+      "key": "ba8ec515221832df",
+      "textKey": "c4f3a1c2c1ab8ab2",
+      "route": "/login",
+      "text": "Go to /login",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "goto",
+            "url": "/login"
+          },
+          "fingerprint": null,
+          "expectPost": {
+            "requests": [
+              {
+                "method": "GET",
+                "route": "/login",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 364,
+            "waitedFor": {
+              "network": 286,
+              "dom": 312,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Login page loaded with Email/Password fields and Log in button",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:49:27.995Z"
+    },
+    {
+      "key": "fee215fde0226031",
+      "textKey": "99b98ca7e73a3ac0",
+      "route": "/login",
+      "text": "Fill \"Email\" with {{params.email}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "{{params.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#login-email"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "input",
+            "attributes": {
+              "id": "login-email",
+              "name": "email",
+              "type": "email"
+            },
+            "anchorText": "Log in",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 199.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Email field now shows {{params.email}}",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:49:30.907Z"
+    },
+    {
+      "key": "f8b84006aa2051c6",
+      "textKey": "601e4c8b381cca3e",
+      "route": "/login",
+      "text": "Fill \"Password\" with {{params.password}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#login-password"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "input",
+            "attributes": {
+              "id": "login-password",
+              "name": "password",
+              "type": "password"
+            },
+            "anchorText": "Log in",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 285.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Password field now contains the secret password value",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:49:33.806Z"
+    },
+    {
+      "key": "d4cfb673a893fa2a",
+      "textKey": "b47d7fbd6902a574",
+      "route": "/login",
+      "text": "Click \"Log in\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Log in",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Log in",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#login-form > button"
+              },
+              {
+                "kind": "text",
+                "text": "Log in",
+                "exact": true
+              }
+            ],
+            "role": "button",
+            "name": "Log in",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Log in",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 343.4375,
+              "width": 77.8125,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "urlChange": "/dashboard",
+            "appeared": [
+              {
+                "role": "link",
+                "name": "Dashboard"
+              },
+              {
+                "role": "link",
+                "name": "Orders"
+              },
+              {
+                "role": "link",
+                "name": "Billing"
+              },
+              {
+                "role": "link",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Log out"
+              },
+              {
+                "role": "heading",
+                "name": "Dashboard"
+              },
+              {
+                "role": "region",
+                "name": ""
+              },
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "Create project"
+              },
+              {
+                "role": "listitem",
+                "name": "",
+                "text": "No projects yet."
+              }
+            ],
+            "removed": [
+              {
+                "role": "link",
+                "name": "Pricing"
+              },
+              {
+                "role": "link",
+                "name": "Log in"
+              },
+              {
+                "role": "link",
+                "name": "Sign up"
+              },
+              {
+                "role": "heading",
+                "name": "Log in"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Email"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Password"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              },
+              {
+                "role": "button",
+                "name": "Log in"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "New here?"
+              }
+            ],
+            "requests": [
+              {
+                "method": "POST",
+                "route": "/login",
+                "status": 303
+              },
+              {
+                "method": "GET",
+                "route": "/dashboard",
+                "status": 200
+              },
+              {
+                "method": "GET",
+                "route": "/api/projects",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 962,
+            "waitedFor": {
+              "network": 597,
+              "dom": 599,
+              "busy": 623
+            }
+          }
+        }
+      ],
+      "reasoning": "Logged in; navigated to Dashboard page with Orders, Billing, Settings, Log out links",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:49:40.031Z"
+    },
+    {
+      "key": "95131f621fc592f3",
+      "textKey": "3c482e5ce21be3f3",
+      "route": "/dashboard",
+      "text": "Go to the settings page",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "link",
+              "name": "Settings",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "link",
+              "name": "Settings",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Settings",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "html > body > header > nav > ul > li:nth-of-type(4) > a"
+              }
+            ],
+            "role": "link",
+            "name": "Settings",
+            "tag": "a",
+            "attributes": {
+              "href": "/settings"
+            },
+            "anchorText": "Main",
+            "framePath": [],
+            "box": {
+              "x": 1719.3125,
+              "y": 24,
+              "width": 59.875,
+              "height": 18
+            }
+          },
+          "expectPost": {
+            "urlChange": "/settings",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Settings"
+              },
+              {
+                "role": "heading",
+                "name": "Profile"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Full name"
+              },
+              {
+                "role": "textbox",
+                "name": "Full name",
+                "text": "Ada Lovelace"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Email"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Time zone"
+              },
+              {
+                "role": "combobox",
+                "name": "Time zone"
+              },
+              {
+                "role": "option",
+                "name": "UTC"
+              },
+              {
+                "role": "option",
+                "name": "Europe/London"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Dashboard"
+              },
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "Create project"
+              },
+              {
+                "role": "listitem",
+                "name": "",
+                "text": "No projects yet."
+              }
+            ],
+            "requests": [
+              {
+                "method": "GET",
+                "route": "/settings",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 362,
+            "waitedFor": {
+              "network": 284,
+              "dom": 310,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Settings page loaded with Profile, Avatar, and Danger zone sections",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:49:46.329Z"
+    },
+    {
+      "key": "52ec80c36c8d59b1",
+      "textKey": "570ca089c29247ed",
+      "route": "/settings",
+      "text": "Fill \"Full name\" with Ada King",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Full name",
+              "exact": true
+            },
+            "value": "Ada King"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Full name",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Full name",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#profile-name"
+              }
+            ],
+            "role": "textbox",
+            "name": "Full name",
+            "tag": "input",
+            "attributes": {
+              "id": "profile-name",
+              "name": "name",
+              "type": "text"
+            },
+            "anchorText": "Profile",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 293.25,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Full name",
+                "text": "Ada King"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Full name",
+                "text": "Ada Lovelace"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Full name field now shows 'Ada King'",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:49:52.629Z"
+    },
+    {
+      "key": "efdf46eefbf5c46a",
+      "textKey": "9289601ec52ddae2",
+      "route": "/settings",
+      "text": "Select \"Europe/London\" in \"Time zone\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "select",
+            "target": {
+              "kind": "role",
+              "role": "combobox",
+              "name": "Time zone",
+              "exact": true
+            },
+            "option": "Europe/London"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "combobox",
+              "name": "Time zone",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Time zone",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#profile-timezone"
+              }
+            ],
+            "role": "combobox",
+            "name": "Time zone",
+            "tag": "select",
+            "attributes": {
+              "id": "profile-timezone",
+              "name": "timezone"
+            },
+            "anchorText": "Profile",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 465.25,
+              "width": 360,
+              "height": 38
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "option",
+                "name": "UTC"
+              },
+              {
+                "role": "option",
+                "name": "Europe/London"
+              }
+            ],
+            "removed": [
+              {
+                "role": "option",
+                "name": "UTC"
+              },
+              {
+                "role": "option",
+                "name": "Europe/London"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Time zone dropdown now shows Europe/London selected",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:49:55.308Z"
+    },
+    {
+      "key": "b585cc4152d7171f",
+      "textKey": "473fc914cbd299ab",
+      "route": "/settings",
+      "text": "Click \"Save changes\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Save changes",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Save changes",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Save changes",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "html > body > main > section:nth-of-type(1) > form > button"
+              }
+            ],
+            "role": "button",
+            "name": "Save changes",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Profile",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 519.25,
+              "width": 134.765625,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "Profile saved"
+              }
+            ],
+            "requests": [
+              {
+                "method": "POST",
+                "route": "/api/profile",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 365,
+            "waitedFor": {
+              "network": 313,
+              "dom": 287,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Clicked Save changes button on Profile section",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:49:58.665Z"
+    },
+    {
+      "key": "58f5e9b224ff22f3",
+      "textKey": "3b1d1585f7e0b1c6",
+      "route": "/settings",
+      "text": "Reload the page",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "reload"
+          },
+          "fingerprint": null,
+          "expectPost": {
+            "removed": [
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "Profile saved"
+              }
+            ],
+            "requests": [
+              {
+                "method": "GET",
+                "route": "/settings",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 339,
+            "waitedFor": {
+              "network": 286,
+              "dom": 287,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Page reloaded; 'Profile saved' message no longer shown",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:50:04.344Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "089ede1f96b46138",
+      "textKey": "5c6d25b275ab76c6",
+      "text": "the page heading is \"Dashboard\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:29:17.379Z"
+    },
+    {
+      "key": "1f632852116d6420",
+      "textKey": "cc9bb2329962b592",
+      "text": "a message says \"Profile saved\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:29:17.379Z"
+    },
+    {
+      "key": "5fb1490c9ca246ed",
+      "textKey": "740d288ad05f7eb6",
+      "text": "\"Full name\" contains \"Ada King\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:29:17.379Z"
+    },
+    {
+      "key": "579a6a2bcde60ccd",
+      "textKey": "da455415e8cbf94a",
+      "text": "\"Time zone\" is \"Europe/London\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:29:17.379Z"
+    }
+  ]
+}
