@@ -58,6 +58,10 @@ export interface Evidence {
   signal: string;
   /** Short plain detail for the report ("POST /api/signup → 500"). */
   detail?: string | undefined;
+  /** For scored signals (same_element): how strongly it says "same", from -1 (no) to 1 (yes). */
+  score?: number | undefined;
+  /** The signal's weight in the combined score. */
+  weight?: number | undefined;
   ref?: EvidenceRef | undefined;
 }
 

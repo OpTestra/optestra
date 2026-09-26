@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "build:evals": "node scripts/build-evals.ts",
+    "build:evals": "node scripts/build-evals.ts && node scripts/build-evals-during.ts",
     "eval:baseline": "node scripts/write-baseline.ts"
   },
   "dependencies": {

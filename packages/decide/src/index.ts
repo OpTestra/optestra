@@ -104,4 +104,18 @@ export {
   type ObservedRequest,
   signatureFromTestResult,
 } from "./helpers.js";
+export {
+  decideMiss,
+  decideSameElement,
+  type ElementFactsLike,
+  type FingerprintLike,
+  type LiveCandidate,
+  type MissAnswer,
+  missContext,
+  type RankedCandidate,
+  type RankResult,
+  rankCandidates,
+  type SameElementAnswer,
+  sameElementInputFor,
+} from "./during.js";
 export * from "./tasks/index.js";

@@ -16,8 +16,14 @@ describe("eval sets", () => {
       const cases = loadEvalSet(task);
       expect(cases.length, task).toBeGreaterThanOrEqual(40);
       expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
-      expect(new Set(cases.map((c) => c.source))).toEqual(
-        new Set(["contract-fixture", "shop-manifest", "hand-written"]),
+      const sources = new Set(cases.map((c) => c.source));
+      // Contract fixtures carry no element fingerprints, so the during-run sets come from the shop and by hand.
+      expect(sources).toEqual(
+        new Set(
+          task === "same_element" || task === "miss_action"
+            ? ["shop-manifest", "hand-written"]
+            : ["contract-fixture", "shop-manifest", "hand-written"],
+        ),
       );
     }
   });

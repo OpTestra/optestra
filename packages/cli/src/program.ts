@@ -72,10 +72,7 @@ export function createProgram(): Command {
     )
     .option("--check", "check every decision backend: key valid, reachable, model installed")
     .option("--bench", "measure decision latency on the demo task (after a warm-up)")
-    .option(
-      "--eval",
-      "score the after-run decisions on the committed eval sets (exit 1 on a false label)",
-    )
+    .option("--eval", "score the decisions on the committed eval sets (exit 1 on a false label)")
     .option(
       "--backend <name>",
       "for --bench: jev, kev, laya or all (default: the selected backend); for --eval: rules (default), jev, kev or laya",

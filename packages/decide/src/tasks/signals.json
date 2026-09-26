@@ -203,7 +203,11 @@
       ["save", "save changes", "update"],
       ["back", "previous"],
       ["edit", "change", "modify"],
-      ["help", "support"]
+      ["help", "support"],
+      ["add", "create", "new"],
+      ["avatar", "photo", "picture", "image"],
+      ["show", "include"],
+      ["hide", "exclude"]
     ],
     "rewordFiller": [
       "now",
@@ -216,7 +220,8 @@
       "today",
       "for free",
       "free",
-      "for"
+      "for",
+      "full"
     ]
   }
 }

@@ -398,6 +398,8 @@ Rules-only baseline (`evals/baseline.json`; a test holds the rules to it):
 | flaky_or_real | 42 | 40 (95.2%) | 2 | 0 |
 | duplicate_or_new | 43 | 39 (90.7%) | 4 | 0 |
 | heal_class | 43 | 37 (86%) | 6 | 0 |
+| same_element | 67 | 57 (85.1%) | 10 | 0 |
+| miss_action | 41 | 41 (100%) | 0 | 0 |
 
 After changing rules or cases, run `pnpm --filter ./packages/decide eval:baseline`.
 
@@ -442,6 +444,124 @@ labels.recordLabel(healClass, healInput(proposal), { classification: "behavior_c
 
 `c.input` is the `failureCauseCase(result, ctx)` input. The input must be the
 exact one the decision saw, so the example trains on the same view.
+
+## The during-run decisions (DEC-3)
+
+These two tasks run while a test replays, and they power healing without AI
+(HEAL-1 level 1). They decide identity and the next step, never a verdict: a
+replayed step still counts only when its post-state and checks pass later.
+Both are `during` tasks (100 ms limit). DEC-2 measured that only Laya is fast
+enough, and it is untrained, so for now the rules carry them.
+
+### same_element (REP-5, HEAL-6)
+
+- **Question:** noul `same`: "the candidate is the element the step was recorded on".
+- **Input** (`sameElementInputFor(fingerprint, candidate)`): two sets of element
+  identity facts. One is the recorded Fingerprint (role, name, tag, attributes,
+  anchor text, frame path, box). The other is the live candidate's ElementFacts
+  (the same fields plus visible text), with which locator found it
+  (`primary | fallback | refind`) and how many elements that locator matched.
+- **Signals** (weights and thresholds in `src/tasks/same-element.json`; each scores -1 … 1):
+
+  | Signal | Weight | Scores |
+  |---|---|---|
+  | role | 3 | equal 1, different -1 |
+  | name | 3 | equal 1, near / synonym 0.8, partial 0, different -0.6, opposite -1 (DEC-2's synonym and opposite lists) |
+  | text | 1 | as name (fingerprints don't store text, so usually unknown) |
+  | test_id | 2 | equal 1, same last token (`plan-pro` → `pricing-pro`) 0.3, unrelated -0.5 |
+  | attributes | 1.5 | href path, input type, name/for, placeholder, alt, title, aria-label |
+  | anchor | 2 | same section 1, partial -0.5, different -1 |
+  | frame | 3 | same frame path 1, different -1 |
+  | position | 0.5 | within 16 px 1, fading to 0 at 600 px (layout moves never count against) |
+
+- **Rules.** A wrong "same" is the dangerous mistake, so doubt escalates.
+  - Not same when:
+    - it is in a different frame, or has a different role;
+    - the name is the opposite action;
+    - it is a different kind of field (input type);
+    - it links to a different page with a different name;
+    - it is in a different section (unless the test id matches).
+  - Same when:
+    - it has the same *unique* test id and role; or
+    - it has the same role, the same name (allowing near or synonym) and the same
+      section, with nothing ambiguous (the locator matched one element, or the
+      candidate sits where the recorded one was).
+  - Everything else escalates. The escalation carries every signal's score as
+    evidence (`best`), so HEAL-6 can show "why we think it's the same element".
+  - The rules never say "not same" just because the words changed within the same
+    section: "Create" → "Save project" escalates.
+
+### Helpers
+
+| Helper | Returns |
+|---|---|
+| `decideSameElement(fingerprint, candidate, { decisions? })` | `{ same: true \| false \| null, decided, confidence, score, evidence }` |
+| `rankCandidates(fingerprint, candidates, { decisions?, margin? })` | `{ outcome: match \| ambiguous \| none, best, ranked }` |
+| `decideMiss(context, { decisions? })` | `{ action, decided, blockedReason, evidence }` |
+| `missContext({ …, fallbacks: { total, matched, best }, rank })` | miss_action's input from the helpers' outputs |
+
+`rankCandidates` decides all candidates in one batch. It returns a `best` only
+when all three hold:
+- the best candidate is decided "same";
+- it is ahead of the runner-up by `margin` (0.15 in combined score, from `same-element.json`);
+- the runner-up is not also "same".
+
+Two near-equal matches are `ambiguous`; the helper never picks at random.
+
+### miss_action (HEAL-1): the healing ladder
+
+- **Question:** choice `action`: `replay_fallback | refind | call_fixer | block | no_heal`.
+  The brief's `fail` is called `no_heal`: "fail" is a verdict word, and the step
+  failing is the checks' business.
+- **Input:**
+  - why the stored step missed (`not_found | multiple_matches | fingerprint_mismatch | action_refused | post_state_mismatch`);
+  - the refusal reason;
+  - whether the element acted on was the recorded one;
+  - the fallbacks: how many exist, how many matched, and same_element's answer for the best;
+  - rankCandidates' outcome;
+  - page health (`page_is_error`, app down, 5xx count, network failures);
+  - heal policy, budget left, and whether a fixer model is available.
+- **The ladder** (first rung that applies; HEAL implements the same order):
+
+  | # | When | Action |
+  |---|---|---|
+  | 1 | Error page, app down, a 5xx or a network failure; or the action was refused | `block`: not a test problem; the blocked reason is `app_down` or the refusal |
+  | 2 | Post-state mismatch and the element was the recorded one | `no_heal`: the app didn't react; healing would hide it |
+  | 3 | A fallback locator matched and same_element says same | `replay_fallback` |
+  | 4 | rankCandidates found one clear match | `refind` (no AI, so allowed under strict too) |
+  | 5 | Heal policy `strict` | `no_heal` |
+  | 6 | A fixer model is available and budget is left | `call_fixer` |
+  | 7 | Otherwise | `block` (`ai_unavailable` or `budget_exceeded`) |
+
+  The ladder always decides. No model is needed, and in the eval Jev alone got
+  5 of 19 wrong (policy and budget), so the rules own this task.
+
+### Recording labels for the during-run tasks (LRN-9)
+
+HEAL's approve or reject of a fix is the main source of same_element labels:
+
+```ts
+const labels = createLabelStore(projectDir);
+// A heal that re-found an element was approved (same) or rejected (a different element):
+labels.recordLabel(sameElement, sameElementInputFor(fingerprint, candidate), { same: true }, { source: "approved" });
+labels.recordLabel(sameElement, sameElementInputFor(fingerprint, candidate), { same: false }, { source: "rejected" });
+// A person said what should have happened on a miss (from the heal review):
+labels.recordLabel(missAction, missInput, { action: "call_fixer" }, { source: "confirmed" });
+```
+
+### Measured (development Mac, 2026-09-26)
+
+| | same_element | miss_action | Model p50 |
+|---|---|---|---|
+| Rules only | 57/67 decided, 0 false "same" | 41/41, 0 wrong | – |
+| Rules → Laya | 57/67 (Laya +0) | 41/41 | ≈ 150 ms |
+| Laya alone | 0/67 (all below threshold) | 0/41 | ≈ 150–170 ms |
+| Rules → Jev (limits lifted) | 62/67 (Jev +5), 0 false | 41/41 | ≈ 310 ms |
+| Jev alone (limits lifted) | 29/67, 0 false "same" | 19/41, **5 wrong** | ≈ 315 ms |
+
+Laya's same_element calls take about 150 ms, over the 100 ms limit. In a run,
+the timeout skip (DEC-2) stops calling it after 3 timeouts. It needs to be both
+faster and trained before it helps here.
 
 ## CLI
 

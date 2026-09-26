@@ -229,7 +229,9 @@ describe("decisions command", () => {
       expect(report.decided).toBe(baseline[report.task].decided);
     }
     const text = run(dir, "--eval").stdout;
-    expect(text).toContain("Eval  after-run decisions · rules only");
+    expect(text).toContain("Eval  decisions · rules only");
+    expect(text).toMatch(/same_element\s+67\s+/);
+    expect(text).toMatch(/miss_action\s+41\s+/);
     expect(text).toMatch(/failure_cause\s+50\s+/);
     expect(run(dir, "--eval", "--backend", "nope").status).toBe(2);
   });

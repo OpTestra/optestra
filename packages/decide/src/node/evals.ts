@@ -13,6 +13,8 @@ export const EVAL_TASKS = [
   "flaky_or_real",
   "duplicate_or_new",
   "heal_class",
+  "same_element",
+  "miss_action",
 ] as const;
 export type EvalTask = (typeof EVAL_TASKS)[number];
 
