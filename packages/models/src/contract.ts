@@ -23,5 +23,6 @@ export function toModelCall(record: ModelCallRecord): ModelCall {
     latencyMs: record.latencyMs,
     attempts: record.attempts.filter((attempt) => attempt.attempt > 0).length,
     outcome: record.outcome,
+    billing: record.billing,
   };
 }

@@ -1,6 +1,7 @@
 import type { Config } from "@testament/config";
 import { processEnvSource, type SecretSource, type SecretValue } from "@testament/config/node";
-import { MODEL_ROLES, type ModelRole, type ProviderSettings } from "./config.js";
+import { isDelegatedKind, MODEL_ROLES, type ModelRole, type ProviderSettings } from "./config.js";
+import { findBinary, type ResolvedBinary } from "./delegated/process.js";
 import { keyOptional, providerBaseUrl } from "./providers.js";
 
 export type KeyStatus = "set" | "missing" | "not_needed" | "not_allowed";
@@ -15,6 +16,8 @@ export interface ResolvedProvider {
   keyStatus: KeyStatus;
   /** Why the provider can't be used, if it can't. */
   problem: string | undefined;
+  /** Delegated CLI providers: the binary found (not yet run). */
+  binary?: ResolvedBinary;
 }
 
 export interface PoolEntry {
@@ -49,9 +52,30 @@ export function resolveProviders(
   config: Config,
   sources: readonly SecretSource[] = [processEnvSource()],
   environment?: string,
+  env: Readonly<Record<string, string | undefined>> = process.env,
 ): Map<string, ResolvedProvider> {
   const out = new Map<string, ResolvedProvider>();
   for (const [id, settings] of Object.entries(config.models?.providers ?? {})) {
+    if (isDelegatedKind(settings.kind)) {
+      // No key and no host: the user's own signed-in CLI, found on PATH (MOD-6).
+      const allowed = config.models?.allowDelegated !== false;
+      const found = allowed ? findBinary(settings.kind, settings.binary, env) : undefined;
+      out.set(id, {
+        id,
+        settings,
+        baseUrl: undefined,
+        host: undefined,
+        key: undefined,
+        keyStatus: "not_needed",
+        problem: !allowed
+          ? "subscription CLIs are turned off here (models.allowDelegated: false)"
+          : found && !found.ok
+            ? found.problem
+            : undefined,
+        ...(found?.ok ? { binary: found.binary } : {}),
+      });
+      continue;
+    }
     const base = providerBaseUrl(settings);
     const baseUrl = "url" in base ? base.url : undefined;
     const host = baseUrl ? hostOf(baseUrl) : undefined;

@@ -27,7 +27,13 @@ import { describeVariables, harnessValue, type StepVariables } from "./variables
 export const PROMPT_VERSION: string = prompt.version;
 
 /** Actions that may legitimately leave the page unchanged. */
-const NO_EFFECT_OK = new Set(["hover", "scroll", "waitFor", "press"]);
+// upload: attaching a file often shows nothing until the form is sent (the next step).
+const NO_EFFECT_OK = new Set(["hover", "scroll", "waitFor", "press", "upload"]);
+
+/** The page's elements in order (refs and focus left out), to notice reordering such as a sort. */
+function orderSignature(observation: Observation): string {
+  return JSON.stringify(observation.elements.map((e) => [e.role, e.name, e.text ?? ""]));
+}
 
 export interface AgentContext {
   session: AuthorSession;
@@ -59,6 +65,8 @@ interface Executed {
   outcome: ActionOutcome;
   recorded: RecordedAction;
   command: Command;
+  /** The harness saw a change, or the elements' order changed (e.g. a table sort). */
+  effect: boolean;
 }
 
 function describeElement(element: ObservedElement | undefined): string {
@@ -77,7 +85,7 @@ function summarize(outcome: ActionOutcome, variables: StepVariables): string {
       .slice(0, 6)
       .map(
         (e) =>
-          `${e.role}${e.name ? ` "${pageTemplate(e.name, variables.list)}"` : ""}${e.text ? `: "${pageTemplate(e.text, variables.list).slice(0, 60)}"` : ""}`,
+          `${e.role}${e.name ? ` "${pageTemplate(e.name, variables.pageList)}"` : ""}${e.text ? `: "${pageTemplate(e.text, variables.pageList).slice(0, 60)}"` : ""}`,
       )
       .join(", ");
   if (post.added.length) parts.push(`appeared: ${shown(post.added)}`);
@@ -143,6 +151,7 @@ export async function runActionStep(
   let consecutiveFailures = 0;
   let wantScreenshot = false;
   let nudged = false;
+  let actedSinceObserve = 0;
   let lastRefusalWasGuard = false;
 
   const end = (status: ActionStepResult["status"], reason?: StopReason, message?: string) => {
@@ -164,6 +173,7 @@ export async function runActionStep(
     }
 
     const observation = await ctx.session.observe();
+    actedSinceObserve = 0;
     const needShot = wantScreenshot || observation.truncated || frameIsBlank(observation);
     wantScreenshot = false;
     const content: Array<TextPart | ImagePart> = [
@@ -243,20 +253,21 @@ export async function runActionStep(
       }
       if (call.name === "step_impossible") {
         const reason = lastRefusalWasGuard ? "guard_refused" : "step_impossible";
-        return end("failed", reason, pageTemplate(call.input.reason, variables.list));
+        return end("failed", reason, pageTemplate(call.input.reason, variables.pageList));
       }
       if (call.name === "step_done") {
         const verdict = acceptDone(executed);
         if (verdict === "accept") {
           result.commands = executed.map((e) => e.command);
-          result.reasoning = pageTemplate(call.input.visible_effect, variables.list).slice(0, 300);
+          result.reasoning = pageTemplate(call.input.visible_effect, variables.pageList).slice(
+            0,
+            300,
+          );
           return end("recorded");
         }
         if (verdict === "nothing_done" && !nudged) {
           nudged = true;
-          note(
-            "step_done refused: you haven't done anything for this step yet. Perform the step's action.",
-          );
+          note(prompt.nudge);
           break;
         }
         return end(
@@ -300,6 +311,7 @@ export async function runActionStep(
       }
 
       actions++;
+      actedSinceObserve++;
       const outcome = await ctx.session.act(planned.action);
       const report: ActionReport = {
         tool: call.name,
@@ -334,8 +346,26 @@ export async function runActionStep(
       }
       consecutiveFailures = 0;
       lastRefusalWasGuard = false;
-      const command = commandOf(planned.recorded, planned.fingerprint, outcome, variables.list);
-      executed.push({ outcome, recorded: planned.recorded, command });
+      const command = commandOf(planned.recorded, planned.fingerprint, outcome, variables.pageList);
+      let effect = outcome.post.changed;
+      // The harness compares elements as a set, so reordering (a sort) looks like no change.
+      // Compare the order with the snapshot this action was planned on (only valid for the
+      // first action since that snapshot). Observing resets the refs, so stop this reply here.
+      if (!effect && actedSinceObserve === 1) {
+        const after = await ctx.session.observe();
+        if (orderSignature(after) !== orderSignature(observation)) {
+          effect = true;
+          report.changed = true;
+          const last = history.length - 1;
+          history[last] = (history[last] ?? "").replace(
+            "NO visible change",
+            "the page changed: its elements were reordered",
+          );
+        }
+        executed.push({ outcome, recorded: planned.recorded, command, effect });
+        break;
+      }
+      executed.push({ outcome, recorded: planned.recorded, command, effect });
       // The page moved on: the rest of this reply's refs may be stale.
       if (outcome.post.urlAfter !== outcome.post.urlBefore) break;
     }
@@ -344,7 +374,7 @@ export async function runActionStep(
 
 function acceptDone(executed: Executed[]): "accept" | "nothing_done" | "no_effect" {
   if (executed.length === 0) return "nothing_done";
-  if (executed.some((e) => e.outcome.post.changed)) return "accept";
+  if (executed.some((e) => e.effect)) return "accept";
   return executed.every((e) => NO_EFFECT_OK.has(e.recorded.type)) ? "accept" : "no_effect";
 }
 

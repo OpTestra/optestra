@@ -5,7 +5,14 @@ import type { BoundSegment, ExpandedStep, ExpandedTest } from "@testament/spec";
 // to execute them. Secrets have no value here; they reach the harness by name.
 
 export interface StepVariables {
+  /** What this step may type as templates. */
   list: TemplateVariable[];
+  /**
+   * For turning PAGE text into templates: this step's variables first, then every
+   * other value bound anywhere in the test (a later step's page still shows the
+   * email an earlier step typed). Never used for what the agent types.
+   */
+  pageList: TemplateVariable[];
   /** ref → value, for non-secret refs that have one. */
   values: Record<string, string>;
   /** Secret names the step may type. */
@@ -36,7 +43,21 @@ export function stepVariables(test: ExpandedTest, step: ExpandedStep): StepVaria
     ...[...secrets].map((name) => ({ ref: `secret.${name}` })),
     ...[...unresolved].map((ref) => ({ ref })),
   ];
-  return { list, values, secrets: [...secrets], unresolved: [...unresolved] };
+  const seen = new Set(list.map((v) => v.value).filter(Boolean));
+  const pageList = [...list];
+  const add = (ref: string, value: string) => {
+    if (seen.has(value)) return;
+    seen.add(value);
+    pageList.push({ ref, value });
+  };
+  for (const other of test.steps) {
+    for (const segment of other.bound) if (segment.kind === "value") add(segment.ref, segment.text);
+  }
+  for (const [name, bound] of Object.entries(test.data)) {
+    if (!bound.segments.some((s) => s.kind === "secret" || s.kind === "unresolved"))
+      add(`data.${name}`, bound.display);
+  }
+  return { list, pageList, values, secrets: [...secrets], unresolved: [...unresolved] };
 }
 
 /** Lines for the prompt: values of plain variables, secrets by name only. */

@@ -20,17 +20,24 @@ describe("pools", () => {
     const config = defaults();
     const pools = resolvePools(
       config,
-      resolveProviders(config, [memorySource({ ANTHROPIC_API_KEY: "sk-ant-test-1" })]),
+      // No subscription CLI on this PATH.
+      resolveProviders(config, [memorySource({ ANTHROPIC_API_KEY: "sk-ant-test-1" })], undefined, {
+        PATH: "",
+      }),
     );
     expect(pools.planner.map((e) => [e.provider, e.model, e.usable])).toEqual([
       ["anthropic", "claude-sonnet-5", true],
       ["openai", "gpt-6-sol", false],
       ["google", "gemini-3.8-flash", false],
+      ["claude-code", "sonnet", false],
+      ["codex", "default", false],
     ]);
     expect(pools.fixer.map((e) => [e.provider, e.model, e.usable])).toEqual([
       ["anthropic", "claude-haiku-4-5", true],
       ["openai", "gpt-6-luna", false],
       ["google", "gemini-3.5-flash-lite", false],
+      ["claude-code", "haiku", false],
+      ["codex", "default", false],
     ]);
   });
 

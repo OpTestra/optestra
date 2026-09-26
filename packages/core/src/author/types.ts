@@ -156,6 +156,8 @@ export interface AuthoringReport {
     tokens: { input: number; output: number; cached: number; cacheWrite: number };
     costUsd: number;
     unknownCostCalls: number;
+    /** How the calls were paid: API keys, the user's own subscription CLI (MOD-6), or both. */
+    billing: "api" | "subscription" | "mixed" | null;
   };
   /** Set when saved: relative paths of the recording and evidence files. */
   recordingPath?: string;

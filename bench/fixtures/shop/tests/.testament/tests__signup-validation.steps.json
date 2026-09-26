@@ -1,0 +1,324 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__signup-validation",
+  "testPath": "tests/signup-validation.test.md",
+  "target": "web",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "chromium",
+    "device": "desktop",
+    "environment": "local",
+    "model": "claude-code/sonnet",
+    "promptVersion": "planner-v2"
+  },
+  "updatedAt": "2026-09-26T17:53:29.172Z",
+  "steps": [
+    {
+      "key": "dce20d0fc772664c",
+      "textKey": "a94b76e72260d6d0",
+      "route": "/signup",
+      "text": "Fill \"Email\" with not-an-email",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "not-an-email"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#signup-email"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "input",
+            "attributes": {
+              "id": "signup-email",
+              "name": "email",
+              "type": "email"
+            },
+            "anchorText": "Create your account",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 199.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "not-an-email"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Email field now contains 'not-an-email'",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:53:19.197Z"
+    },
+    {
+      "key": "f76b638fd5448b1d",
+      "textKey": "4de5a4928d877b17",
+      "route": "/signup",
+      "text": "Fill \"Password\" with short",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "short"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#signup-password"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "input",
+            "attributes": {
+              "id": "signup-password",
+              "name": "password",
+              "type": "password"
+            },
+            "anchorText": "Create your account",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 285.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "short"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Password field now contains 'short'",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:53:22.230Z"
+    },
+    {
+      "key": "389a09d7e3f9c515",
+      "textKey": "10946276109ea041",
+      "route": "/signup",
+      "text": "Click \"Sign up\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign up",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign up",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#signup-form > button"
+              },
+              {
+                "kind": "text",
+                "text": "Sign up",
+                "exact": true
+              }
+            ],
+            "role": "button",
+            "name": "Sign up",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Create your account",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 368.4375,
+              "width": 88.65625,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "not-an-email"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "Enter a valid email address, like name@example.com."
+              },
+              {
+                "role": "textbox",
+                "name": "Password"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "Password must be at least 8 characters."
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "not-an-email"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "short"
+              }
+            ],
+            "requests": [
+              {
+                "method": "POST",
+                "route": "/signup",
+                "status": 400
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 363,
+            "waitedFor": {
+              "network": 284,
+              "dom": 312,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Validation errors shown for invalid email and short password",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:53:29.172Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "dfc8dd950d6a1be4",
+      "textKey": "5ef35a9b9d51dfed",
+      "text": "the text \"Enter a valid email address, like name@example.com.\" is shown",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:31:31.494Z"
+    },
+    {
+      "key": "931e26e1db57d6a6",
+      "textKey": "a06d1736daa43d14",
+      "text": "the text \"Password must be at least 8 characters.\" is shown",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:31:31.494Z"
+    },
+    {
+      "key": "53cbf47e7101e8eb",
+      "textKey": "682c0ea1c5a058e6",
+      "text": "the page heading is \"Create your account\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:31:31.494Z"
+    }
+  ]
+}

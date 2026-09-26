@@ -56,6 +56,12 @@ models:
     google:
       kind: google
       keySecret: GEMINI_API_KEY
+    # Your own AI subscription through the vendor's official CLI (MOD-6). Used only
+    # when the CLI is installed and signed in, after the API-key entries.
+    claude-code:
+      kind: claude-code
+    codex:
+      kind: codex
   # Ordered pool per role: the first healthy entry answers (MOD-8).
   roles:
     # Writes and re-records tests: Sonnet-class models.
@@ -63,15 +69,23 @@ models:
       - { provider: anthropic, model: claude-sonnet-5 }
       - { provider: openai, model: gpt-6-sol }
       - { provider: google, model: gemini-3.8-flash }
+      - { provider: claude-code, model: sonnet }
+      - { provider: codex, model: default }
     # Cheap, fast single-step heals.
     fixer:
       - { provider: anthropic, model: claude-haiku-4-5 }
       - { provider: openai, model: gpt-6-luna }
       - { provider: google, model: gemini-3.5-flash-lite }
+      - { provider: claude-code, model: haiku }
+      - { provider: codex, model: default }
   # Per-model price overrides (USD per million tokens); the base table ships with the models package.
   prices: {}
   # Maximum time for one model request, in seconds.
   timeoutSeconds: 120
+  # Allow claude-code / codex (the user's own subscription). the cloud sets false.
+  allowDelegated: true
+  # Most calls one run may make through each subscription CLI.
+  delegatedCallsPerRun: 300
 
 # The decision layer (LRN-6..8). The decide package registers this section.
 decisions:

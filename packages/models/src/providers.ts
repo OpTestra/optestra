@@ -86,5 +86,9 @@ export function createLanguageModel(
         ...defined({ apiKey, fetch }),
       })(model);
     }
+    case "claude-code":
+    case "codex":
+      // Delegated CLIs never go through the AI SDK (see delegated/).
+      throw new Error(`${provider.kind} is a delegated CLI provider, not an SDK model`);
   }
 }

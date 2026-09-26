@@ -3,7 +3,9 @@ import type { Config } from "@testament/config";
 import { defaultRedactor, processEnvSource, type SecretSource } from "@testament/config/node";
 import { revealSecret } from "@testament/config/reveal";
 import { generateText, type LanguageModel } from "ai";
-import type { ProviderKind } from "./config.js";
+import { isDelegatedKind, type ProviderKind } from "./config.js";
+import { INSTALL_HINT, SIGN_IN_COMMAND, VENDOR_LABEL } from "./delegated/lockdown.js";
+import { probeBinary, signInStatus } from "./delegated/run.js";
 import { type ResolvedProvider, resolveProviders } from "./keys.js";
 import { createLanguageModel } from "./providers.js";
 import { type FetchLike, guardedFetch, platformFetch } from "./transport.js";
@@ -14,7 +16,12 @@ export type ProviderCheckStatus =
   | "unreachable"
   | "no_key"
   | "misconfigured"
-  | "error";
+  | "error"
+  /** Delegated CLIs (MOD-6). */
+  | "not_installed"
+  | "outdated"
+  | "not_signed_in"
+  | "disabled";
 
 export interface ProviderCheck {
   provider: string;
@@ -22,6 +29,8 @@ export interface ProviderCheck {
   status: ProviderCheckStatus;
   message: string;
   fix: string;
+  /** Delegated CLIs: the installed version, when known. */
+  version?: string;
 }
 
 export interface CheckOptions {
@@ -30,6 +39,8 @@ export interface CheckOptions {
   fetch?: FetchLike;
   /** Per provider. Default 10 s. */
   timeoutMs?: number;
+  /** Environment for finding and running subscription CLIs. Default: process.env. */
+  env?: Readonly<Record<string, string | undefined>>;
   /** Test hook for providers checked with a 1-token completion (azure, bedrock). */
   languageModel?: (provider: string, model: string, apiKey: string | undefined) => LanguageModel;
 }
@@ -67,16 +78,75 @@ export async function checkProviders(
   config: Config,
   options: CheckOptions = {},
 ): Promise<ProviderCheck[]> {
+  const env = options.env ?? process.env;
   const providers = resolveProviders(
     config,
     options.sources ?? [processEnvSource()],
     options.environment,
+    env,
   );
   const timeoutMs = options.timeoutMs ?? 10_000;
   const redact = (text: string) => defaultRedactor.redact(text).slice(0, 300);
   const checks = [...providers.values()].map(async (provider): Promise<ProviderCheck> => {
     const base = { provider: provider.id, kind: provider.settings.kind };
     const keyName = provider.settings.keySecret;
+    if (isDelegatedKind(provider.settings.kind)) {
+      const kind = provider.settings.kind;
+      if (config.models?.allowDelegated === false) {
+        return {
+          ...base,
+          status: "disabled",
+          message: "Subscription CLIs are turned off here (models.allowDelegated: false).",
+          fix: "Nothing to do in the cloud; locally, set models.allowDelegated: true.",
+        };
+      }
+      if (!provider.binary) {
+        return {
+          ...base,
+          status: "not_installed",
+          message: provider.problem ?? "Not installed.",
+          fix: INSTALL_HINT[kind],
+        };
+      }
+      const probe = await probeBinary(kind, provider.binary, env);
+      const version = probe.version ? { version: probe.version } : {};
+      if (!probe.installed)
+        return {
+          ...base,
+          ...version,
+          status: "not_installed",
+          message: probe.problem ?? "Could not run it.",
+          fix: INSTALL_HINT[kind],
+        };
+      if (!probe.meetsMinimum)
+        return {
+          ...base,
+          ...version,
+          status: "outdated",
+          message: probe.problem ?? "Too old.",
+          fix:
+            kind === "claude-code"
+              ? "Run `claude update`."
+              : "Update Codex (npm install -g @openai/codex@latest).",
+        };
+      const status = await signInStatus(kind, provider.binary, env);
+      if (!status.signedIn) {
+        return {
+          ...base,
+          ...version,
+          status: "not_signed_in",
+          message: `Installed${probe.version ? ` (${probe.version})` : ""}, not signed in.`,
+          fix: status.fix ?? `Run \`${SIGN_IN_COMMAND[kind]}\`.`,
+        };
+      }
+      return {
+        ...base,
+        ...version,
+        status: "valid",
+        message: `Ready: uses your ${VENDOR_LABEL[kind]}${probe.version ? ` ${probe.version}` : ""}.`,
+        fix: "Nothing to do.",
+      };
+    }
     if (provider.problem || !provider.host) {
       return {
         ...base,

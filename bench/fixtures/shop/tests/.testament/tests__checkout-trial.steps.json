@@ -1,0 +1,535 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__checkout-trial",
+  "testPath": "tests/checkout-trial.test.md",
+  "target": "web",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "chromium",
+    "device": "desktop",
+    "environment": "local",
+    "model": "claude-code/sonnet",
+    "promptVersion": "planner-v2"
+  },
+  "updatedAt": "2026-09-26T17:54:40.174Z",
+  "steps": [
+    {
+      "key": "2e804e233a67bf9c",
+      "textKey": "da483e4feb328a49",
+      "route": "/pricing",
+      "text": "Click \"Start free trial\" on the Pro plan",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "css",
+              "selector": "html > body > main > div > article:nth-of-type(2) > form > button"
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "css",
+              "selector": "html > body > main > div > article:nth-of-type(2) > form > button"
+            },
+            "fallbacks": [
+              {
+                "kind": "role",
+                "role": "button",
+                "name": "Start free trial",
+                "exact": true
+              },
+              {
+                "kind": "text",
+                "text": "Start free trial",
+                "exact": true
+              }
+            ],
+            "role": "button",
+            "name": "Start free trial",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Pro",
+            "framePath": [],
+            "box": {
+              "x": 847.65625,
+              "y": 433.25,
+              "width": 133.5625,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "urlChange": "/signup",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Create your account"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "You're starting a free trial of Pro."
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Email"
+              },
+              {
+                "role": "textbox",
+                "name": "Email"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Password"
+              },
+              {
+                "role": "textbox",
+                "name": "Password"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "At least 8 characters."
+              },
+              {
+                "role": "button",
+                "name": "Sign up"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Already have an account?"
+              },
+              {
+                "role": "link",
+                "name": "Log in"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Pricing"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "Every plan starts with a 14-day free trial."
+              },
+              {
+                "role": "heading",
+                "name": "Starter"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "$9.00/month"
+              },
+              {
+                "role": "listitem",
+                "name": "",
+                "text": "1 project"
+              },
+              {
+                "role": "listitem",
+                "name": "",
+                "text": "Email support"
+              },
+              {
+                "role": "button",
+                "name": "Start free trial"
+              },
+              {
+                "role": "heading",
+                "name": "Pro"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "$29.00/month"
+              },
+              {
+                "role": "listitem",
+                "name": "",
+                "text": "Unlimited projects"
+              }
+            ],
+            "requests": [
+              {
+                "method": "GET",
+                "route": "/signup",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 365,
+            "waitedFor": {
+              "network": 287,
+              "dom": 313,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Clicked Start free trial on Pro plan; navigated to signup page showing 'You're starting a free trial of Pro.'",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:54:27.236Z"
+    },
+    {
+      "key": "1cae53be5bedaf47",
+      "textKey": "43ea269a2fb77b83",
+      "route": "/signup",
+      "text": "Sign up with {{data.email}} and password {{secret.SHOP_PASSWORD}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "{{data.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#signup-email"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "input",
+            "attributes": {
+              "id": "signup-email",
+              "name": "email",
+              "type": "email"
+            },
+            "anchorText": "Create your account",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 239.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{data.email}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#signup-password"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "input",
+            "attributes": {
+              "id": "signup-password",
+              "name": "password",
+              "type": "password"
+            },
+            "anchorText": "Create your account",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 325.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign up",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign up",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#signup-form > button"
+              },
+              {
+                "kind": "text",
+                "text": "Sign up",
+                "exact": true
+              }
+            ],
+            "role": "button",
+            "name": "Sign up",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Create your account",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 408.4375,
+              "width": 88.65625,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "urlChange": "/verify",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Check your email"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "We sent a 6-digit code to"
+              },
+              {
+                "role": "strong",
+                "name": "",
+                "text": "{{data.email}}"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "."
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Verification code"
+              },
+              {
+                "role": "textbox",
+                "name": "Verification code"
+              },
+              {
+                "role": "button",
+                "name": "Verify"
+              }
+            ],
+            "removed": [
+              {
+                "role": "link",
+                "name": "Log in"
+              },
+              {
+                "role": "heading",
+                "name": "Create your account"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "You're starting a free trial of Pro."
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Email"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{data.email}}"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Password"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "At least 8 characters."
+              },
+              {
+                "role": "button",
+                "name": "Sign up"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Already have an account?"
+              }
+            ],
+            "requests": [
+              {
+                "method": "POST",
+                "route": "/signup",
+                "status": 303
+              },
+              {
+                "method": "GET",
+                "route": "/verify",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 364,
+            "waitedFor": {
+              "network": 286,
+              "dom": 312,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Signed up and redirected to email verification page for {{data.email}}",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:54:35.921Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "03b5cec53b96a091",
+      "textKey": "f2f8b9aa634ed9b7",
+      "text": "the page heading is \"Check your email\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:32:33.457Z"
+    },
+    {
+      "key": "ef8f9dafb38b2835",
+      "textKey": "57a5d9c5ddca274a",
+      "text": "the page heading is \"Welcome to Pro\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:32:33.457Z"
+    },
+    {
+      "key": "6e90a80a89e956ad",
+      "textKey": "a6d140b00086d6fc",
+      "text": "the URL contains /dashboard",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:32:33.457Z"
+    },
+    {
+      "key": "ccce4275d1ce98a5",
+      "textKey": "8726b12d9000a355",
+      "text": "the page shows \"$0.00 due today\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:32:33.457Z"
+    }
+  ]
+}

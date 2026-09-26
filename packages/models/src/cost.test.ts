@@ -8,8 +8,13 @@ describe("prices", () => {
     const defaults = parse(
       readFileSync(new URL("../../config/defaults.yaml", import.meta.url), "utf8"),
     );
-    const ids = Object.values(defaults.models.roles as Record<string, { model: string }[]>)
+    const providers = defaults.models.providers as Record<string, { kind: string }>;
+    // Subscription CLIs (claude-code, codex) have no price: they cost the run nothing.
+    const ids = Object.values(
+      defaults.models.roles as Record<string, { provider: string; model: string }[]>,
+    )
       .flat()
+      .filter((e) => !["claude-code", "codex"].includes(providers[e.provider]?.kind ?? ""))
       .map((e) => e.model);
     for (const id of ids) expect(basePrices()[id], id).toBeDefined();
   });

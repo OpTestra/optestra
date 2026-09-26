@@ -20,9 +20,109 @@ Zen/Go, Ollama, vLLM, LM Studio, our future hosted AI), `azure` (needs
 `options.resourceName` or `baseUrl`; optional `options.apiVersion`) and `bedrock`
 (needs `options.region`; the key is a Bedrock API key).
 
+Plus `claude-code` and `codex`: your own AI subscription through its official CLI (see [Use your AI subscription](#use-your-ai-subscription-mod-6)).
+
 `keySecret` names a secret. If that name is not declared under `secrets:`, it is
 implicitly allowed only on the provider's API host. If it is declared, its
 `domains` must include that host. Only `openai-compatible` providers may have no key.
+
+## Use your AI subscription (MOD-6)
+
+Instead of an API key, Testament can use the AI plan you already pay for. It does
+this through the vendor's **own official command-line tool**, which you install
+and sign in to yourself. The two provider kinds are `claude-code` and `codex`.
+They are in the default pools, after the API-key entries. They are used when
+the tool is installed and signed in, so with no API key and a signed-in Claude
+Code, planner and fixer simply work.
+
+| Vendor | Plans | Tool | Sign in (in the vendor's tool) | Supported |
+|---|---|---|---|---|
+| Anthropic | Claude Pro, Max, Team, Enterprise | Claude Code ≥ 2.1.259 | `claude auth login` | yes |
+| OpenAI | ChatGPT Plus, Pro, Business, Enterprise | Codex (with the lock-down flags below) | `codex login` | yes |
+| Google | Gemini, AI Pro, Ultra | — | — | **no**: Google bans using Gemini CLI's Google sign-in from other tools. Use a Gemini API key (`GEMINI_API_KEY`), which has a free tier |
+| GitHub | Copilot | Copilot CLI | — | **no**: GitHub documents a programmatic mode and an SDK, but we found no terms that clearly let a third-party tool drive it on a user's plan |
+
+`login` lists which tools are ready and the exact sign-in command. It never
+signs in for you. `models --check` reports, for each tool: installed (and its
+version), recent enough, and signed in. It asks the tool's own status command
+and never reads its files.
+
+### What Testament does and never does
+
+- **Never touches your sign-in.** Testament never reads, copies, stores, logs or
+  forwards the tool's tokens or config files. Sign-in happens only in the
+  vendor's tool. We run the unmodified binary, as you.
+- **The tool is a model, not an agent (SAF-2).** Every one of its own tools is
+  off: no shell, no file read, write or edit, no web fetch or search, no MCP
+  servers, no plugins, hooks or skills, no project instruction files
+  (CLAUDE.md, AGENTS.md) and no session history. It runs in a new, empty
+  temporary folder, which is deleted afterwards. Its environment holds only
+  `HOME`, `PATH`, `USER`, `LANG`, the Windows profile variables, the tool's own
+  config-location variable if you set one, and the lock-down switches. None of
+  our API keys or secrets are passed. The browser is still only ever touched
+  through our closed action set.
+- **Local only.** `models.allowDelegated` (default `true`) is set to `false` in
+  Testament Cloud workers. We never route other people's usage through a
+  subscription.
+- **Honest about cost and limits.** Calls are recorded with
+  `billing: "subscription"` and cost 0 to the run budget. Tokens and the tool's
+  own cost estimate (`reportedCostUsd`) are kept for information. Advertised
+  plan limits assume ordinary individual use, so each tool gets at most
+  `models.delegatedCallsPerRun` calls per run (default 300). When the vendor
+  says the plan limit is hit, the call fails over to the next pool entry, or
+  stops with "Plan limit reached".
+
+### The exact commands
+
+Claude Code (headless print mode, prompt as stream-json on stdin):
+
+```
+claude -p --restricted --tools "" --disallowedTools "mcp__*" --strict-mcp-config --mcp-config '{"mcpServers":{}}'
+       --disable-slash-commands --no-session-persistence --permission-mode dontAsk --permission-prompts none
+       --system-prompt <ours> --input-format stream-json --output-format stream-json --verbose
+       --json-schema <reply schema> [--model sonnet|haiku|…]
+env: CLAUDE_CODE_DISABLE_CLAUDE_MDS=1 CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 CLAUDE_CODE_DISABLE_BUNDLED_SKILLS=1
+     CLAUDE_CODE_DISABLE_WORKFLOWS=1 CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1 CLAUDE_CODE_DISABLE_ATTACHMENTS=1
+     CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 CLAUDE_CODE_SKIP_PROMPT_HISTORY=1 DISABLE_AUTOUPDATER=1
+```
+
+`--bare` is **not** used: bare mode ignores subscription sign-in (it needs an
+API key). `--restricted`, which Anthropic built for evaluation harnesses,
+together with `--tools ""` gives the same lock-down while keeping your own
+sign-in. Images (the `look` screenshot) go in as stream-json image blocks.
+
+Codex (prompt on stdin):
+
+```
+codex exec --json --output-schema <file> --output-last-message <file> --sandbox read-only --ask-for-approval never
+      --skip-git-repo-check --ephemeral --ignore-user-config --cd <empty temp folder>
+      -c features.shell_tool=false -c features.unified_exec=false -c features.multi_agent=false -c features.apps=false
+      -c features.hooks=false -c features.memories=false -c web_search="disabled" -c tools.view_image=false
+      -c project_doc_max_bytes=0 -c history.persistence="none" [--model …] [--image <file>…] -
+```
+
+Before first use, Testament checks the version (`claude --version`) or the
+flags (`codex exec --help`). A tool without every lock-down flag is refused
+with the fix (`cli_unavailable`). On Windows the native `claude.exe` /
+`codex.exe` is needed, because `.cmd` shims would need a shell. `binary:` in a
+provider entry points at a specific install. Both argument lists are pinned in
+`src/delegated/delegated.test.ts`.
+
+### Tool calls over structured output
+
+The tools' own tool calling is off, so the request's tools become a JSON Schema
+for the reply: `{ toolCalls: [{ name, input }], text }`, where each item is one
+of our tools with that tool's input schema. The reply is turned back into
+`ToolCall[]`, and callers (the author) see no difference. For Codex, the schema
+is made strict: every property is required, and optional ones become nullable
+(the nulls are dropped again). An invalid reply is retried once, then
+`invalid_output`.
+
+### Terms (checked 2026-09-26)
+
+- Anthropic: https://code.claude.com/docs/en/legal-and-compliance ("Authentication and credential use"): third parties may not offer Claude.ai login or route requests through Free, Pro or Max credentials on behalf of users, nor collect or store Claude.ai tokens; this "does not prevent an end user from signing in to the unmodified Claude Code binary with their own Claude subscription".
+- OpenAI: https://developers.openai.com/codex/auth: ChatGPT sign-in is supported for Codex, and API keys remain the recommended default for automation. We use ChatGPT sign-in only on your own machine, for your own runs.
+- Google: using Gemini CLI's Google sign-in from other tools is not allowed, so API keys only.
 
 ## Roles and failover (MOD-8)
 

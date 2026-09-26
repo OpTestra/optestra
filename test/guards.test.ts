@@ -139,6 +139,29 @@ describe("engine guards", () => {
     expect(session).toContain("maxRedirects: 0,");
   });
 
+  // Starting other programs: only these files may (MOD-6 delegated CLIs; the
+  // browser installer; the brand tool). The delegated runner never uses a shell.
+  const SPAWN_ALLOWED = [
+    "packages/brand/src/run.ts",
+    "packages/browser/src/launch.ts",
+    "packages/models/src/delegated/process.ts",
+  ];
+
+  it("starts other programs only from the named files, never through a shell", () => {
+    const spawners = source
+      .filter((f) =>
+        /from "node:child_process"|require\("node:child_process"\)/.test(readFileSync(f, "utf8")),
+      )
+      .map(rel);
+    expect(spawners.sort()).toEqual(SPAWN_ALLOWED);
+    const delegated = readFileSync(join(root, "packages/models/src/delegated/process.ts"), "utf8");
+    expect(delegated).toContain("shell: false,");
+    expect(delegated).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
+    // It runs only the resolved CLI binary (or Node for a .js install), plus taskkill to stop it.
+    expect(delegated).toContain("const command = binary.viaNode ? process.execPath : binary.path;");
+    expect([...delegated.matchAll(/spawn\(/g)]).toHaveLength(2);
+  });
+
   it("keeps fixtures out of engine packages (tests may use them)", () => {
     const packageSource = source.filter((f) => rel(f).startsWith("packages/"));
     expect(offenders(packageSource, new RegExp(`["']${brand.npmScope}/fixture-`))).toEqual([]);

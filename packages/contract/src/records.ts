@@ -29,6 +29,11 @@ export const ModelCallSchema = z.object({
   attempts: CountSchema,
   /** "ok" or the adapter's failure reason. */
   outcome: z.union([z.literal("ok"), z.string().regex(/^[a-z][a-z0-9_]*$/)]),
+  /**
+   * 1.1: how the call was paid for. "subscription" = the user's own AI plan via its
+   * official CLI (MOD-6): costUsd is 0 to the run budget. Absent in 1.0 documents.
+   */
+  billing: z.enum(["api", "subscription"]).optional(),
 });
 export type ModelCall = z.infer<typeof ModelCallSchema>;
 

@@ -69,7 +69,16 @@ export type AttemptOutcome =
   | "skipped_no_key"
   | "skipped_unusable"
   | "skipped_disabled"
-  | "skipped_near_cap";
+  | "skipped_near_cap"
+  /** Delegated CLI: the vendor says the subscription's usage limit is reached. */
+  | "plan_limit"
+  /** Delegated CLI: not installed, too old, or couldn't start. */
+  | "cli_unavailable"
+  /** Delegated CLI: this run used its allowance of calls (models.delegatedCallsPerRun). */
+  | "skipped_call_cap";
+
+/** How a call is paid for: an API key, or the user's own subscription through its CLI (MOD-6). */
+export type Billing = "api" | "subscription";
 
 export interface Attempt {
   provider: string;
@@ -83,6 +92,9 @@ export interface Attempt {
   latencyMs: number;
   usage?: TokenUsage;
   costUsd?: number | null;
+  billing?: Billing;
+  /** Delegated CLIs: the tool's own cost estimate, for information only (never charged). */
+  reportedCostUsd?: number;
 }
 
 export type FailureReason =
@@ -109,6 +121,8 @@ export interface ModelCallRecord {
   costUsd: number | null;
   attempts: Attempt[];
   tags: Record<string, string>;
+  /** "subscription" when the answer came through a delegated CLI (cost 0 to budgets). */
+  billing: Billing;
 }
 
 export interface CompletionSuccess<T> {

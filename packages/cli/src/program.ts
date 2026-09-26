@@ -1,6 +1,6 @@
+import { createInterface } from "node:readline/promises";
 import { brand } from "@testament/brand";
 import { version } from "@testament/core";
-import { createInterface } from "node:readline/promises";
 import { Command } from "commander";
 import { registerAuthCommands } from "./commands/auth.js";
 import { type AuthorCommandOptions, runAuthorCommand } from "./commands/author.js";
@@ -9,6 +9,7 @@ import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.j
 import { type DeciderSetupOptions, runDeciderSetup } from "./commands/decider.js";
 import { type DecisionsCommandOptions, runDecisionsCommand } from "./commands/decisions.js";
 import { type LintCommandOptions, runLintCommand } from "./commands/lint.js";
+import { runLoginCommand } from "./commands/login.js";
 import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
 import { type ResultsCommandOptions, runResultsCommand } from "./commands/results.js";
 import {
@@ -208,6 +209,19 @@ export function createProgram(): Command {
     env: process.env,
     stdout: (text) => process.stdout.write(text),
   }));
+
+  program
+    .command("login")
+    .description(
+      "show which AI subscription tools (Claude Code, Codex) are ready, and how to sign in to them",
+    )
+    .action(async () => {
+      process.exitCode = await runLoginCommand({
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
 
   registerBrowserCommands(program, () => ({
     cwd: process.cwd(),

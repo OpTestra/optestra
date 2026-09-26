@@ -29,7 +29,12 @@ export interface AuthorCommandOptions {
 }
 
 const posix = (path: string) => path.split(sep).join("/");
-const money = (usd: number | null) => (usd === null ? "$?" : `$${usd.toFixed(4)}`);
+const money = (usd: number | null) => (usd === null ? "$?" : `${usd.toFixed(4)}`);
+/** Subscription calls cost the run nothing; say so instead of "$0.0000". */
+const costText = (calls: readonly { billing?: string | undefined }[], usd: number | null) =>
+  calls.length > 0 && calls.every((c) => c.billing === "subscription")
+    ? "via your subscription"
+    : money(usd);
 
 /** Exit 0: every action step recorded. 1: a step failed. 2: stopped, or a config/test problem. */
 export async function runAuthorCommand(
@@ -155,7 +160,7 @@ export async function runAuthorCommand(
         if (event.type === "step.finished") {
           const step = event.step;
           const label = `${step.number ?? ""}. ${step.text}`.slice(0, 60).padEnd(60);
-          const detail = `${step.actions.length} action${step.actions.length === 1 ? "" : "s"} · ${step.modelCalls.length} AI call${step.modelCalls.length === 1 ? "" : "s"} · ${money(step.costUsd)}`;
+          const detail = `${step.actions.length} action${step.actions.length === 1 ? "" : "s"} · ${step.modelCalls.length} AI call${step.modelCalls.length === 1 ? "" : "s"} · ${costText(step.modelCalls, step.costUsd)}`;
           io.stdout(`  ${label}  ${step.status.padEnd(8)}  ${detail}\n`);
           if (step.status !== "recorded" && step.message)
             io.stdout(`      ${step.reason}: ${step.message}\n`);
@@ -179,7 +184,7 @@ export async function runAuthorCommand(
   const t = report.totals;
   io.stdout(
     `\n${report.outcome === "recorded" ? "Recorded every action step." : `Stopped: ${report.stopReason}${report.message ? ` (${report.message})` : ""}`}\n` +
-      `AI: ${t.aiCalls} calls, ${t.tokens.input} input + ${t.tokens.output} output tokens, ${money(t.costUsd)}${t.unknownCostCalls ? ` (+${t.unknownCostCalls} calls of unknown cost)` : ""}\n` +
+      `AI: ${t.aiCalls} calls, ${t.tokens.input} input + ${t.tokens.output} output tokens, ${t.billing === "subscription" ? "via your subscription (no API cost)" : money(t.costUsd)}${t.billing === "mixed" ? " (partly via your subscription)" : ""}${t.unknownCostCalls ? ` (+${t.unknownCostCalls} calls of unknown cost)` : ""}\n` +
       `Recording: ${posix(relative(io.cwd, saved.recordingPath))}\n` +
       `Report:    ${posix(relative(io.cwd, saved.reportPath))}\n`,
   );

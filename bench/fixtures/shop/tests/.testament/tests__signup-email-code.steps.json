@@ -1,0 +1,375 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__signup-email-code",
+  "testPath": "tests/signup-email-code.test.md",
+  "target": "web",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "chromium",
+    "device": "desktop",
+    "environment": "local",
+    "model": "claude-code/sonnet",
+    "promptVersion": "planner-v2"
+  },
+  "updatedAt": "2026-09-26T17:54:20.077Z",
+  "steps": [
+    {
+      "key": "a31b5670ce195ea1",
+      "textKey": "60ce3e97e48791ac",
+      "route": "/signup",
+      "text": "Fill \"Email\" with {{data.email}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "{{data.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#signup-email"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "input",
+            "attributes": {
+              "id": "signup-email",
+              "name": "email",
+              "type": "email"
+            },
+            "anchorText": "Create your account",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 199.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{data.email}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Email field now contains {{data.email}}",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:54:03.065Z"
+    },
+    {
+      "key": "ce1b52e567e39fcc",
+      "textKey": "d017b6bd3576bb4f",
+      "route": "/signup",
+      "text": "Fill \"Password\" with {{secret.SHOP_PASSWORD}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#signup-password"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "input",
+            "attributes": {
+              "id": "signup-password",
+              "name": "password",
+              "type": "password"
+            },
+            "anchorText": "Create your account",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 285.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Password field shows masked value entered",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:54:08.667Z"
+    },
+    {
+      "key": "389a09d7e3f9c515",
+      "textKey": "10946276109ea041",
+      "route": "/signup",
+      "text": "Click \"Sign up\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign up",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign up",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#signup-form > button"
+              },
+              {
+                "kind": "text",
+                "text": "Sign up",
+                "exact": true
+              }
+            ],
+            "role": "button",
+            "name": "Sign up",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Create your account",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 368.4375,
+              "width": 88.65625,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "urlChange": "/verify",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Check your email"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "We sent a 6-digit code to"
+              },
+              {
+                "role": "strong",
+                "name": "",
+                "text": "{{data.email}}"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "."
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Verification code"
+              },
+              {
+                "role": "textbox",
+                "name": "Verification code"
+              },
+              {
+                "role": "button",
+                "name": "Verify"
+              }
+            ],
+            "removed": [
+              {
+                "role": "link",
+                "name": "Log in"
+              },
+              {
+                "role": "heading",
+                "name": "Create your account"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Email"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{data.email}}"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Password"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "At least 8 characters."
+              },
+              {
+                "role": "button",
+                "name": "Sign up"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Already have an account?"
+              }
+            ],
+            "requests": [
+              {
+                "method": "POST",
+                "route": "/signup",
+                "status": 303
+              },
+              {
+                "method": "GET",
+                "route": "/verify",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 365,
+            "waitedFor": {
+              "network": 287,
+              "dom": 313,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Navigated to email verification page with 'Check your email' heading and code input.",
+      "source": "ai",
+      "recordedAt": "2026-09-26T17:54:16.330Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "03b5cec53b96a091",
+      "textKey": "f2f8b9aa634ed9b7",
+      "text": "the page heading is \"Check your email\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:32:14.307Z"
+    },
+    {
+      "key": "4e19e68bc93dcac0",
+      "textKey": "b67f863f0801c70e",
+      "text": "the page heading is \"Dashboard\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:32:14.307Z"
+    },
+    {
+      "key": "6155819c3f768a7c",
+      "textKey": "b83b6a009d33ed22",
+      "text": "the projects list says \"No projects yet.\"",
+      "soft": false,
+      "check": {
+        "type": "pending"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T17:32:14.307Z"
+    }
+  ]
+}
