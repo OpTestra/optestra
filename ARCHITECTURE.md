@@ -16,7 +16,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
 | `packages/mcp` | MCP server for coding agents | agents phase |
 | `packages/action` | GitHub Action (`action.yml`) | GitHub/CI phase |
-| `bench/` | Evaluation fixtures (not a package yet) | FND-4 |
+| `bench/fixtures/shop` | Acme Shop (`@testament/fixture-shop`, private): the demo project and first Bench fixture, with variants, plain-English tests, gold `manifest.yaml` and a Playwright reference suite. See `bench/README.md` | FND-4 |
 
 ## Dependency direction
 
@@ -31,10 +31,13 @@ contract ──► zod only (bottom of the graph)
 
 - The engine is self-contained. It never imports or references the apps repo;
   the arrow only points apps → engine (`test/guards.test.ts` enforces this).
-- No telemetry. **One network exception:** `packages/models/src/transport.ts`, the
-  only file allowed to make network calls. It sends requests only to configured
+- No telemetry. **One network exception in engine code:** `packages/models/src/transport.ts`,
+  the only file allowed to make network calls. It sends requests only to configured
   provider hosts, and only when a caller asks for a completion or key check. Only
   `packages/models` may depend on the AI SDK. `test/guards.test.ts` enforces all of this.
+- Bench fixtures are servers, not engine code. They bind to 127.0.0.1 and never
+  call out; the guard test scans them too, with one named exception per file
+  (`NETWORK_EXCEPTIONS`). Nothing under `packages/` imports a fixture.
 - Apps consume these packages by semver, never by copying code.
 
 ## Where future phases plug in
@@ -46,7 +49,10 @@ contract ──► zod only (bottom of the graph)
   a `models` config section, default model ids in `packages/config/defaults.yaml`,
   and prices in `packages/models/prices.yaml`. See `packages/models/README.md`.
 - FND-3 (done): results contract, see below.
-- FND-4 demo site and first fixture: `bench/`.
+- FND-4 (done): `bench/fixtures/shop`. `startShop({ variant, port })` is what the
+  desktop app will launch as the demo project; `/__test/` hooks are what AUT-10
+  setup and the Bench runner use. Browser tests run only in `bench:fixtures:test`
+  (CI job `fixtures`); `pnpm check` stays browser-free.
 
 ## Results contract (`packages/contract`)
 

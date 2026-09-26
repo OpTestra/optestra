@@ -8,6 +8,7 @@
     { "path": "packages/models" },
     { "path": "packages/cli" },
     { "path": "packages/mcp" },
-    { "path": "packages/action" }
+    { "path": "packages/action" },
+    { "path": "bench/fixtures/shop" }
   ]
 }

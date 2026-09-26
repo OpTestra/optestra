@@ -1,0 +1,28 @@
+{
+  "name": "@testament/fixture-shop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Acme Shop: the demo project and the first Bench fixture website.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "start": "tsc -b && node dist/cli.js",
+    "browsers:install": "playwright install chromium",
+    "test:reference": "tsc -b && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.5"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

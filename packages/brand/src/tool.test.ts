@@ -80,6 +80,15 @@ describe("brand-sync", () => {
     expect(checkBrand(root, brandFor("Beta"))).toEqual([]);
   });
 
+  it("ignores a worktree's .git file", () => {
+    const root = fixture();
+    write(root, ".git", "gitdir: /home/me/alpha/.git/worktrees/alpha-2\n");
+    expect(checkBrand(root, brandFor("Alpha"))).toEqual([]);
+    expect(planBrandApply(root, brandFor("Beta")).map((c) => c.file)).not.toContain(
+      join(root, ".git"),
+    );
+  });
+
   it("reports pending edits when brand.json changed but apply did not run", () => {
     const problems = checkBrand(fixture(), brandFor("Beta"));
     expect(problems.some((p) => p.message.includes("out of sync"))).toBe(true);
