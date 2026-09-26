@@ -75,21 +75,27 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
   },
   decisions: {
     backend: "auto",
+    during: "auto",
+    after: "auto",
+    skipAfterTimeouts: 3,
     jev: {
       baseUrl: "https://api.typesafe.ai",
       model: "jev-latest",
       keySecret: "JEV_API_KEY",
       priceUsdPerMillionInputTokens: 0.042,
+      expectedLatencyMs: 400,
     },
     kev: {
       baseUrl: "http://127.0.0.1:8009",
       model: "kev-latest",
       priceUsdPerMillionInputTokens: 0,
+      expectedLatencyMs: 500,
     },
     laya: {
       baseUrl: "http://127.0.0.1:11435",
       model: "laya:typed-decisions",
       priceUsdPerMillionInputTokens: 0,
+      expectedLatencyMs: 90,
       keepAlive: "30m",
       warmUpTimeoutMs: 15000,
     },

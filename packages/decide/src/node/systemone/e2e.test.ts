@@ -22,7 +22,7 @@ for (const id of ["jev", "kev", "laya"] as const) {
         { secrets: {}, decisions: { ...settings, backend: id } },
         { sources: [processEnvSource()] },
       );
-      const backend = selection.backend;
+      const backend = selection.after.backend;
       expect(backend, selection.problems[0]?.message).not.toBeNull();
       if (!backend) return;
       if (backend.warmUp) expect((await backend.warmUp({ timeoutMs: 20_000 })).ok).toBe(true);

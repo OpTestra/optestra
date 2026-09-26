@@ -4,6 +4,17 @@
  */
 export { decisionsDir, fileCache } from "./file-cache.js";
 export {
+  ABSTAIN,
+  EVAL_TASKS,
+  type EvalCase,
+  type EvalMistake,
+  type EvalReport,
+  type EvalTask,
+  evalsDir,
+  loadEvalSet,
+  runEval,
+} from "./evals.js";
+export {
   createLabelStore,
   type Label,
   type LabelSource,

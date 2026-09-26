@@ -1,5 +1,5 @@
 import { VERDICTS } from "@testament/contract";
-import { type AnyTask, QUESTION_KINDS } from "./task.js";
+import { type AnyTask, QUESTION_KINDS, type Questions } from "./task.js";
 
 /**
  * Words a decision may never output (LRN-8): verdicts stay with the
@@ -10,6 +10,35 @@ export const VERDICT_WORDS: ReadonlySet<string> = new Set([...VERDICTS, "pass", 
 const VERDICT_STATEMENT =
   /\b(test|step|check|run)s?\s+(has\s+|have\s+)?(pass|passed|fail|failed)\b/i;
 const NAME = /^[a-z][a-z0-9_]*$/;
+
+/**
+ * The no-verdict rules alone, for questions built from an input
+ * (`questionsFor`): no verdict words in ids, options, levels or instructions.
+ */
+export function verdictProblems(questions: Questions): string[] {
+  const problems: string[] = [];
+  for (const [id, question] of Object.entries(questions)) {
+    if (id.split("_").some((part) => VERDICT_WORDS.has(part)))
+      problems.push(`question "${id}": a decision may not output a verdict (id)`);
+    const values =
+      question.kind === "choice"
+        ? question.options
+        : question.kind === "score"
+          ? question.levels
+          : [];
+    for (const value of values)
+      if (
+        value
+          .toLowerCase()
+          .split(/[^a-z]+/)
+          .some((part) => VERDICT_WORDS.has(part))
+      )
+        problems.push(`question "${id}": a decision may not output a verdict ("${value}")`);
+    if (VERDICT_STATEMENT.test(question.instructions))
+      problems.push(`question "${id}": a decision may not judge whether a test passed or failed`);
+  }
+  return problems;
+}
 
 /** Everything wrong with a task spec; empty when it may be registered. */
 export function taskProblems(task: AnyTask): string[] {

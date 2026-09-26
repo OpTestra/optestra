@@ -16,6 +16,12 @@ export interface TaskMetrics {
   escalatedPct: number;
   p50Ms: number;
   p95Ms: number;
+  /**
+   * Decisions where the backend was not called (latency-aware routing): too_slow
+   * (expected latency above the task's limit) or timeouts (timed out too often in
+   * this run). Null when unknown (read back from a run folder).
+   */
+  backendSkipped: { too_slow: number; timeouts: number } | null;
 }
 
 export type DecisionMetrics = Record<string, TaskMetrics>;
@@ -37,6 +43,7 @@ function finish(
   escalated: number,
   cacheHits: number | null,
   latencies: number[],
+  backendSkipped: TaskMetrics["backendSkipped"] = null,
 ): TaskMetrics {
   const sorted = [...latencies].sort((a, b) => a - b);
   return {
@@ -50,6 +57,7 @@ function finish(
     escalatedPct: pct(escalated, total),
     p50Ms: percentile(sorted, 50),
     p95Ms: percentile(sorted, 95),
+    backendSkipped,
   };
 }
 
@@ -78,8 +86,36 @@ export function metricsFromRecords(records: readonly DecisionRecord[]): Decision
 export class MetricsCollector {
   readonly #tasks = new Map<
     string,
-    { rules: number; model: number; escalated: number; cacheHits: number; latencies: number[] }
+    {
+      rules: number;
+      model: number;
+      escalated: number;
+      cacheHits: number;
+      latencies: number[];
+      skipped: { too_slow: number; timeouts: number };
+    }
   >();
+
+  #entry(task: string) {
+    let entry = this.#tasks.get(task);
+    if (!entry) {
+      entry = {
+        rules: 0,
+        model: 0,
+        escalated: 0,
+        cacheHits: 0,
+        latencies: [],
+        skipped: { too_slow: 0, timeouts: 0 },
+      };
+      this.#tasks.set(task, entry);
+    }
+    return entry;
+  }
+
+  /** A decision where the backend was deliberately not called. */
+  skip(task: string, reason: "too_slow" | "timeouts") {
+    this.#entry(task).skipped[reason]++;
+  }
 
   add(
     task: string,
@@ -87,11 +123,7 @@ export class MetricsCollector {
     latencyMs: number,
     cacheHit: boolean,
   ) {
-    let entry = this.#tasks.get(task);
-    if (!entry) {
-      entry = { rules: 0, model: 0, escalated: 0, cacheHits: 0, latencies: [] };
-      this.#tasks.set(task, entry);
-    }
+    const entry = this.#entry(task);
     entry[outcome]++;
     if (cacheHit) entry.cacheHits++;
     // Bounded: percentiles over the most recent 10k decisions per task.
@@ -109,6 +141,7 @@ export class MetricsCollector {
         e.escalated,
         e.cacheHits,
         e.latencies,
+        { ...e.skipped },
       );
     }
     return out;

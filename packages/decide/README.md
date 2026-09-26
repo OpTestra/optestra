@@ -144,12 +144,16 @@ decision escalates.
 
 ```yaml
 decisions:
-  backend: auto          # auto (default): Jev if JEV_API_KEY is set, else rules only
-                         # none: rules only · jev | kev | laya: that model, explicitly
-  jev:  { baseUrl: https://api.typesafe.ai, model: jev-latest, keySecret: JEV_API_KEY, priceUsdPerMillionInputTokens: 0.042 }
-  kev:  { baseUrl: http://127.0.0.1:8009, model: kev-latest, priceUsdPerMillionInputTokens: 0 }   # keySecret: optional
-  laya: { baseUrl: http://127.0.0.1:11435, model: "laya:typed-decisions",
-          priceUsdPerMillionInputTokens: 0, keepAlive: 30m, warmUpTimeoutMs: 15000 }   # keySecret: optional
+  backend: auto          # shorthand for both phases: auto | none | jev | kev | laya
+  during: auto           # auto → what `backend` names; if that is auto too: rules only
+  after: auto            # auto → what `backend` names; if that is auto too: Jev when JEV_API_KEY is set, else rules only
+  skipAfterTimeouts: 3   # stop calling a backend for a task after 3 timeouts in one run
+  jev:  { baseUrl: https://api.typesafe.ai, model: jev-latest, keySecret: JEV_API_KEY,
+          priceUsdPerMillionInputTokens: 0.042, expectedLatencyMs: 400 }
+  kev:  { baseUrl: http://127.0.0.1:8009, model: kev-latest, priceUsdPerMillionInputTokens: 0,
+          expectedLatencyMs: 500 }   # keySecret: optional
+  laya: { baseUrl: http://127.0.0.1:11435, model: "laya:typed-decisions", priceUsdPerMillionInputTokens: 0,
+          expectedLatencyMs: 90, keepAlive: 30m, warmUpTimeoutMs: 15000 }   # keySecret: optional
   threshold: 0.8         # project default
   tasks:
     page_is_error: { threshold: 0.9, timeLimitMs: 150, enabled: true }
@@ -159,6 +163,27 @@ decisions:
 For each task, the first setting found applies:
 - threshold: `tasks.<name>.threshold`, then the task's own `threshold`, then `decisions.threshold`.
 - time limit: `tasks.<name>.timeLimitMs`, then the task's `timeLimitMs`, then the phase default.
+
+### Per-phase routing (DEC-2)
+
+Decisions made during a run have about 100 ms, and decisions made after it have
+about 2 s. Each phase therefore gets its own backend:
+
+| `backend` | `during` | `after` | During-run tasks | After-run tasks |
+|---|---|---|---|---|
+| auto | auto | auto | rules only | Jev if `JEV_API_KEY` is set, else rules only |
+| laya | auto | auto | laya | laya |
+| jev | auto | auto | jev (but see below: 400 ms > 100 ms, so skipped) | jev |
+| auto | laya | auto | laya | Jev if its key is set |
+
+Routing never slows a run. A task never calls a backend if the backend's
+`expectedLatencyMs` is above the task's time limit (`skipped: "too_slow"`).
+A backend that times out on a task `skipAfterTimeouts` times in one run stops
+being called for that task (`skipped: "timeouts"`). Either way the task falls
+back to its rules or escalates. The skip reason appears in `DecisionMeta.backend`,
+in the result, and in the metrics (`backendSkipped: { too_slow, timeouts }`).
+`createDecisions({ backends: { during, after } })` sets the backends in code;
+`backend` alone sets both.
 
 `enabled: false` makes the task escalate with reason `disabled`. The section can
 be overridden per environment. `testament decisions` lists the effective values
@@ -242,10 +267,187 @@ is retried inside a decision's time limit.
 tokens, the cost in USD (input tokens × `priceUsdPerMillionInputTokens`) and the
 number of truncated states.
 
+## The after-run decisions (DEC-2)
+
+These four tasks label, group and explain. None of them sets a verdict (LRN-8).
+Each decided answer carries `evidence`: named signals, with contract
+`EvidenceRef`s when they point at a step or check. That way the report can show
+"why this label" (DIA-1, HEAL-6). The rules' word lists and patterns live in
+`src/tasks/signals.json`. Page and app text in every state is wrapped in
+`untrusted()`, and the backend client redacts it before it leaves.
+
+### failure_cause (DIA-1)
+
+- **Question:** choice `cause`: `product_bug | test_drift | environment | test_data`.
+  The contract's `blocked` cause is never a decision. It follows from a blocked
+  reason, so `failureCauseCase` / `classifyFailure` set it deterministically,
+  with the blocked reason and step as evidence. It would also trip the
+  no-verdict guard.
+- **Input** (built by `failureCauseCase(result, context)`):
+  - verdict (failed or flaky) and a summary of each attempt;
+  - the failing step: kind, recovery, error, element not found, post-state, flow;
+  - the failing check: expected and actual;
+  - requests around the failure, with other sites' requests marked `thirdParty`;
+  - console errors;
+  - the page (untrusted) and `page_is_error`'s answer.
+  Without runner observations, requests are read from the step error ("GET /api/search returned 503").
+- **Rules, in order:**
+  1. App unreachable (document request failed, connection refused or DNS error) → environment.
+  2. Infrastructure trouble (5xx, network failure, 429 or timeout text) that went away on retry → environment.
+  3. 429 → environment. Network failures → environment when they repeat or went away; else escalate.
+     Gateway errors only (502/503/504) → environment.
+  4. A test-data phrase ("already exists", "coupon expired", "no such user", …) on a page with no 5xx → test_data.
+  5. An error page or a 5xx: gone on retry → environment; the same on every attempt → product_bug;
+     a single attempt → escalate.
+  6. A 404/410 page → escalate (a broken link or a removed URL the test uses).
+  7. A failure on a healthy page that passed on retry → escalate.
+  8. On a healthy page:
+     - a JS crash in the console → product_bug;
+     - element not found → test_drift, but escalate while the page says it is still loading;
+     - the action did nothing (post-state mismatch) → product_bug when it repeats, else escalate;
+     - a hard check failed → product_bug.
+- **Used for:** the test's `failureCause` and `failureEvidence`, the headline, and routing a failure to the right person.
+
+### flaky_or_real (DIA-2, DIA-5): advice only
+
+- **Question:** noul `intermittent` ("this failure comes and goes"). "Flaky" is a
+  verdict word, so the id avoids it. The flaky *verdict* stays deterministic:
+  failed, then passed on retry.
+- **Input** (`flakyInput(result, context)`): each attempt's status, cause and failure
+  signature, plus recent history (verdict and signature, newest first).
+- **Rules:**
+  - passed on retry → yes;
+  - the same failure on every attempt and in history → no;
+  - newly broken (the same failure every attempt, history all passes) → no;
+  - a single attempt that failed exactly as in recent runs → no;
+  - the same environment failure on every attempt (an outage) → escalate;
+  - a different failure each attempt, an environment cause, or history that flips → yes;
+  - the same failure every attempt with stable or no history → no.
+- **Used for:** quarantine suggestions and retry hints. Never a verdict.
+
+### duplicate_or_new (DIA-4)
+
+- **Question:** choice `group`: the run's failure group ids (`g1`, `g2`, …) plus `new`.
+  The options come from the input (`questionsFor`), and the no-verdict guard runs on them too.
+- **Input** (`signatureFromTestResult`): headline, failing step text, flow chain,
+  route and cause, for this failure and each group's first failure.
+- **Rules:**
+  - no groups yet → new;
+  - the same step inside the same flow chain (the login flow) → that group;
+  - the same normalized headline (numbers, quoted values, ids and money ignored) on the same route → that group;
+  - the same headline and step text → that group;
+  - the same headline only → escalate;
+  - nothing in common (no shared route, step or flow, and word similarity under 0.2) → new.
+- **Used for:** "one broken login breaks 20 tests": `groupFailures(results)`.
+
+### heal_class (HEAL-6)
+
+- **Question:** choice `classification`: `cosmetic | behavior_change | unknown`
+  (the contract's HealProposal classification). The rules never answer
+  `unknown`; that is what `classifyHeal` records when nothing is confident.
+- **Input** (`healInput(proposal, facts?)`): the element facts before and after
+  (role, accessible name, text, tag, test id, position), read from Playwright-style
+  locators unless the recording gives them; the changes; the healer's signals.
+- **Rules:**
+  - only waits changed → cosmetic;
+  - the action changed, the role changed, or the opposite action (Save → Cancel, Log in → Log out) → behavior_change;
+  - the same role and the same name (ignoring case, punctuation and whitespace) → cosmetic;
+  - synonyms (Continue → Next, Cart → Bag, Log in → Sign in) → cosmetic;
+  - two different action verbs that aren't synonyms (Delete → Archive) → behavior_change;
+  - the same words plus filler only (Save → Save now) → cosmetic;
+  - anything else escalates ('Add to cart' → 'Add to wishlist', 'Delete' → 'Delete account',
+    'Pricing' → 'Plans', a test-id-only locator).
+- **Used for:** heal review (a cosmetic heal can be auto-accepted under the `auto` policy;
+  a behaviour change always needs review).
+
+### Helpers for the runner (browser-safe)
+
+| Helper | Returns |
+|---|---|
+| `inputFromTestResult(result, context?)` | `{ failureCause: FailureCauseCase, flakyOrReal: input \| null }` |
+| `failureCauseCase(result, context?)` / `classifyFailure(result, { decisions, context })` | failure_cause's input or the deterministic `blocked`; the decided cause with evidence |
+| `flakyInput(result, context?)` | flaky_or_real's input |
+| `groupFailures(results, { decisions, context })` | `FailureGroup[]`: id, members, first failure, why each member joined, `uncertain` |
+| `classifyHeal(proposal, { decisions, before?, after?, attempt? })` | `{ classification, decided, source, confidence, evidence }` |
+
+`context` is what the runner saw beyond the contract documents:
+- requests and console errors per attempt;
+- the page and `page_is_error`'s answer;
+- the route;
+- whether the element was not found;
+- each step's flow chain (from SPEC's `ExpandedStep.flowPath`);
+- the test's history.
+
+With no `decisions`, the helpers use the rules alone.
+
+### Evals (LRN-10 foundation)
+
+`evals/<task>.jsonl` holds the labelled cases for each after-run task (at least
+40 each). They come from three sources: the contract fixtures, the shop fixture's
+manifest (the expected cause for each scenario and variant), and hand-written
+realistic cases, including tricky ones where guessing would be wrong. The labels
+are what a careful triager would answer. Rebuild the sets with
+`pnpm --filter ./packages/decide build:evals`. `decisions --eval` scores them.
+**False labels** (decided but wrong) are what matter: escalating is always allowed.
+
+Rules-only baseline (`evals/baseline.json`; a test holds the rules to it):
+
+| Task | Cases | Decided | Escalated | False labels |
+|---|---|---|---|---|
+| failure_cause | 50 | 45 (90%) | 5 | 0 |
+| flaky_or_real | 42 | 40 (95.2%) | 2 | 0 |
+| duplicate_or_new | 43 | 39 (90.7%) | 4 | 0 |
+| heal_class | 43 | 37 (86%) | 6 | 0 |
+
+After changing rules or cases, run `pnpm --filter ./packages/decide eval:baseline`.
+
+Measured with real models on the development Mac (2026-09-26; `decisions --eval --backend …`).
+Decided counts are "decided / cases"; false labels were 0 in every run shown.
+Jev's counts vary by one or two between runs, so ranges are given.
+
+| Task | Rules → Jev | Jev alone (rules off) | Rules → Laya | Laya alone |
+|---|---|---|---|---|
+| failure_cause | 47/50 (+2 by Jev) | 34–35/50 | 45/50 (+0) | 0/50 |
+| flaky_or_real | 40/42 (+0) | 11–15/42 | 40/42 (+0) | 0/42 |
+| duplicate_or_new | 42/43 (+3) | 35–36/43 | 39/43 (+0) | 0/43 |
+| heal_class | 39/43 (+2) | 23–25/43 | 37/43 (+0) | 0/43 |
+| Model p50 per call | ≈ 290–330 ms | ≈ 300–370 ms | ≈ 80–210 ms | ≈ 100–240 ms |
+
+- Jev never gave a wrong label. Once it answered heal_class `unknown` at 0.8+;
+  evals count that as an abstention (`ABSTAIN`), not a label. Behind the rules it
+  settled 7 of the 17 cases the rules left, for about $0.0003 per full eval.
+- Laya (`laya:typed-decisions`, untrained on this project) reached the 0.8
+  threshold on none of the cases. Every call escalated, so it is safe but adds
+  nothing until LRN-9 training. Its 4 errors on `duplicate_or_new` alone are the
+  first-failure cases with a single option (`new`), which Ollaya rejects; the rules
+  always decide those first.
+
+### Recording labels (LRN-9)
+
+When a person confirms or corrects a label, the runner (LOOP-4) and heal review
+(HEAL) record it with the DEC-0 store, so training data builds up from day one:
+
+```ts
+const labels = createLabelStore(projectDir);
+// A person confirmed or changed a failure's cause in the report:
+labels.recordLabel(failureCause, c.input, { cause: "test_drift" }, { source: "confirmed" });
+// A person said "this is flaky" / "this is a real bug" on a quarantine suggestion:
+labels.recordLabel(flakyOrReal, flakyInput(result, ctx)!, { intermittent: true }, { source: "confirmed" });
+// A person merged a failure into a group, or split it out:
+labels.recordLabel(duplicateOrNew, { failure, groups }, { group: "g2" }, { source: "confirmed" });
+// A heal was accepted (approved) or rejected; the class a person gave it:
+labels.recordLabel(healClass, healInput(proposal), { classification: "cosmetic" }, { source: "approved" });
+labels.recordLabel(healClass, healInput(proposal), { classification: "behavior_change" }, { source: "rejected" });
+```
+
+`c.input` is the `failureCauseCase(result, ctx)` input. The input must be the
+exact one the decision saw, so the example trains on the same view.
+
 ## CLI
 
-- `testament decisions [--json]` shows the backend (e.g. `auto → none (rules only; set JEV_API_KEY to use Jev)`), the threshold, the cache and every task, with its effective threshold, limit, phase, escalation and questions.
-- `testament decisions --check` checks all three backends: whether the key is valid (`GET /v1/models`, no tokens spent), whether the backend is reachable, and whether the model is installed. It shows the fix for each problem, and exits 2 only if the selected backend is unusable.
+- `testament decisions [--json]` shows the routing per phase (e.g. `During  auto → none (rules only)`, `After  auto → jev (JEV_API_KEY set)`), the threshold, the cache and every task, with its effective threshold, limit, phase, escalation and questions.
+- `testament decisions --eval [--backend rules|jev|kev|laya] [--model-only] [--json]` scores the after-run tasks on the committed eval sets. It shows accuracy on decided cases, decided and escalated %, false labels, p50 overall and for model calls, and escalation reasons. `--model-only` turns the rules off to measure the model alone. Exit 1 on any false label.
+- `testament decisions --check` checks all three backends: whether the key is valid (`GET /v1/models`, no tokens spent), whether the backend is reachable, and whether the model is installed. It shows the fix for each problem, and exits 2 only if a backend a phase uses is unusable.
 - `testament decisions --bench [--backend jev|kev|laya|all] [--n 50]` runs `page_is_error` on fixed unclear inputs after a warm-up, with the cache off. It prints p50/p95, the share within 100 ms, the error rate, decided/escalated counts and agreement with the expected answers. Laya's during-run target (p50 < 100 ms) is reported as met or missed.
 - `testament decider setup laya [--model …] [--yes]` sets up Laya (see above). `setup jev` and `setup kev` print the steps.
 - `testament decisions --stats <runDir> [--json]` prints metrics per task, built from the run's `decision.made` events (or from its documents when there are no events).

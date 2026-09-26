@@ -1,7 +1,7 @@
 import { execFile, spawnSync } from "node:child_process";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -99,10 +99,15 @@ describe("decisions command", () => {
     dirs.push(dir);
     const result = run(dir);
     expect(result.status).toBe(0);
+    expect(result.stdout).toContain("During     auto → none (rules only)");
     expect(result.stdout).toContain(
-      "Backend    auto → none (rules only; set JEV_API_KEY to use Jev)",
+      "After      auto → none (rules only; set JEV_API_KEY to use Jev)",
     );
     expect(result.stdout).toMatch(/page_is_error\s+v1\s+during\s+0\.80\s+100 ms\s+on\s+fixer/);
+    for (const task of ["failure_cause", "flaky_or_real", "duplicate_or_new", "heal_class"])
+      expect(result.stdout).toMatch(
+        new RegExp(`${task}\\s+v1\\s+after\\s+0\\.80\\s+2000 ms\\s+on\\s+(human|fixer)`),
+      );
   });
 
   it("applies project overrides and warns about unknown task names", () => {
@@ -157,7 +162,7 @@ describe("decisions command", () => {
 
     const kev = await runAsync(projectWith([...base, "  backend: kev"]), ["decisions", "--check"]);
     expect(kev.status).toBe(2);
-    expect(kev.stdout).toContain("The selected backend (kev) is not usable");
+    expect(kev.stdout).toContain("A selected backend (kev) is not usable");
   });
 
   it("--bench measures Laya after a warm-up", async () => {
@@ -207,5 +212,25 @@ describe("decisions command", () => {
     expect(result.stdout).toContain("Ollaya is not running at http://127.0.0.1:9");
     expect(result.stdout).toMatch(/Fix: .*Ollaya/);
     expect(result.stdout).toContain("never installs Ollaya");
+  });
+
+  it("--eval scores the after-run decisions on the committed sets (rules only): no false labels", () => {
+    const dir = mkdtempSync(join(tmpdir(), "cli-decisions-"));
+    dirs.push(dir);
+    const baseline = JSON.parse(
+      readFileSync(new URL("../../decide/evals/baseline.json", import.meta.url), "utf8"),
+    );
+    const result = run(dir, "--eval", "--json");
+    expect(result.status).toBe(0);
+    const output = JSON.parse(result.stdout);
+    expect(output.backend).toBe("rules");
+    for (const report of output.reports) {
+      expect(report.falseLabels, report.task).toBe(0);
+      expect(report.decided).toBe(baseline[report.task].decided);
+    }
+    const text = run(dir, "--eval").stdout;
+    expect(text).toContain("Eval  after-run decisions · rules only");
+    expect(text).toMatch(/failure_cause\s+50\s+/);
+    expect(run(dir, "--eval", "--backend", "nope").status).toBe(2);
   });
 });

@@ -61,6 +61,11 @@ export interface DecisionBackend {
    * takes about 2 s to load). Called at run start, never recorded as a decision.
    */
   warmUp?(options: { timeoutMs: number; signal?: AbortSignal }): Promise<BackendResponse>;
+  /**
+   * Typical latency of one request. A task whose time limit is below it never
+   * calls this backend (phase routing must never slow a run).
+   */
+  readonly expectedLatencyMs?: number;
 }
 
 /** Checks one answer against its question: right kind, a known option/level, confidence in 0–1. */

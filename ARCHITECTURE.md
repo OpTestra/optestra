@@ -127,6 +127,23 @@ contract ──► zod only (bottom of the graph)
   tests run in `bench:fixtures:test`; `@testament/models/testing` provides the
   scripted model. See `packages/recording/README.md` and `packages/core/README.md`.
 
+- DEC-2 (done): the four after-run decisions in `@testament/decide`:
+  - `failure_cause` (DIA-1);
+  - `flaky_or_real` (advice only; the flaky verdict stays deterministic);
+  - `duplicate_or_new` (DIA-4 failure groups; its options are the run's groups);
+  - `heal_class` (HEAL-6).
+
+  Each has pure rules with their word lists in `src/tasks/signals.json`, and
+  every decided answer carries evidence (signals + contract EvidenceRefs).
+  `blocked` is set deterministically from a blocked reason, never decided.
+  Backends are chosen per phase (`decisions.during` / `decisions.after`; `backend`
+  is the shorthand). A backend too slow for a task's limit, or one that keeps
+  timing out, is skipped for that task.
+  LOOP-4 calls the browser-safe helpers `inputFromTestResult`, `classifyFailure`,
+  `groupFailures` and `classifyHeal`. Eval sets live in `packages/decide/evals/`
+  with a committed rules-only baseline, and `decisions --eval` scores them.
+  DEC-3 adds the during-run `same_element` and `miss_action`.
+
 ## Results contract (`packages/contract`)
 
 The one format every reader uses: CLI, HTML report, PR comment, MCP server,

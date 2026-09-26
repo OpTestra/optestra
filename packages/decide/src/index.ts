@@ -39,12 +39,13 @@ export {
   type EffectiveTaskSettings,
   type Escalated,
   type EscalationReason,
+  type SkipReason,
   type OnDecision,
   type RaceResult,
   type ScoredAnswer,
   taskSettings,
 } from "./decide.js";
-export { taskProblems, VERDICT_WORDS } from "./guard.js";
+export { taskProblems, VERDICT_WORDS, verdictProblems } from "./guard.js";
 export {
   type DecisionMetrics,
   MetricsCollector,
@@ -72,6 +73,7 @@ export {
   type DecisionTask,
   defineTask,
   type EscalateTo,
+  type Evidence,
   type InputOf,
   type NoulQuestion,
   QUESTION_KINDS,
@@ -79,14 +81,27 @@ export {
   type QuestionKind,
   type Questions,
   type QuestionsOf,
+  questionsOf,
   type RulesAnswer,
   type ScoreQuestion,
   untrusted,
 } from "./task.js";
 export {
-  BUILT_IN_TASKS,
-  type DecisionTasks,
-  type PageIsErrorInput,
-  pageIsError,
-  pageIsErrorInput,
-} from "./tasks/index.js";
+  type AttemptObservations,
+  attemptSignature,
+  type CauseAnswer,
+  classifyFailure,
+  classifyHeal,
+  type FailureCauseCase,
+  type FailureContext,
+  type FailureGroup,
+  failureCauseCase,
+  flakyInput,
+  groupFailures,
+  type HealClassAnswer,
+  healInput,
+  inputFromTestResult,
+  type ObservedRequest,
+  signatureFromTestResult,
+} from "./helpers.js";
+export * from "./tasks/index.js";

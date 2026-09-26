@@ -2,7 +2,7 @@ import { defaultRegistry } from "@testament/config";
 import { type DecisionRecord, ulid } from "@testament/contract";
 import { type BackendAnswer, type DecisionBackend, validAnswer } from "./backend.js";
 import { type CachedDecision, cacheKey, type DecisionCache } from "./cache.js";
-import { taskProblems } from "./guard.js";
+import { taskProblems, verdictProblems } from "./guard.js";
 import { type DecisionMetrics, MetricsCollector } from "./metrics.js";
 import type { DecisionsSettings } from "./section.js";
 import {
@@ -11,9 +11,11 @@ import {
   DEFAULT_TIME_LIMIT_MS,
   type DecisionPhase,
   type EscalateTo,
+  type Evidence,
   type InputOf,
   type Questions,
   type QuestionsOf,
+  questionsOf,
 } from "./task.js";
 import { BUILT_IN_TASKS, type DecisionTasks } from "./tasks/index.js";
 // builtInSettings() reads the registered defaults, so make sure the section is registered.
@@ -43,6 +45,8 @@ export interface ScoredAnswer<Q extends Questions = Questions> {
   confidence: number;
   /** "rules" or the backend id. */
   source: string;
+  /** The signals behind the answer (DIA-1, HEAL-6), so a report can show "why this label". */
+  evidence: Evidence[];
 }
 
 export interface Decided<Q extends Questions = Questions> extends ScoredAnswer<Q> {
@@ -52,6 +56,8 @@ export interface Decided<Q extends Questions = Questions> extends ScoredAnswer<Q
   latencyMs: number;
   /** The contract record passed to `onDecision`. */
   record: DecisionRecord;
+  /** Set when a backend was asked or deliberately skipped (as in `DecisionMeta.backend`). */
+  backend?: BackendNotes;
 }
 
 export interface Escalated<Q extends Questions = Questions> {
@@ -64,6 +70,8 @@ export interface Escalated<Q extends Questions = Questions> {
   latencyMs: number;
   /** Null when aborted (an aborted decision is not a decision and is not recorded). */
   record: DecisionRecord | null;
+  /** Set when a backend was asked or deliberately skipped (as in `DecisionMeta.backend`). */
+  backend?: BackendNotes;
 }
 
 export type DecisionResult<Q extends Questions = Questions> = Decided<Q> | Escalated<Q>;
@@ -85,8 +93,10 @@ export interface DecisionMeta {
   attempt: number | null;
   reason: EscalationReason | null;
   cached: boolean;
-  /** Set when a backend was asked: the model that answered, a truncated state, or why it failed. */
+  /** Set when a backend was asked (or skipped): the model, a truncated state, or why it failed. */
   backend?: BackendNotes;
+  /** The evidence behind the answer (or behind `best` when escalated). */
+  evidence: Evidence[];
 }
 
 export interface BackendNotes {
@@ -96,7 +106,14 @@ export interface BackendNotes {
   stateTruncated?: boolean;
   /** The backend's failure reason, e.g. rate_limited, unavailable. */
   failure?: string;
+  /**
+   * The backend was not called for this task: too_slow (its expected latency is
+   * above the task's time limit) or timeouts (it timed out on this task too often).
+   */
+  skipped?: SkipReason;
 }
+
+export type SkipReason = "too_slow" | "timeouts";
 
 /** Called once per decision with its contract record. The runner emits `decision.made` from it. */
 export type OnDecision = (record: DecisionRecord, meta: DecisionMeta) => void;
@@ -106,13 +123,17 @@ export interface DecisionsOptions {
   config?: { decisions: DecisionsSettings };
   /** Extra tasks on top of the built-ins (DEC-2 adds built-ins instead). */
   tasks?: readonly AnyTask[];
-  /** The decision model. None (the default) means rules only. DEC-1 builds this from config. */
+  /** The decision model for both phases. None (the default) means rules only. */
   backend?: DecisionBackend | null;
+  /** Per-phase decision models (DEC-2); a phase given here wins over `backend`. */
+  backends?: { during?: DecisionBackend | null; after?: DecisionBackend | null };
   /** Where model answers are cached. Ignored when `decisions.cache.enabled` is false. */
   cache?: DecisionCache | null;
   onDecision?: OnDecision;
   /** Skip the cache for every call (evals, Bench). */
   bypassCache?: boolean;
+  /** Evals only: ignore the rules, so the backend answers everything (measures the model alone). */
+  skipRules?: boolean;
   /** Monotonic clock in ms, for latencies. */
   now?: () => number;
   /** Epoch ms, for cache TTL. */
@@ -174,7 +195,10 @@ export interface Decisions {
   readonly tasks: ReadonlyMap<string, AnyTask>;
   /** Threshold, time limit and enabled flag after config overrides. */
   settingsFor(task: AnyTask): EffectiveTaskSettings;
+  /** The after-phase backend (kept for DEC-1 callers; see `backends`). */
   readonly backend: DecisionBackend | null;
+  /** The backend each phase uses. */
+  readonly backends: { during: DecisionBackend | null; after: DecisionBackend | null };
   /** Per-task counters since this instance was created. */
   metrics(): DecisionMetrics;
 }
@@ -196,7 +220,7 @@ export function taskSettings(task: AnyTask, settings: DecisionsSettings): Effect
 }
 
 /** Every question answered with a valid value, confidence in 0–1. */
-function validRules(task: AnyTask, result: unknown): result is ScoredAnswer {
+function validRules(questions: Questions, result: unknown): result is Omit<ScoredAnswer, "source"> {
   if (!result || typeof result !== "object") return false;
   const { answers, confidence } = result as {
     answers?: Record<string, unknown>;
@@ -204,7 +228,7 @@ function validRules(task: AnyTask, result: unknown): result is ScoredAnswer {
   };
   if (typeof confidence !== "number" || !(confidence >= 0 && confidence <= 1)) return false;
   if (!answers || typeof answers !== "object") return false;
-  return Object.entries(task.questions).every(([id, q]) =>
+  return Object.entries(questions).every(([id, q]) =>
     validAnswer(q, { kind: q.kind, value: answers[id] as string | boolean, confidence }),
   );
 }
@@ -217,6 +241,8 @@ interface Pending {
   index: number;
   task: AnyTask;
   input: unknown;
+  questions: Questions;
+  backend: DecisionBackend;
   settings: EffectiveTaskSettings;
   rules: ScoredAnswer | null;
   key: string | null;
@@ -226,7 +252,16 @@ interface Pending {
 
 export function createDecisions(options: DecisionsOptions = {}): Decisions {
   const settings = options.config?.decisions ?? builtInSettings();
-  const backend = options.backend ?? null;
+  const backends = {
+    during:
+      options.backends && "during" in options.backends
+        ? (options.backends.during ?? null)
+        : (options.backend ?? null),
+    after:
+      options.backends && "after" in options.backends
+        ? (options.backends.after ?? null)
+        : (options.backend ?? null),
+  };
   const cache = settings.cache.enabled ? (options.cache ?? null) : null;
   const now = options.now ?? (() => performance.now());
   const wallClock = options.wallClock ?? (() => Date.now());
@@ -243,12 +278,30 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
 
   const settingsFor = (task: AnyTask) => taskSettings(task, settings);
 
+  /** Timeouts per task and backend in this instance (one run), for latency-aware skipping. */
+  const timeouts = new Map<string, number>();
+  const timeoutKey = (task: AnyTask, backend: DecisionBackend) => `${task.name}\u0000${backend.id}`;
+
+  /** Why a backend must not be called for a task, if it mustn't (guarantee: routing never slows a run). */
+  function skipReason(
+    task: AnyTask,
+    backend: DecisionBackend,
+    limitMs: number,
+  ): SkipReason | undefined {
+    if (backend.expectedLatencyMs !== undefined && backend.expectedLatencyMs > limitMs)
+      return "too_slow";
+    if ((timeouts.get(timeoutKey(task, backend)) ?? 0) >= settings.skipAfterTimeouts)
+      return "timeouts";
+    return undefined;
+  }
+
   function emit(
     record: DecisionRecord,
     meta: DecisionMeta,
     outcome: "rules" | "model" | "escalated",
   ) {
     collector.add(record.task, outcome, record.latencyMs, meta.cached);
+    if (meta.backend?.skipped) collector.skip(record.task, meta.backend.skipped);
     try {
       options.onDecision?.(record, meta);
     } catch {
@@ -275,10 +328,24 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
     };
     emit(
       record,
-      { task: task.name, phase: task.phase, ...item, reason: null, cached },
+      {
+        task: task.name,
+        phase: task.phase,
+        ...item,
+        reason: null,
+        cached,
+        evidence: answer.evidence,
+      },
       answer.source === "rules" ? "rules" : "model",
     );
-    return { status: "decided", ...answer, cached, latencyMs, record };
+    return {
+      status: "decided",
+      ...answer,
+      cached,
+      latencyMs,
+      record,
+      ...(item.backend ? { backend: item.backend } : {}),
+    };
   }
 
   function escalated(
@@ -293,7 +360,8 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
     const latencyMs = round(now() - start);
     const onEscalate = task?.onEscalate ?? "fixer";
     const base = { status: "escalated" as const, reason, onEscalate, latencyMs };
-    const withBest = best ? { ...base, best } : base;
+    const withNotes = item.backend ? { ...base, backend: item.backend } : base;
+    const withBest = best ? { ...withNotes, best } : withNotes;
     if (reason === "aborted") return { ...withBest, record: null };
     const record: DecisionRecord = {
       id: ulid(),
@@ -306,7 +374,14 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
     };
     emit(
       record,
-      { task: record.task, phase: task?.phase ?? null, ...item, reason, cached },
+      {
+        task: record.task,
+        phase: task?.phase ?? null,
+        ...item,
+        reason,
+        cached,
+        evidence: best?.evidence ?? [],
+      },
       "escalated",
     );
     return { ...withBest, record };
@@ -341,20 +416,26 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
   }
 
   function toScored(
-    task: AnyTask,
+    item: Pending,
     raw: Record<string, BackendAnswer>,
     prefix: string,
     source: string,
   ): ScoredAnswer | null {
     const answers: Record<string, unknown> = {};
     let confidence = 1;
-    for (const [id, question] of Object.entries(task.questions)) {
+    for (const [id, question] of Object.entries(item.questions)) {
       const answer = raw[prefix + id];
       if (!validAnswer(question, answer) || !answer) return null;
       answers[id] = answer.value;
       confidence = Math.min(confidence, answer.confidence);
     }
-    return { answers: answers as Answers<Questions>, confidence, source };
+    let evidence: Evidence[] = [];
+    try {
+      evidence = item.task.evidence?.(item.input) ?? [];
+    } catch {
+      // Evidence is best effort for model answers.
+    }
+    return { answers: answers as Answers<Questions>, confidence, source, evidence };
   }
 
   /** Cache reads, then one backend request for everything still open. */
@@ -372,9 +453,9 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
       const answer =
         fresh && hit
           ? toScored(
-              item.task,
+              item,
               Object.fromEntries(
-                Object.entries(item.task.questions).map(([id, q]) => [
+                Object.entries(item.questions).map(([id, q]) => [
                   id,
                   { kind: q.kind, value: hit.answers[id], confidence: hit.confidence },
                 ]),
@@ -402,7 +483,7 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
         continue;
       }
       states.push(single ? state : `### Decision ${item.index}: ${item.task.name}\n${state}`);
-      for (const [id, q] of Object.entries(item.task.questions)) {
+      for (const [id, q] of Object.entries(item.questions)) {
         questions[prefixOf(item) + id] = single
           ? q
           : { ...q, instructions: `[Decision ${item.index}] ${q.instructions}` };
@@ -428,7 +509,7 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
       : { failure: response.failure.reason };
     for (const item of asked) {
       const answer = response.ok
-        ? toScored(item.task, response.answers, prefixOf(item), active.id)
+        ? toScored(item, response.answers, prefixOf(item), active.id)
         : null;
       if (!answer) {
         out.set(item.index, {
@@ -445,7 +526,12 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
       }
       out.set(item.index, { kind: "answer", answer, cached: false, notes });
       if (item.key) {
-        const entry: CachedDecision = { ...answer, storedAt: wallClock() };
+        const entry: CachedDecision = {
+          answers: answer.answers,
+          confidence: answer.confidence,
+          source: answer.source,
+          storedAt: wallClock(),
+        };
         void cache?.set(item.key, entry).catch(() => {});
       }
     }
@@ -478,14 +564,31 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
         return;
       }
       const parsed = task.input.safeParse(item.input);
-      if (!parsed.success) {
+      let questions: Questions | undefined;
+      try {
+        if (parsed.success) questions = questionsOf(task, parsed.data);
+      } catch {
+        questions = undefined;
+      }
+      // Input-dependent questions get the same no-verdict guard as static ones.
+      if (
+        !parsed.success ||
+        !questions ||
+        (task.questionsFor && verdictProblems(questions).length > 0)
+      ) {
         results[index] = escalated(start, name, task, "invalid_input", null, false, meta);
         return;
       }
       let rules: ScoredAnswer | null = null;
       try {
-        const raw = task.rules(parsed.data);
-        if (validRules(task, raw)) rules = { ...raw, source: "rules" };
+        const raw = options.skipRules ? null : task.rules(parsed.data);
+        if (validRules(questions, raw))
+          rules = {
+            answers: raw.answers,
+            confidence: raw.confidence,
+            source: "rules",
+            evidence: raw.evidence ?? [],
+          };
       } catch {
         // A throwing rule is an undecided rule.
       }
@@ -493,7 +596,9 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
         results[index] = decided(start, task, rules, false, meta);
         return;
       }
-      if (!backend) {
+      const backend = backends[task.phase];
+      const skipped = backend ? skipReason(task, backend, effective.timeLimitMs) : undefined;
+      if (!backend || skipped) {
         results[index] = escalated(
           start,
           name,
@@ -501,7 +606,7 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
           rules ? "below_threshold" : "undecided",
           rules,
           false,
-          meta,
+          skipped ? { ...meta, backend: { skipped } } : meta,
         );
         return;
       }
@@ -509,6 +614,8 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
         index,
         task,
         input: parsed.data,
+        questions,
+        backend,
         settings: effective,
         rules,
         key: useCache ? cacheKey(task.name, task.version, parsed.data, backend.id) : null,
@@ -516,57 +623,68 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
       });
     });
 
-    if (pending.length > 0 && backend) {
-      // The batch gets the tightest time limit of its members, minus the time already spent.
-      const limit = Math.min(...pending.map((p) => p.settings.timeLimitMs)) - (now() - start);
-      const outcome =
-        limit <= 0
-          ? ("timeout" as const)
-          : await withDeadline(limit, ctx.signal, (signal) =>
-              backendStage(backend, pending, signal, limit),
+    // One request per backend (the phases may use different ones), all at once.
+    const groups = new Map<DecisionBackend, Pending[]>();
+    for (const item of pending)
+      groups.set(item.backend, [...(groups.get(item.backend) ?? []), item]);
+    await Promise.all(
+      [...groups].map(async ([backend, group]) => {
+        // The group gets the tightest time limit of its members, minus the time already spent.
+        const limit = Math.min(...group.map((p) => p.settings.timeLimitMs)) - (now() - start);
+        const outcome =
+          limit <= 0
+            ? ("timeout" as const)
+            : await withDeadline(limit, ctx.signal, (signal) =>
+                backendStage(backend, group, signal, limit),
+              );
+        for (const item of group) {
+          const stage: Stage =
+            typeof outcome === "string"
+              ? { kind: "failure", reason: outcome }
+              : (outcome.get(item.index) ?? { kind: "failure", reason: "backend_error" });
+          if (stage.kind === "failure" && stage.reason === "timeout") {
+            const key = timeoutKey(item.task, backend);
+            timeouts.set(key, (timeouts.get(key) ?? 0) + 1);
+          }
+          const notes = typeof outcome === "string" ? { failure: outcome } : stage.notes;
+          const meta = {
+            testId: item.testId,
+            attempt: item.attempt,
+            ...(notes ? { backend: notes } : {}),
+          };
+          if (stage.kind === "answer" && stage.answer.confidence >= item.settings.threshold) {
+            results[item.index] = decided(start, item.task, stage.answer, stage.cached, meta);
+          } else if (stage.kind === "answer") {
+            results[item.index] = escalated(
+              start,
+              item.task.name,
+              item.task,
+              "below_threshold",
+              better(item.rules, stage.answer),
+              stage.cached,
+              meta,
             );
-      for (const item of pending) {
-        const stage: Stage =
-          typeof outcome === "string"
-            ? { kind: "failure", reason: outcome }
-            : (outcome.get(item.index) ?? { kind: "failure", reason: "backend_error" });
-        const notes = typeof outcome === "string" ? { failure: outcome } : stage.notes;
-        const meta = {
-          testId: item.testId,
-          attempt: item.attempt,
-          ...(notes ? { backend: notes } : {}),
-        };
-        if (stage.kind === "answer" && stage.answer.confidence >= item.settings.threshold) {
-          results[item.index] = decided(start, item.task, stage.answer, stage.cached, meta);
-        } else if (stage.kind === "answer") {
-          results[item.index] = escalated(
-            start,
-            item.task.name,
-            item.task,
-            "below_threshold",
-            better(item.rules, stage.answer),
-            stage.cached,
-            meta,
-          );
-        } else {
-          results[item.index] = escalated(
-            start,
-            item.task.name,
-            item.task,
-            stage.reason,
-            item.rules,
-            false,
-            meta,
-          );
+          } else {
+            results[item.index] = escalated(
+              start,
+              item.task.name,
+              item.task,
+              stage.reason,
+              item.rules,
+              false,
+              meta,
+            );
+          }
         }
-      }
-    }
+      }),
+    );
     return results;
   }
 
   const api: Decisions = {
     tasks,
-    backend,
+    backend: backends.after,
+    backends,
     settingsFor,
     metrics: () => collector.snapshot(),
     decideBatch,

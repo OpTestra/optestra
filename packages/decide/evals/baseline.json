@@ -1,0 +1,30 @@
+{
+  "failure_cause": {
+    "cases": 50,
+    "decided": 45,
+    "escalated": 5,
+    "falseLabels": 0,
+    "decidedPct": 90
+  },
+  "flaky_or_real": {
+    "cases": 42,
+    "decided": 40,
+    "escalated": 2,
+    "falseLabels": 0,
+    "decidedPct": 95.2
+  },
+  "duplicate_or_new": {
+    "cases": 43,
+    "decided": 39,
+    "escalated": 4,
+    "falseLabels": 0,
+    "decidedPct": 90.7
+  },
+  "heal_class": {
+    "cases": 43,
+    "decided": 37,
+    "escalated": 6,
+    "falseLabels": 0,
+    "decidedPct": 86
+  }
+}
