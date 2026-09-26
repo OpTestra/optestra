@@ -26,7 +26,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
 
-  # Bench fixtures in a real browser. Kept out of `check` so it stays fast and browser-free.
+  # Bench fixtures and the browser harness in real browsers. Kept out of `check` so it
+  # stays fast and browser-free.
   fixtures:
     name: bench fixtures (ubuntu)
     runs-on: ubuntu-latest
@@ -41,18 +42,18 @@ jobs:
       - name: Read Playwright version
         id: playwright
         run: echo "version=$(pnpm --filter ./bench/fixtures/shop exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
-      - name: Cache Chromium
+      - name: Cache browsers
         id: browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
-      - name: Install Chromium
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium, Firefox and WebKit
         if: steps.browsers.outputs.cache-hit != 'true'
-        run: pnpm --filter ./bench/fixtures/shop exec playwright install --with-deps chromium
-      - name: Install Chromium system dependencies
+        run: pnpm --filter ./bench/fixtures/shop exec playwright install --with-deps chromium firefox webkit
+      - name: Install browser system dependencies
         if: steps.browsers.outputs.cache-hit == 'true'
-        run: pnpm --filter ./bench/fixtures/shop exec playwright install-deps chromium
+        run: pnpm --filter ./bench/fixtures/shop exec playwright install-deps chromium firefox webkit
       - run: pnpm bench:fixtures:test
       - name: Upload reports
         if: failure()

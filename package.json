@@ -16,8 +16,8 @@
     "brand:apply": "brand-sync apply",
     "brand:check": "brand-sync check",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm brand:check",
-    "bench:fixtures:install": "pnpm --filter \"./bench/fixtures/*\" exec playwright install chromium",
-    "bench:fixtures:test": "pnpm --filter \"./bench/fixtures/*\" --workspace-concurrency=1 run test:reference",
+    "bench:fixtures:install": "pnpm --filter \"./bench/fixtures/*\" exec playwright install chromium && pnpm --filter @testament/browser exec playwright install firefox webkit",
+    "bench:fixtures:test": "pnpm --filter \"./bench/fixtures/*\" --workspace-concurrency=1 run test:reference && pnpm --filter @testament/browser run test:browser",
     "changeset": "changeset",
     "version-packages": "changeset version"
   },

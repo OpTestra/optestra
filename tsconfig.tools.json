@@ -10,6 +10,8 @@
     "test",
     "vitest.config.ts",
     "bench/fixtures/*/e2e",
+    "packages/browser/e2e",
+    "packages/browser/vitest.config.ts",
     "bench/fixtures/*/playwright.config.ts"
   ]
 }

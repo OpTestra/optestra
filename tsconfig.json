@@ -8,6 +8,7 @@
     { "path": "packages/models" },
     { "path": "packages/spec" },
     { "path": "packages/decide" },
+    { "path": "packages/browser" },
     { "path": "packages/cli" },
     { "path": "packages/mcp" },
     { "path": "packages/action" },
