@@ -1,0 +1,337 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__billing-zero-due",
+  "testPath": "tests/billing-zero-due.test.md",
+  "target": "web",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "chromium",
+    "device": "laptop",
+    "environment": "local",
+    "model": "fixture/hand-written",
+    "promptVersion": "planner-v1"
+  },
+  "updatedAt": "2026-09-26T12:00:00.000Z",
+  "steps": [
+    {
+      "key": "ba8ec515221832df",
+      "textKey": "c4f3a1c2c1ab8ab2",
+      "route": "/login",
+      "text": "Go to /login",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "goto",
+            "url": "/login"
+          },
+          "fingerprint": null,
+          "expectPost": {},
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "fee215fde0226031",
+      "textKey": "99b98ca7e73a3ac0",
+      "route": "/login",
+      "text": "Fill \"Email\" with {{params.email}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "{{params.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#login-email"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "f8b84006aa2051c6",
+      "textKey": "601e4c8b381cca3e",
+      "route": "/login",
+      "text": "Fill \"Password\" with {{params.password}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "label",
+              "text": "Password",
+              "exact": true
+            },
+            "value": "{{params.password}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "label",
+              "text": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#login-password"
+              }
+            ],
+            "role": "",
+            "name": "Password",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "d4cfb673a893fa2a",
+      "textKey": "b47d7fbd6902a574",
+      "route": "/login",
+      "text": "Click \"Log in\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Log in",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Log in",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Log in",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#login-form > button"
+              }
+            ],
+            "role": "button",
+            "name": "Log in",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {
+            "urlChange": "/dashboard",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Dashboard"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "70bd6612d79b3476",
+      "textKey": "22cbbde96460059d",
+      "route": "/dashboard",
+      "text": "Go to the billing page",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "link",
+              "name": "Billing",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "link",
+              "name": "Billing",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Billing",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "nav a[href=\"/billing\"]"
+              }
+            ],
+            "role": "link",
+            "name": "Billing",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {
+            "urlChange": "/billing",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Billing"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "089ede1f96b46138",
+      "textKey": "5c6d25b275ab76c6",
+      "text": "the page heading is \"Dashboard\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "h1"
+        },
+        "match": "equals",
+        "value": "Dashboard"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "d5b19d8e11d341d4",
+      "textKey": "b3eebfad8abcf87c",
+      "text": "the page shows \"Pro plan\"",
+      "soft": false,
+      "check": {
+        "type": "element_state",
+        "target": {
+          "kind": "text",
+          "text": "Pro plan",
+          "exact": false
+        },
+        "state": "visible"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "ccce4275d1ce98a5",
+      "textKey": "8726b12d9000a355",
+      "text": "the page shows \"$0.00 due today\"",
+      "soft": false,
+      "check": {
+        "type": "element_state",
+        "target": {
+          "kind": "text",
+          "text": "$0.00 due today",
+          "exact": true
+        },
+        "state": "visible"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    }
+  ]
+}

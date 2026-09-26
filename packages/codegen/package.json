@@ -1,0 +1,40 @@
+{
+  "name": "@testament/codegen",
+  "version": "0.1.0",
+  "description": "Generates plain Playwright specs from recordings: portable test code you own, no runtime needed.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "default": "./dist/node/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "runtime"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test:browser": "tsc -b ../../bench/fixtures/shop . && vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@testament/brand": "workspace:^",
+    "@testament/config": "workspace:^",
+    "@testament/recording": "workspace:^",
+    "@testament/spec": "workspace:^",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@testament/fixture-shop": "workspace:*"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

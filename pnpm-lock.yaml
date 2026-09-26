@@ -73,6 +73,9 @@ importers:
       '@testament/browser':
         specifier: workspace:^
         version: link:../browser
+      '@testament/codegen':
+        specifier: workspace:^
+        version: link:../codegen
       '@testament/config':
         specifier: workspace:^
         version: link:../config
@@ -97,6 +100,31 @@ importers:
       commander:
         specifier: ^15.0.0
         version: 15.0.0
+
+  packages/codegen:
+    dependencies:
+      '@testament/brand':
+        specifier: workspace:^
+        version: link:../brand
+      '@testament/config':
+        specifier: workspace:^
+        version: link:../config
+      '@testament/recording':
+        specifier: workspace:^
+        version: link:../recording
+      '@testament/spec':
+        specifier: workspace:^
+        version: link:../spec
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@playwright/test':
+        specifier: 1.63.0
+        version: 1.63.0
+      '@testament/fixture-shop':
+        specifier: workspace:*
+        version: link:../../bench/fixtures/shop
 
   packages/config:
     dependencies:

@@ -7,6 +7,7 @@ import { registerBrowserCommands } from "./commands/browser.js";
 import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
 import { type DeciderSetupOptions, runDeciderSetup } from "./commands/decider.js";
 import { type DecisionsCommandOptions, runDecisionsCommand } from "./commands/decisions.js";
+import { type GenerateCommandOptions, runGenerateCommand } from "./commands/generate.js";
 import { type LintCommandOptions, runLintCommand } from "./commands/lint.js";
 import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
 import { type ResultsCommandOptions, runResultsCommand } from "./commands/results.js";
@@ -196,6 +197,24 @@ export function createProgram(): Command {
     .option("-C, --dir <path>", "project folder (default: the test's nearest project)")
     .action(async (file: string, options: AuthorCommandOptions) => {
       process.exitCode = await runAuthorCommand(file, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("generate")
+    .description(
+      "write the plain Playwright spec of each recorded test next to its recording (runs without this tool)",
+    )
+    .argument("[tests...]", "test files or folders (default: every recorded test)")
+    .option("--force", "overwrite generated files that were changed by hand")
+    .option("--check", "write nothing; exit 1 if a spec is out of date or changed by hand (for CI)")
+    .option("-e, --env <name>", "environment whose base URL and allowed domains the specs use")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (tests: string[], options: GenerateCommandOptions) => {
+      process.exitCode = await runGenerateCommand(tests, options, {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),
