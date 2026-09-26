@@ -80,7 +80,7 @@ describe("loadTests", () => {
     const loaded = await loadTests(dir, config);
     expect(loaded.dir).toBe("suite");
     expect(loaded.tests.map((t) => [t.id, t.path])).toEqual([
-      ["suite__login.test", "suite/login.test.md"],
+      ["suite__login", "suite/login.test.md"],
     ]);
     expect(loaded.flows.map((t) => t.path)).toEqual(["suite/flows/login.test.md"]);
     expect(loaded.tests[0]?.diagnostics.map((d) => d.code)).toEqual(["SECRET_UNDECLARED"]);

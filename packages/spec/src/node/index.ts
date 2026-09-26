@@ -10,6 +10,7 @@ import type { TestSpec } from "../model.js";
 import { parseTest } from "../parse.js";
 import type { TestsSettings } from "../section.js";
 import "../section.js";
+import "../lint/section.js";
 
 export const DEFAULT_TESTS: TestsSettings = { dir: "tests", include: ["**/*.test.md"] };
 const SKIP = new Set(["node_modules", "dist"]);

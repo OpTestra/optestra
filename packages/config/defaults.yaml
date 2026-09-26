@@ -34,6 +34,13 @@ tests:
   # Globs (relative to dir) of the files that are tests or flows.
   include: ["**/*.test.md"]
 
+# Test lint rules. The spec package registers this section.
+lint:
+  # Per-rule level (off | info | warning | error); unlisted rules use their default.
+  rules: {}
+  # Warnings count as errors for the exit code (CI).
+  strict: false
+
 # AI models (MOD-7): the ONLY place default model ids live. The models package
 # registers this section. A pool entry is used only when its provider's key is
 # available, so these pools switch on by themselves when the standard key env

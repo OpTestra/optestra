@@ -30,14 +30,14 @@ export interface ShowCommandOptions {
   json?: boolean;
 }
 
-interface Project {
+export interface Project {
   dir: string;
   /** Undefined when the folder has no project file: default settings, secrets unchecked. */
   config: Config | undefined;
   environment: string | undefined;
 }
 
-function openProject(io: CommandIo, options: { dir?: string; env?: string }): Project {
+export function openProject(io: CommandIo, options: { dir?: string; env?: string }): Project {
   const dir = options.dir ? resolve(io.cwd, options.dir) : (findProject(io.cwd) ?? io.cwd);
   if (!existsSync(projectFile(dir))) return { dir, config: undefined, environment: options.env };
   const loaded = loadProject(dir, { environment: options.env, env: io.env });

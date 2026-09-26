@@ -42,6 +42,9 @@ export const SPEC_DIAGNOSTIC_CODES = [
   "FLOW_PARAM_UNKNOWN",
   // Project
   "TESTS_DIR_MISSING",
+  // Lint (SPEC-1): every rule finding has code LINT and its `rule` id
+  "LINT",
+  "LINT_RULE_UNKNOWN",
 ] as const;
 
 export type SpecDiagnosticCode = (typeof SPEC_DIAGNOSTIC_CODES)[number];

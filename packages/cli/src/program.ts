@@ -2,6 +2,7 @@ import { brand } from "@testament/brand";
 import { version } from "@testament/core";
 import { Command } from "commander";
 import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
+import { type LintCommandOptions, runLintCommand } from "./commands/lint.js";
 import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
 import { type ResultsCommandOptions, runResultsCommand } from "./commands/results.js";
 import {
@@ -92,6 +93,25 @@ export function createProgram(): Command {
     .option("--json", "print machine-readable JSON")
     .action(async (file: string, options: ShowCommandOptions) => {
       process.exitCode = await runShowCommand(file, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("lint")
+    .description(
+      "check test files for problems and weak tests (exit 1 on errors, 2 if a file can't be parsed)",
+    )
+    .argument("[paths...]", "test files or folders (default: every test and flow in the project)")
+    .option("--fix", "apply the safe fixes (never changes an Expect:, Soft: or Never: line)")
+    .option("--strict", "count warnings as errors")
+    .option("-e, --env <name>", "environment whose overrides and vars apply")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .option("--json", "print machine-readable JSON")
+    .action(async (paths: string[], options: LintCommandOptions) => {
+      process.exitCode = await runLintCommand(paths, options, {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),

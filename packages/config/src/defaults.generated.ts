@@ -21,6 +21,10 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
     dir: "tests",
     include: ["**/*.test.md"],
   },
+  lint: {
+    rules: {},
+    strict: false,
+  },
   models: {
     providers: {
       anthropic: {

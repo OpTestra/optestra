@@ -32,7 +32,7 @@ describe("list", () => {
     expect(result.stdout).toContain("11 tests, 1 flow in tests/.");
     expect(result.stdout).toContain("No problems found.");
     expect(result.stdout).toMatch(
-      /tests__create-project\.test\s+A new project is saved\s+smoke, projects\s+13\s+0/,
+      /tests__create-project\s+A new project is saved\s+smoke, projects\s+13\s+0/,
     );
     expect(result.stdout).not.toContain("tests__flows__login");
   });
@@ -47,7 +47,7 @@ describe("list", () => {
       "tests/declined-card.test.md",
     ]);
     expect(output.flows).toEqual([
-      { id: "tests__flows__login.test", path: "tests/flows/login.test.md", name: "Log in" },
+      { id: "tests__flows__login", path: "tests/flows/login.test.md", name: "Log in" },
     ]);
   });
 });

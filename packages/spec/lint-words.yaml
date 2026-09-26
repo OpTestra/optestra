@@ -1,0 +1,251 @@
+# Word lists and patterns behind the lint rules. English only for now.
+# Tune here, then run `pnpm --filter ./packages/spec gen:words` (a test fails if
+# src/lint/words.generated.ts is out of date). Phrases match whole words,
+# case-insensitively. Patterns are JavaScript regular expressions (flag i).
+
+# vague-step: phrases that say nothing a browser can do.
+vaguePhrases:
+  - log in normally
+  - log in as usual
+  - login normally
+  - sign in normally
+  - do the usual
+  - the usual steps
+  - the usual way
+  - as usual
+  - as normal
+  - set things up
+  - set everything up
+  - set it up
+  - get set up
+  - check it works
+  - check that it works
+  - check everything works
+  - check everything
+  - make sure it works
+  - make sure everything works
+  - verify it works
+  - verify everything
+  - test it
+  - test everything
+  - do the thing
+  - do stuff
+  - and so on
+  - etc
+  - somehow
+  - whatever is needed
+  - if needed
+
+# vague-step: these verbs need a target; alone or with only a pronoun they fire.
+# Android verbs (tap, swipe, long press) count like web verbs.
+targetVerbs:
+  - click
+  - tap
+  - double click
+  - double tap
+  - long press
+  - press
+  - select
+  - choose
+  - pick
+  - open
+  - fill
+  - fill in
+  - type
+  - enter
+  - check
+  - uncheck
+  - toggle
+  - submit
+  - swipe
+  - scroll to
+  - upload
+  - go to
+  - navigate to
+emptyTargets:
+  - it
+  - this
+  - that
+  - them
+  - these
+  - those
+  - here
+  - there
+  - something
+  - anything
+  - stuff
+  - things
+  - the thing
+  - the button
+  - the link
+  - the field
+  - on it
+  - the form
+  - the page
+
+# expect-not-observable / vague-guard: nouns naming something on screen.
+elementNouns:
+  - heading
+  - title
+  - button
+  - message
+  - dialog
+  - modal
+  - popup
+  - field
+  - input
+  - textbox
+  - checkbox
+  - radio
+  - dropdown
+  - option
+  - list
+  - table
+  - row
+  - column
+  - cell
+  - image
+  - picture
+  - icon
+  - avatar
+  - link
+  - tab
+  - toast
+  - banner
+  - alert
+  - notification
+  - error
+  - warning
+  - label
+  - badge
+  - menu
+  - card
+  - form
+  - tooltip
+  - url
+  - address bar
+  - total
+  - price
+  - chart
+  - header
+  - footer
+  - sidebar
+  - section
+  - counter
+  - spinner
+  - page title
+# expect-not-observable: states a check can observe.
+stateWords:
+  - visible
+  - shown
+  - displayed
+  - hidden
+  - enabled
+  - disabled
+  - checked
+  - unchecked
+  - selected
+  - empty
+  - contains
+  - contain
+  - appears
+  - disappears
+  - open
+  - closed
+  - focused
+  - redirected
+  - says
+  - shows
+  - reads
+  - equals
+  - matches
+  - starts with
+  - ends with
+  - sorted
+
+# vague-guard: object words that name nothing specific.
+vagueGuardWords:
+  - anything
+  - something
+  - everything
+  - stuff
+  - things
+  - bad
+  - wrong
+  - break
+  - mess
+  - weird
+  - unexpected
+
+# missing-start: a first step starting with one of these navigates.
+navigationVerbs:
+  - go to
+  - open
+  - navigate to
+  - visit
+  - browse to
+  - launch
+  - start the app
+  - open the app
+  - load
+
+# destructive-undeclared (SAF-4): phrases that mean each destructive action.
+destructive:
+  delete: [delete, remove, erase, destroy, close account, close my account, deactivate]
+  pay: [pay, purchase, buy, place order, place the order, complete order, complete the order, complete purchase]
+  send: [send, resend, send email, send message]
+  invite: [invite]
+  cancel:
+    - cancel subscription
+    - cancel the subscription
+    - cancel my subscription
+    - cancel plan
+    - cancel the plan
+    - cancel order
+    - cancel the order
+    - cancel membership
+    - cancel booking
+    - cancel account
+    - unsubscribe
+
+# literal-credential: field words that take a credential, and the shortest
+# literal treated as a real one (shorter values are usually invalid-input tests).
+credentialFields:
+  password: PASSWORD
+  passcode: PASSCODE
+  passphrase: PASSPHRASE
+  pin: PIN
+  token: TOKEN
+  api key: API_KEY
+  apikey: API_KEY
+  access key: ACCESS_KEY
+  secret: SECRET
+credentialMinLength: 8
+# Values that look like keys or tokens wherever they appear.
+tokenPatterns:
+  - '\b(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]{10,}\b'
+  - '\bgh[pousr]_[A-Za-z0-9]{20,}\b'
+  - '\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{4,}\b'
+  - '\bAKIA[0-9A-Z]{16}\b'
+  - '\bxox[abprs]-[A-Za-z0-9-]{10,}\b'
+
+# fixed-email (ENV-3): a step or test that creates an account.
+signupWords:
+  - sign up
+  - signs up
+  - signing up
+  - signup
+  - sign-up
+  - register
+  - registration
+  - create an account
+  - create account
+  - create a new account
+  - join
+  - onboard
+  - onboarding
+
+# fixed-wait (LRN-4)
+fixedWaitPatterns:
+  - '\b(?:wait|sleep|pause)(?:\s+for)?\s+(?:about\s+)?\d+(?:\.\d+)?\s*(?:ms|milliseconds?|s|secs?|seconds?|m|mins?|minutes?)\b'
+  - '\bwaitForTimeout\s*\('

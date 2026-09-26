@@ -118,8 +118,8 @@ loader or merge change is needed. Register it when the owning package loads,
 before any config is loaded. Values in `defaults.yaml` under the same key win
 over `defaults`.
 
-Registered sections today: `models` (from `@testament/models`) and `tests` (from
-`@testament/spec`: where the test files are). Import the owning package before
+Registered sections today: `models` (from `@testament/models`), and `tests` (where
+the test files are) and `lint` (rule levels, strict) from `@testament/spec`. Import the owning package before
 loading config, or the section is reported as unknown. The full schema
 including `models` is `@testament/models/schema.json`.
 

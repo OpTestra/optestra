@@ -5,7 +5,9 @@
  * in `@testament/spec/node`. Importing this registers the `tests` config section.
  */
 import "./section.js";
+import "./lint/section.js";
 
+export { type CheckContext, type CheckResult, checkTest, isParseProblem } from "./check.js";
 export {
   diagnostic,
   hasSpecErrors,
@@ -50,6 +52,29 @@ export {
   TEXT_KEY_VERSION,
   textKey,
 } from "./key.js";
+export {
+  applySafeFixes,
+  type LintContext,
+  lintConfigDiagnostics,
+  lintProject,
+  lintTest,
+  ruleById,
+  ruleLevel,
+} from "./lint/lint.js";
+export { findCredentials, isObservable, LINT_RULES } from "./lint/rules.js";
+export { type LintSettings, lintSchema } from "./lint/section.js";
+export { applyEdits, isCheckStep, protectedLines } from "./lint/source.js";
+export {
+  type CheckedFile,
+  type Finding,
+  type Fix,
+  type LintRule,
+  RULE_IDS,
+  type RuleId,
+  type RuleLevel,
+  type TextEdit,
+} from "./lint/types.js";
+export { BUILT_IN_WORDS, type CompiledWords, compileWords, type LintWords } from "./lint/words.js";
 export * from "./model.js";
 export {
   declaredSecrets,
@@ -60,4 +85,15 @@ export {
 } from "./parse.js";
 export { printFrontmatter, printStep, printTest, withoutSource } from "./print.js";
 export { type TestsSettings, testsSchema } from "./section.js";
+export {
+  type CodeAction,
+  type CompletionItem,
+  type CompletionKind,
+  createLanguageService,
+  type Definition,
+  type Hover,
+  type LanguageService,
+  type LanguageServiceOptions,
+  type OutlineItem,
+} from "./service/index.js";
 export { parseTemplate, template, templateRefs } from "./template.js";

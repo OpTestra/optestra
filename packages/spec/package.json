@@ -12,14 +12,18 @@
     "./node": {
       "types": "./dist/node/index.d.ts",
       "default": "./dist/node/index.js"
-    }
+    },
+    "./lint-words.yaml": "./lint-words.yaml"
   },
   "files": [
     "dist",
-    "!dist/**/*.test.*"
+    "!dist/**/*.test.*",
+    "lint-words.yaml"
   ],
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "gen:words": "node scripts/gen-words.ts",
+    "gen:rule-docs": "node scripts/gen-rule-docs.ts"
   },
   "dependencies": {
     "@testament/config": "workspace:^",

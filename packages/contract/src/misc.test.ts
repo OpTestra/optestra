@@ -63,7 +63,11 @@ describe("testIdFromPath", () => {
   it("is stable, readable and folder-safe", () => {
     expect(testIdFromPath("tests/checkout/guest.md")).toBe("tests__checkout__guest");
     expect(testIdFromPath("./tests\\checkout\\guest.md")).toBe("tests__checkout__guest");
-    expect(testIdFromPath("smoke.test.md")).toBe("smoke.test");
+    expect(testIdFromPath("smoke.test.md")).toBe("smoke");
+    expect(testIdFromPath("tests/login.test.md")).toBe("tests__login");
+    expect(testIdFromPath("tests/flows/login.test.md")).toBe("tests__flows__login");
+    expect(testIdFromPath("tests/Login.test.md")).toMatch(/^tests__login-[0-9a-f]{8}$/);
+    expect(testIdFromPath("tests/notes.md")).toBe("tests__notes");
   });
 
   it("adds a hash when the path had to change, so ids never collide", () => {

@@ -12,7 +12,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/config` | Project file (YAML) schema, defaults, merge with provenance, diagnostics, environments, secrets, redactor. Browser-safe main entry + `/node` (also the redacting logger) + restricted `/reveal` | FND-1 |
 | `packages/models` | The one AI adapter: providers (via the Vercel AI SDK), role pools with failover, prices, usage caps, budgets, call records, key check. Registers the `models` config section | FND-2 |
 | `packages/contract` | The results contract: zod schemas, types and JSON Schema for runs, test results and live events; the run folder layout; `foldEvents`, `summarize`, `exitCodeFor`. Browser-safe main entry + `/node` (run writer/reader). Depends only on zod | FND-3 |
-| `packages/spec` | The test file format: `.test.md` parser, typed model, variables and generators, flow expansion, step keys (`textKey`), canonical printer, diagnostics with ranges; registers the `tests` config section. Browser-safe main entry + `/node` (project loading) | SPEC-0 |
+| `packages/spec` | The test file format: `.test.md` parser, typed model, variables and generators, flow expansion, step keys (`textKey`), canonical printer, diagnostics with ranges; lint rules, `checkTest` and the editor language service; registers the `tests` and `lint` config sections. Browser-safe main entry + `/node` (project loading) | SPEC-0, SPEC-1 |
 | `packages/core` | The engine: run, record, replay, heal, verdicts. Currently `version()`; re-exports the redacting `logger` (all engine logging goes through it) | engine phases |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
 | `packages/mcp` | MCP server for coding agents | agents phase |
@@ -63,6 +63,14 @@ contract ──► zod only (bottom of the graph)
   LOOP runs `ExpandedTest.steps` and builds `StepResult.key` from `textKey` +
   route + engine version. SPEC-1 adds lint rules and the editor language service
   on top of the same model. See `packages/spec/README.md` (the file-format reference).
+- SPEC-1 (done): lint and editor support, also in `packages/spec` (it needs the
+  model, positions and expansion, and a separate package would only add a
+  dependency hop). `checkTest(text, path, ctx)` is the one parse + expand + lint
+  answer for the CLI (`lint`), editors and cloud; rules are data-driven
+  (`lint-words.yaml`), a fix that touches an expectation line is never safe
+  (HEAL-3), and `createLanguageService` gives the desktop and web editors
+  diagnostics, completions, hover, code actions, format, outline and go-to-flow.
+  Test ids now drop the whole `.test.md` suffix (`tests/login.test.md` → `tests__login`).
 
 ## Results contract (`packages/contract`)
 
