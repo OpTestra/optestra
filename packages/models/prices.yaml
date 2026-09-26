@@ -1,0 +1,25 @@
+# Model prices: the ONE price table. USD per 1 million tokens.
+#   input       = uncached input tokens
+#   cachedInput = cache reads (defaults to input when absent)
+#   cacheWrite  = cache writes (defaults to input when absent)
+#   output      = output tokens
+# Projects override entries with `models.prices`. Models not listed here get
+# cost null and a warning: never a guess. Provider-reported cost (e.g. OpenRouter)
+# always wins over this table.
+# Checked 2026-09-26 against the providers' official pricing pages.
+
+# Anthropic: platform.claude.com/docs/en/about-claude/pricing (cacheWrite = 5-minute cache)
+claude-sonnet-5: { input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 10 }
+claude-haiku-4-5: { input: 1, cachedInput: 0.1, cacheWrite: 1.25, output: 5 }
+claude-haiku-4-5-20251001: { input: 1, cachedInput: 0.1, cacheWrite: 1.25, output: 5 }
+
+# OpenAI: developers.openai.com/api/docs/pricing
+gpt-6-astra: { input: 10, cachedInput: 1, output: 50 }
+gpt-6-sol: { input: 2, cachedInput: 0.2, output: 10 }
+gpt-6-luna: { input: 0.1, cachedInput: 0.01, output: 0.5 }
+
+# Google: ai.google.dev/gemini-api/docs/pricing (prompts up to 200k tokens)
+# gemini-3.8-flash: promotional price until 2026-12-31, then 1.5 / 0.15 / 7.5.
+gemini-3.8-flash: { input: 0.75, cachedInput: 0.075, output: 3.75 }
+gemini-3.5-flash-lite: { input: 0.3, output: 2.5 }
+gemini-3.1-pro-preview: { input: 2, cachedInput: 0.2, output: 12 }

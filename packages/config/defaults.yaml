@@ -26,3 +26,35 @@ run:
     # Caps in US dollars (enforced from the models phase on).
     maxPerRunUsd: 1
     maxPerSuiteUsd: 10
+
+# AI models (MOD-7): the ONLY place default model ids live. The models package
+# registers this section. A pool entry is used only when its provider's key is
+# available, so these pools switch on by themselves when the standard key env
+# var is set (ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY).
+models:
+  providers:
+    anthropic:
+      kind: anthropic
+      keySecret: ANTHROPIC_API_KEY
+    openai:
+      kind: openai
+      keySecret: OPENAI_API_KEY
+    google:
+      kind: google
+      keySecret: GEMINI_API_KEY
+  # Ordered pool per role: the first healthy entry answers (MOD-8).
+  roles:
+    # Writes and re-records tests: Sonnet-class models.
+    planner:
+      - { provider: anthropic, model: claude-sonnet-5 }
+      - { provider: openai, model: gpt-6-sol }
+      - { provider: google, model: gemini-3.8-flash }
+    # Cheap, fast single-step heals.
+    fixer:
+      - { provider: anthropic, model: claude-haiku-4-5 }
+      - { provider: openai, model: gpt-6-luna }
+      - { provider: google, model: gemini-3.5-flash-lite }
+  # Per-model price overrides (USD per million tokens); the base table ships with the models package.
+  prices: {}
+  # Maximum time for one model request, in seconds.
+  timeoutSeconds: 120

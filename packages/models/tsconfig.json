@@ -5,10 +5,5 @@
     "outDir": "dist"
   },
   "include": ["src"],
-  "references": [
-    { "path": "../brand" },
-    { "path": "../config" },
-    { "path": "../core" },
-    { "path": "../models" }
-  ]
+  "references": [{ "path": "../brand" }, { "path": "../config" }]
 }

@@ -11,7 +11,7 @@ Loading is pure parsing: no code in config is ever executed.
 | Import | Use | Runs in |
 |---|---|---|
 | `@testament/config` | schema, types, defaults, `resolveConfig`, diagnostics, `configJsonSchema`, `registerSection` | browser and Node |
-| `@testament/config/node` | `findProject`, `loadProject`, `saveProject`, `createProject`, `.env` parsing, secret sources, `resolveSecrets`, `Redactor` | Node |
+| `@testament/config/node` | `findProject`, `loadProject`, `saveProject`, `createProject`, `.env` parsing, secret sources, `resolveSecrets`, `Redactor`, the redacting logger (`createLogger`, `logger`; core re-exports them) | Node |
 | `@testament/config/reveal` | `revealSecret`: **restricted** (see below) | Node |
 | `@testament/config/schema.json` | JSON Schema of the project file (generated at build) | editors, settings forms |
 
@@ -73,8 +73,11 @@ URL-encoded, form-encoded, JSON-escaped and base64/base64url forms) is registere
 with the process-wide `defaultRedactor`. The engine logger in `core` passes every
 line through it.
 
-**`@testament/config/reveal` is restricted.** Only the browser and Android drivers
-may import it, to type a value into an allowed domain (from the AUTH phase on).
+**`@testament/config/reveal` is restricted.** Only two places may import it:
+- the browser and Android drivers, to type a value into an allowed domain (from
+  the AUTH phase on);
+- `packages/models`, to send a provider key to that provider's own host.
+
 Nothing else may: not logging, reports, AI prompts or the apps.
 
 Known limit: a secret embedded inside a larger encoded blob (for example
@@ -114,6 +117,10 @@ The section then shows up in validation, defaults, env vars
 loader or merge change is needed. Register it when the owning package loads,
 before any config is loaded. Values in `defaults.yaml` under the same key win
 over `defaults`.
+
+Registered sections today: `models` (from `@testament/models`; import that package
+before loading config, or the section is reported as unknown). The full schema
+including `models` is `@testament/models/schema.json`.
 
 After editing `defaults.yaml`, run `pnpm --filter ./packages/config gen:defaults`.
 A test fails if you forget.

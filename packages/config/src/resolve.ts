@@ -105,7 +105,7 @@ function hostOf(url: unknown): string | undefined {
 function describeIssue(issue: z.core.$ZodIssue): string {
   switch (issue.code) {
     case "invalid_type":
-      return `a ${issue.expected}`;
+      return `${/^[aeiou]/.test(issue.expected) ? "an" : "a"} ${issue.expected}`;
     case "invalid_value":
       return `one of ${issue.values.map((v) => JSON.stringify(v)).join(", ")}`;
     case "too_small":

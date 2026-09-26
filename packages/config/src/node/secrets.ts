@@ -1,5 +1,5 @@
-import type { Config } from "../schema.js";
 import type { Diagnostic } from "../diagnostics.js";
+import type { Config } from "../schema.js";
 import { readDotenvFile } from "./dotenv.js";
 import type { Redactor } from "./redactor.js";
 import { createSecretValue, type SecretValue, withDomains } from "./secret-value.js";

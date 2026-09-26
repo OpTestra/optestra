@@ -7,7 +7,7 @@ export {
   type LoggerOptions,
   type LogLevel,
   logger,
-} from "./logger.js";
+} from "@testament/config/node";
 
 const pkg = createRequire(import.meta.url)("../package.json") as { version: string };
 

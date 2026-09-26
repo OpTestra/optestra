@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
-import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
+import { parse } from "yaml";
 import { z } from "zod";
 import { configJsonSchema } from "./json-schema.js";
 import { SAMPLE_CONFIG_PATH } from "./sample.test-support.js";

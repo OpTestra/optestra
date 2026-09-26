@@ -1,6 +1,6 @@
-import { Redactor } from "@testament/config/node";
 import { describe, expect, it } from "vitest";
 import { createLogger } from "./logger.js";
+import { Redactor } from "./redactor.js";
 
 describe("logger", () => {
   const redactor = new Redactor();

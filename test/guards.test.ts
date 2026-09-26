@@ -3,8 +3,8 @@ import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-// Guarantees 1 and 4: the engine never reaches into the closed apps repo,
-// ships no telemetry and makes no network calls.
+// Guarantees: the engine never reaches into the closed apps repo, ships no
+// telemetry, and makes network calls only through the models transport.
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const self = fileURLToPath(import.meta.url);
@@ -31,10 +31,23 @@ describe("engine guards", () => {
     expect(offenders(code, /\.\.\/apps\b|["'`]apps\//)).toEqual([]);
   });
 
-  it("makes no network calls", () => {
+  // THE single network exception (FND-2): the models package, and within it only
+  // transport.ts, which pins every request to the configured provider's host.
+  const NETWORK_EXCEPTION = "packages/models/src/transport.ts";
+  const AI_SDK_PACKAGE = "packages/models/";
+
+  it("makes no network calls outside the one allowed transport file", () => {
     const network =
-      /\bfetch\s*\(|node:(https?|http2|net|dgram|tls)\b|from\s+["'](https?|net|dgram|tls|undici|axios|got|node-fetch)["']|\bWebSocket\b|XMLHttpRequest/;
-    expect(offenders(source, network)).toEqual([]);
+      /\bfetch\s*\(|globalThis\.fetch|node:(https?|http2|net|dgram|tls)\b|from\s+["'](https?|net|dgram|tls|undici|axios|got|node-fetch)["']|\bWebSocket\b|XMLHttpRequest/;
+    expect(offenders(source, network).filter((file) => file !== NETWORK_EXCEPTION)).toEqual([]);
+  });
+
+  it("uses the AI SDK only inside the models package", () => {
+    const aiSdk = /from\s+["'](ai|@ai-sdk\/[^"']+)["']/;
+    expect(offenders(source, aiSdk).filter((file) => !file.startsWith(AI_SDK_PACKAGE))).toEqual([]);
+    const manifests = code.filter((f) => f.endsWith("package.json"));
+    const dependsOnSdk = /"(ai|@ai-sdk\/[^"]+)"\s*:/;
+    expect(offenders(manifests, dependsOnSdk)).toEqual([`${AI_SDK_PACKAGE}package.json`]);
   });
 
   it("depends on no telemetry or analytics libraries", () => {

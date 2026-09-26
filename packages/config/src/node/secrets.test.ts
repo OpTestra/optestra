@@ -1,7 +1,7 @@
 import { inspect } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, sampleProject, tempDir } from "../sample.test-support.js";
 import { revealSecret } from "../reveal.js";
+import { cleanup, sampleProject, tempDir } from "../sample.test-support.js";
 import { loadProject } from "./project.js";
 import { Redactor } from "./redactor.js";
 import { createSecretValue } from "./secret-value.js";

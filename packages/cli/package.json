@@ -20,6 +20,7 @@
     "@testament/brand": "workspace:^",
     "@testament/config": "workspace:^",
     "@testament/core": "workspace:^",
+    "@testament/models": "workspace:^",
     "commander": "^15.0.0"
   },
   "files": [

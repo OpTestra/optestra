@@ -4,6 +4,14 @@
  */
 export { type DotenvResult, parseDotenv, readDotenvFile } from "./dotenv.js";
 export {
+  createLogger,
+  type LogFields,
+  type Logger,
+  type LoggerOptions,
+  type LogLevel,
+  logger,
+} from "./logger.js";
+export {
   applyPatch,
   type CreateProjectOptions,
   type CreateProjectResult,

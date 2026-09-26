@@ -1,14 +1,18 @@
 # Architecture (engine)
 
+Repos: this engine is `TestamentHQ/testament` (MIT, public at launch); the closed
+apps and cloud live in `TestamentHQ/platform` (checked out as `../apps`).
+
 pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 (project references) into its own `dist/`.
 
 | Package | Role | Filled in by |
 |---|---|---|
 | `packages/brand` | `brand.json`, the only source of product naming, its typed export, and the `brand-sync` tool behind `brand:apply` / `brand:check` | FND-0 |
-| `packages/config` | Project file (YAML) schema, defaults, merge with provenance, diagnostics, environments, secrets, redactor. Browser-safe main entry + `/node` + restricted `/reveal` | FND-1 |
+| `packages/config` | Project file (YAML) schema, defaults, merge with provenance, diagnostics, environments, secrets, redactor. Browser-safe main entry + `/node` (also the redacting logger) + restricted `/reveal` | FND-1 |
+| `packages/models` | The one AI adapter: providers (via the Vercel AI SDK), role pools with failover, prices, usage caps, budgets, call records, key check. Registers the `models` config section | FND-2 |
 | `packages/contract` | Versioned results contract: run events, results, artifact layout | FND-3 |
-| `packages/core` | The engine: run, record, replay, heal, verdicts. Currently `version()` and the redacting `logger` (all engine logging goes through it) | engine phases |
+| `packages/core` | The engine: run, record, replay, heal, verdicts. Currently `version()`; re-exports the redacting `logger` (all engine logging goes through it) | engine phases |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
 | `packages/mcp` | MCP server for coding agents | agents phase |
 | `packages/action` | GitHub Action (`action.yml`) | GitHub/CI phase |
@@ -18,16 +22,17 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 
 ```
 cli ──► core ──► config ──► brand
- │        │                   ▲
- │        └──► contract (FND-3), model adapter (FND-2)
- └──────────────────────────────┘  everything that shows a name reads brand
+ │                 ▲          ▲
+ └──► models ──────┘──────────┘   (models never imports core, so core can use models later)
 mcp, action ──► core, contract (later)
 ```
 
 - The engine is self-contained. It never imports or references the apps repo;
   the arrow only points apps → engine (`test/guards.test.ts` enforces this).
-- No telemetry and no network calls in engine code (also enforced by the guard test).
-  Model calls in FND-2 go through the adapter layer, only when the user asks.
+- No telemetry. **One network exception:** `packages/models/src/transport.ts`, the
+  only file allowed to make network calls. It sends requests only to configured
+  provider hosts, and only when a caller asks for a completion or key check. Only
+  `packages/models` may depend on the AI SDK. `test/guards.test.ts` enforces all of this.
 - Apps consume these packages by semver, never by copying code.
 
 ## Where future phases plug in
@@ -35,9 +40,9 @@ mcp, action ──► core, contract (later)
 - FND-1 (done): `packages/config`. Project file `{name}.config.yaml`, resolution
   order defaults → project → environment overrides → env vars → run options.
   See `packages/config/README.md`.
-- FND-2 AI model adapter and provider pool: its own package, used by `core`. It
-  registers a `models` config section (`registerSection`) and puts model
-  defaults in `packages/config/defaults.yaml`.
+- FND-2 (done): `packages/models`. `createModels(...).complete(role, request)`,
+  a `models` config section, default model ids in `packages/config/defaults.yaml`,
+  and prices in `packages/models/prices.yaml`. See `packages/models/README.md`.
 - FND-3 results contract: `contract`, consumed by every reader (CLI, MCP, apps).
 - FND-4 demo site and first fixture: `bench/`.
 

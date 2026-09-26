@@ -1,4 +1,4 @@
-import { defaultRedactor, type Redactor } from "@testament/config/node";
+import { defaultRedactor, type Redactor } from "./redactor.js";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
