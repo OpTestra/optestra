@@ -1,0 +1,38 @@
+# Sample project with a local and a staging environment.
+# Tests copy this file into a temporary folder under the real project file name,
+# with env -> .env and env.<name> -> .env.<name>.
+version: 1
+
+project:
+  name: Acme Shop # shown in the apps
+  target: web
+
+defaultEnvironment: local
+
+environments:
+  local:
+    baseUrl: http://localhost:3000
+  staging:
+    baseUrl: https://staging.acme.test
+    # Tests may also visit the login service.
+    allowedDomains: [staging.acme.test, auth.acme.test]
+    vars:
+      PLAN: pro
+    # Overrides for this environment only.
+    run:
+      retries: 2
+    secrets:
+      TEST_PASSWORD:
+        domains: [auth.acme.test]
+
+secrets:
+  TEST_PASSWORD:
+    domains: [localhost]
+    description: Password of the test user
+  API_TOKEN:
+    domains: [staging.acme.test, localhost]
+
+run:
+  healPolicy: review
+  budget:
+    maxPerRunUsd: 0.5

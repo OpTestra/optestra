@@ -6,8 +6,9 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | Package | Role | Filled in by |
 |---|---|---|
 | `packages/brand` | `brand.json`, the only source of product naming, its typed export, and the `brand-sync` tool behind `brand:apply` / `brand:check` | FND-0 |
+| `packages/config` | Project file (YAML) schema, defaults, merge with provenance, diagnostics, environments, secrets, redactor. Browser-safe main entry + `/node` + restricted `/reveal` | FND-1 |
 | `packages/contract` | Versioned results contract: run events, results, artifact layout | FND-3 |
-| `packages/core` | The engine: run, record, replay, heal, verdicts. Currently only `version()` | FND-1+, engine phases |
+| `packages/core` | The engine: run, record, replay, heal, verdicts. Currently `version()` and the redacting `logger` (all engine logging goes through it) | engine phases |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
 | `packages/mcp` | MCP server for coding agents | agents phase |
 | `packages/action` | GitHub Action (`action.yml`) | GitHub/CI phase |
@@ -16,9 +17,10 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 ## Dependency direction
 
 ```
-cli ──► core ──► contract
- │        (config, model adapter: FND-1/2)
- └────► brand ◄── everything that shows a name
+cli ──► core ──► config ──► brand
+ │        │                   ▲
+ │        └──► contract (FND-3), model adapter (FND-2)
+ └──────────────────────────────┘  everything that shows a name reads brand
 mcp, action ──► core, contract (later)
 ```
 
@@ -30,9 +32,12 @@ mcp, action ──► core, contract (later)
 
 ## Where future phases plug in
 
-- FND-1 config, environments and secrets: new module in `core` (config file name
-  and data dir name come from `brand`).
-- FND-2 AI model adapter and provider pool: its own package, used by `core`.
+- FND-1 (done): `packages/config`. Project file `{name}.config.yaml`, resolution
+  order defaults → project → environment overrides → env vars → run options.
+  See `packages/config/README.md`.
+- FND-2 AI model adapter and provider pool: its own package, used by `core`. It
+  registers a `models` config section (`registerSection`) and puts model
+  defaults in `packages/config/defaults.yaml`.
 - FND-3 results contract: `contract`, consumed by every reader (CLI, MCP, apps).
 - FND-4 demo site and first fixture: `bench/`.
 

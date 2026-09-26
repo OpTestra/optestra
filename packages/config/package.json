@@ -1,0 +1,40 @@
+{
+  "name": "@testament/config",
+  "version": "0.1.0",
+  "description": "Project config: schema, defaults, merge with provenance, diagnostics, environments and secrets.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "default": "./dist/node/index.js"
+    },
+    "./reveal": {
+      "types": "./dist/reveal.d.ts",
+      "default": "./dist/reveal.js"
+    },
+    "./schema.json": "./dist/config.schema.json",
+    "./defaults.yaml": "./defaults.yaml"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "defaults.yaml"
+  ],
+  "scripts": {
+    "build": "tsc -b && node dist/write-schema.js",
+    "gen:defaults": "node scripts/gen-defaults.ts"
+  },
+  "dependencies": {
+    "@testament/brand": "workspace:^",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.5"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

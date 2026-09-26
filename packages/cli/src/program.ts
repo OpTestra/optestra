@@ -1,6 +1,7 @@
 import { brand } from "@testament/brand";
 import { version } from "@testament/core";
 import { Command } from "commander";
+import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
 
 export function createProgram(): Command {
   const program = new Command()
@@ -10,6 +11,21 @@ export function createProgram(): Command {
     )
     .version(version(), "-v, --version", "print the engine version")
     .helpOption("-h, --help", "show this help");
+
+  program
+    .command("config")
+    .description("show the resolved project settings for an environment and where each came from")
+    .option("-e, --env <name>", "environment to resolve")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .option("--json", "print machine-readable JSON")
+    .action((options: ConfigCommandOptions) => {
+      process.exitCode = runConfigCommand(options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
   program.action(() => program.help());
   return program;
 }

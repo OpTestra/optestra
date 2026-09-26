@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "packages/brand" },
+    { "path": "packages/config" },
     { "path": "packages/contract" },
     { "path": "packages/core" },
     { "path": "packages/cli" },

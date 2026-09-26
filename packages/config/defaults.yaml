@@ -1,0 +1,28 @@
+# Built-in defaults: the ONE place for default values (config over code).
+# Resolution order, lowest to highest:
+#   these defaults -> project file -> selected environment's overrides
+#   -> environment variables -> run options from the caller (CLI flags / app).
+# Objects merge key by key; arrays and plain values replace.
+# A "*" entry inside a map applies to every entry of that map.
+# Later phases add their sections' defaults here (e.g. models in FND-2).
+
+environments:
+  "*":
+    production: false
+    vars: {}
+
+secrets: {}
+
+run:
+  # Maximum time for one test, in seconds.
+  timeoutSeconds: 300
+  # Extra attempts after a failure before the test is reported as failed.
+  retries: 1
+  # strict: never heal | review: propose fixes for approval | auto: apply and flag
+  healPolicy: review
+  # replay-only: never call AI | normal: AI only when a step breaks | rerecord: record again
+  mode: normal
+  budget:
+    # Caps in US dollars (enforced from the models phase on).
+    maxPerRunUsd: 1
+    maxPerSuiteUsd: 10

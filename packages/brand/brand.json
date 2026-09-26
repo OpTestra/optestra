@@ -6,6 +6,6 @@
   "desktopAppName": "{Name}",
   "webAppName": "{Name}",
   "domain": "{name}.dev",
-  "configFileName": "{name}.config.ts",
+  "configFileName": "{name}.config.yaml",
   "dataDirName": ".{name}"
 }
