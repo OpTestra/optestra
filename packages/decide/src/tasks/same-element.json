@@ -1,0 +1,29 @@
+{
+  "$comment": "Signal weights and thresholds for same_element (DEC-3). A signal scores from -1 (says different) to 1 (says same); the combined score is the weighted mean over the signals that are known. Rules decide from the signals; the combined score ranks candidates.",
+  "weights": {
+    "role": 3,
+    "name": 3,
+    "text": 1,
+    "test_id": 2,
+    "attributes": 1.5,
+    "anchor": 2,
+    "frame": 3,
+    "position": 0.5
+  },
+  "nameScores": {
+    "equal": 1,
+    "near": 0.8,
+    "synonym": 0.8,
+    "partial": 0,
+    "different": -0.6,
+    "opposite": -1
+  },
+  "keyAttributes": ["name", "type", "href", "for", "placeholder", "alt", "title", "aria-label"],
+  "position": {
+    "nearPx": 16,
+    "farPx": 600
+  },
+  "rank": {
+    "margin": 0.15
+  }
+}

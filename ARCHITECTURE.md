@@ -162,6 +162,18 @@ contract ──► zod only (bottom of the graph)
   `inbox check`, `inbox last`. The Mailpit e2e runs in the `fixtures` CI job with a
   Mailpit service. AUTH-1 wires it all into runs. See `packages/auth/README.md`.
 
+- DEC-3 (done): the during-run decisions in `@testament/decide`:
+  - `same_element`: weighted identity signals from `same-element.json`. It never
+    guesses "same"; anything doubtful escalates, with per-signal evidence.
+  - `miss_action`: the HEAL-1 healing ladder: block → no_heal (the right element
+    did nothing) → replay_fallback → refind → no_heal (strict) → call_fixer → block.
+
+  LOOP-4 and HEAL call the browser-safe helpers `decideSameElement`,
+  `rankCandidates` (a clear, margin-separated match or `ambiguous`, never a
+  random pick), `decideMiss` and `missContext`. They take the recording's
+  Fingerprint and the browser's ElementFacts structurally, without importing
+  either package. Eval sets are built from the shop's correct vs cosmetic builds.
+
 ## Results contract (`packages/contract`)
 
 The one format every reader uses: CLI, HTML report, PR comment, MCP server,

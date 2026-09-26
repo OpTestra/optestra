@@ -26,5 +26,19 @@
     "escalated": 6,
     "falseLabels": 0,
     "decidedPct": 86
+  },
+  "same_element": {
+    "cases": 67,
+    "decided": 57,
+    "escalated": 10,
+    "falseLabels": 0,
+    "decidedPct": 85.1
+  },
+  "miss_action": {
+    "cases": 41,
+    "decided": 41,
+    "escalated": 0,
+    "falseLabels": 0,
+    "decidedPct": 100
   }
 }

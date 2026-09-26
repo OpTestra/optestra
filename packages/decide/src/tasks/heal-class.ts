@@ -62,7 +62,7 @@ export const looseName = (name: string | null) =>
         .trim();
 
 const phrase = (text: string) => ` ${text} `;
-function opposite(a: string, b: string): [string, string] | undefined {
+export function opposite(a: string, b: string): [string, string] | undefined {
   const left = phrase(a);
   const right = phrase(b);
   for (const [x, y] of OPPOSITES) {
@@ -73,7 +73,7 @@ function opposite(a: string, b: string): [string, string] | undefined {
 }
 
 /** Both names say the same thing in different words (from the synonyms list). */
-function synonymous(a: string, b: string): string[] | undefined {
+export function synonymous(a: string, b: string): string[] | undefined {
   const swap = (text: string, from: string, to: string) =>
     phrase(text).replaceAll(phrase(from), phrase(to)).trim();
   for (const group of SYNONYMS) {

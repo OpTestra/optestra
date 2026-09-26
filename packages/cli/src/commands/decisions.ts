@@ -353,8 +353,21 @@ async function runEvalCommand(options: DecisionsCommandOptions, io: CommandIo): 
     }
     if (backend.warmUp) await backend.warmUp({ timeoutMs: project.settings.laya.warmUpTimeoutMs });
   }
+  // Comparing models: lift the during-run limits so a slow model (Jev) is measured, not skipped.
+  const DURING = ["page_is_error", "same_element", "miss_action"];
+  const settings = backend
+    ? {
+        ...project.settings,
+        tasks: {
+          ...project.settings.tasks,
+          ...Object.fromEntries(
+            DURING.map((t) => [t, { ...project.settings.tasks[t], timeLimitMs: 10_000 }]),
+          ),
+        },
+      }
+    : project.settings;
   const decisions = createDecisions({
-    config: { decisions: project.settings },
+    config: { decisions: settings },
     backend,
     bypassCache: true,
     ...(options.modelOnly && backend ? { skipRules: true } : {}),
@@ -380,7 +393,7 @@ async function runEvalCommand(options: DecisionsCommandOptions, io: CommandIo): 
       `${r.byRules}/${r.byModel}`,
     ]);
     const lines = [
-      `Eval  after-run decisions · ${choice === "rules" ? "rules only" : options.modelOnly ? `${choice} alone (rules off)` : `rules → ${choice}`}`,
+      `Eval  decisions · ${choice === "rules" ? "rules only" : options.modelOnly ? `${choice} alone (rules off)` : `rules → ${choice}`}`,
       "",
       table([
         [
@@ -416,6 +429,11 @@ async function runEvalCommand(options: DecisionsCommandOptions, io: CommandIo): 
           (m) =>
             `  ${m.task} ${m.id}: expected ${m.expected}, got ${m.got} (${m.source}, ${m.confidence})`,
         ),
+      );
+    if (backend)
+      lines.push(
+        "",
+        "During-run tasks ran with their 100 ms limit lifted, to compare models; in a run a model slower than the limit is skipped.",
       );
     if (usage)
       lines.push(
