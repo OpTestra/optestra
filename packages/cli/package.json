@@ -24,6 +24,7 @@
     "@testament/core": "workspace:^",
     "@testament/decide": "workspace:^",
     "@testament/models": "workspace:^",
+    "@testament/recording": "workspace:^",
     "@testament/spec": "workspace:^",
     "commander": "^15.0.0"
   },

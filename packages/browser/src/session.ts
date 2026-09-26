@@ -39,6 +39,8 @@ import type {
   CandidatesResult,
   CloseResult,
   DialogSummary,
+  HookRequest,
+  HookResult,
   LocatorCandidate,
   LocatorSpec,
   Observation,
@@ -370,6 +372,59 @@ export class Session {
   /** Current URL of the page (scrubbed). */
   get url(): string {
     return this.#redact(this.#page.isClosed() ? "" : this.#page.url());
+  }
+
+  /**
+   * Sends a setup/teardown request (AUT-10) with the session's cookies, through
+   * Playwright's request context. Allowlisted, no redirects followed. Not part
+   * of the action set: the agent has no tool for it.
+   */
+  async hookRequest(request: HookRequest): Promise<HookResult> {
+    if (this.#unusable()) return { status: "error", message: "The session is closed." };
+    let url: URL;
+    try {
+      url = this.#options.baseUrl
+        ? new URL(request.target, this.#options.baseUrl)
+        : new URL(request.target);
+    } catch {
+      return {
+        status: "refused",
+        reason: "invalid_action",
+        message: `"${request.target}" is not a valid URL.`,
+      };
+    }
+    if (!this.#allowlist.allowsUrl(url)) {
+      this.#refuse({ url: url.href, type: "fetch", frame: "" });
+      return {
+        status: "refused",
+        reason: "disallowed_domain",
+        message: this.#redact(`${url.host || url.protocol} is not in the allowed domains.`),
+      };
+    }
+    try {
+      const response = await this.#context.request.fetch(url.href, {
+        method: request.method,
+        ...(request.body !== undefined ? { data: request.body as never } : {}),
+        ...(request.headers ? { headers: request.headers } : {}),
+        maxRedirects: 0,
+        timeout: request.timeoutMs ?? NAVIGATION_TIMEOUT_MS,
+      });
+      const httpStatus = response.status();
+      if (response.ok()) return { status: "ok", httpStatus };
+      const body = (await response.text().catch(() => "")).slice(0, 300);
+      return {
+        status: "failed",
+        httpStatus,
+        message: this.#redact(
+          `${request.method} ${url.pathname} answered ${httpStatus}${body ? `: ${body}` : ""}`,
+        ),
+      };
+    } catch (error) {
+      return {
+        status: "error",
+        message: this.#redact(errorResult(error).message ?? "request failed"),
+      };
+    }
   }
 
   /** Every refusal so far. */

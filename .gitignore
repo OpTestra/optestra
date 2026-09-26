@@ -9,3 +9,8 @@ coverage/
 # Local data dir (managed by brand:apply)
 # brand:next {dataDirName}/
 .testament/
+# Recordings next to the tests are committed (REP-1); only their authoring reports stay local.
+# brand:next !**/tests/{dataDirName}/
+!**/tests/.testament/
+# brand:next **/tests/{dataDirName}/authoring/
+**/tests/.testament/authoring/

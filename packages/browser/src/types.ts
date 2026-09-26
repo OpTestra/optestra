@@ -292,6 +292,26 @@ export interface EvidenceFile {
   scrubbed: true;
 }
 
+/** A setup/teardown request (AUT-10). Not an agent action: the model can't call it. */
+export interface HookRequest {
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  /** A path on the app (resolved against baseUrl) or an absolute http(s) URL. */
+  target: string;
+  /** Objects are sent as JSON. */
+  body?: unknown;
+  headers?: Record<string, string>;
+  timeoutMs?: number;
+}
+
+export interface HookResult {
+  status: "ok" | "refused" | "failed" | "error";
+  /** HTTP status when a response came back. */
+  httpStatus?: number;
+  reason?: "disallowed_domain" | "invalid_action";
+  /** Scrubbed; for failures, the start of the response body. */
+  message?: string;
+}
+
 export interface CloseResult {
   evidence: EvidenceFile[];
   refused: Refusal[];

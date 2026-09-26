@@ -1,0 +1,19 @@
+# Acme Shop as a project: the demo project (ONB-5) and the Bench fixture.
+# Start the shop first: pnpm --filter @testament/fixture-shop start -- --port 4100
+version: 1
+
+project:
+  name: Acme Shop
+  target: web
+
+defaultEnvironment: local
+
+environments:
+  local:
+    baseUrl: http://127.0.0.1:4100
+    allowedDomains: [127.0.0.1]
+
+secrets:
+  SHOP_PASSWORD:
+    domains: [127.0.0.1]
+    description: Password of the seeded user ada@example.com

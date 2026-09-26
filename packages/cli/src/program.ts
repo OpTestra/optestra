@@ -2,6 +2,7 @@ import { brand } from "@testament/brand";
 import { version } from "@testament/core";
 import { createInterface } from "node:readline/promises";
 import { Command } from "commander";
+import { type AuthorCommandOptions, runAuthorCommand } from "./commands/author.js";
 import { registerBrowserCommands } from "./commands/browser.js";
 import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
 import { type DeciderSetupOptions, runDeciderSetup } from "./commands/decider.js";
@@ -170,6 +171,26 @@ export function createProgram(): Command {
     .option("--json", "print machine-readable JSON")
     .action(async (paths: string[], options: LintCommandOptions) => {
       process.exitCode = await runLintCommand(paths, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("author")
+    .description(
+      "let the AI carry out a test's steps once and save the recording that later runs replay",
+    )
+    .argument("<file>", "the .test.md file")
+    .option("-e, --env <name>", "environment to run against")
+    .option("--headed", "show the browser window")
+    .option("--device <preset>", "device preset, e.g. desktop, laptop, iphone-15")
+    .option("--browser <name>", "chromium (default), firefox or webkit")
+    .option("--video", "also record a video")
+    .option("-C, --dir <path>", "project folder (default: the test's nearest project)")
+    .action(async (file: string, options: AuthorCommandOptions) => {
+      process.exitCode = await runAuthorCommand(file, options, {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),
