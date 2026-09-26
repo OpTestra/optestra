@@ -9,7 +9,7 @@ says a step passed.
 
 | Import | Use | Runs in |
 |---|---|---|
-| `@testament/recording` | zod schemas and types, `serializeRecording` / `parseRecording`, `routeOf`, `stepKey`, `checkKey`, `RECORDING_EPOCH`, templates (`toTemplate`, `templateParts`, `templateRefs`) | browser and Node (the apps display recordings) |
+| `@testament/recording` | zod schemas and types, `serializeRecording` / `parseRecording`, `routeOf`, `stepKey`, `checkKey`, `RECORDING_EPOCH`, templates (`toTemplate`, `templateParts`, `templateRefs`), `describeCheck` / `describeLocator` (check summaries), `bindCheck` | browser and Node (the apps display recordings) |
 | `@testament/recording/node` | `recordingPath`, `readRecording`, `writeRecording` (atomic) | Node |
 
 ## Where it lives
@@ -52,7 +52,14 @@ only real changes.
   ],
   "checks": [          // one per Expect / Soft / exact expect step
     { "key", "textKey", "text": "a dialog titled \"New project\" is open", "soft": false,
-      "check": { "type": "pending" }, "generatedBy": "ai", "recordedAt": "…" }
+      "check": { "type": "element_state", "target": { "kind": "role", "role": "dialog", "name": "New project", "exact": true }, "state": "visible" },
+      "generatedBy": "rules",                 // rules | ai | exact
+      "summary": "Checked that the dialog 'New project' is visible",
+      "rule": "dialog",
+      "sanity": { "empty": { "result": "failed" }, "before": { "result": "failed" }, "provesNothing": false },
+      "failedAtAuthoring"?: { "expected", "actual" },
+      "problem"?: "…",
+      "recordedAt": "…" }
   ]
 }
 ```
@@ -89,23 +96,47 @@ value ever enters it.
 
 ### Checks
 
-The check op union is defined now, so LOOP-2 and LOOP-3 build on it without a
-schema change:
+Every Expect / Soft line, and every `Exact:` expect op, has one check: a typed
+op that plain code evaluates on every run (VER-1, VER-2). LOOP-2 compiles
+them; see `@testament/core`'s README ("How Expect lines become checks").
 
-| `type` | Fields |
-|---|---|
-| `text` | `target`, `match: equals \| contains`, `value` (template) |
-| `url` | `match: is \| contains \| matches`, `value` |
-| `element_state` | `target`, `state: visible \| hidden \| enabled \| disabled \| checked \| unchecked \| focused \| editable \| empty` |
-| `count` | `target`, `n` / `min` / `max` |
-| `network` | `method`, `url` pattern, `status` |
-| `aria_snapshot` | `target`, `snapshot` |
-| `code` | verbatim Playwright code |
-| `pending` | not compiled yet (what LOOP-1 writes for Expect/Soft lines) |
+| `type` | Fields | Passes when |
+|---|---|---|
+| `text` | `target`, `match: equals \| contains \| matches`, `value` (template; a regex source for `matches`) | the visible text (innerText, whitespace collapsed) of one of the matched elements matches; for a form field (input, textarea, select), its value, like `toHaveValue` |
+| `url` | `match: is \| contains \| matches`, `value` | the page URL matches (`is` with a value starting `/` compares the path, with or without the query) |
+| `element_state` | `target`, `state: visible \| hidden \| enabled \| disabled \| checked \| unchecked \| focused \| editable \| empty` | one matched element has the state (`hidden`: none is visible, or none exists) |
+| `count` | `target`, `n` / `min` / `max` | the number of matched (visible, for role and `:visible` locators) elements fits |
+| `value` | `target`, `match: equals \| contains`, `value` | a field's current value matches (a select: its chosen option's label) |
+| `network` | `method`, `url` (a path pattern when it starts with `/`: `*` one segment, `**` any; else a substring), `status` | such a request was sent since the current action step began |
+| `aria_snapshot` | `target`, `snapshot` | every line of `snapshot` appears, in order, in the element's aria snapshot |
+| `code` | verbatim Playwright code | runs from the generated spec only (LOOP-3), never in the harness |
+| `soft_judgment` | `question`, `screenshot: page \| element`, `target?` | a model says yes about a screenshot; **soft only** (refused on non-soft lines by the schema), and it can only warn (VER-3) |
+| `pending` | none | never: the line has no check (`problem` says why) |
 
 Every op with a target can also take a `scope` locator, which carries its own
-frame path. Exact expect ops (`Exact: expect url contains /x`) are already typed
-and are written with `generatedBy: "exact"`.
+frame path. Role locators in checks may carry a heading `level`
+(`{ kind: "role", role: "heading", level: 1 }`).
+
+A check recording also carries:
+- `generatedBy`: `rules` (phrase rules, no model), `ai` (the AI compiler) or
+  `exact` (a typed `Exact:` op). LOOP-1 recordings wrote `ai` for pending
+  checks; they still parse.
+- `summary`: `describeCheck(op)`, one plain sentence generated from the op
+  (EVD-3), e.g. "Checked that the main heading is exactly 'Welcome to Pro'".
+- `rule`: the phrase rule that compiled it.
+- `sanity`: the VER-6 sanity test. `empty` and `before` are each `failed`
+  (good), `passed` (the check proved nothing there) or `skipped` with a note;
+  `provesNothing` is true when either passed.
+- `failedAtAuthoring: { expected, actual }`: the check failed the one time it
+  ran while authoring. It is kept: it may be a real bug.
+- `problem`: why the line has no trustworthy check (not compiled, refused, or
+  proves nothing), for the user.
+
+These are authoring facts, not verdicts: a run always evaluates the check
+again. The `text` is always the line exactly as written (HEAL-3).
+
+`bindCheck(op, values)` binds a check's templates before it runs. A reference
+to a secret is refused: secrets are never check values.
 
 ## Keys (REP-7)
 
@@ -140,4 +171,6 @@ Writing a recording replaces the file:
 - A step not reached this time (for example, after a failure earlier in the
   test) keeps its previous recording.
 - Steps that no longer exist in the test are dropped.
-- Compiled checks survive re-authoring; `pending` ones are rewritten.
+- A check compiled in this run replaces the old one. A compiled check survives
+  a run that doesn't reach it (and whose line is unchanged); `pending` ones
+  are rewritten.

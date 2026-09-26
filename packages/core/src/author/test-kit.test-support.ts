@@ -1,6 +1,9 @@
 import type {
   ActionOutcome,
   CandidatesResult,
+  CheckEvaluation,
+  CheckOptions,
+  PageCopy,
   Observation,
   ObservedElement,
   PostState,
@@ -140,6 +143,25 @@ export function post(overrides: Partial<PostState> = {}): PostState {
 
 export interface FakeSession extends AuthorSession {
   acted: unknown[];
+  checked: Array<{ op: unknown; options: CheckOptions | undefined }>;
+}
+
+/** A check result for fake sessions. */
+export function evaluation(
+  passed: boolean,
+  fields: Partial<CheckEvaluation> = {},
+): CheckEvaluation {
+  return {
+    status: passed ? "passed" : "failed",
+    passed,
+    expected: null,
+    actual: null,
+    ms: 1,
+    attempts: 1,
+    matched: passed ? 1 : 0,
+    seen: passed ? "seen-pass" : "seen-fail",
+    ...fields,
+  };
 }
 
 /** A session over a fixed page; `effect` decides each action's post-state. */
@@ -150,6 +172,8 @@ export function fakeSession(
   }) => Omit<Partial<ActionOutcome>, "post"> & { post?: Partial<PostState> } = () => ({
     post: { changed: true, added: [{ role: "status", name: "", text: "done" }] },
   }),
+  checker: (op: unknown, options: CheckOptions | undefined) => CheckEvaluation = (_op, options) =>
+    evaluation(options?.on === undefined || options.on === "page"),
 ): FakeSession {
   const url = "http://127.0.0.1:4100/login";
   const observation: Observation = {
@@ -163,8 +187,15 @@ export function fakeSession(
     truncated: false,
   };
   const acted: unknown[] = [];
+  const checked: FakeSession["checked"] = [];
   return {
     acted,
+    checked,
+    check: async (op, options) => {
+      checked.push({ op, options });
+      return checker(op, options);
+    },
+    pageCopy: async () => ({ url, takenAt: new Date(0).toISOString() }) as unknown as PageCopy,
     browserName: "chromium",
     get url() {
       return url;

@@ -1,7 +1,7 @@
-import type { Session } from "@testament/browser";
+import type { CheckStatus, Session } from "@testament/browser";
 import type { ModelCall } from "@testament/contract";
 import type { BudgetMeter, Models } from "@testament/models";
-import type { Recording } from "@testament/recording";
+import type { CheckOp, Recording, Sanity } from "@testament/recording";
 
 /** The harness calls the author uses. A LOOP-0 Session satisfies it. */
 export type AuthorSession = Pick<
@@ -14,6 +14,8 @@ export type AuthorSession = Pick<
   | "hookRequest"
   | "refusals"
   | "browserName"
+  | "check"
+  | "pageCopy"
 >;
 
 /** Why a step (and so the test) ended without being recorded. */
@@ -82,6 +84,10 @@ export interface AuthorOptions {
   redact?: (text: string) => string;
   /** Take before/after screenshots of each action step (default true). */
   screenshots?: boolean;
+  /** Compile, evaluate and sanity-test Expect/Soft/exact checks (default true). */
+  checks?: boolean;
+  /** How long a check's authoring evaluation waits for it to pass (default 5000 ms). */
+  checkTimeoutMs?: number;
   onEvent?: (event: AuthorEvent) => void;
   now?: () => Date;
 }
@@ -115,6 +121,23 @@ export interface ActionReport {
 
 export type StepStatus = "recorded" | "failed" | "stopped" | "pending" | "skipped";
 
+/** What the check compiler made of an Expect/Soft/exact step, and how it did while authoring. */
+export interface CheckReport {
+  op: CheckOp;
+  /** describeCheck(op). */
+  summary: string;
+  generatedBy: "rules" | "ai" | "exact";
+  rule?: string;
+  /** The authoring evaluation; "not_compiled" when the line has no check. */
+  status: CheckStatus | "not_compiled";
+  passed: boolean | null;
+  expected: string | null;
+  actual: string | null;
+  sanity: Sanity | null;
+  /** Why the line has no trustworthy check (not compiled, refused, or proves nothing). */
+  problem?: string;
+}
+
 export interface StepReport {
   index: number;
   number: number | null;
@@ -132,6 +155,8 @@ export interface StepReport {
   /** Relative to the report folder. */
   screenshots: { before?: string; after?: string };
   refusals: string[];
+  /** Expect/Soft/exact-check steps. */
+  check?: CheckReport;
 }
 
 export interface AuthoringReport {
@@ -158,6 +183,15 @@ export interface AuthoringReport {
     unknownCostCalls: number;
     /** How the calls were paid: API keys, the user's own subscription CLI (MOD-6), or both. */
     billing: "api" | "subscription" | "mixed" | null;
+  };
+  checks: {
+    total: number;
+    rules: number;
+    ai: number;
+    exact: number;
+    notCompiled: number;
+    failedAtAuthoring: number;
+    provesNothing: number;
   };
   /** Set when saved: relative paths of the recording and evidence files. */
   recordingPath?: string;

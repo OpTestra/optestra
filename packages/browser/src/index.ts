@@ -5,6 +5,13 @@
  */
 export { Allowlist } from "./allowlist.js";
 export {
+  type CheckEvaluation,
+  type CheckOptions,
+  type CheckStatus,
+  type CheckTarget,
+  PageCopy,
+} from "./check.js";
+export {
   DEFAULT_DEVICE,
   DEVICE_PRESETS,
   type DevicePreset,

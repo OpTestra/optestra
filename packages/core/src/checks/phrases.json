@@ -1,0 +1,192 @@
+{
+  "$comment": "Phrase rules for Expect/Soft lines (LOOP-2). Tried in order; the first rule whose pattern matches and whose builder finds the page element wins. Q stands for a quote (straight or curly). Patterns are case-insensitive. Named groups feed the builder (see rules.ts).",
+  "version": 1,
+  "rules": [
+    {
+      "id": "url",
+      "build": "url",
+      "patterns": [
+        "^the (?:page )?(?:url|address|location) (?<match>contains|includes|is|equals|matches|ends with|starts with) (?:Q(?<value>[^\"“”]+)Q|(?<bare>\\S+))$",
+        "^(?:we are|I am|you are|the user is) (?:on|at) (?:the page )?(?<bare>/\\S*)$"
+      ]
+    },
+    {
+      "id": "heading",
+      "build": "heading",
+      "patterns": [
+        "^the (?:page |main |top )?heading (?:is|says|reads|shows) Q(?<text>.+)Q$",
+        "^the page is titled Q(?<text>.+)Q$"
+      ]
+    },
+    {
+      "id": "dialog",
+      "build": "dialog",
+      "patterns": [
+        "^an? (?:dialog|modal|pop-?up)(?: window)? (?:titled|called|named|with the title|labelled|labeled) Q(?<name>.+)Q is (?:open|opened|shown|showing|visible|displayed)$",
+        "^the Q(?<name>.+)Q (?:dialog|modal|pop-?up) is (?:open|opened|shown|showing|visible|displayed)$"
+      ]
+    },
+    {
+      "id": "message",
+      "build": "message",
+      "patterns": [
+        "^an? (?:success |confirmation |status )?(?:message|notification|toast|confirmation|banner|notice) (?:says|shows|reads|appears saying|is shown saying) Q(?<text>.+)Q$",
+        "^(?:the|a) (?:success |confirmation )?(?:message|notification|toast|banner|notice) Q(?<text>.+)Q (?:is shown|is displayed|appears|is visible)$"
+      ]
+    },
+    {
+      "id": "error",
+      "build": "error",
+      "patterns": [
+        "^an? (?:error|error message|validation error|validation message|warning) (?:says|shows|reads|appears saying|is shown saying) Q(?<text>.+)Q$",
+        "^the (?:error|error message|warning) Q(?<text>.+)Q (?:is shown|is displayed|appears|is visible)$"
+      ]
+    },
+    {
+      "id": "element",
+      "build": "element",
+      "patterns": [
+        "^(?:an?|the) Q(?<name>.+)Q (?<role>button|link|checkbox|check box|radio button|radio|tab|text field|text box|field|heading|image|picture|photo|logo|icon|menu item|switch|toggle|option) is (?<state>shown|showing|visible|displayed|present|hidden|not shown|not visible|gone|disabled|enabled|checked|ticked|unchecked|not checked|unticked|selected|focused|editable|empty)$",
+        "^(?:an?|the) (?<role>button|link|checkbox|check box|radio button|radio|tab|text field|text box|field|heading|image|picture|photo|logo|icon|menu item|switch|toggle|option) (?:called |named |labelled |labeled |titled )?Q(?<name>.+)Q is (?<state>shown|showing|visible|displayed|present|hidden|not shown|not visible|gone|disabled|enabled|checked|ticked|unchecked|not checked|unticked|selected|focused|editable|empty)$",
+        "^there is an? Q(?<name>.+)Q (?<role>button|link|checkbox|tab|heading|image|switch)(?<state>)$"
+      ]
+    },
+    {
+      "id": "container-count",
+      "build": "containerCount",
+      "patterns": [
+        "^the (?<noun>[\\w -]+?) (?<kind>list|table|grid) (?:shows|has|contains|lists|displays|includes) (?<n>\\d+) (?<items>[\\w -]+)$",
+        "^there are (?<n>\\d+) (?<items>[\\w -]+?) in the (?<noun>[\\w -]+?) (?<kind>list|table|grid)$"
+      ]
+    },
+    {
+      "id": "row",
+      "build": "row",
+      "patterns": [
+        "^the (?<ordinal>first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\\d+(?:st|nd|rd|th)) (?<item>[\\w -]+?) in the (?:(?<noun>[\\w -]+?) )?(?<kind>table|list|grid) (?:is|shows|says|reads|contains) (?<rest>.+)$",
+        "^the (?<ordinal>first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\\d+(?:st|nd|rd|th)) (?<item>row|item|entry) of the (?:(?<noun>[\\w -]+?) )?(?<kind>table|list|grid) (?:is|shows|says|reads|contains) (?<rest>.+)$"
+      ]
+    },
+    {
+      "id": "container-text",
+      "build": "containerText",
+      "patterns": [
+        "^the (?<noun>[\\w -]+?) (?<kind>list|table|grid|panel|section|sidebar|menu|navigation|card|form|box|area) (?:shows|says|contains|includes|lists|displays|reads) Q(?<text>.+)Q$",
+        "^Q(?<text>.+)Q (?:is|appears) (?:shown |listed |visible |displayed )?in the (?<noun>[\\w -]+?) (?<kind>list|table|grid|panel|section|sidebar|menu|navigation|card|form|box|area)$"
+      ]
+    },
+    {
+      "id": "field-value",
+      "build": "fieldValue",
+      "patterns": [
+        "^Q(?<label>[^\"“”]+)Q (?<match>contains|is|equals|shows|reads|has the value|is set to|has) Q(?<text>.*)Q$",
+        "^the Q(?<label>[^\"“”]+)Q (?:field|input|box|text box|drop-?down|select|menu|picker) (?<match>contains|is|equals|shows|reads|has the value|is set to|has) Q(?<text>.*)Q$"
+      ]
+    },
+    {
+      "id": "no-text",
+      "build": "noText",
+      "patterns": [
+        "^the page (?:does not|doesn't|no longer) (?:show|display|contain|say)s? Q(?<text>.+)Q$",
+        "^the text Q(?<text>.+)Q is (?:not shown|not visible|not displayed|gone|hidden)$",
+        "^Q(?<text>.+)Q is (?:not shown|not visible|not displayed|no longer shown|gone)$"
+      ]
+    },
+    {
+      "id": "visible-text",
+      "build": "visibleText",
+      "patterns": [
+        "^the text Q(?<text>.+)Q is (?:shown|visible|displayed|on the page|present)$",
+        "^the page (?:shows|displays|says|contains|reads|mentions) Q(?<text>.+)Q$",
+        "^Q(?<text>.+)Q is (?:shown|visible|displayed|on the page|present)$",
+        "^(?:I|you|we|the user) (?:see|sees|can see) Q(?<text>.+)Q$"
+      ]
+    }
+  ],
+  "roles": {
+    "button": "button",
+    "link": "link",
+    "checkbox": "checkbox",
+    "check box": "checkbox",
+    "radio button": "radio",
+    "radio": "radio",
+    "tab": "tab",
+    "text field": "textbox",
+    "text box": "textbox",
+    "field": "textbox",
+    "heading": "heading",
+    "image": "img",
+    "picture": "img",
+    "photo": "img",
+    "logo": "img",
+    "icon": "img",
+    "menu item": "menuitem",
+    "switch": "switch",
+    "toggle": "switch",
+    "option": "option"
+  },
+  "states": {
+    "": "visible",
+    "shown": "visible",
+    "showing": "visible",
+    "visible": "visible",
+    "displayed": "visible",
+    "present": "visible",
+    "hidden": "hidden",
+    "not shown": "hidden",
+    "not visible": "hidden",
+    "gone": "hidden",
+    "disabled": "disabled",
+    "enabled": "enabled",
+    "checked": "checked",
+    "ticked": "checked",
+    "selected": "checked",
+    "unchecked": "unchecked",
+    "not checked": "unchecked",
+    "unticked": "unchecked",
+    "focused": "focused",
+    "editable": "editable",
+    "empty": "empty"
+  },
+  "containers": {
+    "list": { "roles": ["list"], "fallbacks": ["region"], "items": "list" },
+    "table": { "roles": ["table", "grid"], "fallbacks": ["region"], "items": "table" },
+    "grid": { "roles": ["grid", "table"], "fallbacks": ["region"], "items": "table" },
+    "panel": { "roles": ["region", "group"], "fallbacks": [] },
+    "section": { "roles": ["region", "group"], "fallbacks": [] },
+    "card": { "roles": ["article", "region", "group"], "fallbacks": [] },
+    "box": { "roles": ["region", "group"], "fallbacks": [] },
+    "area": { "roles": ["region", "group"], "fallbacks": [] },
+    "sidebar": { "roles": ["complementary", "navigation", "region"], "fallbacks": [] },
+    "menu": { "roles": ["menu", "navigation", "menubar"], "fallbacks": [] },
+    "navigation": { "roles": ["navigation"], "fallbacks": [] },
+    "form": { "roles": ["form"], "fallbacks": ["region"] }
+  },
+  "selectors": {
+    "page": "body",
+    "tableRows": "tbody tr:visible",
+    "errorMarked": "[class*=\"error\" i], [id*=\"error\" i], [class*=\"invalid\" i], [aria-live=\"assertive\"]"
+  },
+  "fieldMatch": {
+    "contains": "contains",
+    "has": "contains",
+    "is": "equals",
+    "equals": "equals",
+    "shows": "equals",
+    "reads": "equals",
+    "has the value": "equals",
+    "is set to": "equals"
+  },
+  "ordinals": {
+    "first": 0,
+    "second": 1,
+    "third": 2,
+    "fourth": 3,
+    "fifth": 4,
+    "sixth": 5,
+    "seventh": 6,
+    "eighth": 7,
+    "ninth": 8,
+    "tenth": 9
+  }
+}
