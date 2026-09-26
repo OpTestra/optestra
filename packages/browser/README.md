@@ -60,9 +60,11 @@ These hold by construction; each has a test that fails if it breaks
    `allowUpload: { dir }`, and only for files inside that folder (after
    resolving symlinks). `src/misc.test.ts` pins the exported names and methods.
 3. **Secrets are typed, never seen (SEC-1, SEC-2, SEC-6).** `fill` with
-   `{ secret: NAME }` reveals the value (`@testament/config/reveal`) only at the
-   moment of typing, and only if the element's own frame is on an allowed host
-   **and** on one of that secret's `domains`. Otherwise the action is `refused`
+   `{ secret: NAME }` gets the value (`prepareSecret` from `@testament/config/reveal`)
+   only at the moment of typing. For a dynamic secret, such as a TOTP seed (AUTH-0),
+   that is when the value is produced: the current code, registered with the
+   session's redactor before it is typed. It is typed only if the element's own frame
+   is on an allowed host **and** on one of that secret's `domains`. Otherwise the action is `refused`
    with `disallowed_domain`, and `missing_secret` if no value was provided.
    Around the fill, tracing is stopped (the chunk before it is saved and a new
    one starts after), so the fill is never in the trace. The field is also

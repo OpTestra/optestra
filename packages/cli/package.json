@@ -17,6 +17,7 @@
     "bin": "cliName"
   },
   "dependencies": {
+    "@testament/auth": "workspace:^",
     "@testament/brand": "workspace:^",
     "@testament/browser": "workspace:^",
     "@testament/config": "workspace:^",

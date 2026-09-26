@@ -1,10 +1,11 @@
 import { inspect } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
-import { revealSecret } from "../reveal.js";
+import { prepareSecret, revealSecret } from "../reveal.js";
 import { cleanup, sampleProject, tempDir } from "../sample.test-support.js";
 import { loadProject } from "./project.js";
 import { Redactor } from "./redactor.js";
-import { createSecretValue } from "./secret-value.js";
+import { registerSecretType } from "./secret-types.js";
+import { createSecretValue, type SecretValue } from "./secret-value.js";
 import { dotenvSource, memorySource, processEnvSource, resolveSecrets } from "./secrets.js";
 
 afterEach(cleanup);
@@ -106,5 +107,68 @@ describe("secret sources", () => {
       path: "secrets.TEST_PASSWORD",
       fix: "Add TEST_PASSWORD=<value> to .env.staging, or set the TEST_PASSWORD environment variable",
     });
+  });
+});
+
+describe("dynamic secrets (secret types)", () => {
+  let counter = 0;
+  registerSecretType({
+    type: "totp",
+    check: (stored) =>
+      stored.startsWith("seed:")
+        ? { ok: true, sensitive: [stored.slice(5)] }
+        : { ok: false, problem: "not a seed", fix: "Use seed:<value>." },
+    producer: () => async (stored) => `${stored.slice(5)}-code-${++counter}`,
+  });
+
+  it("types the produced value, registers it with the redactor, keeps the seed hidden", async () => {
+    const redactor = new Redactor();
+    const config = { secrets: { OTP: { domains: ["x.test"], type: "totp" } } } as never;
+    const resolved = resolveSecrets(config, [
+      memorySource({ OTP: "seed:abc987" }, {}, { redactor }),
+    ]);
+    const otp = resolved.secrets.OTP as SecretValue;
+    expect(otp.type).toBe("totp");
+    expect(otp.dynamic).toBe(true);
+    expect(otp.domains).toEqual(["x.test"]);
+    // The seed inside the stored value is registered too.
+    expect(redactor.redact("seed abc987")).toBe("seed [secret:OTP]");
+    const code = await prepareSecret(otp);
+    expect(code).toMatch(/^abc987-code-\d+$/);
+    expect(redactor.redact(`typed ${code}`)).toBe("typed [secret:OTP]");
+    // revealSecret still gives the stored seed, never a code.
+    expect(revealSecret(otp)).toBe("seed:abc987");
+    expect(JSON.stringify({ otp })).toBe('{"otp":"[secret:OTP]"}');
+  });
+
+  it("plain secrets prepare to their value", async () => {
+    const secret = createSecretValue("PW", "hunter3", { redactor: new Redactor() });
+    expect(secret.dynamic).toBe(false);
+    expect(secret.type).toBe("text");
+    expect(await prepareSecret(secret)).toBe("hunter3");
+  });
+
+  it("reports SECRET_INVALID without the value, and for types nobody registered", () => {
+    const config = {
+      secrets: {
+        OTP: { domains: ["x.test"], type: "totp" },
+        ODD: { domains: ["x.test"], type: "hotp" },
+      },
+    } as never;
+    const resolved = resolveSecrets(config, [
+      memorySource({ OTP: "not-a-seed-4411", ODD: "v" }, {}, { redactor: new Redactor() }),
+    ]);
+    expect(resolved.secrets).toEqual({});
+    expect(resolved.invalid).toEqual(["OTP", "ODD"]);
+    expect(resolved.diagnostics.map((d) => d.code)).toEqual(["SECRET_INVALID", "SECRET_INVALID"]);
+    expect(resolved.diagnostics[0]?.fix).toBe("Use seed:<value>.");
+    expect(JSON.stringify(resolved.diagnostics)).not.toContain("not-a-seed-4411");
+    expect(() =>
+      registerSecretType({
+        type: "totp",
+        check: () => ({ ok: true }),
+        producer: () => async () => "",
+      }),
+    ).toThrow(/already registered/);
   });
 });

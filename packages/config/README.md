@@ -53,7 +53,7 @@ Loading never throws on user mistakes. Invalid values fall back to their default
 `INVALID_VALUE`, `ENV_NONE_DEFINED` (warning), `ENV_NOT_SELECTED` (warning),
 `ENV_NOT_FOUND`, `ENV_DEFAULT_UNKNOWN`, `ENV_BASE_URL_MISSING`, `ENV_APP_MISSING`,
 `SECRET_NAME_INVALID`, `SECRET_DUPLICATE`, `SECRET_NO_DOMAINS`, `SECRET_UNDECLARED`,
-`SECRET_MISSING`, `ENV_VAR_INVALID`, `ENV_VAR_UNKNOWN` (warning), `RUN_OPTION_INVALID`,
+`SECRET_MISSING`, `SECRET_INVALID`, `ENV_VAR_INVALID`, `ENV_VAR_UNKNOWN` (warning), `RUN_OPTION_INVALID`,
 `ENV_FILE_SYNTAX` (warning).
 
 ## Secrets
@@ -73,12 +73,35 @@ URL-encoded, form-encoded, JSON-escaped and base64/base64url forms) is registere
 with the process-wide `defaultRedactor`. The engine logger in `core` passes every
 line through it.
 
-**`@testament/config/reveal` is restricted.** Only these places may import it:
-- the browser and Android drivers, to type a value into an allowed domain (from
-  the AUTH phase on);
+**`@testament/config/reveal` is restricted.** Only these places may import it
+(`test/guards.test.ts` lists the files):
+- the browser and Android drivers, to type a value into an allowed domain;
 - `packages/models`, to send a provider key to that provider's own host;
 - `packages/decide` (`src/node/systemone/`), to send a decision model key (e.g.
-  `JEV_API_KEY`) to that backend's own host.
+  `JEV_API_KEY`) to that backend's own host;
+- `packages/auth` (`src/inbox/transport.ts`), to send an inbox API key to that
+  inbox's own host.
+
+It has two functions: `revealSecret(secret)` (the stored value) and
+`prepareSecret(secret)` (async: the value to type *now*; drivers call it right
+before typing).
+
+### Secret types
+
+A declaration may set `type` (default `text`). Other types are registered by the
+package that owns them, like config sections
+(`registerSecretType({ type, check, producer })` in `/node`):
+- `totp` (from `@testament/auth`): the value is a TOTP seed (base32 or an
+  `otpauth://` URI) and typing it types the current code.
+
+`resolveSecrets` checks each typed value with the type's `check`. A bad value is
+`SECRET_INVALID` (in `invalid`, never in `secrets`), and the message never
+includes the value. Parts of the value the type names (e.g. the seed inside the
+URI) are registered with the redactor too. A good value becomes a **dynamic**
+`SecretValue` (`secret.dynamic`, `secret.type`). `prepareSecret` produces its
+value at the moment of typing and registers it with the redactor first.
+`asDynamicSecret(secret, type, produce)` makes one directly (e.g. an inbox code
+that arrives by email).
 
 Nothing else may: not logging, reports, AI prompts or the apps.
 
@@ -121,9 +144,10 @@ before any config is loaded. Values in `defaults.yaml` under the same key win
 over `defaults`.
 
 Registered sections today: `models` (from `@testament/models`), `tests` (where
-the test files are) and `lint` (rule levels, strict) from `@testament/spec`, and
+the test files are) and `lint` (rule levels, strict) from `@testament/spec`,
 `decisions` (decision backend and its jev/kev/laya settings, thresholds, time limits,
-cache) from `@testament/decide`. Import the owning package before
+cache) from `@testament/decide`, and `auth` (login profiles, TOTP) and `inbox` (test
+email inboxes) from `@testament/auth`. Import the owning package before
 loading config, or the section is reported as unknown. The full schema
 including `models` is `@testament/models/schema.json`.
 

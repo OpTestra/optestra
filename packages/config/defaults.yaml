@@ -111,3 +111,44 @@ decisions:
     enabled: true
     # One week.
     ttlSeconds: 604800
+
+# Login profiles and TOTP (SEC-3, SEC-4). The auth package registers this section.
+auth:
+  # Named logins a test picks with `auth: <name>` (`auth: none` = start logged out), e.g.
+  #   admin:
+  #     flow: flows/login-admin.test.md   # the flow that logs in (relative to tests.dir)
+  #     params: { email: "{{data.admin_email}}" }
+  #     check: { url: /dashboard }         # how to tell a saved session still works
+  profiles:
+    "*":
+      params: {}
+      # per-worker: each parallel worker logs in once (tests that change server data)
+      # shared: one saved session for every worker
+      reuse: per-worker
+      # A saved session is used for at most this long, then the flow logs in again.
+      ttlMinutes: 60
+  totp:
+    # If the current code expires in fewer seconds than this, wait for the next one.
+    minRemainingSeconds: 5
+
+# Test email inboxes (SEC-5). The auth package registers this section.
+inbox:
+  # none | mailpit | mailosaur | mailslurp
+  provider: none
+  # How long a test waits for an email, in seconds.
+  timeoutSeconds: 60
+  # Mailpit on your machine or in CI (mailpit.axllent.org). Catches every address.
+  mailpit:
+    url: http://127.0.0.1:8025
+    # Domain for generated addresses like {{unique.email}}.
+    domain: example.test
+  # Mailosaur (hosted). Addresses are <anything>@<serverId>.mailosaur.net.
+  mailosaur:
+    baseUrl: https://mailosaur.com
+    # serverId: abc123
+    keySecret: MAILOSAUR_API_KEY
+  # MailSlurp (hosted). Each address is an inbox created through its API.
+  mailslurp:
+    baseUrl: https://api.mailslurp.com
+    # inboxId: <an existing inbox to reuse>
+    keySecret: MAILSLURP_API_KEY

@@ -25,8 +25,15 @@ export interface SourceInfo {
 // ── Templates ──────────────────────────────────────────────────────────────────
 
 /** Variable namespaces. `unique` and `faker` members come from the generator registry. */
-export const NAMESPACES = ["data", "env", "secret", "params", "unique", "faker"] as const;
+export const NAMESPACES = ["data", "env", "secret", "params", "unique", "faker", "inbox"] as const;
 export type Namespace = (typeof NAMESPACES)[number];
+
+/**
+ * Members of `{{inbox.…}}` (SEC-5): read from the test inbox at run time, so they
+ * always bind as `unresolved` here and a recording keeps the template.
+ */
+export const INBOX_MEMBERS = ["code", "link", "subject"] as const;
+export type InboxMember = (typeof INBOX_MEMBERS)[number];
 
 export type Segment =
   | { kind: "text"; text: string }

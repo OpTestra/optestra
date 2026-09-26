@@ -301,6 +301,27 @@ describe("variables", () => {
     expect(bound.expanded.diagnostics.map(at)).toEqual(["ENV_UNDEFINED@5:30-5:42"]);
   });
 
+  it("keeps inbox values unresolved (read at run time) and checks their names", async () => {
+    const files = {
+      "tests/t.test.md": file("name: T", [
+        '1. Fill "Verification code" with {{inbox.code}}',
+        "2. Open {{inbox.link}}",
+        '3. Expect: the text "{{inbox.subject}}" is shown',
+        "4. Type {{inbox.body}}",
+      ]),
+    };
+    const { parsed, expanded } = await expand(files, "tests/t.test.md");
+    expect(expanded.steps[0]?.bound).toEqual([
+      { kind: "text", text: 'Fill "Verification code" with ' },
+      { kind: "unresolved", ref: "inbox.code" },
+    ]);
+    expect(expanded.steps[0]?.display).toBe('Fill "Verification code" with {{inbox.code}}');
+    expect(expanded.steps[1]?.bound[1]).toEqual({ kind: "unresolved", ref: "inbox.link" });
+    expect(expanded.diagnostics).toEqual([]);
+    expect(parsed.diagnostics.map((d) => d.code)).toEqual(["VAR_MEMBER_UNKNOWN"]);
+    expect(parsed.diagnostics[0]?.fix).toContain("{{inbox.code}}");
+  });
+
   it("binds values inside exact ops", async () => {
     const { expanded } = await expand(
       {

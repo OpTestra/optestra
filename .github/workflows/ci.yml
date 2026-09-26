@@ -31,6 +31,13 @@ jobs:
   fixtures:
     name: bench fixtures (ubuntu)
     runs-on: ubuntu-latest
+    # A real test inbox for the auth e2e (SEC-5): the shop sends its sign-up code here.
+    services:
+      mailpit:
+        image: axllent/mailpit
+        ports:
+          - 1025:1025
+          - 8025:8025
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -55,6 +62,11 @@ jobs:
         if: steps.browsers.outputs.cache-hit == 'true'
         run: pnpm --filter ./bench/fixtures/shop exec playwright install-deps chromium firefox webkit
       - run: pnpm bench:fixtures:test
+        env:
+          MAILPIT_URL: http://127.0.0.1:8025
+          MAILPIT_SMTP: 127.0.0.1:1025
+          # A missing Mailpit fails the auth e2e here instead of skipping it.
+          REQUIRE_MAILPIT: "1"
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@v4

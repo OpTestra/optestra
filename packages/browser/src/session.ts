@@ -5,7 +5,7 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { brand } from "@testament/brand";
 import { defaultRedactor, Redactor } from "@testament/config/node";
 // RESTRICTED import: the browser driver types secrets into allowed domains (SEC-1).
-import { revealSecret } from "@testament/config/reveal";
+import { prepareSecret, revealSecret } from "@testament/config/reveal";
 import type {
   Browser,
   BrowserContext,
@@ -101,6 +101,8 @@ export class Session {
   readonly #allowlist: Allowlist;
   readonly #options: SessionOptions;
   readonly #redact: (text: string) => string;
+  /** Knows every secret of the session, and every code a dynamic secret (TOTP) typed. */
+  readonly #secretRedactor: Redactor;
   readonly #tracker: ActivityTracker;
   readonly #evidence: Evidence;
   readonly #refusals: Refusal[] = [];
@@ -125,6 +127,7 @@ export class Session {
     allowlist: Allowlist;
     options: SessionOptions;
     redact: (text: string) => string;
+    secretRedactor: Redactor;
     tracker: ActivityTracker;
     evidence: Evidence;
     refusedRequests: WeakSet<Request>;
@@ -138,6 +141,7 @@ export class Session {
     this.#allowlist = init.allowlist;
     this.#options = init.options;
     this.#redact = init.redact;
+    this.#secretRedactor = init.secretRedactor;
     this.#tracker = init.tracker;
     this.#evidence = init.evidence;
   }
@@ -219,6 +223,7 @@ export class Session {
       allowlist,
       options,
       redact,
+      secretRedactor: own,
       tracker,
       evidence,
       refusedRequests,
@@ -926,9 +931,12 @@ export class Session {
           (element as HTMLElement).style.setProperty("-webkit-text-security", "disc");
         }
       }, this.#secretAttribute);
+      // The value to type now: a TOTP secret produces its current code here (AUTH-0).
+      const value = await prepareSecret(secret);
+      this.#secretRedactor.register(value, secret.label);
       await this.#evidence.pauseTrace();
       try {
-        await handle.fill(revealSecret(secret), { timeout });
+        await handle.fill(value, { timeout });
       } finally {
         await this.#evidence.resumeTrace();
       }

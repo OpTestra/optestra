@@ -2,6 +2,7 @@ import { brand } from "@testament/brand";
 import { version } from "@testament/core";
 import { createInterface } from "node:readline/promises";
 import { Command } from "commander";
+import { registerAuthCommands } from "./commands/auth.js";
 import { type AuthorCommandOptions, runAuthorCommand } from "./commands/author.js";
 import { registerBrowserCommands } from "./commands/browser.js";
 import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
@@ -196,6 +197,12 @@ export function createProgram(): Command {
         stdout: (text) => process.stdout.write(text),
       });
     });
+
+  registerAuthCommands(program, () => ({
+    cwd: process.cwd(),
+    env: process.env,
+    stdout: (text) => process.stdout.write(text),
+  }));
 
   registerBrowserCommands(program, () => ({
     cwd: process.cwd(),

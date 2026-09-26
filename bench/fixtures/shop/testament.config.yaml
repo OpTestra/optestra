@@ -17,3 +17,20 @@ secrets:
   SHOP_PASSWORD:
     domains: [127.0.0.1]
     description: Password of the seeded user ada@example.com
+
+# Saved logins (SEC-3). A test with `auth: ada` starts logged in as the seeded user;
+# the session is saved in the project's data folder (auth/) and reused until it expires.
+auth:
+  profiles:
+    ada:
+      flow: flows/login.test.md
+      check: { url: /dashboard }
+
+# The test inbox (SEC-5). The shop sends its sign-up code to Mailpit when started
+# with MAILPIT_SMTP=127.0.0.1:1025 (docker run -d -p 8025:8025 -p 1025:1025 axllent/mailpit).
+# The CLI's `inbox check` checks it; tests read the code with {{inbox.code}}.
+inbox:
+  provider: mailpit
+  mailpit:
+    url: http://127.0.0.1:8025
+    domain: example.test

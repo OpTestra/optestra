@@ -78,6 +78,14 @@ export const NAMESPACE_DOCS: Record<string, string> = {
   params: "This flow's params.",
   unique: "A fresh value for every run (unique.email, unique.id, unique.name).",
   faker: "A realistic made-up value (faker.name, faker.email, …).",
+  inbox:
+    "From the latest email to the test's address in the test inbox: inbox.code, inbox.link, inbox.subject. Read at run time; codes and links are typed like secrets.",
+};
+
+export const INBOX_MEMBER_DOCS: Record<string, string> = {
+  code: "The one-time code in the email (4–8 digits or letters and digits).",
+  link: "The verify / magic / reset link in the email, only if it points to an allowed domain.",
+  subject: "The email's subject line.",
 };
 
 export const PREFIX_DOCS: [string, string][] = [
