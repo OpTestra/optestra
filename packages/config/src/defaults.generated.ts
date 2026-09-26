@@ -17,6 +17,10 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
       maxPerSuiteUsd: 10,
     },
   },
+  tests: {
+    dir: "tests",
+    include: ["**/*.test.md"],
+  },
   models: {
     providers: {
       anthropic: {

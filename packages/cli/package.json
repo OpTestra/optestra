@@ -22,6 +22,7 @@
     "@testament/contract": "workspace:^",
     "@testament/core": "workspace:^",
     "@testament/models": "workspace:^",
+    "@testament/spec": "workspace:^",
     "commander": "^15.0.0"
   },
   "files": [

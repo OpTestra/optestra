@@ -1,0 +1,5018 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Acme Shop tests > tests/avatar-upload.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": null,
+  "data": {},
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/avatar-upload.test.md",
+    "tests/flows/login.test.md",
+  ],
+  "guards": [],
+  "heal": null,
+  "id": "tests__avatar-upload.test",
+  "kind": "test",
+  "name": "A user can upload an avatar",
+  "params": {},
+  "path": "tests/avatar-upload.test.md",
+  "setup": [
+    {
+      "method": "POST",
+      "target": "/__test/seed",
+      "type": "request",
+    },
+  ],
+  "start": {
+    "display": "/login",
+    "raw": "/login",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/login",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to /login",
+        },
+      ],
+      "display": "Go to /login",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/avatar-upload.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 16,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to /login",
+      "textKey": "c4f3a1c2c1ab8ab2",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with ",
+        },
+        {
+          "kind": "value",
+          "ref": "params.email",
+          "text": "ada@example.com",
+        },
+      ],
+      "display": "Fill "Email" with ada@example.com",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/avatar-upload.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 11,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with {{params.email}}",
+      "textKey": "99b98ca7e73a3ac0",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/avatar-upload.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 12,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with {{params.password}}",
+      "textKey": "601e4c8b381cca3e",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Log in"",
+        },
+      ],
+      "display": "Click "Log in"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 3,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/avatar-upload.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 13,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Log in"",
+      "textKey": "b47d7fbd6902a574",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Dashboard"",
+        },
+      ],
+      "display": "the page heading is "Dashboard"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 4,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/avatar-upload.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 14,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Dashboard"",
+      "textKey": "5c6d25b275ab76c6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to the settings page",
+        },
+      ],
+      "display": "Go to the settings page",
+      "flowPath": [],
+      "index": 5,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/avatar-upload.test.md",
+          "line": 10,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 27,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to the settings page",
+      "textKey": "3c482e5ce21be3f3",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Upload files/avatar.png to "Choose an image"",
+        },
+      ],
+      "display": "Upload files/avatar.png to "Choose an image"",
+      "flowPath": [],
+      "index": 6,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/avatar-upload.test.md",
+          "line": 11,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 48,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Upload files/avatar.png to "Choose an image"",
+      "textKey": "11914ee1f668ee6a",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Upload avatar"",
+        },
+      ],
+      "display": "Click "Upload avatar"",
+      "flowPath": [],
+      "index": 7,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/avatar-upload.test.md",
+          "line": 12,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 25,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Click "Upload avatar"",
+      "textKey": "e31e211f6fdfaa2d",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "a message says "Avatar updated"",
+        },
+      ],
+      "display": "a message says "Avatar updated"",
+      "flowPath": [],
+      "index": 8,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/avatar-upload.test.md",
+          "line": 13,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "a message says "Avatar updated"",
+      "textKey": "106de82a794630f4",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the image "Your avatar" is visible",
+        },
+      ],
+      "display": "the image "Your avatar" is visible",
+      "flowPath": [],
+      "index": 9,
+      "kind": "expect",
+      "number": 6,
+      "origin": [
+        {
+          "file": "tests/avatar-upload.test.md",
+          "line": 14,
+          "number": 6,
+          "range": {
+            "end": {
+              "column": 46,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the image "Your avatar" is visible",
+      "textKey": "111c7cddf7ac9ed4",
+    },
+  ],
+  "tags": [
+    "settings",
+    "files",
+  ],
+  "teardown": [],
+  "timeout": null,
+}
+`;
+
+exports[`Acme Shop tests > tests/billing-zero-due.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": null,
+  "data": {},
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/billing-zero-due.test.md",
+    "tests/flows/login.test.md",
+  ],
+  "guards": [],
+  "heal": null,
+  "id": "tests__billing-zero-due.test",
+  "kind": "test",
+  "name": "A trial costs nothing today",
+  "params": {},
+  "path": "tests/billing-zero-due.test.md",
+  "setup": [
+    {
+      "body": {
+        "trial": "pro",
+      },
+      "method": "POST",
+      "target": "/__test/seed",
+      "type": "request",
+    },
+  ],
+  "start": {
+    "display": "/login",
+    "raw": "/login",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/login",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to /login",
+        },
+      ],
+      "display": "Go to /login",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/billing-zero-due.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 16,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to /login",
+      "textKey": "c4f3a1c2c1ab8ab2",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with ",
+        },
+        {
+          "kind": "value",
+          "ref": "params.email",
+          "text": "ada@example.com",
+        },
+      ],
+      "display": "Fill "Email" with ada@example.com",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/billing-zero-due.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 11,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with {{params.email}}",
+      "textKey": "99b98ca7e73a3ac0",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/billing-zero-due.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 12,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with {{params.password}}",
+      "textKey": "601e4c8b381cca3e",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Log in"",
+        },
+      ],
+      "display": "Click "Log in"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 3,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/billing-zero-due.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 13,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Log in"",
+      "textKey": "b47d7fbd6902a574",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Dashboard"",
+        },
+      ],
+      "display": "the page heading is "Dashboard"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 4,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/billing-zero-due.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 14,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Dashboard"",
+      "textKey": "5c6d25b275ab76c6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to the billing page",
+        },
+      ],
+      "display": "Go to the billing page",
+      "flowPath": [],
+      "index": 5,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/billing-zero-due.test.md",
+          "line": 11,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 26,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Go to the billing page",
+      "textKey": "22cbbde96460059d",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page shows "Pro plan"",
+        },
+      ],
+      "display": "the page shows "Pro plan"",
+      "flowPath": [],
+      "index": 6,
+      "kind": "expect",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/billing-zero-due.test.md",
+          "line": 12,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 37,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "the page shows "Pro plan"",
+      "textKey": "b3eebfad8abcf87c",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page shows "$0.00 due today"",
+        },
+      ],
+      "display": "the page shows "$0.00 due today"",
+      "flowPath": [],
+      "index": 7,
+      "kind": "expect",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/billing-zero-due.test.md",
+          "line": 13,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "the page shows "$0.00 due today"",
+      "textKey": "8726b12d9000a355",
+    },
+  ],
+  "tags": [
+    "payments",
+  ],
+  "teardown": [],
+  "timeout": null,
+}
+`;
+
+exports[`Acme Shop tests > tests/checkout-trial.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": "none",
+  "data": {
+    "email": {
+      "display": "test-s9fei2taku@example.test",
+      "raw": "{{unique.email}}",
+      "segments": [
+        {
+          "kind": "value",
+          "ref": "unique.email",
+          "text": "test-s9fei2taku@example.test",
+        },
+      ],
+    },
+  },
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/checkout-trial.test.md",
+  ],
+  "guards": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "click "Delete account"",
+        },
+      ],
+      "display": "click "Delete account"",
+      "flowPath": [],
+      "index": 0,
+      "kind": "guard",
+      "number": null,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 22,
+          "number": null,
+          "range": {
+            "end": {
+              "column": 30,
+              "line": 22,
+            },
+            "start": {
+              "column": 1,
+              "line": 22,
+            },
+          },
+        },
+      ],
+      "text": "click "Delete account"",
+      "textKey": "319ca435d63dc988",
+    },
+  ],
+  "heal": null,
+  "id": "tests__checkout-trial.test",
+  "kind": "test",
+  "name": "New customer can start a Pro trial",
+  "params": {},
+  "path": "tests/checkout-trial.test.md",
+  "setup": [],
+  "start": {
+    "display": "/pricing",
+    "raw": "/pricing",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/pricing",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Start free trial" on the Pro plan",
+        },
+      ],
+      "display": "Click "Start free trial" on the Pro plan",
+      "flowPath": [],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 11,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Click "Start free trial" on the Pro plan",
+      "textKey": "da483e4feb328a49",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Sign up with ",
+        },
+        {
+          "kind": "value",
+          "ref": "data.email",
+          "text": "test-s9fei2taku@example.test",
+        },
+        {
+          "kind": "text",
+          "text": " and password ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Sign up with test-s9fei2taku@example.test and password {{secret.SHOP_PASSWORD}}",
+      "flowPath": [],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 12,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 69,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Sign up with {{data.email}} and password {{secret.SHOP_PASSWORD}}",
+      "textKey": "43ea269a2fb77b83",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Check your email"",
+        },
+      ],
+      "display": "the page heading is "Check your email"",
+      "flowPath": [],
+      "index": 2,
+      "kind": "expect",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 13,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 50,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Check your email"",
+      "textKey": "f2f8b9aa634ed9b7",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Enter the code from the verification email and click "Verify"",
+        },
+      ],
+      "display": "Enter the code from the verification email and click "Verify"",
+      "flowPath": [],
+      "index": 3,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 14,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 65,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "Enter the code from the verification email and click "Verify"",
+      "textKey": "3a4b61dbe8152629",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill the card form with test card 4242 4242 4242 4242, expiry 12/34, CVC 123",
+        },
+      ],
+      "display": "Fill the card form with test card 4242 4242 4242 4242, expiry 12/34, CVC 123",
+      "flowPath": [],
+      "index": 4,
+      "kind": "action",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 15,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 80,
+              "line": 15,
+            },
+            "start": {
+              "column": 1,
+              "line": 15,
+            },
+          },
+        },
+      ],
+      "text": "Fill the card form with test card 4242 4242 4242 4242, expiry 12/34, CVC 123",
+      "textKey": "34b5075a397fe329",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Start trial"",
+        },
+      ],
+      "display": "Click "Start trial"",
+      "flowPath": [],
+      "index": 5,
+      "kind": "action",
+      "number": 6,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 16,
+          "number": 6,
+          "range": {
+            "end": {
+              "column": 23,
+              "line": 16,
+            },
+            "start": {
+              "column": 1,
+              "line": 16,
+            },
+          },
+        },
+      ],
+      "text": "Click "Start trial"",
+      "textKey": "a6df31940326d9d3",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Welcome to Pro"",
+        },
+      ],
+      "display": "the page heading is "Welcome to Pro"",
+      "flowPath": [],
+      "index": 6,
+      "kind": "expect",
+      "number": 7,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 17,
+          "number": 7,
+          "range": {
+            "end": {
+              "column": 48,
+              "line": 17,
+            },
+            "start": {
+              "column": 1,
+              "line": 17,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Welcome to Pro"",
+      "textKey": "57a5d9c5ddca274a",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the URL contains /dashboard",
+        },
+      ],
+      "display": "the URL contains /dashboard",
+      "flowPath": [],
+      "index": 7,
+      "kind": "expect",
+      "number": 8,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 18,
+          "number": 8,
+          "range": {
+            "end": {
+              "column": 39,
+              "line": 18,
+            },
+            "start": {
+              "column": 1,
+              "line": 18,
+            },
+          },
+        },
+      ],
+      "text": "the URL contains /dashboard",
+      "textKey": "a6d140b00086d6fc",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to the billing page",
+        },
+      ],
+      "display": "Go to the billing page",
+      "flowPath": [],
+      "index": 8,
+      "kind": "action",
+      "number": 9,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 19,
+          "number": 9,
+          "range": {
+            "end": {
+              "column": 26,
+              "line": 19,
+            },
+            "start": {
+              "column": 1,
+              "line": 19,
+            },
+          },
+        },
+      ],
+      "text": "Go to the billing page",
+      "textKey": "22cbbde96460059d",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page shows "$0.00 due today"",
+        },
+      ],
+      "display": "the page shows "$0.00 due today"",
+      "flowPath": [],
+      "index": 9,
+      "kind": "expect",
+      "number": 10,
+      "origin": [
+        {
+          "file": "tests/checkout-trial.test.md",
+          "line": 20,
+          "number": 10,
+          "range": {
+            "end": {
+              "column": 45,
+              "line": 20,
+            },
+            "start": {
+              "column": 1,
+              "line": 20,
+            },
+          },
+        },
+      ],
+      "text": "the page shows "$0.00 due today"",
+      "textKey": "8726b12d9000a355",
+    },
+  ],
+  "tags": [
+    "smoke",
+    "payments",
+  ],
+  "teardown": [],
+  "timeout": 180,
+}
+`;
+
+exports[`Acme Shop tests > tests/create-project.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": null,
+  "data": {},
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/create-project.test.md",
+    "tests/flows/login.test.md",
+  ],
+  "guards": [],
+  "heal": null,
+  "id": "tests__create-project.test",
+  "kind": "test",
+  "name": "A new project is saved",
+  "params": {},
+  "path": "tests/create-project.test.md",
+  "setup": [
+    {
+      "method": "POST",
+      "target": "/__test/seed",
+      "type": "request",
+    },
+  ],
+  "start": {
+    "display": "/login",
+    "raw": "/login",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/login",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to /login",
+        },
+      ],
+      "display": "Go to /login",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 16,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to /login",
+      "textKey": "c4f3a1c2c1ab8ab2",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with ",
+        },
+        {
+          "kind": "value",
+          "ref": "params.email",
+          "text": "ada@example.com",
+        },
+      ],
+      "display": "Fill "Email" with ada@example.com",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 11,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with {{params.email}}",
+      "textKey": "99b98ca7e73a3ac0",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 12,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with {{params.password}}",
+      "textKey": "601e4c8b381cca3e",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Log in"",
+        },
+      ],
+      "display": "Click "Log in"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 3,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 13,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Log in"",
+      "textKey": "b47d7fbd6902a574",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Dashboard"",
+        },
+      ],
+      "display": "the page heading is "Dashboard"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 4,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 14,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Dashboard"",
+      "textKey": "5c6d25b275ab76c6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Create project"",
+        },
+      ],
+      "display": "Click "Create project"",
+      "flowPath": [],
+      "index": 5,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 10,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 26,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Click "Create project"",
+      "textKey": "2443a0ca74f201d2",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "a dialog titled "New project" is open",
+        },
+      ],
+      "display": "a dialog titled "New project" is open",
+      "flowPath": [],
+      "index": 6,
+      "kind": "expect",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 11,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 49,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "a dialog titled "New project" is open",
+      "textKey": "a28e4e38dcf9f5ac",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Project name" with Q3 roadmap",
+        },
+      ],
+      "display": "Fill "Project name" with Q3 roadmap",
+      "flowPath": [],
+      "index": 7,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 12,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 39,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Project name" with Q3 roadmap",
+      "textKey": "88df4e92307bca04",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Create"",
+        },
+      ],
+      "display": "Click "Create"",
+      "flowPath": [],
+      "index": 8,
+      "kind": "action",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 13,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Create"",
+      "textKey": "4419ba230daccb97",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "a message says "Project created"",
+        },
+      ],
+      "display": "a message says "Project created"",
+      "flowPath": [],
+      "index": 9,
+      "kind": "expect",
+      "number": 6,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 14,
+          "number": 6,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "a message says "Project created"",
+      "textKey": "3012cf8765d52ab1",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the projects list shows "Q3 roadmap"",
+        },
+      ],
+      "display": "the projects list shows "Q3 roadmap"",
+      "flowPath": [],
+      "index": 10,
+      "kind": "expect",
+      "number": 7,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 15,
+          "number": 7,
+          "range": {
+            "end": {
+              "column": 48,
+              "line": 15,
+            },
+            "start": {
+              "column": 1,
+              "line": 15,
+            },
+          },
+        },
+      ],
+      "text": "the projects list shows "Q3 roadmap"",
+      "textKey": "949ced657cbde369",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Reload the page",
+        },
+      ],
+      "display": "Reload the page",
+      "flowPath": [],
+      "index": 11,
+      "kind": "action",
+      "number": 8,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 16,
+          "number": 8,
+          "range": {
+            "end": {
+              "column": 19,
+              "line": 16,
+            },
+            "start": {
+              "column": 1,
+              "line": 16,
+            },
+          },
+        },
+      ],
+      "text": "Reload the page",
+      "textKey": "3b1d1585f7e0b1c6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the projects list shows "Q3 roadmap"",
+        },
+      ],
+      "display": "the projects list shows "Q3 roadmap"",
+      "flowPath": [],
+      "index": 12,
+      "kind": "expect",
+      "number": 9,
+      "origin": [
+        {
+          "file": "tests/create-project.test.md",
+          "line": 17,
+          "number": 9,
+          "range": {
+            "end": {
+              "column": 48,
+              "line": 17,
+            },
+            "start": {
+              "column": 1,
+              "line": 17,
+            },
+          },
+        },
+      ],
+      "text": "the projects list shows "Q3 roadmap"",
+      "textKey": "949fe9657cc01274",
+    },
+  ],
+  "tags": [
+    "smoke",
+    "projects",
+  ],
+  "teardown": [],
+  "timeout": null,
+}
+`;
+
+exports[`Acme Shop tests > tests/declined-card.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": null,
+  "data": {},
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/declined-card.test.md",
+    "tests/flows/login.test.md",
+  ],
+  "guards": [],
+  "heal": null,
+  "id": "tests__declined-card.test",
+  "kind": "test",
+  "name": "A declined card shows an error and no trial starts",
+  "params": {},
+  "path": "tests/declined-card.test.md",
+  "setup": [
+    {
+      "method": "POST",
+      "target": "/__test/seed",
+      "type": "request",
+    },
+  ],
+  "start": {
+    "display": "/login",
+    "raw": "/login",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/login",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to /login",
+        },
+      ],
+      "display": "Go to /login",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 16,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to /login",
+      "textKey": "c4f3a1c2c1ab8ab2",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with ",
+        },
+        {
+          "kind": "value",
+          "ref": "params.email",
+          "text": "ada@example.com",
+        },
+      ],
+      "display": "Fill "Email" with ada@example.com",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 11,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with {{params.email}}",
+      "textKey": "99b98ca7e73a3ac0",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 12,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with {{params.password}}",
+      "textKey": "601e4c8b381cca3e",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Log in"",
+        },
+      ],
+      "display": "Click "Log in"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 3,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 13,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Log in"",
+      "textKey": "b47d7fbd6902a574",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Dashboard"",
+        },
+      ],
+      "display": "the page heading is "Dashboard"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 4,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 14,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Dashboard"",
+      "textKey": "5c6d25b275ab76c6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to /pricing",
+        },
+      ],
+      "display": "Go to /pricing",
+      "flowPath": [],
+      "index": 5,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 10,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to /pricing",
+      "textKey": "0f07c8218d8b8307",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Start free trial" on the Pro plan",
+        },
+      ],
+      "display": "Click "Start free trial" on the Pro plan",
+      "flowPath": [],
+      "index": 6,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 11,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Click "Start free trial" on the Pro plan",
+      "textKey": "da483e4feb328a49",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill the card form with test card 4000 0000 0000 0002, expiry 12/34, CVC 123",
+        },
+      ],
+      "display": "Fill the card form with test card 4000 0000 0000 0002, expiry 12/34, CVC 123",
+      "flowPath": [],
+      "index": 7,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 12,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 80,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill the card form with test card 4000 0000 0000 0002, expiry 12/34, CVC 123",
+      "textKey": "69d84b5e84e6c48b",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Start trial"",
+        },
+      ],
+      "display": "Click "Start trial"",
+      "flowPath": [],
+      "index": 8,
+      "kind": "action",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 13,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 23,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Start trial"",
+      "textKey": "a6df31940326d9d3",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "an error says "Your card was declined."",
+        },
+      ],
+      "display": "an error says "Your card was declined."",
+      "flowPath": [],
+      "index": 9,
+      "kind": "expect",
+      "number": 6,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 14,
+          "number": 6,
+          "range": {
+            "end": {
+              "column": 51,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "an error says "Your card was declined."",
+      "textKey": "a1e57a2686af8063",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the URL contains /checkout",
+        },
+      ],
+      "display": "the URL contains /checkout",
+      "flowPath": [],
+      "index": 10,
+      "kind": "expect",
+      "number": 7,
+      "origin": [
+        {
+          "file": "tests/declined-card.test.md",
+          "line": 15,
+          "number": 7,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 15,
+            },
+            "start": {
+              "column": 1,
+              "line": 15,
+            },
+          },
+        },
+      ],
+      "text": "the URL contains /checkout",
+      "textKey": "b47cf365f02a4c5a",
+    },
+  ],
+  "tags": [
+    "payments",
+  ],
+  "teardown": [],
+  "timeout": null,
+}
+`;
+
+exports[`Acme Shop tests > tests/delete-account-guard.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": null,
+  "data": {},
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/delete-account-guard.test.md",
+    "tests/flows/login.test.md",
+  ],
+  "guards": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "click "Delete account"",
+        },
+      ],
+      "display": "click "Delete account"",
+      "flowPath": [],
+      "index": 0,
+      "kind": "guard",
+      "number": null,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 16,
+          "number": null,
+          "range": {
+            "end": {
+              "column": 30,
+              "line": 16,
+            },
+            "start": {
+              "column": 1,
+              "line": 16,
+            },
+          },
+        },
+      ],
+      "text": "click "Delete account"",
+      "textKey": "319ca435d63dc988",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "click "Yes, delete my account"",
+        },
+      ],
+      "display": "click "Yes, delete my account"",
+      "flowPath": [],
+      "index": 1,
+      "kind": "guard",
+      "number": null,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 17,
+          "number": null,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 17,
+            },
+            "start": {
+              "column": 1,
+              "line": 17,
+            },
+          },
+        },
+      ],
+      "text": "click "Yes, delete my account"",
+      "textKey": "e8ec6e90a336fdf5",
+    },
+  ],
+  "heal": null,
+  "id": "tests__delete-account-guard.test",
+  "kind": "test",
+  "name": "Settings can be changed without going near account deletion",
+  "params": {},
+  "path": "tests/delete-account-guard.test.md",
+  "setup": [
+    {
+      "method": "POST",
+      "target": "/__test/seed",
+      "type": "request",
+    },
+  ],
+  "start": {
+    "display": "/login",
+    "raw": "/login",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/login",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to /login",
+        },
+      ],
+      "display": "Go to /login",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 16,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to /login",
+      "textKey": "c4f3a1c2c1ab8ab2",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with ",
+        },
+        {
+          "kind": "value",
+          "ref": "params.email",
+          "text": "ada@example.com",
+        },
+      ],
+      "display": "Fill "Email" with ada@example.com",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 11,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with {{params.email}}",
+      "textKey": "99b98ca7e73a3ac0",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 12,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with {{params.password}}",
+      "textKey": "601e4c8b381cca3e",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Log in"",
+        },
+      ],
+      "display": "Click "Log in"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 3,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 13,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Log in"",
+      "textKey": "b47d7fbd6902a574",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Dashboard"",
+        },
+      ],
+      "display": "the page heading is "Dashboard"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 4,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 14,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Dashboard"",
+      "textKey": "5c6d25b275ab76c6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to the settings page",
+        },
+      ],
+      "display": "Go to the settings page",
+      "flowPath": [],
+      "index": 5,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 10,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 27,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to the settings page",
+      "textKey": "3c482e5ce21be3f3",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "a "Delete account" button is shown",
+        },
+      ],
+      "display": "a "Delete account" button is shown",
+      "flowPath": [],
+      "index": 6,
+      "kind": "expect",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 11,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 46,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "a "Delete account" button is shown",
+      "textKey": "b41246cb248157a8",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Select "Asia/Tokyo" in "Time zone"",
+        },
+      ],
+      "display": "Select "Asia/Tokyo" in "Time zone"",
+      "flowPath": [],
+      "index": 7,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 12,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Select "Asia/Tokyo" in "Time zone"",
+      "textKey": "7ab911de5846cdb4",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Save changes"",
+        },
+      ],
+      "display": "Click "Save changes"",
+      "flowPath": [],
+      "index": 8,
+      "kind": "action",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 13,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 24,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Save changes"",
+      "textKey": "473fc914cbd299ab",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "a message says "Profile saved"",
+        },
+      ],
+      "display": "a message says "Profile saved"",
+      "flowPath": [],
+      "index": 9,
+      "kind": "expect",
+      "number": 6,
+      "origin": [
+        {
+          "file": "tests/delete-account-guard.test.md",
+          "line": 14,
+          "number": 6,
+          "range": {
+            "end": {
+              "column": 42,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "a message says "Profile saved"",
+      "textKey": "cc9bb2329962b592",
+    },
+  ],
+  "tags": [
+    "settings",
+    "safety",
+  ],
+  "teardown": [],
+  "timeout": null,
+}
+`;
+
+exports[`Acme Shop tests > tests/flows/login.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": null,
+  "data": {},
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/flows/login.test.md",
+  ],
+  "guards": [],
+  "heal": null,
+  "id": "tests__flows__login.test",
+  "kind": "flow",
+  "name": "Log in",
+  "params": {
+    "email": {
+      "display": "ada@example.com",
+      "raw": "ada@example.com",
+      "segments": [
+        {
+          "kind": "text",
+          "text": "ada@example.com",
+        },
+      ],
+    },
+    "password": {
+      "display": "{{secret.SHOP_PASSWORD}}",
+      "raw": "{{secret.SHOP_PASSWORD}}",
+      "segments": [
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+    },
+  },
+  "path": "tests/flows/login.test.md",
+  "setup": [],
+  "start": {
+    "display": "/login",
+    "raw": "/login",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/login",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to /login",
+        },
+      ],
+      "display": "Go to /login",
+      "flowPath": [],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 16,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to /login",
+      "textKey": "82a8d5a9378fbeac",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with ",
+        },
+        {
+          "kind": "value",
+          "ref": "params.email",
+          "text": "ada@example.com",
+        },
+      ],
+      "display": "Fill "Email" with ada@example.com",
+      "flowPath": [],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 11,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with {{params.email}}",
+      "textKey": "30499eaf01a27772",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "flowPath": [],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 12,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with {{params.password}}",
+      "textKey": "227afe4ba13d1730",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Log in"",
+        },
+      ],
+      "display": "Click "Log in"",
+      "flowPath": [],
+      "index": 3,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 13,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Log in"",
+      "textKey": "0fe721c063ff84ea",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Dashboard"",
+        },
+      ],
+      "display": "the page heading is "Dashboard"",
+      "flowPath": [],
+      "index": 4,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 14,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Dashboard"",
+      "textKey": "b67f863f0801c70e",
+    },
+  ],
+  "tags": [],
+  "teardown": [],
+  "timeout": null,
+}
+`;
+
+exports[`Acme Shop tests > tests/login.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": "none",
+  "data": {},
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/login.test.md",
+  ],
+  "guards": [],
+  "heal": null,
+  "id": "tests__login.test",
+  "kind": "test",
+  "name": "Returning user can log in and out",
+  "params": {},
+  "path": "tests/login.test.md",
+  "setup": [
+    {
+      "method": "POST",
+      "target": "/__test/seed",
+      "type": "request",
+    },
+  ],
+  "start": {
+    "display": "/login",
+    "raw": "/login",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/login",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with ada@example.com",
+        },
+      ],
+      "display": "Fill "Email" with ada@example.com",
+      "flowPath": [],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/login.test.md",
+          "line": 11,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 37,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with ada@example.com",
+      "textKey": "10b3d1c2f0e23649",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "flowPath": [],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/login.test.md",
+          "line": 12,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 49,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "textKey": "d017b6bd3576bb4f",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Log in"",
+        },
+      ],
+      "display": "Click "Log in"",
+      "flowPath": [],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/login.test.md",
+          "line": 13,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Log in"",
+      "textKey": "0fe721c063ff84ea",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Dashboard"",
+        },
+      ],
+      "display": "the page heading is "Dashboard"",
+      "flowPath": [],
+      "index": 3,
+      "kind": "expect",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/login.test.md",
+          "line": 14,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Dashboard"",
+      "textKey": "b67f863f0801c70e",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the URL contains /dashboard",
+        },
+      ],
+      "display": "the URL contains /dashboard",
+      "flowPath": [],
+      "index": 4,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/login.test.md",
+          "line": 15,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 39,
+              "line": 15,
+            },
+            "start": {
+              "column": 1,
+              "line": 15,
+            },
+          },
+        },
+      ],
+      "text": "the URL contains /dashboard",
+      "textKey": "a6d140b00086d6fc",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Log out"",
+        },
+      ],
+      "display": "Click "Log out"",
+      "flowPath": [],
+      "index": 5,
+      "kind": "action",
+      "number": 6,
+      "origin": [
+        {
+          "file": "tests/login.test.md",
+          "line": 16,
+          "number": 6,
+          "range": {
+            "end": {
+              "column": 19,
+              "line": 16,
+            },
+            "start": {
+              "column": 1,
+              "line": 16,
+            },
+          },
+        },
+      ],
+      "text": "Click "Log out"",
+      "textKey": "05180c41e19cc5fd",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Acme Shop"",
+        },
+      ],
+      "display": "the page heading is "Acme Shop"",
+      "flowPath": [],
+      "index": 6,
+      "kind": "expect",
+      "number": 7,
+      "origin": [
+        {
+          "file": "tests/login.test.md",
+          "line": 17,
+          "number": 7,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 17,
+            },
+            "start": {
+              "column": 1,
+              "line": 17,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Acme Shop"",
+      "textKey": "0fb41730f030ed98",
+    },
+  ],
+  "tags": [
+    "smoke",
+    "auth",
+  ],
+  "teardown": [],
+  "timeout": 60,
+}
+`;
+
+exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": null,
+  "data": {},
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/settings-profile.test.md",
+    "tests/flows/login.test.md",
+  ],
+  "guards": [],
+  "heal": null,
+  "id": "tests__settings-profile.test",
+  "kind": "test",
+  "name": "Profile changes are saved",
+  "params": {},
+  "path": "tests/settings-profile.test.md",
+  "setup": [
+    {
+      "method": "POST",
+      "target": "/__test/seed",
+      "type": "request",
+    },
+  ],
+  "start": {
+    "display": "/login",
+    "raw": "/login",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/login",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to /login",
+        },
+      ],
+      "display": "Go to /login",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 16,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to /login",
+      "textKey": "c4f3a1c2c1ab8ab2",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with ",
+        },
+        {
+          "kind": "value",
+          "ref": "params.email",
+          "text": "ada@example.com",
+        },
+      ],
+      "display": "Fill "Email" with ada@example.com",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 11,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with {{params.email}}",
+      "textKey": "99b98ca7e73a3ac0",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 12,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with {{params.password}}",
+      "textKey": "601e4c8b381cca3e",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Log in"",
+        },
+      ],
+      "display": "Click "Log in"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 3,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 13,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Log in"",
+      "textKey": "b47d7fbd6902a574",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Dashboard"",
+        },
+      ],
+      "display": "the page heading is "Dashboard"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 4,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 14,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Dashboard"",
+      "textKey": "5c6d25b275ab76c6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to the settings page",
+        },
+      ],
+      "display": "Go to the settings page",
+      "flowPath": [],
+      "index": 5,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 10,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 27,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to the settings page",
+      "textKey": "3c482e5ce21be3f3",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Full name" with Ada King",
+        },
+      ],
+      "display": "Fill "Full name" with Ada King",
+      "flowPath": [],
+      "index": 6,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 11,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 34,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Full name" with Ada King",
+      "textKey": "570ca089c29247ed",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Select "Europe/London" in "Time zone"",
+        },
+      ],
+      "display": "Select "Europe/London" in "Time zone"",
+      "flowPath": [],
+      "index": 7,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 12,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 41,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Select "Europe/London" in "Time zone"",
+      "textKey": "9289601ec52ddae2",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Save changes"",
+        },
+      ],
+      "display": "Click "Save changes"",
+      "flowPath": [],
+      "index": 8,
+      "kind": "action",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 13,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 24,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Save changes"",
+      "textKey": "473fc914cbd299ab",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "a message says "Profile saved"",
+        },
+      ],
+      "display": "a message says "Profile saved"",
+      "flowPath": [],
+      "index": 9,
+      "kind": "expect",
+      "number": 6,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 14,
+          "number": 6,
+          "range": {
+            "end": {
+              "column": 42,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "a message says "Profile saved"",
+      "textKey": "cc9bb2329962b592",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Reload the page",
+        },
+      ],
+      "display": "Reload the page",
+      "flowPath": [],
+      "index": 10,
+      "kind": "action",
+      "number": 7,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 15,
+          "number": 7,
+          "range": {
+            "end": {
+              "column": 19,
+              "line": 15,
+            },
+            "start": {
+              "column": 1,
+              "line": 15,
+            },
+          },
+        },
+      ],
+      "text": "Reload the page",
+      "textKey": "3b1d1585f7e0b1c6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": ""Full name" contains "Ada King"",
+        },
+      ],
+      "display": ""Full name" contains "Ada King"",
+      "flowPath": [],
+      "index": 11,
+      "kind": "expect",
+      "number": 8,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 16,
+          "number": 8,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 16,
+            },
+            "start": {
+              "column": 1,
+              "line": 16,
+            },
+          },
+        },
+      ],
+      "text": ""Full name" contains "Ada King"",
+      "textKey": "740d288ad05f7eb6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": ""Time zone" is "Europe/London"",
+        },
+      ],
+      "display": ""Time zone" is "Europe/London"",
+      "flowPath": [],
+      "index": 12,
+      "kind": "expect",
+      "number": 9,
+      "origin": [
+        {
+          "file": "tests/settings-profile.test.md",
+          "line": 17,
+          "number": 9,
+          "range": {
+            "end": {
+              "column": 42,
+              "line": 17,
+            },
+            "start": {
+              "column": 1,
+              "line": 17,
+            },
+          },
+        },
+      ],
+      "text": ""Time zone" is "Europe/London"",
+      "textKey": "da455415e8cbf94a",
+    },
+  ],
+  "tags": [
+    "settings",
+    "forms",
+  ],
+  "teardown": [],
+  "timeout": null,
+}
+`;
+
+exports[`Acme Shop tests > tests/signup-email-code.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": "none",
+  "data": {
+    "email": {
+      "display": "test-w41sqo521b@example.test",
+      "raw": "{{unique.email}}",
+      "segments": [
+        {
+          "kind": "value",
+          "ref": "unique.email",
+          "text": "test-w41sqo521b@example.test",
+        },
+      ],
+    },
+  },
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/signup-email-code.test.md",
+  ],
+  "guards": [],
+  "heal": null,
+  "id": "tests__signup-email-code.test",
+  "kind": "test",
+  "name": "New user signs up and verifies their email",
+  "params": {},
+  "path": "tests/signup-email-code.test.md",
+  "setup": [],
+  "start": {
+    "display": "/signup",
+    "raw": "/signup",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/signup",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with ",
+        },
+        {
+          "kind": "value",
+          "ref": "data.email",
+          "text": "test-w41sqo521b@example.test",
+        },
+      ],
+      "display": "Fill "Email" with test-w41sqo521b@example.test",
+      "flowPath": [],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/signup-email-code.test.md",
+          "line": 11,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 36,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with {{data.email}}",
+      "textKey": "60ce3e97e48791ac",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "flowPath": [],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/signup-email-code.test.md",
+          "line": 12,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 49,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "textKey": "d017b6bd3576bb4f",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Sign up"",
+        },
+      ],
+      "display": "Click "Sign up"",
+      "flowPath": [],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/signup-email-code.test.md",
+          "line": 13,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 19,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Sign up"",
+      "textKey": "10946276109ea041",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Check your email"",
+        },
+      ],
+      "display": "the page heading is "Check your email"",
+      "flowPath": [],
+      "index": 3,
+      "kind": "expect",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/signup-email-code.test.md",
+          "line": 14,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 50,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Check your email"",
+      "textKey": "f2f8b9aa634ed9b7",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Enter the code from the verification email into "Verification code"",
+        },
+      ],
+      "display": "Enter the code from the verification email into "Verification code"",
+      "flowPath": [],
+      "index": 4,
+      "kind": "action",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/signup-email-code.test.md",
+          "line": 15,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 71,
+              "line": 15,
+            },
+            "start": {
+              "column": 1,
+              "line": 15,
+            },
+          },
+        },
+      ],
+      "text": "Enter the code from the verification email into "Verification code"",
+      "textKey": "c247983aef90acd9",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Verify"",
+        },
+      ],
+      "display": "Click "Verify"",
+      "flowPath": [],
+      "index": 5,
+      "kind": "action",
+      "number": 6,
+      "origin": [
+        {
+          "file": "tests/signup-email-code.test.md",
+          "line": 16,
+          "number": 6,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 16,
+            },
+            "start": {
+              "column": 1,
+              "line": 16,
+            },
+          },
+        },
+      ],
+      "text": "Click "Verify"",
+      "textKey": "9c71b64ff29586b6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Dashboard"",
+        },
+      ],
+      "display": "the page heading is "Dashboard"",
+      "flowPath": [],
+      "index": 6,
+      "kind": "expect",
+      "number": 7,
+      "origin": [
+        {
+          "file": "tests/signup-email-code.test.md",
+          "line": 17,
+          "number": 7,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 17,
+            },
+            "start": {
+              "column": 1,
+              "line": 17,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Dashboard"",
+      "textKey": "b67f863f0801c70e",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the projects list says "No projects yet."",
+        },
+      ],
+      "display": "the projects list says "No projects yet."",
+      "flowPath": [],
+      "index": 7,
+      "kind": "expect",
+      "number": 8,
+      "origin": [
+        {
+          "file": "tests/signup-email-code.test.md",
+          "line": 18,
+          "number": 8,
+          "range": {
+            "end": {
+              "column": 53,
+              "line": 18,
+            },
+            "start": {
+              "column": 1,
+              "line": 18,
+            },
+          },
+        },
+      ],
+      "text": "the projects list says "No projects yet."",
+      "textKey": "b83b6a009d33ed22",
+    },
+  ],
+  "tags": [
+    "smoke",
+    "auth",
+    "email",
+  ],
+  "teardown": [],
+  "timeout": 120,
+}
+`;
+
+exports[`Acme Shop tests > tests/signup-validation.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": "none",
+  "data": {},
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/signup-validation.test.md",
+  ],
+  "guards": [],
+  "heal": null,
+  "id": "tests__signup-validation.test",
+  "kind": "test",
+  "name": "Sign-up form explains what is wrong",
+  "params": {},
+  "path": "tests/signup-validation.test.md",
+  "setup": [],
+  "start": {
+    "display": "/signup",
+    "raw": "/signup",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/signup",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with not-an-email",
+        },
+      ],
+      "display": "Fill "Email" with not-an-email",
+      "flowPath": [],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/signup-validation.test.md",
+          "line": 8,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 34,
+              "line": 8,
+            },
+            "start": {
+              "column": 1,
+              "line": 8,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with not-an-email",
+      "textKey": "a94b76e72260d6d0",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with short",
+        },
+      ],
+      "display": "Fill "Password" with short",
+      "flowPath": [],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/signup-validation.test.md",
+          "line": 9,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 30,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with short",
+      "textKey": "4de5a4928d877b17",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Sign up"",
+        },
+      ],
+      "display": "Click "Sign up"",
+      "flowPath": [],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/signup-validation.test.md",
+          "line": 10,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 19,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Click "Sign up"",
+      "textKey": "10946276109ea041",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the text "Enter a valid email address, like name@example.com." is shown",
+        },
+      ],
+      "display": "the text "Enter a valid email address, like name@example.com." is shown",
+      "flowPath": [],
+      "index": 3,
+      "kind": "expect",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/signup-validation.test.md",
+          "line": 11,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 83,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "the text "Enter a valid email address, like name@example.com." is shown",
+      "textKey": "5ef35a9b9d51dfed",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the text "Password must be at least 8 characters." is shown",
+        },
+      ],
+      "display": "the text "Password must be at least 8 characters." is shown",
+      "flowPath": [],
+      "index": 4,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/signup-validation.test.md",
+          "line": 12,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 71,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "the text "Password must be at least 8 characters." is shown",
+      "textKey": "a06d1736daa43d14",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Create your account"",
+        },
+      ],
+      "display": "the page heading is "Create your account"",
+      "flowPath": [],
+      "index": 5,
+      "kind": "expect",
+      "number": 6,
+      "origin": [
+        {
+          "file": "tests/signup-validation.test.md",
+          "line": 13,
+          "number": 6,
+          "range": {
+            "end": {
+              "column": 53,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Create your account"",
+      "textKey": "682c0ea1c5a058e6",
+    },
+  ],
+  "tags": [
+    "auth",
+    "forms",
+  ],
+  "teardown": [],
+  "timeout": null,
+}
+`;
+
+exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and matches its expanded snapshot 1`] = `
+{
+  "allowDestructive": [],
+  "auth": null,
+  "data": {},
+  "dataset": null,
+  "diagnostics": [],
+  "environment": null,
+  "files": [
+    "tests/sort-orders.test.md",
+    "tests/flows/login.test.md",
+  ],
+  "guards": [],
+  "heal": null,
+  "id": "tests__sort-orders.test",
+  "kind": "test",
+  "name": "Orders can be sorted by total",
+  "params": {},
+  "path": "tests/sort-orders.test.md",
+  "setup": [
+    {
+      "method": "POST",
+      "target": "/__test/seed",
+      "type": "request",
+    },
+  ],
+  "start": {
+    "display": "/login",
+    "raw": "/login",
+    "segments": [
+      {
+        "kind": "text",
+        "text": "/login",
+      },
+    ],
+  },
+  "steps": [
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to /login",
+        },
+      ],
+      "display": "Go to /login",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 0,
+      "kind": "action",
+      "number": 1,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 10,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 16,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to /login",
+      "textKey": "c4f3a1c2c1ab8ab2",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Email" with ",
+        },
+        {
+          "kind": "value",
+          "ref": "params.email",
+          "text": "ada@example.com",
+        },
+      ],
+      "display": "Fill "Email" with ada@example.com",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 1,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 11,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 38,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Email" with {{params.email}}",
+      "textKey": "99b98ca7e73a3ac0",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Fill "Password" with ",
+        },
+        {
+          "kind": "secret",
+          "name": "SHOP_PASSWORD",
+        },
+      ],
+      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 2,
+      "kind": "action",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 12,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 44,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Fill "Password" with {{params.password}}",
+      "textKey": "601e4c8b381cca3e",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Log in"",
+        },
+      ],
+      "display": "Click "Log in"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 3,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 13,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 18,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "Click "Log in"",
+      "textKey": "b47d7fbd6902a574",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the page heading is "Dashboard"",
+        },
+      ],
+      "display": "the page heading is "Dashboard"",
+      "flowPath": [
+        "tests/flows/login.test.md",
+      ],
+      "index": 4,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 9,
+          "number": 1,
+          "range": {
+            "end": {
+              "column": 28,
+              "line": 9,
+            },
+            "start": {
+              "column": 1,
+              "line": 9,
+            },
+          },
+        },
+        {
+          "file": "tests/flows/login.test.md",
+          "line": 14,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "the page heading is "Dashboard"",
+      "textKey": "5c6d25b275ab76c6",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Go to the orders page",
+        },
+      ],
+      "display": "Go to the orders page",
+      "flowPath": [],
+      "index": 5,
+      "kind": "action",
+      "number": 2,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 10,
+          "number": 2,
+          "range": {
+            "end": {
+              "column": 25,
+              "line": 10,
+            },
+            "start": {
+              "column": 1,
+              "line": 10,
+            },
+          },
+        },
+      ],
+      "text": "Go to the orders page",
+      "textKey": "52746f509c2cb01f",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the orders table shows 5 orders",
+        },
+      ],
+      "display": "the orders table shows 5 orders",
+      "flowPath": [],
+      "index": 6,
+      "kind": "expect",
+      "number": 3,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 11,
+          "number": 3,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 11,
+            },
+            "start": {
+              "column": 1,
+              "line": 11,
+            },
+          },
+        },
+      ],
+      "text": "the orders table shows 5 orders",
+      "textKey": "2f1959934aab0864",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click the "Total" column header",
+        },
+      ],
+      "display": "Click the "Total" column header",
+      "flowPath": [],
+      "index": 7,
+      "kind": "action",
+      "number": 4,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 12,
+          "number": 4,
+          "range": {
+            "end": {
+              "column": 35,
+              "line": 12,
+            },
+            "start": {
+              "column": 1,
+              "line": 12,
+            },
+          },
+        },
+      ],
+      "text": "Click the "Total" column header",
+      "textKey": "76ded50dc9eb2ca9",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the first order in the table is A-1002 ($8.90)",
+        },
+      ],
+      "display": "the first order in the table is A-1002 ($8.90)",
+      "flowPath": [],
+      "index": 8,
+      "kind": "expect",
+      "number": 5,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 13,
+          "number": 5,
+          "range": {
+            "end": {
+              "column": 58,
+              "line": 13,
+            },
+            "start": {
+              "column": 1,
+              "line": 13,
+            },
+          },
+        },
+      ],
+      "text": "the first order in the table is A-1002 ($8.90)",
+      "textKey": "4bb6b90fa539d9ac",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click the "Total" column header again",
+        },
+      ],
+      "display": "Click the "Total" column header again",
+      "flowPath": [],
+      "index": 9,
+      "kind": "action",
+      "number": 6,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 14,
+          "number": 6,
+          "range": {
+            "end": {
+              "column": 41,
+              "line": 14,
+            },
+            "start": {
+              "column": 1,
+              "line": 14,
+            },
+          },
+        },
+      ],
+      "text": "Click the "Total" column header again",
+      "textKey": "cafdd4001143d555",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the first order in the table is A-1004 ($150.00)",
+        },
+      ],
+      "display": "the first order in the table is A-1004 ($150.00)",
+      "flowPath": [],
+      "index": 10,
+      "kind": "expect",
+      "number": 7,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 15,
+          "number": 7,
+          "range": {
+            "end": {
+              "column": 60,
+              "line": 15,
+            },
+            "start": {
+              "column": 1,
+              "line": 15,
+            },
+          },
+        },
+      ],
+      "text": "the first order in the table is A-1004 ($150.00)",
+      "textKey": "1aeef67ebd28ad67",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "Click "Show refunded orders"",
+        },
+      ],
+      "display": "Click "Show refunded orders"",
+      "flowPath": [],
+      "index": 11,
+      "kind": "action",
+      "number": 8,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 16,
+          "number": 8,
+          "range": {
+            "end": {
+              "column": 32,
+              "line": 16,
+            },
+            "start": {
+              "column": 1,
+              "line": 16,
+            },
+          },
+        },
+      ],
+      "text": "Click "Show refunded orders"",
+      "textKey": "bf3d7935c8c272e2",
+    },
+    {
+      "bound": [
+        {
+          "kind": "text",
+          "text": "the orders table shows 6 orders",
+        },
+      ],
+      "display": "the orders table shows 6 orders",
+      "flowPath": [],
+      "index": 12,
+      "kind": "expect",
+      "number": 9,
+      "origin": [
+        {
+          "file": "tests/sort-orders.test.md",
+          "line": 17,
+          "number": 9,
+          "range": {
+            "end": {
+              "column": 43,
+              "line": 17,
+            },
+            "start": {
+              "column": 1,
+              "line": 17,
+            },
+          },
+        },
+      ],
+      "text": "the orders table shows 6 orders",
+      "textKey": "835ae926bc4d272f",
+    },
+  ],
+  "tags": [
+    "tables",
+  ],
+  "teardown": [],
+  "timeout": null,
+}
+`;

@@ -12,6 +12,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/config` | Project file (YAML) schema, defaults, merge with provenance, diagnostics, environments, secrets, redactor. Browser-safe main entry + `/node` (also the redacting logger) + restricted `/reveal` | FND-1 |
 | `packages/models` | The one AI adapter: providers (via the Vercel AI SDK), role pools with failover, prices, usage caps, budgets, call records, key check. Registers the `models` config section | FND-2 |
 | `packages/contract` | The results contract: zod schemas, types and JSON Schema for runs, test results and live events; the run folder layout; `foldEvents`, `summarize`, `exitCodeFor`. Browser-safe main entry + `/node` (run writer/reader). Depends only on zod | FND-3 |
+| `packages/spec` | The test file format: `.test.md` parser, typed model, variables and generators, flow expansion, step keys (`textKey`), canonical printer, diagnostics with ranges; registers the `tests` config section. Browser-safe main entry + `/node` (project loading) | SPEC-0 |
 | `packages/core` | The engine: run, record, replay, heal, verdicts. Currently `version()`; re-exports the redacting `logger` (all engine logging goes through it) | engine phases |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
 | `packages/mcp` | MCP server for coding agents | agents phase |
@@ -24,6 +25,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 cli ──► core ──► config ──► brand
  │                 ▲          ▲
  ├──► models ──────┘──────────┘   (models never imports core, so core can use models later)
+ ├──► spec ──► config, contract    (spec never imports core or models; no AI, no network)
  └──► contract                     (cli reads run folders through the contract)
 mcp, action ──► core, contract (later)
 contract ──► zod only (bottom of the graph)
@@ -53,6 +55,14 @@ contract ──► zod only (bottom of the graph)
   desktop app will launch as the demo project; `/__test/` hooks are what AUT-10
   setup and the Bench runner use. Browser tests run only in `bench:fixtures:test`
   (CI job `fixtures`); `pnpm check` stays browser-free.
+
+- SPEC-0 (done): `packages/spec`. `parseTest(text, path)` → `TestSpec` + diagnostics,
+  `expandTest(spec, ctx)` → the runnable steps (flows inlined, variables bound,
+  secrets kept as references, a `textKey` per step), `printTest(spec)` → canonical
+  text, and `loadTests(projectDir, config)` in `/node`. CLI `list` and `show`.
+  LOOP runs `ExpandedTest.steps` and builds `StepResult.key` from `textKey` +
+  route + engine version. SPEC-1 adds lint rules and the editor language service
+  on top of the same model. See `packages/spec/README.md` (the file-format reference).
 
 ## Results contract (`packages/contract`)
 
