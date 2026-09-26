@@ -1,0 +1,35 @@
+{
+  "name": "@testament/cli",
+  "version": "0.1.0",
+  "description": "Command-line interface for CI, coding agents and power users.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "testament": "bin/cli.js"
+  },
+  "brand": {
+    "bin": "cliName"
+  },
+  "dependencies": {
+    "@testament/brand": "workspace:^",
+    "@testament/core": "workspace:^",
+    "commander": "^15.0.0"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -1,0 +1,7 @@
+# Stub. Inputs, outputs and the bundled entry point arrive in the GitHub/CI phase.
+# brand:next name: "{productName}"
+name: "Testament"
+description: "Run plain-English end-to-end tests (placeholder)."
+runs:
+  using: node24
+  main: dist/index.js

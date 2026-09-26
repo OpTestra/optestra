@@ -1,0 +1,31 @@
+{
+  "name": "engine-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "typecheck": "tsc -b && tsc -p tsconfig.tools.json",
+    "test": "vitest run",
+    "build": "pnpm -r run build",
+    "brand:apply": "brand-sync apply",
+    "brand:check": "brand-sync check",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm brand:check",
+    "changeset": "changeset",
+    "version-packages": "changeset version"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@changesets/cli": "3.0.3",
+    "@testament/brand": "workspace:*",
+    "@testament/cli": "workspace:*",
+    "@types/node": "^24.19.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.2"
+  }
+}

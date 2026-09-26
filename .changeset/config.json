@@ -1,0 +1,11 @@
+{
+  "$schema": "../node_modules/@changesets/config/schema.json",
+  "baseBranch": "main",
+  "access": "restricted",
+  "commit": false,
+  "format": false,
+  "fixed": [["@testament/*"]],
+  "linked": [],
+  "ignore": [],
+  "updateInternalDependencies": "patch"
+}

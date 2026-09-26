@@ -1,0 +1,23 @@
+{
+  "name": "@testament/core",
+  "version": "0.1.0",
+  "description": "The test engine.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

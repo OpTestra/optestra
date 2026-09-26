@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+# Local data dir (managed by brand:apply)
+# brand:next {dataDirName}/
+.testament/

@@ -1,0 +1,24 @@
+{
+  "name": "@testament/action",
+  "version": "0.1.0",
+  "description": "GitHub Action (later phase).",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "action.yml",
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

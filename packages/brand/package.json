@@ -1,0 +1,33 @@
+{
+  "name": "@testament/brand",
+  "version": "0.1.0",
+  "description": "Single source of product naming, plus the brand-sync tool (apply/check).",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./tool": {
+      "types": "./dist/src/tool.d.ts",
+      "default": "./dist/src/tool.js"
+    },
+    "./brand.json": "./brand.json"
+  },
+  "bin": {
+    "brand-sync": "bin/brand-sync.js"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "bin",
+    "brand.json"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

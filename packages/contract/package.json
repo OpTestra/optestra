@@ -1,0 +1,23 @@
+{
+  "name": "@testament/contract",
+  "version": "0.1.0",
+  "description": "Versioned results contract: run events, results and artifact layout (FND-3).",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
