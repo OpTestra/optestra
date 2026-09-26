@@ -1,0 +1,224 @@
+/* Acme Shop — the cosmetic build: same behaviour, different look and markup. */
+:root {
+  --ink: #f1f1f4;
+  --muted: #a3a8b8;
+  --line: #3a3f4f;
+  --accent: #16a34a;
+  --warn: #dc2626;
+  --bg: #14161d;
+  --card: #1d2029;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font:
+    15px / 1.6 Georgia,
+    serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+a {
+  color: #7dd3fc;
+}
+.topbar {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 48px;
+  background: #0b0c10;
+}
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.menu ul {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.menu a[aria-current="page"] {
+  text-decoration: underline;
+}
+.menu form {
+  margin: 0;
+}
+.content {
+  max-width: 720px;
+  margin: 48px auto;
+  padding: 0 20px;
+}
+.box {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 28px;
+  margin-bottom: 28px;
+}
+.button {
+  font: inherit;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.button--main {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04130a;
+  font-weight: 700;
+}
+.button--warn {
+  background: transparent;
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pricing-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.pricing-tile {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
+.pricing-tile--pro {
+  outline: 2px solid var(--accent);
+}
+.price {
+  font-size: 32px;
+  margin: 0;
+}
+.price span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.form-row {
+  margin-bottom: 20px;
+  display: grid;
+  gap: 6px;
+}
+.form-row label {
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+.form-row input,
+.form-row select {
+  font: inherit;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+}
+.form-row input[aria-invalid="true"] {
+  border-color: var(--warn);
+}
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+.form-row__error {
+  color: #fca5a5;
+  font-size: 13px;
+  margin: 0;
+}
+.toolbar {
+  display: block;
+}
+dialog {
+  background: var(--card);
+  color: var(--ink);
+  border: 0;
+  border-radius: 14px;
+  padding: 28px;
+  min-width: 400px;
+}
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+.actions {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 12px;
+  justify-content: flex-start;
+}
+.notices {
+  position: fixed;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 8px;
+}
+.toast {
+  margin: 0;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #04130a;
+}
+.toast-error {
+  background: var(--warn);
+  color: #fff;
+}
+.due {
+  font-size: 26px;
+  color: var(--accent);
+}
+iframe {
+  display: block;
+  border: 0;
+  border-radius: 10px;
+  margin: 16px 0;
+  background: #fff;
+}
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+}
+.data-table caption {
+  text-align: right;
+  color: var(--muted);
+  padding-bottom: 8px;
+}
+.data-table th,
+.data-table td {
+  text-align: right;
+  padding: 10px 14px;
+  background: var(--card);
+}
+.data-table thead button {
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.text-action {
+  color: #7dd3fc;
+  cursor: pointer;
+  text-align: right;
+  margin-bottom: 16px;
+}

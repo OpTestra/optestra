@@ -1,0 +1,206 @@
+# Gold answers for the Acme Shop fixture: for every test × variant, the verdict a
+# correct engine must reach and, when it isn't `passed`, the step where the
+# failure is observed, its cause (DIA-1 classes) and why.
+#
+# Verdicts: passed | failed | flaky | blocked
+#   flaky   = failed on the first attempt, passed on the retry (one retry, DIA-2)
+#   blocked = the test never reached its own steps because a `Use:` flow failed
+# Causes: product_bug | test_drift | environment | test_data | blocked
+# `step` is the step number in the .test.md file.
+# Shorthand: `variant: passed` means { verdict: passed }.
+
+version: 1
+fixture: shop
+tests_dir: tests
+
+# How a runner must drive the fixture for these answers to hold.
+harness:
+  retries: 1
+  before_first_attempt: POST /__test/reset?environment=1, then the test's `setup:` requests
+  before_retry: POST /__test/reset, then the test's `setup:` requests
+  secrets:
+    SHOP_PASSWORD: shop-demo-pass
+
+variants:
+  correct: {}
+  cosmetic:
+    # A run that heals the changed surface is as right as a clean pass.
+    also_accept:
+      passed: [healed]
+  broken-signup: {}
+  broken-total: {}
+  broken-login-redirect: {}
+  broken-silent-click: {}
+  broken-not-saved: {}
+  env-flaky: {}
+
+tests:
+  checkout-trial:
+    correct: passed
+    cosmetic: passed
+    broken-signup:
+      verdict: failed
+      step: 3
+      cause: product_bug
+      reason: Submitting a valid sign-up form returns a 500 "Something went wrong" page, every time.
+    broken-total:
+      verdict: failed
+      step: 10
+      cause: product_bug
+      reason: Billing shows "$29.00 due today" during a free trial.
+    broken-login-redirect: passed
+    broken-silent-click: passed
+    broken-not-saved: passed
+    env-flaky: passed
+
+  signup-email-code:
+    correct: passed
+    cosmetic: passed
+    broken-signup:
+      verdict: failed
+      step: 4
+      cause: product_bug
+      reason: Sign-up returns a 500 page instead of asking for the verification code.
+    broken-total: passed
+    broken-login-redirect: passed
+    broken-silent-click: passed
+    broken-not-saved: passed
+    env-flaky: passed
+
+  signup-validation:
+    correct: passed
+    cosmetic: passed
+    broken-signup: passed # validation runs before the crash
+    broken-total: passed
+    broken-login-redirect: passed
+    broken-silent-click: passed
+    broken-not-saved: passed
+    env-flaky: passed
+
+  login:
+    correct: passed
+    cosmetic: passed
+    broken-signup: passed
+    broken-total: passed
+    broken-login-redirect:
+      verdict: failed
+      step: 4
+      cause: product_bug
+      reason: Logging in with the right password lands on "Something went wrong" instead of the dashboard.
+    broken-silent-click: passed
+    broken-not-saved: passed
+    env-flaky: passed
+
+  create-project:
+    correct: passed
+    cosmetic: passed
+    broken-signup: passed
+    broken-total: passed
+    broken-login-redirect:
+      verdict: blocked
+      step: 1
+      cause: product_bug
+      reason: The login flow fails (login lands on an error page), so the test never starts.
+    broken-silent-click:
+      verdict: failed
+      step: 3
+      cause: product_bug
+      reason: False-pass trap. "Create project" can be clicked but no dialog opens.
+    broken-not-saved:
+      verdict: failed
+      step: 9
+      cause: product_bug
+      reason: False-pass trap. The toast says "Project created" and the list shows it, but after a reload it is gone.
+    env-flaky:
+      verdict: flaky
+      step: 6
+      cause: environment
+      reason: The projects API answers 503 to its 2nd request, so the create fails with an error toast; the retry passes.
+
+  billing-zero-due:
+    correct: passed
+    cosmetic: passed
+    broken-signup: passed
+    broken-total:
+      verdict: failed
+      step: 4
+      cause: product_bug
+      reason: Billing shows "$29.00 due today" during a free trial.
+    broken-login-redirect:
+      verdict: blocked
+      step: 1
+      cause: product_bug
+      reason: The login flow fails, so the test never starts.
+    broken-silent-click: passed
+    broken-not-saved: passed
+    env-flaky: passed
+
+  declined-card:
+    correct: passed
+    cosmetic: passed
+    broken-signup: passed
+    broken-total: passed
+    broken-login-redirect:
+      verdict: blocked
+      step: 1
+      cause: product_bug
+      reason: The login flow fails, so the test never starts.
+    broken-silent-click: passed
+    broken-not-saved: passed
+    env-flaky: passed
+
+  settings-profile:
+    correct: passed
+    cosmetic: passed
+    broken-signup: passed
+    broken-total: passed
+    broken-login-redirect:
+      verdict: blocked
+      step: 1
+      cause: product_bug
+      reason: The login flow fails, so the test never starts.
+    broken-silent-click: passed
+    broken-not-saved: passed
+    env-flaky: passed
+
+  avatar-upload:
+    correct: passed
+    cosmetic: passed
+    broken-signup: passed
+    broken-total: passed
+    broken-login-redirect:
+      verdict: blocked
+      step: 1
+      cause: product_bug
+      reason: The login flow fails, so the test never starts.
+    broken-silent-click: passed
+    broken-not-saved: passed
+    env-flaky: passed
+
+  delete-account-guard:
+    correct: passed
+    cosmetic: passed
+    broken-signup: passed
+    broken-total: passed
+    broken-login-redirect:
+      verdict: blocked
+      step: 1
+      cause: product_bug
+      reason: The login flow fails, so the test never starts.
+    broken-silent-click: passed
+    broken-not-saved: passed
+    env-flaky: passed
+
+  sort-orders:
+    correct: passed
+    cosmetic: passed
+    broken-signup: passed
+    broken-total: passed
+    broken-login-redirect:
+      verdict: blocked
+      step: 1
+      cause: product_bug
+      reason: The login flow fails, so the test never starts.
+    broken-silent-click: passed
+    broken-not-saved: passed
+    env-flaky: passed

@@ -1,0 +1,33 @@
+/* The hosted card fields inside the checkout iframe. */
+body {
+  margin: 0;
+  padding: 16px;
+  font:
+    15px / 1.4 system-ui,
+    sans-serif;
+  color: #1d2433;
+}
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+input {
+  font: inherit;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d9dee8;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.error {
+  color: #b42318;
+  font-size: 13px;
+}

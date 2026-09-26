@@ -1,0 +1,215 @@
+/* Acme Shop — the reference look. The cosmetic build uses cosmetic.css instead. */
+:root {
+  --ink: #1d2433;
+  --muted: #5b6475;
+  --line: #d9dee8;
+  --brand: #2952cc;
+  --danger: #b42318;
+  --bg: #f6f7fb;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font:
+    16px / 1.5 system-ui,
+    sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+a {
+  color: var(--brand);
+}
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 32px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--ink);
+}
+.site-nav ul {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.site-nav a[aria-current="page"] {
+  font-weight: 600;
+}
+.site-nav form {
+  margin: 0;
+}
+.page {
+  max-width: 880px;
+  margin: 32px auto;
+  padding: 0 24px;
+}
+.panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.btn {
+  font: inherit;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+}
+.btn-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+.btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.plan {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px;
+}
+.plan--pro {
+  border-color: var(--brand);
+}
+.price {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 4px 0;
+}
+.price span {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.field {
+  margin-bottom: 16px;
+}
+.field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.field input,
+.field select {
+  font: inherit;
+  width: 100%;
+  max-width: 360px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.field input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.hint {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 4px 0 0;
+}
+.field-error {
+  color: var(--danger);
+  font-size: 14px;
+  margin: 4px 0 0;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+dialog {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px;
+  min-width: 360px;
+}
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.35);
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.toasts {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  display: grid;
+  gap: 8px;
+}
+.toast {
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #fff;
+}
+.toast-error {
+  background: var(--danger);
+}
+.due {
+  font-size: 22px;
+  font-weight: 700;
+}
+iframe {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+.orders-table caption {
+  text-align: left;
+  font-weight: 600;
+  padding: 8px 0;
+}
+.orders-table th,
+.orders-table td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.orders-table thead button {
+  font: inherit;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.fake-link {
+  color: var(--brand);
+  cursor: pointer;
+  margin-bottom: 12px;
+  display: inline-block;
+}

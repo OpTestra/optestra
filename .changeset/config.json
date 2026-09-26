@@ -7,5 +7,6 @@
   "fixed": [["@testament/*"]],
   "linked": [],
   "ignore": [],
-  "updateInternalDependencies": "patch"
+  "updateInternalDependencies": "patch",
+  "privatePackages": { "version": false, "tag": false }
 }
