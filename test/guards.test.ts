@@ -33,6 +33,9 @@ const NETWORK_EXCEPTIONS: Record<string, RegExp> = {
   // for hosts outside the allowlist here and it refuses all of it. Loopback only,
   // never connects anywhere (checked below). Playwright drives the browser itself.
   "packages/browser/src/refusal-proxy.ts": /from "node:(http|net)";/g,
+  // Setup/teardown request hooks (AUT-10) go through Playwright's request context,
+  // allowlist-checked first (checked below). Not an agent action.
+  "packages/browser/src/session.ts": /this\.#context\.request\.fetch\(/g,
   // Serves the demo shop. Binding to 127.0.0.1 is checked below.
   "bench/fixtures/shop/src/server.ts": /from "node:http";/g,
   // Optional delivery to a local Mailpit inbox; refuses non-loopback hosts.
@@ -91,6 +94,17 @@ describe("engine guards", () => {
     expect(proxy).toMatch(/\.listen\(0, PROXY_HOST,/);
     expect([...proxy.matchAll(/\.listen\(/g)]).toHaveLength(1);
     expect(proxy).not.toMatch(/\b(connect|request|get)\(|createConnection|new Socket/);
+  });
+
+  it("sends hook requests only after the allowlist check, without following redirects", () => {
+    const session = readFileSync(join(root, "packages/browser/src/session.ts"), "utf8");
+    expect([...session.matchAll(/\.request\.fetch\(/g)]).toHaveLength(1);
+    const hook = session.slice(
+      session.indexOf("async hookRequest("),
+      session.indexOf("this.#context.request.fetch("),
+    );
+    expect(hook).toContain("if (!this.#allowlist.allowsUrl(url))");
+    expect(session).toContain("maxRedirects: 0,");
   });
 
   it("keeps fixtures out of engine packages (tests may use them)", () => {

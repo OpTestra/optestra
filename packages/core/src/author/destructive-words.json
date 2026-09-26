@@ -1,0 +1,26 @@
+{
+  "$comment": "SAF-4: words that mark an action as destructive in production mode, by intent (the test's `allowDestructive` values). Matched case-insensitively as whole words/phrases against the target's accessible name and text. Data, not code: extend here. Bare \"cancel\" is left out on purpose: it is also every dialog's harmless close button.",
+  "delete": ["delete", "remove", "destroy", "erase", "deactivate", "close account"],
+  "pay": [
+    "pay",
+    "purchase",
+    "buy",
+    "place order",
+    "checkout",
+    "check out",
+    "subscribe",
+    "upgrade",
+    "start trial",
+    "confirm payment"
+  ],
+  "send": ["send", "publish", "post message", "email everyone"],
+  "invite": ["invite", "add member", "add user"],
+  "cancel": [
+    "cancel subscription",
+    "cancel plan",
+    "cancel order",
+    "cancel account",
+    "cancel membership",
+    "unsubscribe"
+  ]
+}

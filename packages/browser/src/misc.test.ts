@@ -33,6 +33,7 @@ describe("public API (SAF-2: the closed action set)", () => {
       "candidates",
       "close",
       "constructor",
+      "hookRequest",
       "observe",
       "refusals",
       "screenshot",

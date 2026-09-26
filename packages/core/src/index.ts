@@ -15,3 +15,5 @@ const pkg = createRequire(import.meta.url)("../package.json") as { version: stri
 export function version(): string {
   return pkg.version;
 }
+
+export * from "./author/index.js";

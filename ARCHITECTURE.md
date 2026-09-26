@@ -15,7 +15,8 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/spec` | The test file format: `.test.md` parser, typed model, variables and generators, flow expansion, step keys (`textKey`), canonical printer, diagnostics with ranges; lint rules, `checkTest` and the editor language service; registers the `tests` and `lint` config sections. Browser-safe main entry + `/node` (project loading) | SPEC-0, SPEC-1 |
 | `packages/decide` | The decision layer: typed decision tasks (choice / score / noul), rules first → decision model → escalate below threshold, hard time limits, racing (during-run) and batching (after-run), decision cache, metrics, labelled examples; registers the `decisions` config section. Browser-safe main entry + `/node` (disk cache, label store) | DEC-0 |
 | `packages/browser` | The browser harness: fresh isolated Playwright sessions behind the allowlist guard, a closed set of typed actions with post-state and settle, accessibility observations with refs and locator candidates, secret typing, screenshots and scrubbed evidence. Node only; no AI. The agent (LOOP-1) and the replayer (LOOP-4) both drive pages through it | LOOP-0 |
-| `packages/core` | The engine: run, record, replay, heal, verdicts. Currently `version()`; re-exports the redacting `logger` (all engine logging goes through it) | engine phases |
+| `packages/recording` | The recording format: per test, the commands for each step (locators, fingerprints, templates, learned waits) and the typed checks; keys (`routeOf`, `stepKey`, `RECORDING_EPOCH`). Browser-safe + `/node` reader/writer | LOOP-1 |
+| `packages/core` | The engine: run, record, replay, heal, verdicts. Today the author (`authorTest`: agent loop, guards, VER-5 check, authoring report; `/node` `saveAuthoring`); re-exports the redacting `logger` | LOOP-1 onward |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
 | `packages/mcp` | MCP server for coding agents | agents phase |
 | `packages/action` | GitHub Action (`action.yml`) | GitHub/CI phase |
@@ -30,6 +31,8 @@ cli ──► core ──► config ──► brand
  ├──► spec ──► config, contract    (spec never imports core or models; no AI, no network)
  ├──► decide ──► config, contract  (no network; backends are passed in, DEC-1)
  ├──► browser ──► config, contract (+ playwright; never imports core, models or spec)
+ ├──► recording ──► spec, brand    (browser-safe; no AI, no network)
+ core ──► browser, models, spec, recording, contract, config
  └──► contract                     (cli reads run folders through the contract)
 mcp, action ──► core, contract (later)
 contract ──► zod only (bottom of the graph)
@@ -101,6 +104,18 @@ contract ──► zod only (bottom of the graph)
   and `snapshot` (debug). Real-browser tests run in `bench:fixtures:test` (CI job
   `fixtures`, Chromium + Firefox + WebKit). See `packages/browser/README.md`
   (safety model, actions, observation format, outcomes).
+
+- LOOP-1 (done): `packages/recording` + the author in `packages/core`.
+  `authorTest(expanded, { session, models, budget, production, timeoutMs, previous, meta })`
+  runs setup request hooks (through the harness's `hookRequest`), then each action
+  step through the agent loop (planner role, tools = the LOOP-0 action set +
+  `look`/`step_done`/`step_impossible`, guards checked before acting, VER-5: no
+  visible change → `no_visible_effect`), exact ops without a model, and pending
+  checks for Expect/Soft. Output: the recording
+  (`<tests>/<data dir>/<testId>.steps.json`, committed) and the authoring report
+  (`<project>/<data dir>/authoring/<runId>/`). CLI `author`. Scripted-model browser
+  tests run in `bench:fixtures:test`; `@testament/models/testing` provides the
+  scripted model. See `packages/recording/README.md` and `packages/core/README.md`.
 
 ## Results contract (`packages/contract`)
 

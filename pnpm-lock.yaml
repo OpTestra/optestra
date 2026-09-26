@@ -88,6 +88,9 @@ importers:
       '@testament/models':
         specifier: workspace:^
         version: link:../models
+      '@testament/recording':
+        specifier: workspace:^
+        version: link:../recording
       '@testament/spec':
         specifier: workspace:^
         version: link:../spec
@@ -115,9 +118,34 @@ importers:
 
   packages/core:
     dependencies:
+      '@testament/brand':
+        specifier: workspace:^
+        version: link:../brand
+      '@testament/browser':
+        specifier: workspace:^
+        version: link:../browser
       '@testament/config':
         specifier: workspace:^
         version: link:../config
+      '@testament/contract':
+        specifier: workspace:^
+        version: link:../contract
+      '@testament/models':
+        specifier: workspace:^
+        version: link:../models
+      '@testament/recording':
+        specifier: workspace:^
+        version: link:../recording
+      '@testament/spec':
+        specifier: workspace:^
+        version: link:../spec
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@testament/fixture-shop':
+        specifier: workspace:*
+        version: link:../../bench/fixtures/shop
 
   packages/decide:
     dependencies:
@@ -171,6 +199,18 @@ importers:
       yaml:
         specifier: ^2.9.1
         version: 2.9.1
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+
+  packages/recording:
+    dependencies:
+      '@testament/brand':
+        specifier: workspace:^
+        version: link:../brand
+      '@testament/spec':
+        specifier: workspace:^
+        version: link:../spec
       zod:
         specifier: ^4.6.5
         version: 4.6.5

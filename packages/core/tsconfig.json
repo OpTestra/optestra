@@ -2,8 +2,31 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "lib": ["es2024", "dom"]
   },
-  "include": ["src"],
-  "references": [{ "path": "../config" }]
+  "include": ["src", "src/**/*.json"],
+  "references": [
+    {
+      "path": "../brand"
+    },
+    {
+      "path": "../browser"
+    },
+    {
+      "path": "../config"
+    },
+    {
+      "path": "../contract"
+    },
+    {
+      "path": "../models"
+    },
+    {
+      "path": "../recording"
+    },
+    {
+      "path": "../spec"
+    }
+  ]
 }

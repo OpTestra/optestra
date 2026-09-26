@@ -12,6 +12,8 @@
     "bench/fixtures/*/e2e",
     "packages/browser/e2e",
     "packages/browser/vitest.config.ts",
+    "packages/core/e2e",
+    "packages/core/vitest.config.ts",
     "bench/fixtures/*/playwright.config.ts"
   ]
 }
