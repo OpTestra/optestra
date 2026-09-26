@@ -1,0 +1,67 @@
+{
+  "contractVersion": "1.0",
+  "runId": "01M3EF2PM04CMHWHZ9D1V41QWH",
+  "engineVersion": "0.1.0",
+  "project": "demo-shop",
+  "environment": "staging",
+  "target": "web",
+  "trigger": "ci",
+  "mode": "normal",
+  "startedAt": "2026-09-26T09:00:00.000Z",
+  "finishedAt": "2026-09-26T09:00:04.945Z",
+  "durationMs": 4945,
+  "blocked": null,
+  "totals": {
+    "tests": 2,
+    "passed": 2,
+    "healed": 0,
+    "failed": 0,
+    "flaky": 0,
+    "blocked": 0
+  },
+  "cost": {
+    "usd": 0,
+    "unpricedCalls": 0,
+    "aiCalls": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "cacheWrite": 0
+    }
+  },
+  "git": {
+    "branch": "main",
+    "commit": "4f1c2e9a7b3d5f60812c4e9d0a1b2c3d4e5f6071",
+    "pr": null
+  },
+  "tests": [
+    {
+      "testId": "tests__checkout__guest-checkout",
+      "name": "Guest checkout",
+      "file": "tests/checkout/guest-checkout.md",
+      "verdict": "passed",
+      "headline": null,
+      "durationMs": 3250,
+      "attempts": 1,
+      "aiCalls": 0,
+      "costUsd": 0,
+      "result": "tests/tests__checkout__guest-checkout/result.json"
+    },
+    {
+      "testId": "tests__search__search-products",
+      "name": "Search finds products",
+      "file": "tests/search/search-products.md",
+      "verdict": "passed",
+      "headline": null,
+      "durationMs": 1585,
+      "attempts": 1,
+      "aiCalls": 0,
+      "costUsd": 0,
+      "result": "tests/tests__search__search-products/result.json"
+    }
+  ],
+  "modelCalls": [],
+  "decisions": [],
+  "artifacts": []
+}

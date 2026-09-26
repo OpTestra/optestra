@@ -1,0 +1,55 @@
+{
+  "contractVersion": "1.0",
+  "runId": "01M3EGSME0Y0HFX5XMJ3B771ER",
+  "engineVersion": "0.1.0",
+  "project": "demo-shop",
+  "environment": "staging",
+  "target": "web",
+  "trigger": "schedule",
+  "mode": "normal",
+  "startedAt": "2026-09-26T09:30:00.000Z",
+  "finishedAt": "2026-09-26T09:30:12.565Z",
+  "durationMs": 12565,
+  "blocked": null,
+  "totals": {
+    "tests": 1,
+    "passed": 0,
+    "healed": 0,
+    "failed": 0,
+    "flaky": 1,
+    "blocked": 0
+  },
+  "cost": {
+    "usd": 0,
+    "unpricedCalls": 0,
+    "aiCalls": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "cacheWrite": 0
+    }
+  },
+  "git": {
+    "branch": "main",
+    "commit": "4f1c2e9a7b3d5f60812c4e9d0a1b2c3d4e5f6071",
+    "pr": null
+  },
+  "tests": [
+    {
+      "testId": "tests__search__search-products",
+      "name": "Search finds products",
+      "file": "tests/search/search-products.md",
+      "verdict": "flaky",
+      "headline": "Failed, then passed on retry: GET /api/search returned 503 on the first attempt",
+      "durationMs": 12485,
+      "attempts": 2,
+      "aiCalls": 0,
+      "costUsd": 0,
+      "result": "tests/tests__search__search-products/result.json"
+    }
+  ],
+  "modelCalls": [],
+  "decisions": [],
+  "artifacts": []
+}

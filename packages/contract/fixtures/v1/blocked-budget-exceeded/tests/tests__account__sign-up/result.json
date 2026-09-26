@@ -1,0 +1,290 @@
+{
+  "contractVersion": "1.0",
+  "runId": "01M3EHY8A0Z0PMNVCJH2CPRFHD",
+  "testId": "tests__account__sign-up",
+  "file": "tests/account/sign-up.md",
+  "name": "Sign up for a new account",
+  "tags": [
+    "account"
+  ],
+  "matrix": {
+    "target": "web",
+    "browser": "chromium",
+    "device": null
+  },
+  "verdict": "blocked",
+  "decidedBy": [
+    {
+      "kind": "blocked",
+      "reason": "budget_exceeded",
+      "message": "The run budget of $1.00 was reached ($1.08 spent). Raise run.budget.maxPerRunUsd or run in replay mode."
+    }
+  ],
+  "failureCause": "blocked",
+  "failureEvidence": [],
+  "headline": "Blocked: the run budget of $1.00 was reached at step 3",
+  "checkedSummary": [],
+  "startedAt": "2026-09-26T09:50:00.030Z",
+  "durationMs": 12785,
+  "ai": {
+    "calls": 4,
+    "costUsd": 1.08,
+    "unpricedCalls": 0,
+    "tokens": {
+      "input": 259000,
+      "output": 3500,
+      "cached": 0,
+      "cacheWrite": 0
+    },
+    "recent": null
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "blocked",
+      "startedAt": "2026-09-26T09:50:00.050Z",
+      "durationMs": 12755,
+      "steps": [
+        {
+          "index": 0,
+          "key": "action:open-the-sign-up-page",
+          "text": "Open the sign-up page",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "none",
+          "locator": null,
+          "postState": {
+            "status": "verified",
+            "expected": "URL is /signup",
+            "observed": "/signup"
+          },
+          "startedAt": "2026-09-26T09:50:00.090Z",
+          "durationMs": 8300,
+          "settledMs": 610,
+          "screenshots": {
+            "before": "tests/tests__account__sign-up/1/steps/0-before.png",
+            "after": "tests/tests__account__sign-up/1/steps/0-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [
+            "m1",
+            "m2"
+          ],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 1,
+          "key": "action:fill-the-form-with-a-new-user-{email}",
+          "text": "Fill the form with a new user {email}",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "none",
+          "locator": {
+            "used": "primary",
+            "value": "getByLabel('Email')"
+          },
+          "postState": {
+            "status": "verified",
+            "expected": "email field has a value",
+            "observed": "filled"
+          },
+          "startedAt": "2026-09-26T09:50:08.430Z",
+          "durationMs": 4300,
+          "settledMs": 150,
+          "screenshots": {
+            "before": "tests/tests__account__sign-up/1/steps/1-before.png",
+            "after": "tests/tests__account__sign-up/1/steps/1-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [
+            "m3"
+          ],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 2,
+          "key": "action:submit-the-form",
+          "text": "Submit the form",
+          "kind": "action",
+          "status": "blocked",
+          "recovery": "none",
+          "locator": null,
+          "postState": null,
+          "startedAt": "2026-09-26T09:50:12.770Z",
+          "durationMs": 5,
+          "settledMs": null,
+          "screenshots": {
+            "before": "tests/tests__account__sign-up/1/steps/2-before.png",
+            "after": "tests/tests__account__sign-up/1/steps/2-after.png"
+          },
+          "error": "Run budget of $1.00 reached ($1.08 spent)",
+          "checkIds": [],
+          "modelCallIds": [
+            "m4"
+          ],
+          "decisionIds": [],
+          "healIds": []
+        }
+      ],
+      "checks": [],
+      "modelCalls": [
+        {
+          "id": "m1",
+          "role": "planner",
+          "provider": "anthropic",
+          "model": "claude-sonnet-5",
+          "startedAt": "2026-09-26T09:50:00.095Z",
+          "tokens": {
+            "input": 98000,
+            "output": 1400,
+            "cached": 0,
+            "cacheWrite": 0
+          },
+          "costUsd": 0.41,
+          "latencyMs": 3900,
+          "attempts": 1,
+          "outcome": "ok"
+        },
+        {
+          "id": "m2",
+          "role": "planner",
+          "provider": "anthropic",
+          "model": "claude-sonnet-5",
+          "startedAt": "2026-09-26T09:50:00.095Z",
+          "tokens": {
+            "input": 91000,
+            "output": 1200,
+            "cached": 0,
+            "cacheWrite": 0
+          },
+          "costUsd": 0.38,
+          "latencyMs": 3500,
+          "attempts": 1,
+          "outcome": "ok"
+        },
+        {
+          "id": "m3",
+          "role": "planner",
+          "provider": "anthropic",
+          "model": "claude-sonnet-5",
+          "startedAt": "2026-09-26T09:50:08.435Z",
+          "tokens": {
+            "input": 70000,
+            "output": 900,
+            "cached": 0,
+            "cacheWrite": 0
+          },
+          "costUsd": 0.29,
+          "latencyMs": 3100,
+          "attempts": 1,
+          "outcome": "ok"
+        },
+        {
+          "id": "m4",
+          "role": "planner",
+          "provider": null,
+          "model": null,
+          "startedAt": "2026-09-26T09:50:12.775Z",
+          "tokens": {
+            "input": 0,
+            "output": 0,
+            "cached": 0,
+            "cacheWrite": 0
+          },
+          "costUsd": 0,
+          "latencyMs": 0,
+          "attempts": 0,
+          "outcome": "budget_exceeded"
+        }
+      ],
+      "decisions": [],
+      "heals": [],
+      "artifacts": [
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__account__sign-up/1/steps/0-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__account__sign-up/1/steps/0-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__account__sign-up/1/steps/1-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__account__sign-up/1/steps/1-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__account__sign-up/1/steps/2-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__account__sign-up/1/steps/2-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "video",
+          "path": "tests/tests__account__sign-up/1/video.webm",
+          "contentType": "video/webm",
+          "bytes": 18,
+          "sha256": "3ff15866d579f3bcaba537d2fb0cba0431d8bd94cadd8959860ef76ceb23ebc8",
+          "scrubbed": true
+        },
+        {
+          "kind": "trace",
+          "path": "tests/tests__account__sign-up/1/trace.zip",
+          "contentType": "application/zip",
+          "bytes": 22,
+          "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+          "scrubbed": true
+        },
+        {
+          "kind": "console",
+          "path": "tests/tests__account__sign-up/1/console.log",
+          "contentType": "text/plain",
+          "bytes": 18,
+          "sha256": "508ce8e557e3cc3832bd47aafe3908217532f7b237eb1ab16d36ce25b348a479",
+          "scrubbed": true
+        },
+        {
+          "kind": "network",
+          "path": "tests/tests__account__sign-up/1/network.har",
+          "contentType": "application/json",
+          "bytes": 129,
+          "sha256": "09950b6398f024be83a7db53a4bcab24d620d9d1b3ea87f10bacd28ddf0bf115",
+          "scrubbed": true
+        }
+      ]
+    }
+  ]
+}

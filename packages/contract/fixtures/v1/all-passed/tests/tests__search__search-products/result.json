@@ -1,0 +1,236 @@
+{
+  "contractVersion": "1.0",
+  "runId": "01M3EF2PM04CMHWHZ9D1V41QWH",
+  "testId": "tests__search__search-products",
+  "file": "tests/search/search-products.md",
+  "name": "Search finds products",
+  "tags": [
+    "search"
+  ],
+  "matrix": {
+    "target": "web",
+    "browser": "chromium",
+    "device": null
+  },
+  "verdict": "passed",
+  "decidedBy": [
+    {
+      "kind": "check",
+      "attempt": 1,
+      "checkId": "c1"
+    }
+  ],
+  "failureCause": null,
+  "failureEvidence": [],
+  "headline": null,
+  "checkedSummary": [
+    "At least 1 result card contained 'Canvas Tote' (found 2)."
+  ],
+  "startedAt": "2026-09-26T09:00:03.310Z",
+  "durationMs": 1585,
+  "ai": {
+    "calls": 0,
+    "costUsd": 0,
+    "unpricedCalls": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "cacheWrite": 0
+    },
+    "recent": {
+      "runs": 20,
+      "calls": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "passed",
+      "startedAt": "2026-09-26T09:00:03.330Z",
+      "durationMs": 1555,
+      "steps": [
+        {
+          "index": 0,
+          "key": "action:open-the-home-page",
+          "text": "Open the home page",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": null,
+          "postState": {
+            "status": "verified",
+            "expected": "URL is /",
+            "observed": "/"
+          },
+          "startedAt": "2026-09-26T09:00:03.370Z",
+          "durationMs": 760,
+          "settledMs": 590,
+          "screenshots": {
+            "before": "tests/tests__search__search-products/1/steps/0-before.png",
+            "after": "tests/tests__search__search-products/1/steps/0-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 1,
+          "key": "action:search-for-tote",
+          "text": "Search for 'tote'",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": {
+            "used": "primary",
+            "value": "getByRole('searchbox', { name: 'Search' })"
+          },
+          "postState": {
+            "status": "verified",
+            "expected": "results list appears",
+            "observed": "results list with 3 items"
+          },
+          "startedAt": "2026-09-26T09:00:04.170Z",
+          "durationMs": 540,
+          "settledMs": 420,
+          "screenshots": {
+            "before": "tests/tests__search__search-products/1/steps/1-before.png",
+            "after": "tests/tests__search__search-products/1/steps/1-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 2,
+          "key": "expect:at-least-one-product-called-canvas-tote-is-listed",
+          "text": "At least one product called 'Canvas Tote' is listed",
+          "kind": "expect",
+          "status": "passed",
+          "recovery": "none",
+          "locator": null,
+          "postState": null,
+          "startedAt": "2026-09-26T09:00:04.750Z",
+          "durationMs": 105,
+          "settledMs": null,
+          "screenshots": {
+            "before": "tests/tests__search__search-products/1/steps/2-before.png",
+            "after": "tests/tests__search__search-products/1/steps/2-after.png"
+          },
+          "error": null,
+          "checkIds": [
+            "c1"
+          ],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        }
+      ],
+      "checks": [
+        {
+          "id": "c1",
+          "stepIndex": 2,
+          "expectation": "At least one product called 'Canvas Tote' is listed",
+          "generated": {
+            "description": "At least 1 result card contains 'Canvas Tote'",
+            "code": "expect(await page.getByRole('article').filter({ hasText: 'Canvas Tote' }).count()).toBeGreaterThanOrEqual(1);"
+          },
+          "kind": "count",
+          "soft": false,
+          "passed": true,
+          "expected": ">= 1",
+          "actual": "2"
+        }
+      ],
+      "modelCalls": [],
+      "decisions": [],
+      "heals": [],
+      "artifacts": [
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__search__search-products/1/steps/0-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__search__search-products/1/steps/0-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__search__search-products/1/steps/1-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__search__search-products/1/steps/1-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__search__search-products/1/steps/2-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__search__search-products/1/steps/2-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "video",
+          "path": "tests/tests__search__search-products/1/video.webm",
+          "contentType": "video/webm",
+          "bytes": 18,
+          "sha256": "3ff15866d579f3bcaba537d2fb0cba0431d8bd94cadd8959860ef76ceb23ebc8",
+          "scrubbed": true
+        },
+        {
+          "kind": "trace",
+          "path": "tests/tests__search__search-products/1/trace.zip",
+          "contentType": "application/zip",
+          "bytes": 22,
+          "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+          "scrubbed": true
+        },
+        {
+          "kind": "console",
+          "path": "tests/tests__search__search-products/1/console.log",
+          "contentType": "text/plain",
+          "bytes": 18,
+          "sha256": "508ce8e557e3cc3832bd47aafe3908217532f7b237eb1ab16d36ce25b348a479",
+          "scrubbed": true
+        },
+        {
+          "kind": "network",
+          "path": "tests/tests__search__search-products/1/network.har",
+          "contentType": "application/json",
+          "bytes": 129,
+          "sha256": "09950b6398f024be83a7db53a4bcab24d620d9d1b3ea87f10bacd28ddf0bf115",
+          "scrubbed": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,454 @@
+{
+  "contractVersion": "1.0",
+  "runId": "01M3EG7AG0M0AHEMTHAS09ZS7Y",
+  "testId": "tests__checkout__discount-code",
+  "file": "tests/checkout/discount-code.md",
+  "name": "Discount code takes 10% off",
+  "tags": [
+    "checkout"
+  ],
+  "matrix": {
+    "target": "web",
+    "browser": "chromium",
+    "device": null
+  },
+  "verdict": "failed",
+  "decidedBy": [
+    {
+      "kind": "check",
+      "attempt": 1,
+      "checkId": "c1"
+    },
+    {
+      "kind": "check",
+      "attempt": 2,
+      "checkId": "c1"
+    }
+  ],
+  "failureCause": "product_bug",
+  "failureEvidence": [
+    {
+      "kind": "check",
+      "attempt": 2,
+      "checkId": "c1"
+    },
+    {
+      "kind": "artifact",
+      "path": "tests/tests__checkout__discount-code/2/steps/2-after.png"
+    },
+    {
+      "kind": "decision",
+      "attempt": 2,
+      "decisionId": "d1"
+    }
+  ],
+  "headline": "Expected order total '$90.00', found '$100.00'",
+  "checkedSummary": [
+    "The order total did not show '$90.00' (it showed '$100.00')."
+  ],
+  "startedAt": "2026-09-26T09:20:00.030Z",
+  "durationMs": 12725,
+  "ai": {
+    "calls": 0,
+    "costUsd": 0,
+    "unpricedCalls": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "cacheWrite": 0
+    },
+    "recent": {
+      "runs": 20,
+      "calls": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "failed",
+      "startedAt": "2026-09-26T09:20:00.050Z",
+      "durationMs": 6335,
+      "steps": [
+        {
+          "index": 0,
+          "key": "action:open-the-cart-with-canvas-tote-in-it",
+          "text": "Open the cart with 'Canvas Tote' in it",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": null,
+          "postState": {
+            "status": "verified",
+            "expected": "URL is /cart",
+            "observed": "/cart"
+          },
+          "startedAt": "2026-09-26T09:20:00.090Z",
+          "durationMs": 690,
+          "settledMs": 510,
+          "screenshots": {
+            "before": "tests/tests__checkout__discount-code/1/steps/0-before.png",
+            "after": "tests/tests__checkout__discount-code/1/steps/0-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 1,
+          "key": "action:apply-the-discount-code-save10",
+          "text": "Apply the discount code 'SAVE10'",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": {
+            "used": "primary",
+            "value": "getByLabel('Discount code')"
+          },
+          "postState": {
+            "status": "verified",
+            "expected": "discount row appears",
+            "observed": "discount row 'SAVE10'"
+          },
+          "startedAt": "2026-09-26T09:20:00.820Z",
+          "durationMs": 480,
+          "settledMs": 300,
+          "screenshots": {
+            "before": "tests/tests__checkout__discount-code/1/steps/1-before.png",
+            "after": "tests/tests__checkout__discount-code/1/steps/1-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 2,
+          "key": "expect:the-order-total-is-90-00",
+          "text": "The order total is $90.00",
+          "kind": "expect",
+          "status": "failed",
+          "recovery": "none",
+          "locator": null,
+          "postState": null,
+          "startedAt": "2026-09-26T09:20:01.340Z",
+          "durationMs": 5015,
+          "settledMs": null,
+          "screenshots": {
+            "before": "tests/tests__checkout__discount-code/1/steps/2-before.png",
+            "after": "tests/tests__checkout__discount-code/1/steps/2-after.png"
+          },
+          "error": "Expected order total '$90.00', found '$100.00'",
+          "checkIds": [
+            "c1"
+          ],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        }
+      ],
+      "checks": [
+        {
+          "id": "c1",
+          "stepIndex": 2,
+          "expectation": "The order total is $90.00",
+          "generated": {
+            "description": "The order total shows '$90.00'",
+            "code": "await expect(page.getByTestId('order-total')).toHaveText('$90.00');"
+          },
+          "kind": "text",
+          "soft": false,
+          "passed": false,
+          "expected": "'$90.00'",
+          "actual": "'$100.00'"
+        }
+      ],
+      "modelCalls": [],
+      "decisions": [],
+      "heals": [],
+      "artifacts": [
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/1/steps/0-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/1/steps/0-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/1/steps/1-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/1/steps/1-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/1/steps/2-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/1/steps/2-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "video",
+          "path": "tests/tests__checkout__discount-code/1/video.webm",
+          "contentType": "video/webm",
+          "bytes": 18,
+          "sha256": "3ff15866d579f3bcaba537d2fb0cba0431d8bd94cadd8959860ef76ceb23ebc8",
+          "scrubbed": true
+        },
+        {
+          "kind": "trace",
+          "path": "tests/tests__checkout__discount-code/1/trace.zip",
+          "contentType": "application/zip",
+          "bytes": 22,
+          "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+          "scrubbed": true
+        },
+        {
+          "kind": "console",
+          "path": "tests/tests__checkout__discount-code/1/console.log",
+          "contentType": "text/plain",
+          "bytes": 35,
+          "sha256": "1e221ae443d634ad46c35615cd00b5994c287956fc4743418cbcfe813c14ebe3",
+          "scrubbed": true
+        },
+        {
+          "kind": "network",
+          "path": "tests/tests__checkout__discount-code/1/network.har",
+          "contentType": "application/json",
+          "bytes": 129,
+          "sha256": "09950b6398f024be83a7db53a4bcab24d620d9d1b3ea87f10bacd28ddf0bf115",
+          "scrubbed": true
+        }
+      ]
+    },
+    {
+      "attempt": 2,
+      "status": "failed",
+      "startedAt": "2026-09-26T09:20:06.405Z",
+      "durationMs": 6335,
+      "steps": [
+        {
+          "index": 0,
+          "key": "action:open-the-cart-with-canvas-tote-in-it",
+          "text": "Open the cart with 'Canvas Tote' in it",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": null,
+          "postState": {
+            "status": "verified",
+            "expected": "URL is /cart",
+            "observed": "/cart"
+          },
+          "startedAt": "2026-09-26T09:20:06.445Z",
+          "durationMs": 690,
+          "settledMs": 510,
+          "screenshots": {
+            "before": "tests/tests__checkout__discount-code/2/steps/0-before.png",
+            "after": "tests/tests__checkout__discount-code/2/steps/0-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 1,
+          "key": "action:apply-the-discount-code-save10",
+          "text": "Apply the discount code 'SAVE10'",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": {
+            "used": "primary",
+            "value": "getByLabel('Discount code')"
+          },
+          "postState": {
+            "status": "verified",
+            "expected": "discount row appears",
+            "observed": "discount row 'SAVE10'"
+          },
+          "startedAt": "2026-09-26T09:20:07.175Z",
+          "durationMs": 480,
+          "settledMs": 300,
+          "screenshots": {
+            "before": "tests/tests__checkout__discount-code/2/steps/1-before.png",
+            "after": "tests/tests__checkout__discount-code/2/steps/1-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 2,
+          "key": "expect:the-order-total-is-90-00",
+          "text": "The order total is $90.00",
+          "kind": "expect",
+          "status": "failed",
+          "recovery": "none",
+          "locator": null,
+          "postState": null,
+          "startedAt": "2026-09-26T09:20:07.695Z",
+          "durationMs": 5015,
+          "settledMs": null,
+          "screenshots": {
+            "before": "tests/tests__checkout__discount-code/2/steps/2-before.png",
+            "after": "tests/tests__checkout__discount-code/2/steps/2-after.png"
+          },
+          "error": "Expected order total '$90.00', found '$100.00'",
+          "checkIds": [
+            "c1"
+          ],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        }
+      ],
+      "checks": [
+        {
+          "id": "c1",
+          "stepIndex": 2,
+          "expectation": "The order total is $90.00",
+          "generated": {
+            "description": "The order total shows '$90.00'",
+            "code": "await expect(page.getByTestId('order-total')).toHaveText('$90.00');"
+          },
+          "kind": "text",
+          "soft": false,
+          "passed": false,
+          "expected": "'$90.00'",
+          "actual": "'$100.00'"
+        }
+      ],
+      "modelCalls": [],
+      "decisions": [
+        {
+          "id": "d1",
+          "task": "failure_cause",
+          "answer": "product_bug",
+          "confidence": 0.97,
+          "source": "rules",
+          "latencyMs": 1,
+          "escalated": false
+        }
+      ],
+      "heals": [],
+      "artifacts": [
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/2/steps/0-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/2/steps/0-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/2/steps/1-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/2/steps/1-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/2/steps/2-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__discount-code/2/steps/2-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "video",
+          "path": "tests/tests__checkout__discount-code/2/video.webm",
+          "contentType": "video/webm",
+          "bytes": 18,
+          "sha256": "3ff15866d579f3bcaba537d2fb0cba0431d8bd94cadd8959860ef76ceb23ebc8",
+          "scrubbed": true
+        },
+        {
+          "kind": "trace",
+          "path": "tests/tests__checkout__discount-code/2/trace.zip",
+          "contentType": "application/zip",
+          "bytes": 22,
+          "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+          "scrubbed": true
+        },
+        {
+          "kind": "console",
+          "path": "tests/tests__checkout__discount-code/2/console.log",
+          "contentType": "text/plain",
+          "bytes": 35,
+          "sha256": "1e221ae443d634ad46c35615cd00b5994c287956fc4743418cbcfe813c14ebe3",
+          "scrubbed": true
+        },
+        {
+          "kind": "network",
+          "path": "tests/tests__checkout__discount-code/2/network.har",
+          "contentType": "application/json",
+          "bytes": 129,
+          "sha256": "09950b6398f024be83a7db53a4bcab24d620d9d1b3ea87f10bacd28ddf0bf115",
+          "scrubbed": true
+        }
+      ]
+    }
+  ]
+}

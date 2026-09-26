@@ -19,6 +19,7 @@
   "dependencies": {
     "@testament/brand": "workspace:^",
     "@testament/config": "workspace:^",
+    "@testament/contract": "workspace:^",
     "@testament/core": "workspace:^",
     "commander": "^15.0.0"
   },

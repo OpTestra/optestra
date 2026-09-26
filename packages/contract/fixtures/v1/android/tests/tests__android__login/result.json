@@ -1,0 +1,311 @@
+{
+  "contractVersion": "1.0",
+  "runId": "01M3EJGJ80CW0YWY81PDJ70RB6",
+  "testId": "tests__android__login",
+  "file": "tests/android/login.md",
+  "name": "Log in and see the home feed",
+  "tags": [
+    "android",
+    "smoke"
+  ],
+  "matrix": {
+    "target": "android",
+    "androidVersion": "14",
+    "device": "Pixel 7"
+  },
+  "verdict": "passed",
+  "decidedBy": [
+    {
+      "kind": "check",
+      "attempt": 1,
+      "checkId": "c1"
+    }
+  ],
+  "failureCause": null,
+  "failureEvidence": [],
+  "headline": null,
+  "checkedSummary": [
+    "The screen showed the 'Home' title and the product feed."
+  ],
+  "startedAt": "2026-09-26T10:00:00.030Z",
+  "durationMs": 6125,
+  "ai": {
+    "calls": 0,
+    "costUsd": 0,
+    "unpricedCalls": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "cacheWrite": 0
+    },
+    "recent": {
+      "runs": 12,
+      "calls": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "passed",
+      "startedAt": "2026-09-26T10:00:00.050Z",
+      "durationMs": 6095,
+      "steps": [
+        {
+          "index": 0,
+          "key": "action:launch-the-app",
+          "text": "Launch the app",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": null,
+          "postState": {
+            "status": "verified",
+            "expected": "screen MainActivity",
+            "observed": "MainActivity"
+          },
+          "startedAt": "2026-09-26T10:00:00.090Z",
+          "durationMs": 2400,
+          "settledMs": 1800,
+          "screenshots": {
+            "before": "tests/tests__android__login/1/steps/0-before.png",
+            "after": "tests/tests__android__login/1/steps/0-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 1,
+          "key": "action:enter-{email}-as-the-email",
+          "text": "Enter {email} as the email",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": {
+            "used": "primary",
+            "value": "resource-id=com.demoshop:id/email"
+          },
+          "postState": {
+            "status": "verified",
+            "expected": "field has text",
+            "observed": "field has text"
+          },
+          "startedAt": "2026-09-26T10:00:02.530Z",
+          "durationMs": 640,
+          "settledMs": 120,
+          "screenshots": {
+            "before": "tests/tests__android__login/1/steps/1-before.png",
+            "after": "tests/tests__android__login/1/steps/1-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 2,
+          "key": "action:enter-{password}-as-the-password",
+          "text": "Enter {password} as the password",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": {
+            "used": "fallback",
+            "value": "text=Password"
+          },
+          "postState": {
+            "status": "verified",
+            "expected": "field has text",
+            "observed": "field has text"
+          },
+          "startedAt": "2026-09-26T10:00:03.210Z",
+          "durationMs": 610,
+          "settledMs": 110,
+          "screenshots": {
+            "before": "tests/tests__android__login/1/steps/2-before.png",
+            "after": "tests/tests__android__login/1/steps/2-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 3,
+          "key": "action:tap-log-in",
+          "text": "Tap 'Log in'",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": {
+            "used": "primary",
+            "value": "content-desc=Log in"
+          },
+          "postState": {
+            "status": "verified",
+            "expected": "screen changes",
+            "observed": "HomeActivity"
+          },
+          "startedAt": "2026-09-26T10:00:03.860Z",
+          "durationMs": 1900,
+          "settledMs": 1400,
+          "screenshots": {
+            "before": "tests/tests__android__login/1/steps/3-before.png",
+            "after": "tests/tests__android__login/1/steps/3-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 4,
+          "key": "expect:the-home-feed-is-shown",
+          "text": "The home feed is shown",
+          "kind": "expect",
+          "status": "passed",
+          "recovery": "none",
+          "locator": null,
+          "postState": null,
+          "startedAt": "2026-09-26T10:00:05.800Z",
+          "durationMs": 315,
+          "settledMs": null,
+          "screenshots": {
+            "before": "tests/tests__android__login/1/steps/4-before.png",
+            "after": "tests/tests__android__login/1/steps/4-after.png"
+          },
+          "error": null,
+          "checkIds": [
+            "c1"
+          ],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        }
+      ],
+      "checks": [
+        {
+          "id": "c1",
+          "stepIndex": 4,
+          "expectation": "The home feed is shown",
+          "generated": {
+            "description": "The screen shows the 'Home' title and the product feed",
+            "code": "- assertVisible:\n    id: com.demoshop:id/home_feed\n- assertVisible: Home"
+          },
+          "kind": "screen",
+          "soft": false,
+          "passed": true,
+          "expected": "HomeActivity with home_feed visible",
+          "actual": "HomeActivity with home_feed visible"
+        }
+      ],
+      "modelCalls": [],
+      "decisions": [],
+      "heals": [],
+      "artifacts": [
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__android__login/1/steps/0-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__android__login/1/steps/0-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__android__login/1/steps/1-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__android__login/1/steps/1-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__android__login/1/steps/2-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__android__login/1/steps/2-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__android__login/1/steps/3-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__android__login/1/steps/3-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__android__login/1/steps/4-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__android__login/1/steps/4-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "video",
+          "path": "tests/tests__android__login/1/video.webm",
+          "contentType": "video/webm",
+          "bytes": 18,
+          "sha256": "3ff15866d579f3bcaba537d2fb0cba0431d8bd94cadd8959860ef76ceb23ebc8",
+          "scrubbed": true
+        },
+        {
+          "kind": "logcat",
+          "path": "tests/tests__android__login/1/logcat.txt",
+          "contentType": "text/plain",
+          "bytes": 87,
+          "sha256": "ed7d3bb6e8adae8f3caa65ab4ae07c0a96f1636a52aad6ceccd4da99b6f18d0e",
+          "scrubbed": true
+        }
+      ]
+    }
+  ]
+}

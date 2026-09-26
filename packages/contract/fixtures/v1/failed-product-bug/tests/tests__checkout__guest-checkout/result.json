@@ -1,0 +1,303 @@
+{
+  "contractVersion": "1.0",
+  "runId": "01M3EG7AG0M0AHEMTHAS09ZS7Y",
+  "testId": "tests__checkout__guest-checkout",
+  "file": "tests/checkout/guest-checkout.md",
+  "name": "Guest checkout",
+  "tags": [
+    "checkout",
+    "smoke"
+  ],
+  "matrix": {
+    "target": "web",
+    "browser": "chromium",
+    "device": null
+  },
+  "verdict": "passed",
+  "decidedBy": [
+    {
+      "kind": "check",
+      "attempt": 1,
+      "checkId": "c1"
+    },
+    {
+      "kind": "check",
+      "attempt": 1,
+      "checkId": "c2"
+    }
+  ],
+  "failureCause": null,
+  "failureEvidence": [],
+  "headline": null,
+  "checkedSummary": [
+    "The page showed the heading 'Thanks for your order'.",
+    "The URL ended with /order/confirmed."
+  ],
+  "startedAt": "2026-09-26T09:20:12.785Z",
+  "durationMs": 3250,
+  "ai": {
+    "calls": 0,
+    "costUsd": 0,
+    "unpricedCalls": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "cacheWrite": 0
+    },
+    "recent": {
+      "runs": 20,
+      "calls": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "passed",
+      "startedAt": "2026-09-26T09:20:12.805Z",
+      "durationMs": 3220,
+      "steps": [
+        {
+          "index": 0,
+          "key": "action:open-the-home-page",
+          "text": "Open the home page",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": null,
+          "postState": {
+            "status": "verified",
+            "expected": "URL is /",
+            "observed": "/"
+          },
+          "startedAt": "2026-09-26T09:20:12.845Z",
+          "durationMs": 820,
+          "settledMs": 640,
+          "screenshots": {
+            "before": "tests/tests__checkout__guest-checkout/1/steps/0-before.png",
+            "after": "tests/tests__checkout__guest-checkout/1/steps/0-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 1,
+          "key": "action:add-canvas-tote-to-the-cart",
+          "text": "Add 'Canvas Tote' to the cart",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": {
+            "used": "primary",
+            "value": "getByRole('button', { name: 'Add to cart' })"
+          },
+          "postState": {
+            "status": "verified",
+            "expected": "cart badge shows 1",
+            "observed": "1"
+          },
+          "startedAt": "2026-09-26T09:20:13.705Z",
+          "durationMs": 410,
+          "settledMs": 180,
+          "screenshots": {
+            "before": "tests/tests__checkout__guest-checkout/1/steps/1-before.png",
+            "after": "tests/tests__checkout__guest-checkout/1/steps/1-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 2,
+          "key": "action:check-out-as-a-guest-with-email-{email}",
+          "text": "Check out as a guest with email {email}",
+          "kind": "action",
+          "status": "passed",
+          "recovery": "replay",
+          "locator": {
+            "used": "primary",
+            "value": "getByRole('link', { name: 'Checkout' })"
+          },
+          "postState": {
+            "status": "verified",
+            "expected": "URL is /checkout",
+            "observed": "/checkout"
+          },
+          "startedAt": "2026-09-26T09:20:14.155Z",
+          "durationMs": 1650,
+          "settledMs": 900,
+          "screenshots": {
+            "before": "tests/tests__checkout__guest-checkout/1/steps/2-before.png",
+            "after": "tests/tests__checkout__guest-checkout/1/steps/2-after.png"
+          },
+          "error": null,
+          "checkIds": [],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        },
+        {
+          "index": 3,
+          "key": "expect:the-page-says-thanks-for-your-order",
+          "text": "The page says 'Thanks for your order'",
+          "kind": "expect",
+          "status": "passed",
+          "recovery": "none",
+          "locator": null,
+          "postState": null,
+          "startedAt": "2026-09-26T09:20:15.845Z",
+          "durationMs": 150,
+          "settledMs": null,
+          "screenshots": {
+            "before": "tests/tests__checkout__guest-checkout/1/steps/3-before.png",
+            "after": "tests/tests__checkout__guest-checkout/1/steps/3-after.png"
+          },
+          "error": null,
+          "checkIds": [
+            "c1",
+            "c2"
+          ],
+          "modelCallIds": [],
+          "decisionIds": [],
+          "healIds": []
+        }
+      ],
+      "checks": [
+        {
+          "id": "c1",
+          "stepIndex": 3,
+          "expectation": "The page says 'Thanks for your order'",
+          "generated": {
+            "description": "The page shows the heading 'Thanks for your order'",
+            "code": "await expect(page.getByRole('heading', { name: 'Thanks for your order' })).toBeVisible();"
+          },
+          "kind": "text",
+          "soft": false,
+          "passed": true,
+          "expected": "heading 'Thanks for your order'",
+          "actual": "heading 'Thanks for your order'"
+        },
+        {
+          "id": "c2",
+          "stepIndex": 3,
+          "expectation": "The page says 'Thanks for your order'",
+          "generated": {
+            "description": "The URL ends with /order/confirmed",
+            "code": "await expect(page).toHaveURL(/\\/order\\/confirmed$/);"
+          },
+          "kind": "url",
+          "soft": false,
+          "passed": true,
+          "expected": "/order/confirmed",
+          "actual": "/order/confirmed"
+        }
+      ],
+      "modelCalls": [],
+      "decisions": [],
+      "heals": [],
+      "artifacts": [
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__guest-checkout/1/steps/0-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__guest-checkout/1/steps/0-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__guest-checkout/1/steps/1-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__guest-checkout/1/steps/1-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__guest-checkout/1/steps/2-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__guest-checkout/1/steps/2-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__guest-checkout/1/steps/3-before.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "screenshot",
+          "path": "tests/tests__checkout__guest-checkout/1/steps/3-after.png",
+          "contentType": "image/png",
+          "bytes": 70,
+          "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+          "scrubbed": true
+        },
+        {
+          "kind": "video",
+          "path": "tests/tests__checkout__guest-checkout/1/video.webm",
+          "contentType": "video/webm",
+          "bytes": 18,
+          "sha256": "3ff15866d579f3bcaba537d2fb0cba0431d8bd94cadd8959860ef76ceb23ebc8",
+          "scrubbed": true
+        },
+        {
+          "kind": "trace",
+          "path": "tests/tests__checkout__guest-checkout/1/trace.zip",
+          "contentType": "application/zip",
+          "bytes": 22,
+          "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+          "scrubbed": true
+        },
+        {
+          "kind": "console",
+          "path": "tests/tests__checkout__guest-checkout/1/console.log",
+          "contentType": "text/plain",
+          "bytes": 18,
+          "sha256": "508ce8e557e3cc3832bd47aafe3908217532f7b237eb1ab16d36ce25b348a479",
+          "scrubbed": true
+        },
+        {
+          "kind": "network",
+          "path": "tests/tests__checkout__guest-checkout/1/network.har",
+          "contentType": "application/json",
+          "bytes": 129,
+          "sha256": "09950b6398f024be83a7db53a4bcab24d620d9d1b3ea87f10bacd28ddf0bf115",
+          "scrubbed": true
+        }
+      ]
+    }
+  ]
+}
