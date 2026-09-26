@@ -60,6 +60,9 @@ importers:
       '@testament/core':
         specifier: workspace:^
         version: link:../core
+      '@testament/decide':
+        specifier: workspace:^
+        version: link:../decide
       '@testament/models':
         specifier: workspace:^
         version: link:../models
@@ -93,6 +96,21 @@ importers:
       '@testament/config':
         specifier: workspace:^
         version: link:../config
+
+  packages/decide:
+    dependencies:
+      '@testament/brand':
+        specifier: workspace:^
+        version: link:../brand
+      '@testament/config':
+        specifier: workspace:^
+        version: link:../config
+      '@testament/contract':
+        specifier: workspace:^
+        version: link:../contract
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/mcp: {}
 

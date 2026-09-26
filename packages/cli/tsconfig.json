@@ -10,6 +10,7 @@
     { "path": "../config" },
     { "path": "../contract" },
     { "path": "../core" },
+    { "path": "../decide" },
     { "path": "../models" },
     { "path": "../spec" }
   ]

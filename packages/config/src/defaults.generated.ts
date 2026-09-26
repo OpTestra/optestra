@@ -73,4 +73,13 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
     prices: {},
     timeoutSeconds: 120,
   },
+  decisions: {
+    backend: "none",
+    threshold: 0.8,
+    tasks: {},
+    cache: {
+      enabled: true,
+      ttlSeconds: 604800,
+    },
+  },
 };

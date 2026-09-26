@@ -1,0 +1,33 @@
+{
+  "name": "@testament/decide",
+  "version": "0.1.0",
+  "description": "The decision layer: small typed decisions answered by rules first, a decision model second, escalated below threshold.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "default": "./dist/node/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@testament/brand": "workspace:^",
+    "@testament/config": "workspace:^",
+    "@testament/contract": "workspace:^",
+    "zod": "^4.6.5"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -2,6 +2,7 @@ import { brand } from "@testament/brand";
 import { version } from "@testament/core";
 import { Command } from "commander";
 import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
+import { type DecisionsCommandOptions, runDecisionsCommand } from "./commands/decisions.js";
 import { type LintCommandOptions, runLintCommand } from "./commands/lint.js";
 import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
 import { type ResultsCommandOptions, runResultsCommand } from "./commands/results.js";
@@ -44,6 +45,23 @@ export function createProgram(): Command {
     .option("--json", "print machine-readable JSON")
     .action(async (options: ModelsCommandOptions) => {
       process.exitCode = await runModelsCommand(options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("decisions")
+    .description(
+      "show the decision backend, thresholds and tasks; --stats reads a run folder's decisions",
+    )
+    .option("--stats <runDir>", "print per-task decision metrics from a run folder")
+    .option("-e, --env <name>", "environment to resolve")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .option("--json", "print machine-readable JSON")
+    .action((options: DecisionsCommandOptions) => {
+      process.exitCode = runDecisionsCommand(options, {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),

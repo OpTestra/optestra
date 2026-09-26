@@ -13,6 +13,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/models` | The one AI adapter: providers (via the Vercel AI SDK), role pools with failover, prices, usage caps, budgets, call records, key check. Registers the `models` config section | FND-2 |
 | `packages/contract` | The results contract: zod schemas, types and JSON Schema for runs, test results and live events; the run folder layout; `foldEvents`, `summarize`, `exitCodeFor`. Browser-safe main entry + `/node` (run writer/reader). Depends only on zod | FND-3 |
 | `packages/spec` | The test file format: `.test.md` parser, typed model, variables and generators, flow expansion, step keys (`textKey`), canonical printer, diagnostics with ranges; lint rules, `checkTest` and the editor language service; registers the `tests` and `lint` config sections. Browser-safe main entry + `/node` (project loading) | SPEC-0, SPEC-1 |
+| `packages/decide` | The decision layer: typed decision tasks (choice / score / noul), rules first → decision model → escalate below threshold, hard time limits, racing (during-run) and batching (after-run), decision cache, metrics, labelled examples; registers the `decisions` config section. Browser-safe main entry + `/node` (disk cache, label store) | DEC-0 |
 | `packages/core` | The engine: run, record, replay, heal, verdicts. Currently `version()`; re-exports the redacting `logger` (all engine logging goes through it) | engine phases |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
 | `packages/mcp` | MCP server for coding agents | agents phase |
@@ -26,6 +27,7 @@ cli ──► core ──► config ──► brand
  │                 ▲          ▲
  ├──► models ──────┘──────────┘   (models never imports core, so core can use models later)
  ├──► spec ──► config, contract    (spec never imports core or models; no AI, no network)
+ ├──► decide ──► config, contract  (no network; backends are passed in, DEC-1)
  └──► contract                     (cli reads run folders through the contract)
 mcp, action ──► core, contract (later)
 contract ──► zod only (bottom of the graph)
@@ -71,6 +73,14 @@ contract ──► zod only (bottom of the graph)
   (HEAL-3), and `createLanguageService` gives the desktop and web editors
   diagnostics, completions, hover, code actions, format, outline and go-to-flow.
   Test ids now drop the whole `.test.md` suffix (`tests/login.test.md` → `tests__login`).
+
+- DEC-0 (done): `packages/decide`. `createDecisions({ config, backend, cache, onDecision })`
+  gives `decide(task, input)` → `decided` (answers, confidence, source) or `escalated`
+  (reason, `onEscalate`, `best`), plus `race` and `decideBatch`. Every decision yields a
+  contract `DecisionRecord` through `onDecision` (the runner emits `decision.made`).
+  No task can output a verdict (enforced at registration). Default backend `none`:
+  rules only. DEC-1 adds the Jev/Kev/Laya backends behind `DecisionBackend`; DEC-2
+  adds the six real tasks as specs in `src/tasks/`. See `packages/decide/README.md`.
 
 ## Results contract (`packages/contract`)
 

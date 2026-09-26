@@ -72,3 +72,17 @@ models:
   prices: {}
   # Maximum time for one model request, in seconds.
   timeoutSeconds: 120
+
+# The decision layer (LRN-6..8). The decide package registers this section.
+decisions:
+  # Decision model behind the rules. none = rules only; unclear cases escalate.
+  backend: none
+  # Minimum confidence to act on a decision; below it the decision escalates.
+  threshold: 0.8
+  # Per-task overrides, e.g. page_is_error: { threshold: 0.9, timeLimitMs: 150, enabled: true }
+  tasks: {}
+  cache:
+    # Reuse decision model answers for the same input (rules answers are never cached).
+    enabled: true
+    # One week.
+    ttlSeconds: 604800
