@@ -29,6 +29,7 @@
     "@ai-sdk/openai-compatible": "^3.0.57",
     "@testament/brand": "workspace:^",
     "@testament/config": "workspace:^",
+    "@testament/contract": "workspace:^",
     "ai": "^7.0.116",
     "yaml": "^2.9.1",
     "zod": "^4.6.5"

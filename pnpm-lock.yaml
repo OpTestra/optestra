@@ -119,6 +119,9 @@ importers:
       '@testament/config':
         specifier: workspace:^
         version: link:../config
+      '@testament/contract':
+        specifier: workspace:^
+        version: link:../contract
       ai:
         specifier: ^7.0.116
         version: 7.0.116(zod@4.6.5)

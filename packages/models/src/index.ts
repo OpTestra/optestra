@@ -10,6 +10,7 @@ export {
   type ProviderCheckStatus,
 } from "./check.js";
 export { createModels, type Models, type ModelsOptions } from "./client.js";
+export { toModelCall } from "./contract.js";
 export {
   MODEL_ROLES,
   type ModelRole,

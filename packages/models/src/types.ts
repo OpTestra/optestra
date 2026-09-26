@@ -93,7 +93,7 @@ export type FailureReason =
   | "invalid_output"
   | "aborted";
 
-/** Plain, serialisable record of one `complete` call. FND-3 adds it to the results contract. */
+/** Plain, serialisable record of one `complete` call. Convert with `toModelCall` for the results contract. */
 export interface ModelCallRecord {
   id: string;
   role: ModelRole;
