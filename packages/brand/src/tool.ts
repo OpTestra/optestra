@@ -47,6 +47,8 @@ export function listFiles(root: string, extraSkipDirs: readonly string[] = []): 
   const walk = (dir: string): void => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name);
+      // In a git worktree `.git` is a file holding the main repo's path, not a folder.
+      if (entry.name === ".git") continue;
       if (entry.isDirectory()) {
         if (!skip.has(entry.name)) walk(path);
       } else if (entry.isFile() && !entry.name.endsWith(".tsbuildinfo")) {
