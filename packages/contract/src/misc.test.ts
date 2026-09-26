@@ -2,7 +2,16 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { isUlid, testIdFromPath, ulid } from "./index.js";
+import {
+  isPortableSegment,
+  isSafeRelativePath,
+  isUlid,
+  portablePath,
+  portableSegment,
+  runLayout,
+  testIdFromPath,
+  ulid,
+} from "./index.js";
 
 const SRC = dirname(fileURLToPath(import.meta.url));
 
@@ -63,5 +72,35 @@ describe("testIdFromPath", () => {
     expect(upper).toMatch(/^tests__checkout-flow-[0-9a-f]{8}$/);
     expect(lower).toBe("tests__checkout-flow");
     expect(testIdFromPath("tests/checkout flow.md")).not.toBe(upper);
+  });
+});
+
+describe("portable paths", () => {
+  it("rejects names that are invalid on Windows, macOS or Linux", () => {
+    for (const bad of [
+      "a:b",
+      "a<b",
+      'a"b',
+      "a|b",
+      "a?b",
+      "a*b",
+      "con",
+      "NUL.txt",
+      "trailing.",
+      "trailing ",
+    ]) {
+      expect(isPortableSegment(bad), bad).toBe(false);
+      expect(isSafeRelativePath(`tests/${bad}/result.json`), bad).toBe(false);
+    }
+    expect(isPortableSegment("tests__checkout__guest")).toBe(true);
+  });
+
+  it("makes scrubbed ids and paths portable without touching safe ones", () => {
+    expect(portableSegment("login-[secret:ADMIN_PASSWORD]")).toBe("login-[secret-ADMIN_PASSWORD]");
+    expect(portableSegment("tests__login")).toBe("tests__login");
+    expect(portableSegment("aux")).toBe("_aux");
+    expect(portablePath("tests/a:b/1/console.log")).toBe("tests/a-b/1/console.log");
+    expect(runLayout.testResult("login-[secret:X]")).toBe("tests/login-[secret-X]/result.json");
+    expect(isSafeRelativePath(runLayout.testResult("login-[secret:X]"))).toBe(true);
   });
 });

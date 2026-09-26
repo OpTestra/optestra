@@ -1,3 +1,5 @@
+import { portableSegment } from "./common.js";
+
 /**
  * The run folder, inside the project data dir: `<dataDir>/runs/<runId>/`.
  * Every path in a document is relative to the run folder and uses "/".
@@ -21,12 +23,15 @@ export const ATTEMPT_FILES = {
 } as const;
 export type AttemptFile = keyof typeof ATTEMPT_FILES;
 
+/** A test's folder name: the test id, made portable (ids from `testIdFromPath` already are). */
+const dirOf = (testId: string) => portableSegment(testId);
+
 export const runLayout = {
-  testDir: (testId: string) => `tests/${testId}`,
-  testResult: (testId: string) => `tests/${testId}/result.json`,
-  attemptDir: (testId: string, attempt: number) => `tests/${testId}/${attempt}`,
+  testDir: (testId: string) => `tests/${dirOf(testId)}`,
+  testResult: (testId: string) => `tests/${dirOf(testId)}/result.json`,
+  attemptDir: (testId: string, attempt: number) => `tests/${dirOf(testId)}/${attempt}`,
   attemptFile: (testId: string, attempt: number, file: AttemptFile) =>
-    `tests/${testId}/${attempt}/${ATTEMPT_FILES[file]}`,
+    `tests/${dirOf(testId)}/${attempt}/${ATTEMPT_FILES[file]}`,
   screenshot: (testId: string, attempt: number, index: number, when: "before" | "after") =>
-    `tests/${testId}/${attempt}/steps/${index}-${when}.png`,
+    `tests/${dirOf(testId)}/${attempt}/steps/${index}-${when}.png`,
 } as const;

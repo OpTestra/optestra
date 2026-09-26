@@ -1,6 +1,6 @@
 import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, writeSync } from "node:fs";
 import { basename, join } from "node:path";
-import { type ArtifactRef, isSafeRelativePath } from "../common.js";
+import { type ArtifactRef, isSafeRelativePath, portablePath } from "../common.js";
 import type { ArtifactKind } from "../enums.js";
 import { type Event, EventSchema, type EventInput } from "../events.js";
 import { type FoldResult, foldEvents } from "../fold.js";
@@ -111,7 +111,8 @@ export function createRunWriter(dir: string, options: RunWriterOptions): RunWrit
         throw new Error(
           `refusing unscrubbed artifact "${artifact.path}": remove secrets first and pass scrubbed: true`,
         );
-      const path = scrub(artifact.path);
+      // Scrubbing can put characters like ":" into a path; keep it valid on every OS.
+      const path = portablePath(scrub(artifact.path));
       if (!isSafeRelativePath(path) || RESERVED.test(path))
         throw new Error(
           `artifact path "${path}" must be a relative path to a new file in the run folder`,

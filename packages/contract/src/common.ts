@@ -23,8 +23,51 @@ export function isSafeRelativePath(path: string): boolean {
   if (path === "" || path.startsWith("/") || path.includes("\\") || /^[A-Za-z]:/.test(path)) {
     return false;
   }
-  return path.split("/").every((part) => part !== "" && part !== "." && part !== "..");
+  return path
+    .split("/")
+    .every((part) => part !== "" && part !== "." && part !== ".." && isPortableSegment(part));
 }
+
+/** Characters no Windows, macOS or Linux file name may contain (plus control characters). */
+const NON_PORTABLE_CHARS = new Set(["<", ">", ":", '"', "|", "?", "*"]);
+/** Names Windows reserves for devices, with or without an extension. */
+const RESERVED_NAME = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
+
+const isNonPortableChar = (char: string) =>
+  NON_PORTABLE_CHARS.has(char) || char.charCodeAt(0) < 0x20;
+
+/** True when `part` is a valid file or folder name on every supported OS. */
+export function isPortableSegment(part: string): boolean {
+  return ![...part].some(isNonPortableChar) && !RESERVED_NAME.test(part) && !/[. ]$/.test(part);
+}
+
+/**
+ * Makes one path segment valid on every supported OS: non-portable characters
+ * become "-", trailing dots and spaces are dropped, and reserved device names
+ * get a "_" prefix. Portable segments are returned unchanged.
+ */
+export function portableSegment(part: string): string {
+  if (isPortableSegment(part)) return part;
+  let out = [...part]
+    .map((char) => (isNonPortableChar(char) ? "-" : char))
+    .join("")
+    .replace(/[. ]+$/, "");
+  if (out === "") out = "_";
+  return RESERVED_NAME.test(out) ? `_${out}` : out;
+}
+
+/**
+ * Applies `portableSegment` to every segment of a "/"-separated relative path.
+ * Empty, "." and ".." segments are left as they are, so `isSafeRelativePath`
+ * still refuses them rather than having them silently renamed.
+ */
+export function portablePath(path: string): string {
+  return path
+    .split("/")
+    .map((part) => (part === "" || part === "." || part === ".." ? part : portableSegment(part)))
+    .join("/");
+}
+
 export const RelativePathSchema = z
   .string()
   .refine(isSafeRelativePath, "must be a relative path inside the run folder");
