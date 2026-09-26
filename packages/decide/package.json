@@ -16,10 +16,13 @@
   },
   "files": [
     "dist",
+    "evals",
     "!dist/**/*.test.*"
   ],
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "build:evals": "node scripts/build-evals.ts",
+    "eval:baseline": "node scripts/write-baseline.ts"
   },
   "dependencies": {
     "@testament/brand": "workspace:^",

@@ -249,7 +249,8 @@ describe("through the decision pipeline", () => {
       onDecision: (r) => records.push(r),
       sources: [],
     });
-    expect(run.selection).toMatchObject({ selected: "laya" });
+    expect(run.selection.during.selected).toBe("laya");
+    expect(run.selection.after.selected).toBe("laya");
     expect(run.selection.warnings[0]?.message).toContain("untrained");
     const warm = await run.warmUp();
     expect(warm).toMatchObject({ ok: true, skipped: false });
@@ -308,8 +309,31 @@ describe("through the decision pipeline", () => {
     expect(result.latencyMs).toBeLessThan(1500);
   });
 
-  it("auto uses Jev only when its key is set, and sends it as the bearer token", async () => {
-    const server = await fake(() => ({ json: noul(0.95) }));
+  it("auto uses Jev for after-run tasks only when its key is set, and sends it as the bearer token", async () => {
+    // Answers every question it is asked: nouls yes, choices their first option.
+    const server = await fake(({ body }) => {
+      const questions = (body as { questions: Record<string, { type: string; criteria?: object }> })
+        .questions;
+      return {
+        json: {
+          model: "jev-1.13.0",
+          answers: Object.fromEntries(
+            Object.entries(questions).map(([id, q]) => [
+              id,
+              q.type === "noul"
+                ? { type: "noul", noul: 0.95 }
+                : {
+                    type: "choice",
+                    choice: Object.keys(q.criteria ?? {})[0],
+                    confidence: 0.95,
+                    probabilities: {},
+                  },
+            ]),
+          ),
+          usage: { input_tokens: 100, output_tokens: 10 },
+        },
+      };
+    });
     const base = defaults();
     const config = {
       secrets: {},
@@ -317,22 +341,62 @@ describe("through the decision pipeline", () => {
     };
     const dir = mkdtempSync(join(tmpdir(), "decide-s1-"));
     dirs.push(dir);
+    // One 500, no retry: the rules can't tell, so the after-run backend is asked.
+    const unclearFailure = {
+      verdict: "failed" as const,
+      failingAttempt: 1,
+      attempts: [
+        {
+          attempt: 1,
+          status: "failed" as const,
+          failedStep: 3,
+          failedCheck: null,
+          serverErrors: 1,
+          networkFailures: 0,
+          errorPage: null,
+        },
+      ],
+      failingStep: {
+        attempt: 1,
+        index: 3,
+        text: "Click 'Save'",
+        kind: "action" as const,
+        recovery: "none" as const,
+        error: null,
+        notFound: false,
+        postState: "mismatch" as const,
+        flow: null,
+      },
+      failingCheck: null,
+      requests: [
+        { method: "PUT", path: "/api/profile", status: 500, document: false, thirdParty: false },
+      ],
+      consoleErrors: [],
+      page: null,
+      pageIsError: null,
+    };
     const withKey = createProjectDecisions({
       config,
       projectDir: dir,
       sources: [memorySource({ JEV_API_KEY: "jev-test-key" })],
       bypassCache: true,
     });
-    expect(withKey.selection.summary).toBe("auto → jev (JEV_API_KEY set)");
+    expect(withKey.selection.after.summary).toBe("auto → jev (JEV_API_KEY set)");
+    expect(withKey.selection.during.selected).toBe("none");
     expect(await withKey.warmUp()).toMatchObject({ skipped: true });
-    expect(await withKey.decisions.decide("page_is_error", unclear)).toMatchObject({
+    expect(await withKey.decisions.decide("failure_cause", unclearFailure)).toMatchObject({
+      status: "decided",
       source: "jev",
+      answers: { cause: "product_bug" },
     });
     expect(server.received[0]?.headers.authorization).toBe("Bearer jev-test-key");
+    // During-run tasks never go to Jev (rules only by default).
+    await withKey.decisions.decide("page_is_error", unclear);
+    expect(server.received).toHaveLength(1);
 
     const without = createProjectDecisions({ config, projectDir: dir, sources: [] });
-    expect(without.selection).toMatchObject({ selected: "none", backend: null });
-    await without.decisions.decide("page_is_error", unclear);
+    expect(without.selection.after).toMatchObject({ selected: "none", backend: null });
+    await without.decisions.decide("failure_cause", unclearFailure);
     expect(server.received).toHaveLength(1);
   });
 });

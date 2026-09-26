@@ -23,6 +23,8 @@ export interface SystemOneBackendOptions {
   keepAlive?: string;
   /** For the run cost: USD per million input tokens. */
   priceUsdPerMillionInputTokens?: number;
+  /** Typical request latency; tasks with a shorter time limit won't call this backend. */
+  expectedLatencyMs?: number;
   /** Applied to the state and instructions before they leave. Default: the process-wide redactor. */
   scrub?: (text: string) => string;
   fetch?: FetchLike;
@@ -131,6 +133,9 @@ export function createSystemOneBackend(options: SystemOneBackendOptions): System
     host: transport.host,
     usage: () => ({ ...totals }),
     answer,
+    ...(options.expectedLatencyMs !== undefined
+      ? { expectedLatencyMs: options.expectedLatencyMs }
+      : {}),
   };
   if (options.flavor === "ollaya") {
     // Loads the model (≈2 s on first use) so the first real 100 ms decision isn't cut off.

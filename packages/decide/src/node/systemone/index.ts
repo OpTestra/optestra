@@ -29,6 +29,7 @@ export {
   type KeyStatus,
   layaFix,
   type Notice,
+  type PhaseRoute,
   type ProjectDecisions,
   type ProjectDecisionsOptions,
   type ResolveBackendOptions,

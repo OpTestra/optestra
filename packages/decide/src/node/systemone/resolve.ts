@@ -2,7 +2,7 @@ import { brand } from "@testament/brand";
 import type { Config } from "@testament/config";
 import { processEnvSource, type SecretSource, type SecretValue } from "@testament/config/node";
 import { createDecisions, type Decisions, type OnDecision } from "../../decide.js";
-import type { DecisionsSettings, ModelBackendId } from "../../section.js";
+import type { BackendId, DecisionsSettings, ModelBackendId } from "../../section.js";
 import { fileCache } from "../file-cache.js";
 import { ollayaNotRunningFix } from "./admin.js";
 import { createSystemOneBackend, type SystemOneBackend } from "./client.js";
@@ -21,17 +21,25 @@ export interface Notice {
   fix: string;
 }
 
-export interface BackendSelection {
-  /** What `decisions.backend` says. */
-  configured: DecisionsSettings["backend"];
+/** Which backend one phase uses. */
+export interface PhaseRoute {
+  /** What `decisions.<phase>` says. */
+  configured: BackendId;
   /** What will answer: a model backend, or none (rules only). */
   selected: ModelBackendId | "none";
   /** One line for listings, e.g. "auto → jev (JEV_API_KEY set)". */
   summary: string;
   backend: SystemOneBackend | null;
+}
+
+export interface BackendSelection {
+  /** What `decisions.backend` (the shorthand for both phases) says. */
+  configured: BackendId;
+  during: PhaseRoute;
+  after: PhaseRoute;
   /** Key status per model backend. */
   keys: Record<ModelBackendId, KeyResolution>;
-  /** The selected backend can't be used; decisions fall back to rules. */
+  /** A selected backend can't be used; that phase falls back to rules. */
   problems: Notice[];
   warnings: Notice[];
 }
@@ -82,8 +90,11 @@ export interface ResolveBackendOptions {
 }
 
 /**
- * Picks the decision backend from config. `auto` = Jev when its key resolves,
- * otherwise none. Kev and Laya only when chosen. Never makes a network call.
+ * Picks each phase's decision backend from config (DEC-2):
+ * - `decisions.during` / `decisions.after` name a backend, or `auto`;
+ * - `auto` means whatever `decisions.backend` names; when that is `auto` too,
+ *   during → rules only, after → Jev when its key resolves, else rules only.
+ * Kev and Laya are only used when named. Never makes a network call.
  */
 export function resolveDecisionBackend(
   config: Pick<Config, "secrets"> & { decisions: DecisionsSettings },
@@ -98,62 +109,99 @@ export function resolveDecisionBackend(
   };
   const problems: Notice[] = [];
   const warnings: Notice[] = [];
-  let selected: ModelBackendId | "none";
-  let why: string;
-  if (settings.backend === "auto") {
-    selected = keys.jev.status === "set" ? "jev" : "none";
-    why =
-      selected === "jev"
-        ? `auto → jev (${settings.jev.keySecret} set)`
-        : `auto → none (rules only; set ${settings.jev.keySecret ?? "a Jev key"} to use Jev)`;
-    if (keys.jev.status === "not_allowed" && keys.jev.problem)
-      warnings.push({
-        message: keys.jev.problem,
-        fix: "Add the Jev API host to the secret's domains.",
-      });
-  } else {
-    selected = settings.backend;
-    why = selected === "none" ? "none (rules only)" : selected;
-  }
+  const jevKey = settings.jev.keySecret ?? "a Jev key";
+  if (keys.jev.status === "not_allowed" && keys.jev.problem)
+    warnings.push({
+      message: keys.jev.problem,
+      fix: "Add the Jev API host to the secret's domains.",
+    });
 
-  let backend: SystemOneBackend | null = null;
-  if (selected !== "none") {
-    const s = settings[selected];
-    const key = keys[selected];
-    if (key.status === "missing" || key.status === "not_allowed") {
-      problems.push({
-        message:
-          key.problem ??
-          `decisions.backend is ${selected} but ${s.keySecret} is not set; using rules only.`,
-        fix: `Set ${s.keySecret} (environment variable or .env), or set decisions.backend to auto or none.`,
-      });
-      why = `${why} → none (key missing)`;
-      selected = "none";
+  // One backend instance per model, shared by both phases (one usage total).
+  const instances = new Map<ModelBackendId, SystemOneBackend>();
+  const instance = (id: ModelBackendId): SystemOneBackend => {
+    const existing = instances.get(id);
+    if (existing) return existing;
+    const s = settings[id];
+    const created = createSystemOneBackend({
+      id,
+      baseUrl: s.baseUrl,
+      model: s.model,
+      apiKey: keys[id].key,
+      flavor: id === "laya" ? "ollaya" : "systemone",
+      ...(id === "laya" ? { keepAlive: settings.laya.keepAlive } : {}),
+      priceUsdPerMillionInputTokens: s.priceUsdPerMillionInputTokens,
+      expectedLatencyMs: s.expectedLatencyMs,
+      ...(options.fetch ? { fetch: options.fetch } : {}),
+      ...(options.scrub ? { scrub: options.scrub } : {}),
+    });
+    instances.set(id, created);
+    return created;
+  };
+  const reported = new Set<string>();
+
+  function route(phase: "during" | "after"): PhaseRoute {
+    const configured = settings[phase];
+    let wanted: BackendId = configured;
+    let why: string;
+    if (configured === "auto" && settings.backend !== "auto") {
+      wanted = settings.backend;
+      why = `auto → ${wanted}${wanted === "none" ? " (rules only)" : ""} (from backend)`;
+    } else if (configured === "auto") {
+      if (phase === "during") {
+        return { configured, selected: "none", summary: "auto → none (rules only)", backend: null };
+      }
+      const jev = keys.jev.status === "set";
+      wanted = jev ? "jev" : "none";
+      why = jev
+        ? `auto → jev (${settings.jev.keySecret} set)`
+        : `auto → none (rules only; set ${jevKey} to use Jev)`;
     } else {
-      backend = createSystemOneBackend({
-        id: selected,
-        baseUrl: s.baseUrl,
-        model: s.model,
-        apiKey: key.key,
-        flavor: selected === "laya" ? "ollaya" : "systemone",
-        ...(selected === "laya" ? { keepAlive: settings.laya.keepAlive } : {}),
-        priceUsdPerMillionInputTokens: s.priceUsdPerMillionInputTokens,
-        ...(options.fetch ? { fetch: options.fetch } : {}),
-        ...(options.scrub ? { scrub: options.scrub } : {}),
-      });
-      if (selected === "laya" && !options.layaTrained) {
-        warnings.push({
-          message: "Laya is untrained on this project: expect more escalations.",
-          fix: "Laya is recommended after training on your own runs (coming later); Jev works well untrained.",
+      why = configured === "none" ? "none (rules only)" : configured;
+    }
+    if (wanted === "none" || wanted === "auto")
+      return { configured, selected: "none", summary: why, backend: null };
+
+    const id: ModelBackendId = wanted;
+    const key = keys[id];
+    if (key.status === "missing" || key.status === "not_allowed") {
+      if (!reported.has(`key:${id}`)) {
+        reported.add(`key:${id}`);
+        problems.push({
+          message:
+            key.problem ??
+            `${id} is selected but ${settings[id].keySecret} is not set; using rules only.`,
+          fix: `Set ${settings[id].keySecret} (environment variable or .env), or choose auto or none.`,
         });
       }
+      return {
+        configured,
+        selected: "none",
+        summary: `${why} → none (key missing)`,
+        backend: null,
+      };
     }
+    if (id === "laya" && !options.layaTrained && !reported.has("laya-untrained")) {
+      reported.add("laya-untrained");
+      warnings.push({
+        message: "Laya is untrained on this project: expect more escalations.",
+        fix: "Laya is recommended after training on your own runs (coming later); Jev works well untrained.",
+      });
+    }
+    const backend = instance(id);
+    if (phase === "during" && settings[id].expectedLatencyMs > 100 && !reported.has(`slow:${id}`)) {
+      reported.add(`slow:${id}`);
+      warnings.push({
+        message: `${id} (about ${settings[id].expectedLatencyMs} ms) is slower than the 100 ms during-run limit, so during-run tasks won't call it.`,
+        fix: "Use laya for during-run decisions, or leave decisions.during on auto (rules only).",
+      });
+    }
+    return { configured, selected: id, summary: why, backend };
   }
+
   return {
     configured: settings.backend,
-    selected,
-    summary: why,
-    backend,
+    during: route("during"),
+    after: route("after"),
     keys,
     problems,
     warnings,
@@ -203,7 +251,7 @@ export function createProjectDecisions(options: ProjectDecisionsOptions): Projec
   const selection = resolveDecisionBackend(options.config, options);
   const decisions = createDecisions({
     config: options.config,
-    backend: selection.backend,
+    backends: { during: selection.during.backend, after: selection.after.backend },
     cache: fileCache(options.projectDir),
     ...(options.onDecision ? { onDecision: options.onDecision } : {}),
     ...(options.bypassCache ? { bypassCache: true } : {}),
@@ -212,7 +260,8 @@ export function createProjectDecisions(options: ProjectDecisionsOptions): Projec
     decisions,
     selection,
     async warmUp(signal) {
-      const backend = selection.backend;
+      // Only a backend that needs loading (Laya) is warmed, once even if both phases use it.
+      const backend = [selection.during.backend, selection.after.backend].find((b) => b?.warmUp);
       if (!backend?.warmUp) return { ok: true, ms: 0, skipped: true };
       const start = performance.now();
       const response = await backend.warmUp({

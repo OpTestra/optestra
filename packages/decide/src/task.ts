@@ -1,3 +1,4 @@
+import type { EvidenceRef } from "@testament/contract";
 import type { z } from "zod";
 
 /**
@@ -48,10 +49,24 @@ export type DecisionPhase = "during" | "after";
 /** What the caller should do with an escalation. */
 export type EscalateTo = "fixer" | "human" | "block";
 
+/**
+ * Why an answer was given (DIA-1, HEAL-6): a named signal, with a contract
+ * EvidenceRef when it points at a step, check, decision or artifact.
+ */
+export interface Evidence {
+  /** snake_case signal name, e.g. http_5xx, element_not_found, same_headline. */
+  signal: string;
+  /** Short plain detail for the report ("POST /api/signup → 500"). */
+  detail?: string | undefined;
+  ref?: EvidenceRef | undefined;
+}
+
 /** A rules answer: every question answered, with one confidence for the whole answer. */
 export interface RulesAnswer<Q extends Questions> {
   answers: Answers<Q>;
   confidence: number;
+  /** The signals the rule used. Every decided answer should carry some. */
+  evidence?: Evidence[];
 }
 
 /**
@@ -80,6 +95,17 @@ export interface DecisionTask<I = unknown, Q extends Questions = Questions> {
    * `untrusted()` so a model never mistakes it for instructions.
    */
   state(input: I): string;
+  /**
+   * The input's signals a model had to go on, attached as evidence when a backend
+   * (not the rules) decides. Optional; defaults to none.
+   */
+  evidence?(input: I): Evidence[];
+  /**
+   * Questions that depend on the input (e.g. duplicate_or_new's options are the
+   * run's failure groups). Must have the same ids and kinds as `questions`; the
+   * no-verdict guard runs on them too.
+   */
+  questionsFor?(input: I): Q;
   /** Minimum confidence to act on. Leave unset to use the project's `decisions.threshold`. */
   threshold?: number;
   /** Hard time limit for the whole decision. Defaults: 100 ms during, 2000 ms after. */
@@ -92,6 +118,11 @@ export interface DecisionTask<I = unknown, Q extends Questions = Questions> {
 export type AnyTask = DecisionTask<any, Questions>;
 export type InputOf<T> = T extends DecisionTask<infer I, Questions> ? I : never;
 export type QuestionsOf<T> = T extends DecisionTask<unknown, infer Q> ? Q : Questions;
+
+/** The questions asked for this input: `questionsFor(input)` when the task has it. */
+export function questionsOf(task: AnyTask, input: unknown): Questions {
+  return task.questionsFor ? task.questionsFor(input) : task.questions;
+}
 
 /** Identity helper that keeps a task's input and question types for inference. */
 export function defineTask<I, const Q extends Questions>(

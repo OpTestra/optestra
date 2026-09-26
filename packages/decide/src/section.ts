@@ -19,6 +19,8 @@ export interface SystemOneSettings {
   keySecret?: string;
   /** USD per million input tokens (Jev bills input tokens only); 0 for local models. */
   priceUsdPerMillionInputTokens: number;
+  /** Typical latency of one request; tasks with a shorter time limit never call this backend. */
+  expectedLatencyMs: number;
 }
 
 export interface LayaSettings extends SystemOneSettings {
@@ -38,7 +40,14 @@ export interface DecisionTaskSettings {
 }
 
 export interface DecisionsSettings {
+  /** Shorthand for both phases. */
   backend: BackendId;
+  /** During-run decisions. auto: whatever `backend` names, else rules only. */
+  during: BackendId;
+  /** After-run decisions. auto: whatever `backend` names, else Jev when its key is set, else rules only. */
+  after: BackendId;
+  /** Stop calling a backend for a task after this many timeouts in one run. */
+  skipAfterTimeouts: number;
   jev: SystemOneSettings;
   kev: SystemOneSettings;
   laya: LayaSettings;
@@ -73,6 +82,13 @@ const systemOneShape = {
     .number()
     .nonnegative()
     .describe("USD per million input tokens, for the run cost."),
+  expectedLatencyMs: z
+    .number()
+    .int()
+    .positive()
+    .describe(
+      "Typical latency of one request; a task with a shorter time limit never calls this backend.",
+    ),
 };
 
 export const decisionsSchema = z
@@ -82,6 +98,19 @@ export const decisionsSchema = z
       .describe(
         "Decision model behind the rules. auto: Jev if its key is set, else rules only. none: rules only.",
       ),
+    during: z
+      .enum(BACKEND_IDS)
+      .describe("During-run decisions. auto: what `backend` names, else rules only."),
+    after: z
+      .enum(BACKEND_IDS)
+      .describe(
+        "After-run decisions. auto: what `backend` names, else Jev when its key is set, else rules only.",
+      ),
+    skipAfterTimeouts: z
+      .number()
+      .int()
+      .positive()
+      .describe("Stop calling a backend for a task after this many timeouts in one run."),
     jev: z.strictObject(systemOneShape).describe("Jev, hosted by TypeSafe AI."),
     kev: z.strictObject(systemOneShape).describe("Kev, open models you host (System One API)."),
     laya: z

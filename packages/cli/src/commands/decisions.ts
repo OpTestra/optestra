@@ -25,6 +25,10 @@ import {
   type BenchResult,
   benchBackend,
   checkLaya,
+  EVAL_TASKS,
+  type EvalReport,
+  loadEvalSet,
+  runEval,
   checkSystemOne,
   resolveDecisionBackend,
 } from "@testament/decide/node";
@@ -44,6 +48,10 @@ export interface DecisionsCommandOptions {
   backend?: string;
   /** For --bench: decisions per backend. */
   n?: string;
+  /** Score the after-run tasks on the committed eval sets. */
+  eval?: boolean;
+  /** For --eval with a backend: turn the rules off to measure the model alone. */
+  modelOnly?: boolean;
 }
 
 function table(rows: string[][], indent = "  "): string {
@@ -133,8 +141,11 @@ function loadDecisionsProject(options: DecisionsCommandOptions, io: CommandIo): 
   };
 }
 
+/** The routing from config, or with every phase forced to one backend (for --check, --bench, --eval). */
 function select(project: Project, backend?: ModelBackendId): BackendSelection {
-  const settings = backend ? { ...project.settings, backend } : project.settings;
+  const settings = backend
+    ? { ...project.settings, backend, during: backend, after: backend }
+    : project.settings;
   return resolveDecisionBackend(
     { secrets: project.config.secrets, decisions: settings },
     {
@@ -172,28 +183,30 @@ const CHECK_LABEL: Record<BackendCheck["status"], string> = {
 async function runCheck(options: DecisionsCommandOptions, io: CommandIo): Promise<number> {
   const project = loadDecisionsProject(options, io);
   const selection = select(project);
+  const used = new Set<string>([selection.during.selected, selection.after.selected]);
   const checks = await Promise.all(MODEL_BACKENDS.map((id) => checkBackend(project, id)));
-  const selectedCheck = checks.find((c) => c.backend === selection.selected);
-  const failed = selectedCheck !== undefined && selectedCheck.status !== "ok";
+  const unusable = checks.filter((c) => used.has(c.backend) && c.status !== "ok");
+  const failed = unusable.length > 0;
+  const routing = `during ${selection.during.summary} · after ${selection.after.summary}`;
   if (options.json) {
     io.stdout(
-      `${defaultRedactor.redact(JSON.stringify({ backend: selection.summary, selected: selection.selected, checks }, null, 2))}\n`,
+      `${defaultRedactor.redact(JSON.stringify({ during: selection.during.summary, after: selection.after.summary, checks }, null, 2))}\n`,
     );
   } else {
     const rows = checks.map((c) => [
-      c.backend === selection.selected ? `${c.backend} *` : c.backend,
+      used.has(c.backend) ? `${c.backend} *` : c.backend,
       c.baseUrl,
       c.model,
       CHECK_LABEL[c.status],
       c.message,
     ]);
     const fixes = checks
-      .filter((c) => c.fix && (c.status !== "ok" || c.backend === selection.selected))
+      .filter((c) => c.fix && (c.status !== "ok" || used.has(c.backend)))
       .map((c) => `  ${c.backend}: ${c.fix}`);
     io.stdout(
       `${defaultRedactor.redact(
         [
-          `Backend  ${selection.summary}`,
+          `Routing  ${routing}`,
           "",
           table([["BACKEND", "URL", "MODEL", "STATUS", "DETAILS"], ...rows]),
           "  (* selected)",
@@ -201,7 +214,7 @@ async function runCheck(options: DecisionsCommandOptions, io: CommandIo): Promis
           ...(failed
             ? [
                 "",
-                `The selected backend (${selection.selected}) is not usable; decisions fall back to rules.`,
+                `A selected backend (${unusable.map((c) => c.backend).join(", ")}) is not usable; those decisions fall back to rules.`,
               ]
             : []),
         ].join("\n"),
@@ -239,10 +252,17 @@ async function runBench(options: DecisionsCommandOptions, io: CommandIo): Promis
       return 2;
     }
     targets = [options.backend as ModelBackendId];
-  } else if (selection.selected !== "none") targets = [selection.selected];
-  else {
+  } else if (selection.after.selected !== "none" || selection.during.selected !== "none") {
+    targets = [
+      ...new Set(
+        [selection.during.selected, selection.after.selected].filter(
+          (id): id is ModelBackendId => id !== "none",
+        ),
+      ),
+    ];
+  } else {
     io.stdout(
-      `No decision backend is selected (${selection.summary}).\nPick one to measure: --backend jev | kev | laya | all\n`,
+      `No decision backend is selected (during ${selection.during.summary}; after ${selection.after.summary}).\nPick one to measure: --backend jev | kev | laya | all\n`,
     );
     return 2;
   }
@@ -251,7 +271,7 @@ async function runBench(options: DecisionsCommandOptions, io: CommandIo): Promis
   const skipped: { backend: string; message: string; fix?: string }[] = [];
   for (const id of targets) {
     const check = await checkBackend(project, id);
-    const backend = select(project, id).backend;
+    const backend = select(project, id).after.backend;
     if (check.status !== "ok" || !backend) {
       skipped.push({
         backend: id,
@@ -311,6 +331,103 @@ async function runBench(options: DecisionsCommandOptions, io: CommandIo): Promis
 }
 
 /**
+ * `--eval [--backend rules|jev|kev|laya]`: the after-run tasks on the committed
+ * eval sets. Exit 1 when any decided answer is wrong (a false label), 2 when the
+ * backend can't be used.
+ */
+async function runEvalCommand(options: DecisionsCommandOptions, io: CommandIo): Promise<number> {
+  const project = loadDecisionsProject(options, io);
+  const choice = options.backend ?? "rules";
+  if (choice !== "rules" && !(MODEL_BACKENDS as readonly string[]).includes(choice)) {
+    io.stdout(`Unknown backend "${choice}". Use rules, jev, kev or laya.\n`);
+    return 2;
+  }
+  let backend = null;
+  if (choice !== "rules") {
+    const id = choice as ModelBackendId;
+    const check = await checkBackend(project, id);
+    backend = select(project, id).after.backend;
+    if (check.status !== "ok" || !backend) {
+      io.stdout(`${id} can't be used: ${check.message}${check.fix ? `\nFix: ${check.fix}` : ""}\n`);
+      return 2;
+    }
+    if (backend.warmUp) await backend.warmUp({ timeoutMs: project.settings.laya.warmUpTimeoutMs });
+  }
+  const decisions = createDecisions({
+    config: { decisions: project.settings },
+    backend,
+    bypassCache: true,
+    ...(options.modelOnly && backend ? { skipRules: true } : {}),
+  });
+  const reports: EvalReport[] = [];
+  for (const task of EVAL_TASKS)
+    reports.push(await runEval(decisions, task, loadEvalSet(task), { backend: choice }));
+  const usage = backend?.usage();
+  if (options.json) {
+    io.stdout(
+      `${defaultRedactor.redact(JSON.stringify({ backend: choice, modelOnly: Boolean(options.modelOnly && backend), reports, usage: usage ?? null }, null, 2))}\n`,
+    );
+  } else {
+    const rows = reports.map((r) => [
+      r.task,
+      String(r.cases),
+      `${r.decided} (${r.decidedPct}%)`,
+      `${r.escalated} (${r.escalatedPct}%)`,
+      `${Math.round(r.accuracy * 1000) / 10}%`,
+      String(r.falseLabels),
+      `${r.p50Ms} ms`,
+      r.modelP50Ms === null ? "-" : `${r.modelP50Ms} ms (${r.modelCalls})`,
+      `${r.byRules}/${r.byModel}`,
+    ]);
+    const lines = [
+      `Eval  after-run decisions · ${choice === "rules" ? "rules only" : options.modelOnly ? `${choice} alone (rules off)` : `rules → ${choice}`}`,
+      "",
+      table([
+        [
+          "TASK",
+          "CASES",
+          "DECIDED",
+          "ESCALATED",
+          "ACCURACY",
+          "FALSE",
+          "P50",
+          "MODEL P50 (CALLS)",
+          "RULES/MODEL",
+        ],
+        ...rows,
+      ]),
+      "",
+      "Escalations",
+      ...reports.map(
+        (r) =>
+          `  ${r.task}: ${
+            Object.entries(r.escalations)
+              .map(([reason, n]) => `${reason} ×${n}`)
+              .join(", ") || "none"
+          }`,
+      ),
+    ];
+    const mistakes = reports.flatMap((r) => r.mistakes.map((m) => ({ ...m, task: r.task })));
+    if (mistakes.length)
+      lines.push(
+        "",
+        "False labels",
+        ...mistakes.map(
+          (m) =>
+            `  ${m.task} ${m.id}: expected ${m.expected}, got ${m.got} (${m.source}, ${m.confidence})`,
+        ),
+      );
+    if (usage)
+      lines.push(
+        "",
+        `Backend usage: ${usage.requests} requests, ${usage.inputTokens} input tokens, $${usage.costUsd.toFixed(4)}`,
+      );
+    io.stdout(`${defaultRedactor.redact(lines.join("\n"))}\n`);
+  }
+  return reports.some((r) => r.falseLabels > 0) ? 1 : 0;
+}
+
+/**
  * `decisions`: the configured decision backend, thresholds and registered tasks;
  * `--stats <runDir>` per-task metrics from a run folder; `--check` backend health;
  * `--bench` latency. Exit 2 on config errors, an unreadable run folder, or an
@@ -343,6 +460,7 @@ export async function runDecisionsCommand(
   }
   if (options.check) return runCheck(options, io);
   if (options.bench) return runBench(options, io);
+  if (options.eval) return runEvalCommand(options, io);
 
   const project = loadDecisionsProject(options, io);
   const { settings, diagnostics } = project;
@@ -370,7 +488,11 @@ export async function runDecisionsCommand(
       })),
   ];
   const warnings = selection.warnings;
-  const active = selection.selected === "none" ? null : settings[selection.selected];
+  const phases = (["during", "after"] as const).map((phase) => {
+    const route = selection[phase];
+    const s = route.selected === "none" ? null : settings[route.selected];
+    return { phase, ...route, model: s?.model ?? null, baseUrl: s?.baseUrl ?? null };
+  });
 
   let output: string;
   if (options.json) {
@@ -379,10 +501,9 @@ export async function runDecisionsCommand(
         file: project.file,
         environment: project.environment ?? null,
         backend: settings.backend,
-        selected: selection.selected,
-        summary: selection.summary,
-        model: active?.model ?? null,
-        baseUrl: active?.baseUrl ?? null,
+        during: phases[0] && { ...phases[0], backend: undefined },
+        after: phases[1] && { ...phases[1], backend: undefined },
+        skipAfterTimeouts: settings.skipAfterTimeouts,
         keys: Object.fromEntries(MODEL_BACKENDS.map((id) => [id, selection.keys[id].status])),
         threshold: settings.threshold,
         cache: settings.cache,
@@ -418,8 +539,10 @@ export async function runDecisionsCommand(
     output = [
       [
         `Project    ${project.file ?? "no project file here (using built-in defaults)"}`,
-        `Backend    ${selection.summary}`,
-        ...(active ? [`Model      ${active.model} at ${active.baseUrl}`] : []),
+        ...phases.map(
+          (p) =>
+            `${p.phase === "during" ? "During " : "After  "}    ${p.summary}${p.model ? ` · ${p.model} at ${p.baseUrl}` : ""}`,
+        ),
         `Threshold  ${settings.threshold.toFixed(2)} (project default)`,
         `Cache      ${cache}`,
       ].join("\n"),

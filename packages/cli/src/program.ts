@@ -66,15 +66,20 @@ export function createProgram(): Command {
   program
     .command("decisions")
     .description(
-      "show the decision backend, thresholds and tasks; --check the backends, --bench their speed, --stats a run's decisions",
+      "show the decision routing, thresholds and tasks; --check the backends, --bench their speed, --eval their accuracy, --stats a run's decisions",
     )
     .option("--check", "check every decision backend: key valid, reachable, model installed")
     .option("--bench", "measure decision latency on the demo task (after a warm-up)")
     .option(
+      "--eval",
+      "score the after-run decisions on the committed eval sets (exit 1 on a false label)",
+    )
+    .option(
       "--backend <name>",
-      "for --bench: jev, kev, laya or all (default: the selected backend)",
+      "for --bench: jev, kev, laya or all (default: the selected backend); for --eval: rules (default), jev, kev or laya",
     )
     .option("--n <count>", "for --bench: decisions per backend", "50")
+    .option("--model-only", "for --eval with a backend: rules off, to measure the model alone")
     .option("--stats <runDir>", "print per-task decision metrics from a run folder")
     .option("-e, --env <name>", "environment to resolve")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")

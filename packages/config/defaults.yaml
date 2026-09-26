@@ -80,24 +80,37 @@ decisions:
   #   none = rules only; unclear cases escalate
   #   jev | kev | laya = that model (Kev and Laya are only used when chosen)
   backend: auto
+  # Per phase (DEC-2). auto = whatever `backend` names; when that is auto too:
+  #   during (fast, ~100 ms limit): rules only; laya only when chosen explicitly
+  #   after (batched, ~2 s limit): Jev when JEV_API_KEY is set, otherwise rules only
+  during: auto
+  after: auto
+  # Stop calling a backend for a task after this many timeouts in one run.
+  skipAfterTimeouts: 3
   # Jev, hosted by TypeSafe AI. Billed per input token.
   jev:
     baseUrl: https://api.typesafe.ai
     model: jev-latest
     keySecret: JEV_API_KEY
     priceUsdPerMillionInputTokens: 0.042
+    # Measured p50 ≈ 380 ms: too slow for 100 ms during-run decisions.
+    expectedLatencyMs: 400
   # Kev, open models you run yourself (python -m kev.serve ... --port 8009).
   kev:
     baseUrl: http://127.0.0.1:8009
     model: kev-latest
     # keySecret: KEV_API_KEY   # if your Kev server requires a key
     priceUsdPerMillionInputTokens: 0
+    # Kev-4B on an Apple M5: ~140–720 ms per request.
+    expectedLatencyMs: 500
   # Laya, run locally through Ollaya (ollaya.dev). Recommended after training.
   laya:
     baseUrl: http://127.0.0.1:11435
     model: "laya:typed-decisions"
     # keySecret: OLLAYA_API_KEY   # if your Ollaya requires a key
     priceUsdPerMillionInputTokens: 0
+    # Measured p50 ≈ 84 ms warm for one question.
+    expectedLatencyMs: 90
     # Keep the model loaded between decisions.
     keepAlive: 30m
     # The first decision loads the model (about 2 s); the run warms it up first.
