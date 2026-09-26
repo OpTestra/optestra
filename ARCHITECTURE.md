@@ -13,6 +13,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/models` | The one AI adapter: providers (via the Vercel AI SDK), role pools with failover, prices, usage caps, budgets, call records, key check. Registers the `models` config section | FND-2 |
 | `packages/contract` | The results contract: zod schemas, types and JSON Schema for runs, test results and live events; the run folder layout; `foldEvents`, `summarize`, `exitCodeFor`. Browser-safe main entry + `/node` (run writer/reader). Depends only on zod | FND-3 |
 | `packages/spec` | The test file format: `.test.md` parser, typed model, variables and generators, flow expansion, step keys (`textKey`), canonical printer, diagnostics with ranges; registers the `tests` config section. Browser-safe main entry + `/node` (project loading) | SPEC-0 |
+| `packages/browser` | The browser harness: fresh isolated Playwright sessions behind the allowlist guard, a closed set of typed actions with post-state and settle, accessibility observations with refs and locator candidates, secret typing, screenshots and scrubbed evidence. Node only; no AI. The agent (LOOP-1) and the replayer (LOOP-4) both drive pages through it | LOOP-0 |
 | `packages/core` | The engine: run, record, replay, heal, verdicts. Currently `version()`; re-exports the redacting `logger` (all engine logging goes through it) | engine phases |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
 | `packages/mcp` | MCP server for coding agents | agents phase |
@@ -26,6 +27,7 @@ cli ──► core ──► config ──► brand
  │                 ▲          ▲
  ├──► models ──────┘──────────┘   (models never imports core, so core can use models later)
  ├──► spec ──► config, contract    (spec never imports core or models; no AI, no network)
+ ├──► browser ──► config, contract (+ playwright; never imports core, models or spec)
  └──► contract                     (cli reads run folders through the contract)
 mcp, action ──► core, contract (later)
 contract ──► zod only (bottom of the graph)
@@ -37,9 +39,16 @@ contract ──► zod only (bottom of the graph)
   the only file allowed to make network calls. It sends requests only to configured
   provider hosts, and only when a caller asks for a completion or key check. Only
   `packages/models` may depend on the AI SDK. `test/guards.test.ts` enforces all of this.
+- The browser harness drives a browser through Playwright; the page's traffic is
+  the browser's, filtered by the allowlist guard. It makes no calls of its own. Its
+  one server, `packages/browser/src/refusal-proxy.ts`, listens on 127.0.0.1 and
+  refuses everything sent to it (named exception in the guard test, which also checks
+  it never connects out).
 - Bench fixtures are servers, not engine code. They bind to 127.0.0.1 and never
   call out; the guard test scans them too, with one named exception per file
-  (`NETWORK_EXCEPTIONS`). Nothing under `packages/` imports a fixture.
+  (`NETWORK_EXCEPTIONS`). No package source imports a fixture (guard-tested); the
+  browser harness's real-browser tests (`packages/browser/e2e`) use the shop as a
+  dev dependency.
 - Apps consume these packages by semver, never by copying code.
 
 ## Where future phases plug in
@@ -63,6 +72,17 @@ contract ──► zod only (bottom of the graph)
   LOOP runs `ExpandedTest.steps` and builds `StepResult.key` from `textKey` +
   route + engine version. SPEC-1 adds lint rules and the editor language service
   on top of the same model. See `packages/spec/README.md` (the file-format reference).
+
+- LOOP-0 (done): `packages/browser`. `launchBrowser()` once per worker,
+  `openSession({ browser, baseUrl, allowedDomains, secrets, device, evidence, … })`
+  once per test, then `observe()` → `renderForModel()` for the model,
+  `act(action)` → `ActionOutcome` (status, reason, post-state, settle time),
+  `candidates(ref)` for fingerprints, `screenshot()` and `close()` → scrubbed
+  evidence files for `RunWriter.writeArtifact`. Refusals map to the contract's
+  `disallowed_domain` / `missing_secret` blocked reasons. CLI `install-browsers`
+  and `snapshot` (debug). Real-browser tests run in `bench:fixtures:test` (CI job
+  `fixtures`, Chromium + Firefox + WebKit). See `packages/browser/README.md`
+  (safety model, actions, observation format, outcomes).
 
 ## Results contract (`packages/contract`)
 

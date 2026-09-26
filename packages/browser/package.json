@@ -1,0 +1,33 @@
+{
+  "name": "@testament/browser",
+  "version": "0.1.0",
+  "description": "The browser harness: a safe, isolated browser session with a closed set of actions, observation and evidence.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test:browser": "tsc -b ../cli ../../bench/fixtures/shop && vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@testament/brand": "workspace:^",
+    "@testament/config": "workspace:^",
+    "@testament/contract": "workspace:^",
+    "playwright": "1.63.0"
+  },
+  "devDependencies": {
+    "@testament/fixture-shop": "workspace:*"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

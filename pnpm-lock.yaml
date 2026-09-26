@@ -46,11 +46,33 @@ importers:
 
   packages/brand: {}
 
+  packages/browser:
+    dependencies:
+      '@testament/brand':
+        specifier: workspace:^
+        version: link:../brand
+      '@testament/config':
+        specifier: workspace:^
+        version: link:../config
+      '@testament/contract':
+        specifier: workspace:^
+        version: link:../contract
+      playwright:
+        specifier: 1.63.0
+        version: 1.63.0
+    devDependencies:
+      '@testament/fixture-shop':
+        specifier: workspace:*
+        version: link:../../bench/fixtures/shop
+
   packages/cli:
     dependencies:
       '@testament/brand':
         specifier: workspace:^
         version: link:../brand
+      '@testament/browser':
+        specifier: workspace:^
+        version: link:../browser
       '@testament/config':
         specifier: workspace:^
         version: link:../config

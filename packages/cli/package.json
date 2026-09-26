@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@testament/brand": "workspace:^",
+    "@testament/browser": "workspace:^",
     "@testament/config": "workspace:^",
     "@testament/contract": "workspace:^",
     "@testament/core": "workspace:^",

@@ -1,0 +1,32 @@
+{
+  "$comment": "Device presets (TGT-3, TGT-6). Data, not code: add a preset here without an engine change. `descriptor` names a Playwright device descriptor (user agent, scale, touch); `viewport` alone keeps the browser's own user agent. On Firefox, mobile emulation (isMobile) is not available, so phones keep their size, scale and touch only.",
+  "presets": {
+    "desktop": {
+      "label": "Desktop (1920 × 1080)",
+      "category": "desktop",
+      "viewport": { "width": 1920, "height": 1080 }
+    },
+    "laptop": {
+      "label": "Laptop (1440 × 900)",
+      "category": "laptop",
+      "viewport": { "width": 1440, "height": 900 }
+    },
+    "laptop-small": {
+      "label": "Small laptop (1280 × 800)",
+      "category": "laptop",
+      "viewport": { "width": 1280, "height": 800 }
+    },
+    "ipad": { "label": "iPad (gen 7)", "category": "tablet", "descriptor": "iPad (gen 7)" },
+    "ipad-pro": { "label": "iPad Pro 11", "category": "tablet", "descriptor": "iPad Pro 11" },
+    "galaxy-tab": { "label": "Galaxy Tab S9", "category": "tablet", "descriptor": "Galaxy Tab S9" },
+    "iphone-15": { "label": "iPhone 15", "category": "phone", "descriptor": "iPhone 15" },
+    "iphone-15-pro-max": {
+      "label": "iPhone 15 Pro Max",
+      "category": "phone",
+      "descriptor": "iPhone 15 Pro Max"
+    },
+    "pixel-8": { "label": "Pixel 8", "category": "phone", "descriptor": "Pixel 8" },
+    "galaxy-s24": { "label": "Galaxy S24", "category": "phone", "descriptor": "Galaxy S24" }
+  },
+  "default": "desktop"
+}

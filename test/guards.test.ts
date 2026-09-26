@@ -1,10 +1,12 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { brand } from "@testament/brand";
 import { describe, expect, it } from "vitest";
 
 // Guarantees: the engine never reaches into the closed apps repo, ships no
-// telemetry, and makes network calls only through the models transport.
+// telemetry, and makes network calls only through the models transport. (The
+// browser harness drives a browser through Playwright; it makes no calls itself.)
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const self = fileURLToPath(import.meta.url);
@@ -24,9 +26,13 @@ const source = code.filter(
   (f) => /^(packages\/[^/]+|bench\/fixtures\/[^/]+)\/src\//.test(rel(f)) && !/\.test\./.test(f),
 );
 
-// Bench fixtures are servers the engine is tested against. Each exception names
-// one file and the one import it may use; the file must still make no calls out.
+// Each exception names one file and the imports it may use; the file must still
+// make no calls out. Bench fixtures are servers the engine is tested against.
 const NETWORK_EXCEPTIONS: Record<string, RegExp> = {
+  // The browser harness's refusing proxy (LOOP-0, SAF-1): the browser sends traffic
+  // for hosts outside the allowlist here and it refuses all of it. Loopback only,
+  // never connects anywhere (checked below). Playwright drives the browser itself.
+  "packages/browser/src/refusal-proxy.ts": /from "node:(http|net)";/g,
   // Serves the demo shop. Binding to 127.0.0.1 is checked below.
   "bench/fixtures/shop/src/server.ts": /from "node:http";/g,
   // Optional delivery to a local Mailpit inbox; refuses non-loopback hosts.
@@ -77,6 +83,19 @@ describe("engine guards", () => {
     expect([...server.matchAll(/\.listen\(/g)]).toHaveLength(1);
     const smtp = readFileSync(join(root, "bench/fixtures/shop/src/smtp.ts"), "utf8");
     expect(smtp).toContain('const LOOPBACK = new Set(["127.0.0.1", "localhost", "::1"]);');
+  });
+
+  it("keeps the browser harness's refusing proxy on loopback, never connecting out", () => {
+    const proxy = readFileSync(join(root, "packages/browser/src/refusal-proxy.ts"), "utf8");
+    expect(proxy).toContain('export const PROXY_HOST = "127.0.0.1";');
+    expect(proxy).toMatch(/\.listen\(0, PROXY_HOST,/);
+    expect([...proxy.matchAll(/\.listen\(/g)]).toHaveLength(1);
+    expect(proxy).not.toMatch(/\b(connect|request|get)\(|createConnection|new Socket/);
+  });
+
+  it("keeps fixtures out of engine packages (tests may use them)", () => {
+    const packageSource = source.filter((f) => rel(f).startsWith("packages/"));
+    expect(offenders(packageSource, new RegExp(`["']${brand.npmScope}/fixture-`))).toEqual([]);
   });
 
   it("serves fixture pages that only talk to their own origin", () => {

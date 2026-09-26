@@ -1,6 +1,7 @@
 import { brand } from "@testament/brand";
 import { version } from "@testament/core";
 import { Command } from "commander";
+import { registerBrowserCommands } from "./commands/browser.js";
 import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
 import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
 import { type ResultsCommandOptions, runResultsCommand } from "./commands/results.js";
@@ -97,6 +98,12 @@ export function createProgram(): Command {
         stdout: (text) => process.stdout.write(text),
       });
     });
+
+  registerBrowserCommands(program, () => ({
+    cwd: process.cwd(),
+    env: process.env,
+    stdout: (text) => process.stdout.write(text),
+  }));
 
   program.action(() => program.help());
   return program;
