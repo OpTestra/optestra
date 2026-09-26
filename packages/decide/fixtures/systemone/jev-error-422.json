@@ -1,0 +1,19 @@
+{
+  "detail": [
+    {
+      "type": "missing",
+      "loc": ["body", "state"],
+      "msg": "Field required",
+      "input": {
+        "model": "jev-latest",
+        "questions": {
+          "a": {
+            "type": "noul",
+            "instructions": "x",
+            "criteria": null
+          }
+        }
+      }
+    }
+  ]
+}

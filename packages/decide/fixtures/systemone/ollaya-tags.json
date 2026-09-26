@@ -1,0 +1,19 @@
+{
+  "models": [
+    {
+      "name": "laya:typed-decisions",
+      "model": "laya:typed-decisions",
+      "modified_at": "2026-09-26T05:36:40.601923377Z",
+      "size": 853527607,
+      "digest": "1a44bb396ad1de5a4337af0c40e7d4d6fd235db5fc837b5edcf1b1ce67173b4c",
+      "details": {
+        "parent_model": "",
+        "format": "onnx",
+        "family": "laya",
+        "families": ["laya"],
+        "parameter_size": "421M",
+        "quantization_level": "F16/F32"
+      }
+    }
+  ]
+}

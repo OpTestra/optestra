@@ -7,7 +7,8 @@
       "!**/dist",
       "!**/node_modules",
       "!**/*.tsbuildinfo",
-      "!packages/contract/fixtures"
+      "!packages/contract/fixtures",
+      "!packages/decide/fixtures"
     ]
   },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },

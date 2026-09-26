@@ -10,7 +10,7 @@ confidence threshold the decision escalates instead of guessing.
 | Import | Use | Runs in |
 |---|---|---|
 | `@testament/decide` | task contract, `createDecisions` (decide, race, batch), backend interface, `mockBackend`, `memoryCache`, metrics, the `decisions` config section, built-in tasks | browser and Node |
-| `@testament/decide/node` | `fileCache(projectDir)` (`.testament/decisions/`) and `createLabelStore(projectDir)` (`.testament/labels/`) | Node |
+| `@testament/decide/node` | `fileCache(projectDir)` (`.testament/decisions/`), `createLabelStore(projectDir)` (`.testament/labels/`), and the decision model backends: `createProjectDecisions`, `resolveDecisionBackend`, `createSystemOneBackend`, Ollaya setup (`ollayaStatus`, `pullModel`), `checkSystemOne` / `checkLaya`, `benchBackend` | Node |
 
 Importing the main entry registers the `decisions` config section.
 
@@ -32,7 +32,11 @@ Importing the main entry registers the `decisions` config section.
    `onDecision(record, meta)` with a contract `DecisionRecord`. The runner emits
    `decision.made` from it. The only exception is a decision aborted by its caller,
    for example one that lost a race: it made no decision, so there is no record.
-6. **No network here.** Backends are passed in through the `DecisionBackend` interface.
+6. **Narrow network.** The main entry makes no network calls; backends are passed in
+   through the `DecisionBackend` interface. The only file that talks to a network is
+   `src/node/systemone/transport.ts` (a guard test enforces this). It pins every request
+   to the configured backend's host. Before any state leaves, the redactor scrubs it.
+   Nothing is ever downloaded during a run.
 
 `decide`, `race` and `decideBatch` never throw. Unknown tasks, invalid input,
 throwing rules, failing backends and throwing audit hooks all end in an answer or
@@ -59,16 +63,19 @@ carries the task's `onEscalate` (`fixer | human | block`), which tells the calle
 what to do next.
 
 ```ts
-import { createDecisions } from "@testament/decide";
-import { fileCache } from "@testament/decide/node";
+import { createProjectDecisions } from "@testament/decide/node";
 
-const decisions = createDecisions({
-  config,                       // resolved config; only `decisions` is read
-  backend: null,                // DEC-1 builds Jev/Kev/Laya from config
-  cache: fileCache(projectDir),
-  onDecision: (record, { testId, attempt }) =>
+// What a run does: the backend comes from config (auto → Jev if JEV_API_KEY is set,
+// else rules only). The cache lives on disk. The warm-up loads Laya before the first
+// 100 ms decision, and it is never recorded.
+const { decisions, selection, warmUp } = createProjectDecisions({
+  config,                       // resolved config: decisions + secrets are read
+  projectDir,
+  sources,                      // secret sources (env, .env, keychain…)
+  onDecision: (record, { testId, attempt, backend }) =>
     writer.emit({ type: "decision.made", testId, attempt, decision: record }),
 });
+await warmUp();                 // { ok, ms, failure?, fix? }; a failure only means rules fallback
 
 const result = await decisions.decide("page_is_error", { status, title, heading, text });
 if (result.status === "decided") result.answers.is_error; // boolean, typed from the task
@@ -137,7 +144,12 @@ decision escalates.
 
 ```yaml
 decisions:
-  backend: none          # none = rules only (default). DEC-1 adds jev | kev | laya.
+  backend: auto          # auto (default): Jev if JEV_API_KEY is set, else rules only
+                         # none: rules only · jev | kev | laya: that model, explicitly
+  jev:  { baseUrl: https://api.typesafe.ai, model: jev-latest, keySecret: JEV_API_KEY, priceUsdPerMillionInputTokens: 0.042 }
+  kev:  { baseUrl: http://127.0.0.1:8009, model: kev-latest, priceUsdPerMillionInputTokens: 0 }   # keySecret: optional
+  laya: { baseUrl: http://127.0.0.1:11435, model: "laya:typed-decisions",
+          priceUsdPerMillionInputTokens: 0, keepAlive: 30m, warmUpTimeoutMs: 15000 }   # keySecret: optional
   threshold: 0.8         # project default
   tasks:
     page_is_error: { threshold: 0.9, timeLimitMs: 150, enabled: true }
@@ -174,7 +186,66 @@ version, source, time, parsed input and answers. Every line passes through the
 redactor (the process-wide one by default). If the answers don't fit the task's
 questions, the call throws. Training (`testament train`) and evals come later.
 
+## Decision model backends
+
+All three speak TypeSafe's System One API, so one client serves them all:
+`createSystemOneBackend({ id, baseUrl, model, apiKey?, flavor })`. The wire
+differences live in one module, `src/node/systemone/wire.ts`. It is tested
+against recorded responses in `fixtures/systemone/` (see its README for which
+examples are recorded and which come from docs).
+
+| | Jev | Kev | Laya |
+|---|---|---|---|
+| Who runs it | TypeSafe AI (hosted) | you (open, Apache-2.0) | you, through Ollaya (open weights, Apache-2.0) |
+| Chosen by | `auto` when `JEV_API_KEY` is set, or `backend: jev` | `backend: kev` only | `backend: laya` only |
+| Endpoint | `POST https://api.typesafe.ai/v1/systemone` | `POST <kev>/v1/systemone` | `POST http://127.0.0.1:11435/api/decide` (+ `keep_alive`, `state_truncated`) |
+| Key | `JEV_API_KEY` (bearer; allowed only on its API host) | optional (`KEV_API_KEY` on the server → set `kev.keySecret`) | optional (`OLLAYA_API_KEY` → set `laya.keySecret`) |
+| Speed on this Mac (page_is_error, one question) | p50 ≈ 380 ms, p95 ≈ 1.4 s | not measured (no server here) | p50 ≈ 84 ms warm; first load ≈ 2.3 s (warm-up) |
+| Cost | $0.042 per million input tokens (≈ 350 tokens per decision) | your hardware | free, local |
+| Accuracy notes | good untrained | 4B/9B close to Jev on classification | **untrained**: expect more escalations until LRN-9 training |
+
+**What data is sent (SAF-5):** only the task's `state` (for `page_is_error`:
+the HTTP status and the page's title, main heading and a visible-text sample,
+marked untrusted) and the question text. Both pass through the redactor first,
+so declared secrets never leave. Nothing else is sent: no screenshots, no URLs
+beyond what the state contains, no test files, no keys except the backend's own.
+
+- **Jev:** the state goes to TypeSafe AI in the US. TypeSafe says it doesn't
+  train on requests; zero data retention is on their enterprise plan.
+- **Kev** and **Laya:** the state stays on the machine or server you run them on.
+  The default Laya host is Ollaya on 127.0.0.1.
+
+**Setup:**
+- **Jev:** set `JEV_API_KEY` in the environment or `.env`. `auto` picks it up.
+- **Kev:** `uv run --extra serve python -m kev.serve --run jaredpalmer/kev-4b --port 8009`, then `backend: kev`.
+- **Laya:**
+  1. Install Ollaya (the desktop app, or `curl -fsSL https://ollaya.dev/install.sh | sh`).
+  2. Run `testament decider setup laya`. It finds Ollaya and lists its models. If
+     the model is missing, it shows the download size and asks before pulling it
+     (`--yes` skips the question).
+  3. Set `backend: laya`.
+
+  Testament never installs Ollaya, and it never pulls a model during a run.
+
+**Failures degrade and never break a run.** Each of these ends as a
+`BackendFailure`, and the pipeline then returns the rules answer or an escalation:
+- timeouts
+- `429`, `529`, `5xx`
+- an unknown option, a confidence outside 0–1 or malformed JSON
+- Ollaya not running, or the model not pulled
+
+The failure reason is in `DecisionMeta.backend.failure`. When `warmUp()` fails,
+it returns the exact fix: open Ollaya.app, or run `decider setup laya`. Nothing
+is retried inside a decision's time limit.
+
+**Run cost:** `backend.usage()` returns requests, failures, input and output
+tokens, the cost in USD (input tokens × `priceUsdPerMillionInputTokens`) and the
+number of truncated states.
+
 ## CLI
 
-- `testament decisions [--json]` shows the backend, the threshold, the cache and every task, with its effective threshold, limit, phase, escalation and questions.
+- `testament decisions [--json]` shows the backend (e.g. `auto → none (rules only; set JEV_API_KEY to use Jev)`), the threshold, the cache and every task, with its effective threshold, limit, phase, escalation and questions.
+- `testament decisions --check` checks all three backends: whether the key is valid (`GET /v1/models`, no tokens spent), whether the backend is reachable, and whether the model is installed. It shows the fix for each problem, and exits 2 only if the selected backend is unusable.
+- `testament decisions --bench [--backend jev|kev|laya|all] [--n 50]` runs `page_is_error` on fixed unclear inputs after a warm-up, with the cache off. It prints p50/p95, the share within 100 ms, the error rate, decided/escalated counts and agreement with the expected answers. Laya's during-run target (p50 < 100 ms) is reported as met or missed.
+- `testament decider setup laya [--model …] [--yes]` sets up Laya (see above). `setup jev` and `setup kev` print the steps.
 - `testament decisions --stats <runDir> [--json]` prints metrics per task, built from the run's `decision.made` events (or from its documents when there are no events).

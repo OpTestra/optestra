@@ -22,8 +22,22 @@ export interface BackendFailure {
   message?: string;
 }
 
+export interface BackendUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
 export type BackendResponse =
-  | { ok: true; answers: Record<string, BackendAnswer> }
+  | {
+      ok: true;
+      answers: Record<string, BackendAnswer>;
+      /** Tokens the backend reported for this request (Jev bills input tokens). */
+      usage?: BackendUsage;
+      /** The versioned model that answered, when the backend reports it. */
+      model?: string;
+      /** Part of the state was dropped to fit the model's context (Ollaya). */
+      stateTruncated?: boolean;
+    }
   | { ok: false; failure: BackendFailure };
 
 export interface BackendCallOptions {
@@ -42,6 +56,11 @@ export interface DecisionBackend {
   /** Recorded as the decision's `source` and part of the cache key. */
   readonly id: string;
   answer(request: BackendRequest, options: BackendCallOptions): Promise<BackendResponse>;
+  /**
+   * Optional: load the model before the first real decision (Laya via Ollaya
+   * takes about 2 s to load). Called at run start, never recorded as a decision.
+   */
+  warmUp?(options: { timeoutMs: number; signal?: AbortSignal }): Promise<BackendResponse>;
 }
 
 /** Checks one answer against its question: right kind, a known option/level, confidence in 0–1. */

@@ -27,7 +27,7 @@ cli ──► core ──► config ──► brand
  │                 ▲          ▲
  ├──► models ──────┘──────────┘   (models never imports core, so core can use models later)
  ├──► spec ──► config, contract    (spec never imports core or models; no AI, no network)
- ├──► decide ──► config, contract  (no network; backends are passed in, DEC-1)
+ ├──► decide ──► config, contract  (main entry: no network; /node: System One backends, DEC-1)
  └──► contract                     (cli reads run folders through the contract)
 mcp, action ──► core, contract (later)
 contract ──► zod only (bottom of the graph)
@@ -35,10 +35,12 @@ contract ──► zod only (bottom of the graph)
 
 - The engine is self-contained. It never imports or references the apps repo;
   the arrow only points apps → engine (`test/guards.test.ts` enforces this).
-- No telemetry. **One network exception in engine code:** `packages/models/src/transport.ts`,
-  the only file allowed to make network calls. It sends requests only to configured
-  provider hosts, and only when a caller asks for a completion or key check. Only
-  `packages/models` may depend on the AI SDK. `test/guards.test.ts` enforces all of this.
+- No telemetry. **Two network exceptions in engine code**, one file each:
+  `packages/models/src/transport.ts` (AI models: sends only to configured provider
+  hosts, only when a caller asks for a completion or key check) and
+  `packages/decide/src/node/systemone/transport.ts` (decision models Jev, Kev and
+  Laya: sends only to the configured backend's host; the state is redacted first).
+  Only `packages/models` may depend on the AI SDK. `test/guards.test.ts` enforces all of this.
 - Bench fixtures are servers, not engine code. They bind to 127.0.0.1 and never
   call out; the guard test scans them too, with one named exception per file
   (`NETWORK_EXCEPTIONS`). Nothing under `packages/` imports a fixture.
@@ -79,8 +81,16 @@ contract ──► zod only (bottom of the graph)
   (reason, `onEscalate`, `best`), plus `race` and `decideBatch`. Every decision yields a
   contract `DecisionRecord` through `onDecision` (the runner emits `decision.made`).
   No task can output a verdict (enforced at registration). Default backend `none`:
-  rules only. DEC-1 adds the Jev/Kev/Laya backends behind `DecisionBackend`; DEC-2
-  adds the six real tasks as specs in `src/tasks/`. See `packages/decide/README.md`.
+  rules only. DEC-2 adds the six real tasks as specs in `src/tasks/`. See `packages/decide/README.md`.
+- DEC-1 (done): decision model backends in `@testament/decide/node`. One System One
+  client (`createSystemOneBackend`) serves Jev (hosted by TypeSafe AI), Kev (self-hosted)
+  and Laya. **Ollaya** (a local server for decision models, like Ollama for System One
+  models; 127.0.0.1:11435) is the Laya runtime: the client uses its native `/api/decide`
+  (keep-alive, `state_truncated`). `decisions.backend` defaults to `auto` (Jev when
+  `JEV_API_KEY` is set, else rules only, zero network). `createProjectDecisions` is what a
+  run calls: backend from config, disk cache, and a warm-up that loads Laya before the
+  first 100 ms decision. CLI `decisions --check | --bench` and `decider setup laya`
+  (never installs Ollaya; pulls a model only after asking).
 
 ## Results contract (`packages/contract`)
 

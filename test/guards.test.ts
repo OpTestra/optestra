@@ -4,7 +4,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 // Guarantees: the engine never reaches into the closed apps repo, ships no
-// telemetry, and makes network calls only through the models transport.
+// telemetry, and makes network calls only through two transports: the AI models
+// transport and the decision-model (System One) transport.
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const self = fileURLToPath(import.meta.url);
@@ -48,15 +49,23 @@ describe("engine guards", () => {
     expect(offenders(code, /\.\.\/apps\b|["'`]apps\//)).toEqual([]);
   });
 
-  // THE single network exception (FND-2): the models package, and within it only
-  // transport.ts, which pins every request to the configured provider's host.
-  const NETWORK_EXCEPTION = "packages/models/src/transport.ts";
+  // The network exceptions, one file each, both pinning every request to the one
+  // configured host: the AI models transport (FND-2) and the System One transport
+  // for the decision models Jev, Kev and Laya via Ollaya (DEC-1).
+  const NETWORK_EXCEPTIONS_ENGINE = [
+    "packages/models/src/transport.ts",
+    "packages/decide/src/node/systemone/transport.ts",
+  ];
   const AI_SDK_PACKAGE = "packages/models/";
 
-  it("makes no network calls outside the one allowed transport file", () => {
+  it("makes no network calls outside the allowed transport files", () => {
     const network =
       /\bfetch\s*\(|globalThis\.fetch|node:(https?|http2|net|dgram|tls)\b|from\s+["'](https?|net|dgram|tls|undici|axios|got|node-fetch)["']|\bWebSocket\b|XMLHttpRequest/;
-    expect(offenders(source, network).filter((file) => file !== NETWORK_EXCEPTION)).toEqual([]);
+    expect(
+      offenders(source, network).filter((file) => !NETWORK_EXCEPTIONS_ENGINE.includes(file)),
+    ).toEqual([]);
+    // Each exception still exists (a rename must update this list).
+    for (const file of NETWORK_EXCEPTIONS_ENGINE) expect(code.map(rel)).toContain(file);
   });
 
   it("uses the AI SDK only inside the models package", () => {

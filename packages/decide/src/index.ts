@@ -12,6 +12,7 @@ export {
   type BackendFailure,
   type BackendRequest,
   type BackendResponse,
+  type BackendUsage,
   type DecisionBackend,
   type MockBackend,
   type MockBackendOptions,
@@ -26,6 +27,7 @@ export {
   memoryCache,
 } from "./cache.js";
 export {
+  type BackendNotes,
   type BatchItem,
   createDecisions,
   type Decided,
@@ -55,6 +57,10 @@ export {
   type DecisionsSettings,
   type DecisionTaskSettings,
   decisionsSchema,
+  type LayaSettings,
+  MODEL_BACKENDS,
+  type ModelBackendId,
+  type SystemOneSettings,
 } from "./section.js";
 export {
   type AnswerValue,

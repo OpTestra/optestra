@@ -16,6 +16,8 @@ import {
   type QuestionsOf,
 } from "./task.js";
 import { BUILT_IN_TASKS, type DecisionTasks } from "./tasks/index.js";
+// builtInSettings() reads the registered defaults, so make sure the section is registered.
+import "./section.js";
 
 /** Why a decision escalated instead of answering. */
 export type EscalationReason =
@@ -83,6 +85,17 @@ export interface DecisionMeta {
   attempt: number | null;
   reason: EscalationReason | null;
   cached: boolean;
+  /** Set when a backend was asked: the model that answered, a truncated state, or why it failed. */
+  backend?: BackendNotes;
+}
+
+export interface BackendNotes {
+  /** The versioned model id the backend reported, e.g. jev-1.13.0. */
+  model?: string;
+  /** The backend dropped part of the state to fit its context. */
+  stateTruncated?: boolean;
+  /** The backend's failure reason, e.g. rate_limited, unavailable. */
+  failure?: string;
 }
 
 /** Called once per decision with its contract record. The runner emits `decision.made` from it. */
@@ -197,8 +210,8 @@ function validRules(task: AnyTask, result: unknown): result is ScoredAnswer {
 }
 
 type Stage =
-  | { kind: "answer"; answer: ScoredAnswer; cached: boolean }
-  | { kind: "failure"; reason: "timeout" | "backend_error" | "aborted" };
+  | { kind: "answer"; answer: ScoredAnswer; cached: boolean; notes?: BackendNotes }
+  | { kind: "failure"; reason: "timeout" | "backend_error" | "aborted"; notes?: BackendNotes };
 
 interface Pending {
   index: number;
@@ -248,7 +261,7 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
     task: AnyTask,
     answer: ScoredAnswer,
     cached: boolean,
-    item: { testId: string | null; attempt: number | null },
+    item: { testId: string | null; attempt: number | null; backend?: BackendNotes },
   ): Decided {
     const latencyMs = round(now() - start);
     const record: DecisionRecord = {
@@ -275,7 +288,7 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
     reason: EscalationReason,
     best: ScoredAnswer | null,
     cached: boolean,
-    item: { testId: string | null; attempt: number | null },
+    item: { testId: string | null; attempt: number | null; backend?: BackendNotes },
   ): Escalated {
     const latencyMs = round(now() - start);
     const onEscalate = task?.onEscalate ?? "fixer";
@@ -407,6 +420,12 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
     } catch (error) {
       response = { ok: false, failure: { reason: "backend_error", message: String(error) } };
     }
+    const notes: BackendNotes = response.ok
+      ? {
+          ...(response.model ? { model: response.model } : {}),
+          ...(response.stateTruncated ? { stateTruncated: true } : {}),
+        }
+      : { failure: response.failure.reason };
     for (const item of asked) {
       const answer = response.ok
         ? toScored(item.task, response.answers, prefixOf(item), active.id)
@@ -414,11 +433,17 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
       if (!answer) {
         out.set(item.index, {
           kind: "failure",
-          reason: signal.aborted ? "aborted" : "backend_error",
+          // A backend that reports its own timeout ran out of the same time budget.
+          reason: signal.aborted
+            ? "aborted"
+            : !response.ok && response.failure.reason === "timeout"
+              ? "timeout"
+              : "backend_error",
+          notes: response.ok ? { ...notes, failure: "invalid_response" } : notes,
         });
         continue;
       }
-      out.set(item.index, { kind: "answer", answer, cached: false });
+      out.set(item.index, { kind: "answer", answer, cached: false, notes });
       if (item.key) {
         const entry: CachedDecision = { ...answer, storedAt: wallClock() };
         void cache?.set(item.key, entry).catch(() => {});
@@ -505,7 +530,12 @@ export function createDecisions(options: DecisionsOptions = {}): Decisions {
           typeof outcome === "string"
             ? { kind: "failure", reason: outcome }
             : (outcome.get(item.index) ?? { kind: "failure", reason: "backend_error" });
-        const meta = { testId: item.testId, attempt: item.attempt };
+        const notes = typeof outcome === "string" ? { failure: outcome } : stage.notes;
+        const meta = {
+          testId: item.testId,
+          attempt: item.attempt,
+          ...(notes ? { backend: notes } : {}),
+        };
         if (stage.kind === "answer" && stage.answer.confidence >= item.settings.threshold) {
           results[item.index] = decided(start, item.task, stage.answer, stage.cached, meta);
         } else if (stage.kind === "answer") {

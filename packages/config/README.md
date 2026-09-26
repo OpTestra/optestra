@@ -73,10 +73,12 @@ URL-encoded, form-encoded, JSON-escaped and base64/base64url forms) is registere
 with the process-wide `defaultRedactor`. The engine logger in `core` passes every
 line through it.
 
-**`@testament/config/reveal` is restricted.** Only two places may import it:
+**`@testament/config/reveal` is restricted.** Only these places may import it:
 - the browser and Android drivers, to type a value into an allowed domain (from
   the AUTH phase on);
-- `packages/models`, to send a provider key to that provider's own host.
+- `packages/models`, to send a provider key to that provider's own host;
+- `packages/decide` (`src/node/systemone/`), to send a decision model key (e.g.
+  `JEV_API_KEY`) to that backend's own host.
 
 Nothing else may: not logging, reports, AI prompts or the apps.
 
@@ -120,7 +122,8 @@ over `defaults`.
 
 Registered sections today: `models` (from `@testament/models`), `tests` (where
 the test files are) and `lint` (rule levels, strict) from `@testament/spec`, and
-`decisions` (decision backend, thresholds, time limits, cache) from `@testament/decide`. Import the owning package before
+`decisions` (decision backend and its jev/kev/laya settings, thresholds, time limits,
+cache) from `@testament/decide`. Import the owning package before
 loading config, or the section is reported as unknown. The full schema
 including `models` is `@testament/models/schema.json`.
 

@@ -1,0 +1,23 @@
+{
+  "state": "HTTP status: 403\n<untrusted source=\"page-title\">\nAcme\n</untrusted>\n<untrusted source=\"page-heading\">\n\n</untrusted>\n<untrusted source=\"page-text\">\nPlease sign in to continue.\n</untrusted>",
+  "questions": {
+    "is_error": {
+      "type": "noul",
+      "instructions": "This page is an error page (a server error, not-found or crash page) rather than the page the user meant to reach."
+    },
+    "kind": {
+      "type": "choice",
+      "instructions": "What kind of page is this?",
+      "criteria": {
+        "login": null,
+        "error": null,
+        "content": null
+      }
+    },
+    "severity": {
+      "type": "score",
+      "instructions": "How broken does this page look?",
+      "criteria": ["Fine", "Degraded", "Broken"]
+    }
+  }
+}

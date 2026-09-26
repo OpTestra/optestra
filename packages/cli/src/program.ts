@@ -1,7 +1,9 @@
 import { brand } from "@testament/brand";
 import { version } from "@testament/core";
+import { createInterface } from "node:readline/promises";
 import { Command } from "commander";
 import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
+import { type DeciderSetupOptions, runDeciderSetup } from "./commands/decider.js";
 import { type DecisionsCommandOptions, runDecisionsCommand } from "./commands/decisions.js";
 import { type LintCommandOptions, runLintCommand } from "./commands/lint.js";
 import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
@@ -12,6 +14,15 @@ import {
   runShowCommand,
   type ShowCommandOptions,
 } from "./commands/tests.js";
+
+async function askYesNo(question: string): Promise<boolean> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    return /^y(es)?$/i.test((await rl.question(`${question} [y/N] `)).trim());
+  } finally {
+    rl.close();
+  }
+}
 
 export function createProgram(): Command {
   const program = new Command()
@@ -54,17 +65,45 @@ export function createProgram(): Command {
   program
     .command("decisions")
     .description(
-      "show the decision backend, thresholds and tasks; --stats reads a run folder's decisions",
+      "show the decision backend, thresholds and tasks; --check the backends, --bench their speed, --stats a run's decisions",
     )
+    .option("--check", "check every decision backend: key valid, reachable, model installed")
+    .option("--bench", "measure decision latency on the demo task (after a warm-up)")
+    .option(
+      "--backend <name>",
+      "for --bench: jev, kev, laya or all (default: the selected backend)",
+    )
+    .option("--n <count>", "for --bench: decisions per backend", "50")
     .option("--stats <runDir>", "print per-task decision metrics from a run folder")
     .option("-e, --env <name>", "environment to resolve")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .option("--json", "print machine-readable JSON")
-    .action((options: DecisionsCommandOptions) => {
-      process.exitCode = runDecisionsCommand(options, {
+    .action(async (options: DecisionsCommandOptions) => {
+      process.exitCode = await runDecisionsCommand(options, {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("decider")
+    .description("set up a decision model backend")
+    .command("setup")
+    .description(
+      "laya: find the local Ollaya and, if you agree, download the model (never installs Ollaya); jev/kev: how to set them up",
+    )
+    .argument("<backend>", "laya, jev or kev")
+    .option("--model <name>", "the Laya model (default: decisions.laya.model)")
+    .option("-y, --yes", "download without asking")
+    .option("-e, --env <name>", "environment to resolve")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (backend: string, options: DeciderSetupOptions) => {
+      process.exitCode = await runDeciderSetup(backend, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+        ...(process.stdin.isTTY ? { confirm: askYesNo } : {}),
       });
     });
 
