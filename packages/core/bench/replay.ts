@@ -11,6 +11,12 @@
 // --equivalence (the LOOP-3 promise): for correct, broken-total and
 // broken-silent-click, the replay verdict and the generated spec's
 // plain-Playwright verdict must agree per test.
+//
+// Email tests read their code from a test inbox (AUTH-1): a real Mailpit when one
+// answers at MAILPIT_URL (default http://127.0.0.1:8025; the shop then sends over
+// MAILPIT_SMTP, default 127.0.0.1:1025), else the shop's own outbox read in
+// process. REQUIRE_MAILPIT=1 (CI) makes a missing Mailpit an error. The generated
+// specs can only read Mailpit, so without it their email tests aren't compared.
 
 import { spawn } from "node:child_process";
 import {
@@ -32,14 +38,15 @@ import { brand } from "@testament/brand";
 import { ENV_PREFIX } from "@testament/config";
 import { parseYaml } from "@testament/config/node";
 import type { TestResult } from "@testament/contract";
+import { createInbox } from "@testament/auth";
 import { runTests } from "@testament/core/node";
-import { startShop, VARIANTS, type Variant } from "@testament/fixture-shop";
+import { shopInbox, startShop, VARIANTS, type Variant } from "@testament/fixture-shop";
 import { loadTest } from "@testament/spec/node";
 
 const SHOP = fileURLToPath(new URL("../../../bench/fixtures/shop/", import.meta.url));
 const PASSWORD = "shop-demo-pass";
-/** Until AUTH-1 wires inboxes into runs, tests that read an email are blocked, not wrong. */
-const INBOX_REASON = "inbox_unavailable";
+const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
+const MAILPIT_SMTP = process.env.MAILPIT_SMTP ?? "127.0.0.1:1025";
 const EQUIVALENCE_VARIANTS: Variant[] = ["correct", "broken-total", "broken-silent-click"];
 
 interface Expectation {
@@ -61,6 +68,31 @@ const { values } = parseArgs({
     json: { type: "string" },
   },
 });
+
+/** Is Mailpit answering? (Checked through the inbox adapter, like a run would.) */
+async function mailpitRunning(): Promise<boolean> {
+  const created = createInbox({
+    secrets: {},
+    inbox: {
+      provider: "mailpit",
+      timeoutSeconds: 5,
+      mailpit: { url: MAILPIT_URL, domain: "example.test" },
+      mailosaur: { baseUrl: "https://mailosaur.com", keySecret: "MAILOSAUR_API_KEY" },
+      mailslurp: { baseUrl: "https://api.mailslurp.com", keySecret: "MAILSLURP_API_KEY" },
+    },
+  } as never);
+  return created.ok && (await created.inbox.check()).ok;
+}
+const useMailpit = await mailpitRunning();
+if (!useMailpit && process.env.REQUIRE_MAILPIT)
+  throw new Error(`Mailpit is not running at ${MAILPIT_URL} (REQUIRE_MAILPIT is set).`);
+process.stdout.write(
+  useMailpit
+    ? `Email tests read Mailpit at ${MAILPIT_URL}.\n`
+    : `Mailpit isn't running at ${MAILPIT_URL}: email tests read the shop's outbox in process, and their generated specs aren't compared.\n`,
+);
+const startVariant = (variant: Variant) =>
+  startShop({ variant, port: 0, ...(useMailpit ? { mailpitSmtp: MAILPIT_SMTP } : {}) });
 
 const manifest = parseYaml(readFileSync(join(SHOP, "manifest.yaml"), "utf8"), "manifest.yaml")
   .value as Manifest;
@@ -89,11 +121,13 @@ async function failingStep(dir: string, result: TestResult): Promise<number | nu
   if (!attempt) return null;
   const step = attempt.steps.find((s) => s.status === "failed" || s.status === "blocked");
   if (!step) return null;
+  // The test's auth: profile login is step 0 in the manifest (it runs before step 1).
+  if (step.kind === "flow" && step.text.startsWith("auth: ")) return 0;
   const loaded = await loadTest(dir, result.file, undefined, { seed: "bench" });
   return loaded?.expanded.steps[step.index]?.origin[0]?.number ?? null;
 }
 
-type Score = "match" | "healed" | "needs_ai" | "deferred" | "mismatch";
+type Score = "match" | "healed" | "needs_ai" | "mismatch";
 
 interface Row {
   variant: Variant;
@@ -116,12 +150,6 @@ function score(
   heals: { withoutAi: number; needsAi: number },
 ): { score: Score; note: string } {
   const blockedBy = result.decidedBy.find((d) => d.kind === "blocked");
-  if (
-    result.verdict === "blocked" &&
-    blockedBy?.kind === "blocked" &&
-    blockedBy.reason === INBOX_REASON
-  )
-    return { score: "deferred", note: "reads an email: blocked until inboxes run (AUTH-1)" };
   const accepted = [
     expected.verdict,
     ...(manifest.variants[variant]?.also_accept?.[expected.verdict as "passed"] ?? []),
@@ -154,7 +182,7 @@ async function replayVariant(
   variant: Variant,
 ): Promise<{ rows: Row[]; ms: number; results: TestResult[] }> {
   const dir = project();
-  const shop = await startShop({ variant, port: 0 });
+  const shop = await startVariant(variant);
   const started = Date.now();
   try {
     const run = await runTests({
@@ -166,8 +194,10 @@ async function replayVariant(
           ? { PLAYWRIGHT_BROWSERS_PATH: process.env.PLAYWRIGHT_BROWSERS_PATH }
           : {}),
         [`${ENV_PREFIX}BASE_URL`]: shop.url,
+        [`${ENV_PREFIX}INBOX_MAILPIT_URL`]: MAILPIT_URL,
         SHOP_PASSWORD: PASSWORD,
       },
+      ...(useMailpit ? {} : { inbox: shopInbox(shop) }),
       mode: variant === "cosmetic" ? "normal" : "replay-only",
       retries: manifest.harness.retries,
       models: null,
@@ -247,7 +277,7 @@ async function specVerdicts(variant: Variant): Promise<Record<string, string>> {
     join(dir, "node_modules", "@playwright", "test"),
     "junction",
   );
-  const shop = await startShop({ variant, port: 0 });
+  const shop = await startVariant(variant);
   const report = join(dir, "report.json");
   try {
     const output = await node(
@@ -270,6 +300,7 @@ async function specVerdicts(variant: Variant): Promise<Record<string, string>> {
           : {}),
         PLAYWRIGHT_JSON_OUTPUT_NAME: report,
         [`${ENV_PREFIX}BASE_URL`]: shop.url,
+        ...(useMailpit ? { [`${ENV_PREFIX}MAILPIT_URL`]: MAILPIT_URL } : {}),
         SHOP_PASSWORD: PASSWORD,
       },
     );
@@ -293,6 +324,21 @@ async function specVerdicts(variant: Variant): Promise<Record<string, string>> {
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
+
+/** Tests that read an email (their recordings type {{inbox.…}}). */
+const readsEmail = new Set(
+  (
+    await Promise.all(
+      Object.keys(manifest.tests).map(async (name) => {
+        const loaded = await loadTest(SHOP, `tests/${name}.test.md`, undefined, { seed: "bench" });
+        return loaded &&
+          /\binbox\b|verification email/i.test(loaded.expanded.steps.map((s) => s.text).join("\n"))
+          ? `tests/${name}.test.md`
+          : null;
+      }),
+    )
+  ).filter((f): f is string => f !== null),
+);
 
 const variants = (values.variant as Variant[] | undefined) ?? [...VARIANTS];
 for (const v of variants) if (!VARIANTS.includes(v)) throw new Error(`unknown variant ${v}`);
@@ -340,6 +386,13 @@ if (values.equivalence) {
       const replay =
         result.verdict === "blocked" ? "blocked" : first === "passed" ? "passed" : "failed";
       const plain = spec[result.name] ?? "missing";
+      // Without Mailpit a generated spec can't read the email (it skips): nothing to compare.
+      if (!useMailpit && plain === "blocked" && readsEmail.has(result.file)) {
+        process.stdout.write(
+          `  skipped  ${variant.padEnd(20)} ${result.name.padEnd(62)} (its spec needs Mailpit)\n`,
+        );
+        continue;
+      }
       const agree = replay === plain;
       equivalence.push({ variant, test: result.name, replay, spec: plain, agree });
       process.stdout.write(
@@ -356,7 +409,6 @@ const summary = {
   match: counts("match"),
   healed: counts("healed"),
   needsAi: counts("needs_ai"),
-  deferred: counts("deferred"),
   mismatch: counts("mismatch"),
   aiCalls: all.reduce((sum, r) => sum + r.aiCalls, 0),
   cosmetic: {

@@ -1,5 +1,6 @@
 import { type TemplateVariable, templateParts } from "@testament/recording";
 import type { BoundSegment, ExpandedStep, ExpandedTest } from "@testament/spec";
+import { INBOX_SECRETS } from "./inbox.js";
 
 // A step's variables: what the agent may type as templates, and the values used
 // to execute them. Secrets have no value here; they reach the harness by name.
@@ -19,16 +20,45 @@ export interface StepVariables {
   secrets: string[];
   /** References with no value (e.g. env vars not set). */
   unresolved: string[];
+  /**
+   * Inbox values the step may type (SEC-5): `code`, `link`. Read from the test
+   * inbox by the harness and typed like secrets as `{{inbox.code}}` /
+   * `{{inbox.link}}`; never shown, never recorded.
+   */
+  inbox: ("code" | "link")[];
+}
+
+/** The inbox member a whole-value template like `{{inbox.code}}` names, if any. */
+export function inboxMemberOf(template: string): "code" | "link" | null {
+  const match = /^\{\{\s*inbox\.(code|link)\s*\}\}$/.exec(template.trim());
+  return match ? (match[1] as "code" | "link") : null;
+}
+
+/** The step's variables with an inbox value added (after read_inbox). */
+export function withInbox(variables: StepVariables, member: "code" | "link"): StepVariables {
+  if (variables.inbox.includes(member)) return variables;
+  const entry = { ref: `inbox.${member}` };
+  return {
+    ...variables,
+    inbox: [...variables.inbox, member],
+    list: [...variables.list, entry],
+    pageList: [...variables.pageList, entry],
+  };
 }
 
 export function stepVariables(test: ExpandedTest, step: ExpandedStep): StepVariables {
   const values: Record<string, string> = {};
   const secrets = new Set<string>();
   const unresolved = new Set<string>();
+  const inbox = new Set<"code" | "link">();
   for (const segment of step.bound) {
     if (segment.kind === "value") values[segment.ref] = segment.text;
     else if (segment.kind === "secret") secrets.add(segment.name);
-    else if (segment.kind === "unresolved") unresolved.add(segment.ref);
+    else if (segment.kind === "unresolved") {
+      if (segment.ref === "inbox.code" || segment.ref === "inbox.link")
+        inbox.add(segment.ref.slice("inbox.".length) as "code" | "link");
+      else unresolved.add(segment.ref);
+    }
   }
   // The test's own data is available to every step of the test itself.
   if (step.flowPath.length === 0) {
@@ -41,6 +71,7 @@ export function stepVariables(test: ExpandedTest, step: ExpandedStep): StepVaria
   const list: TemplateVariable[] = [
     ...Object.entries(values).map(([ref, value]) => ({ ref, value })),
     ...[...secrets].map((name) => ({ ref: `secret.${name}` })),
+    ...[...inbox].map((member) => ({ ref: `inbox.${member}` })),
     ...[...unresolved].map((ref) => ({ ref })),
   ];
   const seen = new Set(list.map((v) => v.value).filter(Boolean));
@@ -57,7 +88,14 @@ export function stepVariables(test: ExpandedTest, step: ExpandedStep): StepVaria
     if (!bound.segments.some((s) => s.kind === "secret" || s.kind === "unresolved"))
       add(`data.${name}`, bound.display);
   }
-  return { list, pageList, values, secrets: [...secrets], unresolved: [...unresolved] };
+  return {
+    list,
+    pageList,
+    values,
+    secrets: [...secrets],
+    unresolved: [...unresolved],
+    inbox: [...inbox],
+  };
 }
 
 /** Lines for the prompt: values of plain variables, secrets by name only. */
@@ -68,6 +106,10 @@ export function describeVariables(variables: StepVariables): string {
     ),
     ...variables.secrets.map(
       (name) => `- {{secret.${name}}} = (secret; type it exactly as {{secret.${name}}})`,
+    ),
+    ...variables.inbox.map(
+      (member) =>
+        `- {{inbox.${member}}} = (from the test inbox, never shown; ${member === "code" ? "fill it exactly as {{inbox.code}}" : "open it with goto {{inbox.link}}"})`,
     ),
     ...variables.unresolved.map((ref) => `- {{${ref}}} = (no value in this environment)`),
   ];
@@ -107,6 +149,23 @@ export function harnessValue(template: string, variables: StepVariables): Harnes
       };
     }
     return { ok: true, value: { secret: secret.secret } };
+  }
+  const inbox = parts.find(
+    (part) => "unresolved" in part && /^inbox\.(code|link)$/.test(part.unresolved),
+  );
+  if (inbox && "unresolved" in inbox) {
+    const member = inbox.unresolved.slice("inbox.".length) as "code" | "link";
+    if (parts.length !== 1)
+      return {
+        ok: false,
+        error: `{{inbox.${member}}} must be typed on its own, as the whole value.`,
+      };
+    if (!variables.inbox.includes(member))
+      return {
+        ok: false,
+        error: `{{inbox.${member}}} isn't ready: call read_inbox with want: ${member} first.`,
+      };
+    return { ok: true, value: { secret: INBOX_SECRETS[member] } };
   }
   const missing = parts.find((part) => "unresolved" in part);
   if (missing && "unresolved" in missing) {

@@ -2,9 +2,21 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import {
+  checkTestAuth,
+  createInbox,
+  createInboxValues,
+  type Inbox,
+  inboxEmailDomain,
+  type InboxValues,
+  SessionStore,
+  testAuth,
+} from "@testament/auth";
 import { brand } from "@testament/brand";
 import { type Config, hasErrors } from "@testament/config";
+import { CONTRACT_VERSION } from "@testament/contract";
 import {
+  createLogger,
   defaultRedactor,
   dotenvSource,
   loadProject,
@@ -50,8 +62,10 @@ import { readRecording, recordingPath, writeRecording } from "@testament/recordi
 import { hasSpecErrors, type ExpandedTest } from "@testament/spec";
 import { loadTest, loadTests } from "@testament/spec/node";
 import { PROMPT_VERSION } from "../author/agent.js";
+import { createTestInbox, type TestInbox } from "../author/inbox.js";
 import { chaptersVtt, consoleErrors } from "./evidence.js";
 import { recentAiUsage } from "./history.js";
+import { profileFlowPath, profileLogin, replayProfileFlow } from "./profiles.js";
 import { replayAttempt } from "./replay.js";
 import { runSpecTest } from "./spec-run.js";
 import type { ReplayResult, ReplaySession } from "./types.js";
@@ -108,6 +122,11 @@ export interface RunTestsOptions {
   generateSpecs?: boolean;
   /** How long a check waits for its condition (default 5000 ms). */
   checkTimeoutMs?: number;
+  /**
+   * Injected test inbox (tests, Bench). `null`: none. Default: the project's
+   * `inbox` settings (Mailpit, Mailosaur, MailSlurp).
+   */
+  inbox?: Inbox | null;
 }
 
 export interface RunTestsResult {
@@ -265,7 +284,74 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     );
   const baseUrl = settings.baseUrl;
 
-  const all = await loadTests(projectDir, config, { environment: environment.name, seed: runId });
+  const sources = options.secretSources ?? [processEnvSource(env), dotenvSource(projectDir)];
+  // The test inbox (SEC-5): {{unique.email}} lands in it (ENV-3), codes and links are read from it.
+  let inbox: Inbox | undefined;
+  let inboxProblem: string | undefined;
+  if (options.inbox !== undefined) inbox = options.inbox ?? undefined;
+  else if (config.inbox && config.inbox.provider !== "none") {
+    const created = createInbox(config, { sources, environment: environment.name });
+    if (created.ok) inbox = created.inbox;
+    else {
+      inboxProblem = `${created.message}${created.fix ? ` Fix: ${created.fix}` : ""}`;
+      emit({
+        type: "log",
+        level: "warn",
+        message: `The test inbox can't be used: ${inboxProblem}`,
+      });
+    }
+  }
+  const emailDomain =
+    options.inbox !== undefined
+      ? inbox?.emailDomain
+      : config.inbox && config.inbox.provider !== "none"
+        ? inboxEmailDomain(config.inbox)
+        : undefined;
+  const inboxValues: InboxValues | undefined = inbox
+    ? createInboxValues({
+        inbox,
+        allowedDomains: settings.allowedDomains,
+        timeoutMs: (config.inbox?.timeoutSeconds ?? 60) * 1000,
+        redactor,
+      })
+    : undefined;
+  const testInbox = (since: Date): TestInbox | undefined => {
+    if (inboxValues && inbox)
+      return createTestInbox({
+        values: inboxValues,
+        provider: inbox.provider,
+        allowedDomains: settings.allowedDomains,
+        since,
+        redactor,
+      });
+    if (!inboxProblem) return undefined;
+    // Configured but unusable (e.g. a missing key): every read says why.
+    const problem = inboxProblem;
+    return {
+      provider: config.inbox?.provider ?? "inbox",
+      secrets: {},
+      addressFor: () => null,
+      read: async () => ({
+        ok: false,
+        outcome: "blocked",
+        reason: "inbox_unavailable",
+        message: `The test inbox can't be used: ${problem}`,
+      }),
+    };
+  };
+  // Saved logins (SEC-3); the runner reports them as events, so the store only logs warnings.
+  const sessions = new SessionStore({
+    projectDir,
+    redactor,
+    logger: createLogger({ level: "warn", redactor }),
+  });
+  const testsDirRelative = config.tests?.dir ?? "tests";
+
+  const all = await loadTests(projectDir, config, {
+    environment: environment.name,
+    seed: runId,
+    emailDomain,
+  });
   const selected = selectTests(
     projectDir,
     all.tests.map((t) => ({
@@ -278,18 +364,25 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   const plans: TestPlan[] = selected.map((t) => {
     const loadedTest = all.tests.find((l) => l.path === t.path);
     const problems = loadedTest?.diagnostics.filter((d) => d.severity === "error") ?? [];
+    const authProblems = loadedTest ? checkTestAuth(loadedTest.spec, config.auth) : [];
     return {
       path: t.path,
       id: loadedTest?.id ?? t.path,
       name: t.name,
       tags: t.tags,
-      ...(hasSpecErrors(problems)
-        ? { problem: problems.map((d) => `${d.code}: ${d.message}`).join(" ") }
+      ...(hasSpecErrors(problems) || authProblems.length > 0
+        ? {
+            problem: [...problems, ...authProblems]
+              .map(
+                (d) =>
+                  `${d.code}: ${d.message}${d.code.startsWith("AUTH_") ? ` Fix: ${d.fix}` : ""}`,
+              )
+              .join(" "),
+          }
         : {}),
     };
   });
 
-  const sources = options.secretSources ?? [processEnvSource(env), dotenvSource(projectDir)];
   const secrets = resolveSecrets(config, sources, { environment: environment.name });
   const budget =
     options.budgetUsd !== undefined
@@ -369,7 +462,11 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   const healsPerTest: RunTestsResult["heals"] = {};
   const scratch = mkdtempSync(join(tmpdir(), `${brand.cliName}-run-`));
 
-  const runOne = async (plan: TestPlan, launched: import("@testament/browser").LaunchedBrowser) => {
+  const runOne = async (
+    plan: TestPlan,
+    launched: import("@testament/browser").LaunchedBrowser,
+    workerIndex: number,
+  ) => {
     const matrix = { target: "web" as const, browser: browserName, device };
     emit({
       type: "test.started",
@@ -423,6 +520,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       const loadedTest = await loadTest(projectDir, plan.path, config, {
         environment: environment.name,
         seed: `${runId}:${plan.id}:${attempt}`,
+        emailDomain,
       });
       const expanded = loadedTest?.expanded;
       emit({ type: "attempt.started", testId: plan.id, attempt });
@@ -497,6 +595,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         );
       } else {
         const evidenceDir = mkdtempSync(join(scratch, `${plan.id}-${attempt}-`));
+        const attemptInbox = testInbox(new Date());
         let session: import("@testament/browser").Session | undefined;
         try {
           session = await browserModule.openSession({
@@ -504,7 +603,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             device,
             baseUrl,
             allowedDomains: settings.allowedDomains,
-            secrets: secrets.secrets,
+            secrets: { ...secrets.secrets, ...attemptInbox?.secrets },
             allowUpload: { dir: dirname(join(projectDir, plan.path)) },
             evidence: {
               trace: true,
@@ -537,11 +636,88 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
           break;
         }
         const open = session;
+        const auth = testAuth(expanded.auth ?? undefined, config.auth);
+        const commonReplay = {
+          mode,
+          decisions,
+          models,
+          budget,
+          fixerAvailable,
+          plannerAvailable,
+          production: settings.production,
+          ...(options.checkTimeoutMs !== undefined
+            ? { checkTimeoutMs: options.checkTimeoutMs }
+            : {}),
+          newId: ulid,
+          redact: (text: string) => redactor.redact(text),
+        };
+        const prepare =
+          auth.kind === "profile"
+            ? () =>
+                profileLogin({
+                  name: auth.name,
+                  profile: auth.profile,
+                  auth: config.auth,
+                  store: sessions,
+                  environment: environment.name,
+                  worker: workerIndex,
+                  session: open,
+                  stepIndex: expanded.steps.length,
+                  runFlow: () =>
+                    replayProfileFlow({
+                      projectDir,
+                      config,
+                      environment: environment.name,
+                      profile: auth.profile,
+                      seed: `${runId}:auth:${auth.name}:${plan.id}:${attempt}`,
+                      emailDomain,
+                      inbox: () => testInbox(new Date()),
+                      openSession: (extra) =>
+                        browserModule.openSession({
+                          browser: launched,
+                          device,
+                          baseUrl,
+                          allowedDomains: settings.allowedDomains,
+                          secrets: { ...secrets.secrets, ...extra },
+                          evidence: { trace: false, console: false, network: false, video: false },
+                          redact: (text) => redactor.redact(text),
+                        }),
+                      replay: {
+                        ...commonReplay,
+                        policy: (settings.run?.healPolicy ?? config.run.healPolicy) as HealPolicy,
+                      },
+                      onLog: (message) =>
+                        emit({ type: "log", level: "info", testId: plan.id, message }),
+                      saveAuthored: (flow, previousFlow, authored, paths) => {
+                        writeRecording(
+                          paths.recording,
+                          mergeRecording(flow, previousFlow, authored, {
+                            testPath: paths.test,
+                            target: config.project?.target ?? "web",
+                            engineVersion,
+                            browser: browserName,
+                            device,
+                            environment: environment.name,
+                            now: new Date().toISOString(),
+                          }),
+                        );
+                        recorded.push({
+                          test: paths.test,
+                          recording: posix(relative(projectDir, paths.recording)),
+                          specs: [],
+                          warnings: [],
+                        });
+                      },
+                    }),
+                })
+            : undefined;
         try {
           if (options.beforeAttempt)
             await options.beforeAttempt({ testId: plan.id, attempt, session: open });
           result = await where.run({ testId: plan.id, attempt, sink }, () =>
             replayAttempt({
+              inbox: attemptInbox,
+              ...(prepare ? { prepare } : {}),
               test: expanded,
               recording: previous,
               session: open,
@@ -638,9 +814,17 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     // ── the verdict (code, not a model) and the diagnosis ─────────────────────
     const verdict = decideVerdict(records);
     const last = records.at(-1);
-    const stepFlows = Object.fromEntries(
+    const stepFlows: Record<number, string[]> = Object.fromEntries(
       (expandedForFlows?.steps ?? []).map((s) => [s.index, s.flowPath]),
     );
+    // The auth profile's login step (after the test's own steps) ran its flow.
+    const profile = expandedForFlows
+      ? testAuth(expandedForFlows.auth ?? undefined, config.auth)
+      : undefined;
+    if (expandedForFlows && profile?.kind === "profile")
+      stepFlows[expandedForFlows.steps.length] = [
+        profileFlowPath(testsDirRelative, profile.profile.flow),
+      ];
     contexts.set(plan.id, { attempts: observations, stepFlows });
     let failureCause: FailureCause | null = verdict.verdict === "blocked" ? "blocked" : null;
     const failureEvidence: EvidenceRef[] = [];
@@ -761,7 +945,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   const queue = [...plans];
   const workerCount = Math.max(1, Math.min(options.workers ?? 1, queue.length || 1));
   let setupError: string | undefined;
-  const worker = async () => {
+  const worker = async (index: number) => {
     let launched: import("@testament/browser").LaunchedBrowser | undefined;
     try {
       launched = await browserModule.launchBrowser({
@@ -774,13 +958,14 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       return;
     }
     try {
-      for (let plan = queue.shift(); plan; plan = queue.shift()) await runOne(plan, launched);
+      for (let plan = queue.shift(); plan; plan = queue.shift())
+        await runOne(plan, launched, index);
     } finally {
       await launched.close();
     }
   };
   try {
-    await Promise.all(Array.from({ length: workerCount }, worker));
+    await Promise.all(Array.from({ length: workerCount }, (_, index) => worker(index)));
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
@@ -882,7 +1067,7 @@ function provisionalResult(
     artifacts: r.artifacts,
   }));
   return {
-    contractVersion: "1.1",
+    contractVersion: CONTRACT_VERSION,
     runId,
     testId: plan.id,
     file: plan.path,

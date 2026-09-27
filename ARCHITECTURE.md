@@ -40,7 +40,7 @@ cli ──► core ──► config ──► brand
  │                its output imports only @playwright/test)
  ├──► report ──► contract, brand     (browser-safe renderers; never imports core, browser,
  │                models or decide; reads documents, never artifact contents)
- core ──► browser, models, spec, recording, contract, config, decide, codegen
+ core ──► browser, models, spec, recording, contract, config, decide, codegen, auth
  └──► contract                     (cli reads run folders through the contract)
 mcp, action ──► core, contract (later)
 contract ──► zod only (bottom of the graph)
@@ -184,7 +184,19 @@ contract ──► zod only (bottom of the graph)
   (allowed hosts only), and `createInboxValues` / `inboxSecret` for the spec's new
   `{{inbox.code|link|subject}}` namespace (bound `unresolved`). CLI `auth [--clear]`,
   `inbox check`, `inbox last`. The Mailpit e2e runs in the `fixtures` CI job with a
-  Mailpit service. AUTH-1 wires it all into runs. See `packages/auth/README.md`.
+  Mailpit service. See `packages/auth/README.md`.
+- AUTH-1 (done): logins and email codes in real runs. `core` now depends on
+  `auth`. `auth: <profile>` tests start from a saved session (validated with the
+  profile's `check` in the test's session, after its setup hooks) or the
+  profile's flow, replayed like a test in its own evidence-free session
+  (`run/profiles.ts`); the browser exports and loads storage state
+  (`session.storageState()` / `useStorageState()`, values scrubbed). Test inboxes
+  per attempt (`author/inbox.ts`): `{{inbox.code}}` / `{{inbox.link}}` are typed /
+  opened by the harness as `INBOX_CODE` / `INBOX_LINK` secrets; the agent's
+  `read_inbox` tool returns a handle, never the value (prompt `planner-v3`).
+  Contract 1.2 adds blocked reasons `inbox_unavailable`, `login_failed`,
+  `setup_failed`. Generated specs log in with the profile's flow. See
+  `packages/core/README.md`.
 
 - DEC-3 (done): the during-run decisions in `@testament/decide`:
   - `same_element`: weighted identity signals from `same-element.json`. It never

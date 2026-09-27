@@ -43,6 +43,7 @@ off-origin.
 | `GET/POST /signup` | Email + password, visible validation errors (`aria-invalid`, described-by) |
 | `GET/POST /verify` | 6-digit code from the verification email; then checkout (if a plan was picked) or dashboard |
 | `GET/POST /login`, `POST /logout` | Session cookie `acme_session` |
+| `GET/POST /login/code` | Two-factor login, only for a user seeded with `totp`: "Authentication code" (RFC 6238, 6 digits, 30 s) |
 | `GET /error` | "Something went wrong" (where `broken-login-redirect` lands) |
 | `GET /dashboard` | Projects list (loaded client-side), "Create project" → modal `<dialog>` → toast; `?welcome=pro` shows "Welcome to Pro" |
 | `GET/POST /api/projects` | JSON list / create |
@@ -63,12 +64,24 @@ All under `/__test/`, always on (this is a fixture), JSON in and out.
 | Hook | What |
 |---|---|
 | `POST /__test/reset` | Clear all app data. Add `?environment=1` to also restart the `env-flaky` pattern (environment trouble outlives data resets). |
-| `POST /__test/seed` | Create a verified user with six orders. Body (all optional): `email`, `password`, `name`, `trial` (`starter`/`pro`/`team`), `projects` (names). Defaults: `ada@example.com` / `shop-demo-pass` / Ada Lovelace. |
+| `POST /__test/seed` | Create a verified user with six orders. Body (all optional): `email`, `password`, `name`, `trial` (`starter`/`pro`/`team`), `projects` (names), `totp` (a base32 seed: logging in then asks for an authentication code). Defaults: `ada@example.com` / `shop-demo-pass` / Ada Lovelace. Seeding keeps the user's login sessions, so a saved session (auth profiles) stays valid. |
 | `GET /__test/outbox?to=<email>` | Emails sent, newest last: `{ emails: [{ to, subject, text }] }` |
 | `GET /__test/state` | `{ variant, users: [{ email, verified, plan, projects }] }` |
 
 If `MAILPIT_SMTP=127.0.0.1:1025` is set, verification emails are also delivered
 to that local Mailpit (SEC-5). Non-loopback hosts are refused.
+
+`shopInbox(shop)` (exported) is a test inbox over the shop's own outbox, read in
+process with no network: the engine's e2e tests and the Bench use it when
+Mailpit isn't running. It has the shape of `@testament/auth`'s `Inbox`.
+
+## Auth profile
+
+The project file defines the `ada` profile (`flows/login.test.md`, checked by
+opening `/dashboard`). `billing-zero-due`, `settings-profile` and `sort-orders`
+use it (`auth: ada`, start on `/dashboard`); the other logged-in tests keep
+`Use: flows/login.test.md`, so both paths stay tested. In the manifest, a
+profile's login is step 0.
 
 ## Cosmetic change list
 

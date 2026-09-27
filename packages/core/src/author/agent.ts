@@ -12,13 +12,14 @@ import {
 } from "@testament/models";
 import type { Command, Fingerprint, Locator, RecordedAction } from "@testament/recording";
 import { toTemplate } from "@testament/recording";
-import type { ExpandedStep } from "@testament/spec";
+import type { ExpandedStep, ExpandedTest } from "@testament/spec";
 import { commandOf, fingerprintOf, pageTemplate } from "./commands.js";
 import { checkGuards, type GuardContext } from "./guards.js";
+import { inboxMemberOfAction, prepareInbox, type TestInbox } from "./inbox.js";
 import prompt from "./planner-prompt.json" with { type: "json" };
 import { PLANNER_TOOLS, type PlannerToolCall, parseToolCall } from "./tools.js";
 import type { ActionReport, AuthorLimits, AuthorSession, StopReason } from "./types.js";
-import { describeVariables, harnessValue, type StepVariables } from "./variables.js";
+import { describeVariables, harnessValue, type StepVariables, withInbox } from "./variables.js";
 
 // The agent loop for one action step (LOOP-1). Observe → ask the planner → run
 // its tool calls through the harness → repeat, until step_done, step_impossible
@@ -57,6 +58,8 @@ export interface AgentContext {
   guardLines: string[];
   signal: AbortSignal;
   tags: Record<string, string>;
+  /** The test inbox of this attempt and the test (for its address), for read_inbox (AUTH-1). */
+  inbox?: { runtime: TestInbox | undefined; test: ExpandedTest };
 }
 
 export interface ActionStepResult {
@@ -146,8 +149,11 @@ function renderStepPrompt(
 export async function runActionStep(
   ctx: AgentContext,
   step: ExpandedStep,
-  variables: StepVariables,
+  stepVariables: StepVariables,
 ): Promise<ActionStepResult> {
+  // read_inbox adds {{inbox.code}} / {{inbox.link}} as the step goes.
+  let variables = stepVariables;
+  const read = new Set<"code" | "link">();
   const result: ActionStepResult = {
     status: "failed",
     commands: [],
@@ -258,6 +264,23 @@ export async function runActionStep(
       }
       const call = parsed.call;
 
+      if (call.name === "read_inbox") {
+        const to = call.input.to ? resolveAddress(call.input.to, variables) : undefined;
+        const got = await readInbox(ctx, step, call.input.want, to);
+        if (!got.ok) {
+          if (got.stop) return end(got.stop.status, got.stop.reason, got.stop.message);
+          note(`read_inbox: ${got.note}`);
+          if (++consecutiveFailures >= ctx.limits.consecutiveFailures)
+            return end("failed", "limit_reached", `read_inbox kept failing: ${got.note}`);
+          break;
+        }
+        read.add(call.input.want);
+        variables = withInbox(variables, call.input.want);
+        note(
+          `read_inbox: the email "${pageTemplate(got.subject, variables.pageList)}" came; its ${call.input.want} is ready as {{inbox.${call.input.want}}} (never shown). ${call.input.want === "code" ? "Fill {{inbox.code}} into the field." : "Open it with goto {{inbox.link}}."}`,
+        );
+        continue;
+      }
       if (call.name === "look") {
         wantScreenshot = true;
         note("look: a screenshot comes with the next snapshot");
@@ -320,6 +343,17 @@ export async function runActionStep(
           );
         }
         break;
+      }
+
+      // {{inbox.…}} in the step itself: read the email before typing it (like read_inbox).
+      const member = inboxMemberOfAction(planned.action);
+      if (member && !read.has(member)) {
+        const got = await readInbox(ctx, step, member);
+        if (!got.ok) {
+          if (got.stop) return end(got.stop.status, got.stop.reason, got.stop.message);
+          return end("stopped", "inbox_unavailable", got.note);
+        }
+        read.add(member);
       }
 
       actions++;
@@ -392,6 +426,66 @@ export async function runActionStep(
   }
 }
 
+/** The address the model named, bound to text (a template of the step's values, or literal). */
+function resolveAddress(typed: string, variables: StepVariables): string {
+  let text = typed;
+  for (const variable of variables.pageList)
+    if (variable.value !== undefined) text = text.split(`{{${variable.ref}}}`).join(variable.value);
+  return text.trim();
+}
+
+type InboxAnswer =
+  | { ok: true; subject: string }
+  | {
+      ok: false;
+      note: string;
+      stop?: { status: ActionStepResult["status"]; reason: StopReason; message: string };
+    };
+
+/** read_inbox: waits for the email; only the test's own address is read (what replay reads). */
+async function readInbox(
+  ctx: AgentContext,
+  step: ExpandedStep,
+  member: "code" | "link",
+  to?: string,
+): Promise<InboxAnswer> {
+  const runtime = ctx.inbox?.runtime;
+  const test = ctx.inbox?.test;
+  const own = runtime && test ? runtime.addressFor(test, step) : null;
+  if (to !== undefined && own && to.toLowerCase() !== own.toLowerCase())
+    return {
+      ok: false,
+      note: "only the test's own email address can be read (the one it signed up with); leave out `to`.",
+    };
+  if (!test)
+    return {
+      ok: false,
+      note: "no test inbox here",
+      stop: {
+        status: "stopped",
+        reason: "inbox_unavailable",
+        message: "Reading an email isn't available here (no test inbox).",
+      },
+    };
+  const got = await prepareInbox(runtime, test, step, member, { signal: ctx.signal });
+  if (got.ok) return { ok: true, subject: got.subject };
+  if (got.outcome === "failed")
+    return {
+      ok: false,
+      note: got.message,
+      stop: { status: "failed", reason: "step_impossible", message: got.message },
+    };
+  return {
+    ok: false,
+    note: got.message,
+    stop: {
+      status: "stopped",
+      reason: got.reason === "disallowed_domain" ? "disallowed_domain" : "inbox_unavailable",
+      message: got.message,
+    },
+  };
+}
+
 function acceptDone(executed: Executed[]): "accept" | "nothing_done" | "no_effect" {
   if (executed.length === 0) return "nothing_done";
   if (executed.some((e) => e.effect)) return "accept";
@@ -410,7 +504,7 @@ type Planned =
 /** Checks and translates one tool call: ref → element, value → template, guards. */
 async function plan(
   ctx: AgentContext,
-  call: Exclude<PlannerToolCall, { name: "look" | "step_done" | "step_impossible" }>,
+  call: Exclude<PlannerToolCall, { name: "look" | "read_inbox" | "step_done" | "step_impossible" }>,
   observation: Observation,
   variables: StepVariables,
 ): Promise<Planned> {
@@ -442,7 +536,14 @@ async function plan(
     const resolved = harnessValue(template, variables);
     description += ` ${JSON.stringify(template)}`;
     if (!resolved.ok) return { error: resolved.error, description };
-    if (typeof resolved.value !== "string" && call.name !== "fill") {
+    if (
+      typeof resolved.value !== "string" &&
+      call.name !== "fill" &&
+      !(
+        call.name === "goto" &&
+        inboxMemberOfAction({ type: "goto", url: resolved.value }) === "link"
+      )
+    ) {
       return { error: "Secrets can only be typed into fields (fill).", description };
     }
     value = resolved.value;
@@ -536,8 +637,14 @@ async function plan(
       };
     case "goto":
       return {
-        action: { type: "goto", url: value as string },
-        recorded: { type: "goto", url: portableUrl(need(template), ctx.session.url) },
+        action: { type: "goto", url: value as string | { secret: string } },
+        recorded: {
+          type: "goto",
+          url:
+            typeof value === "string"
+              ? portableUrl(need(template), ctx.session.url)
+              : need(template),
+        },
         fingerprint: null,
         description,
       };

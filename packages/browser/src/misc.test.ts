@@ -45,7 +45,9 @@ describe("public API (SAF-2: the closed action set)", () => {
       "requestMark",
       "screenshot",
       "settle",
+      "storageState",
       "url",
+      "useStorageState",
     ]);
     expect(Object.getOwnPropertyNames(api.LaunchedBrowser.prototype).sort()).toEqual([
       "close",

@@ -15,12 +15,13 @@ const outcome = z.union([
   z
     .object({
       verdict: z.enum(VERDICTS),
-      step: z.number().int().positive().optional(),
+      // 0 = the test's auth: profile login, before step 1.
+      step: z.number().int().nonnegative().optional(),
       cause: z.enum(CAUSES).optional(),
       reason: z.string().min(10).optional(),
     })
     .strict()
-    .refine((o) => o.verdict === "passed" || (o.step && o.cause && o.reason), {
+    .refine((o) => o.verdict === "passed" || (o.step !== undefined && o.cause && o.reason), {
       message: "a failed, flaky or blocked answer needs step, cause and reason",
     }),
 ]);
@@ -93,8 +94,16 @@ describe("gold manifest", () => {
       for (const variant of VARIANTS) {
         const answer = expectation(manifest, test, variant);
         if (answer.verdict === "passed") continue;
-        const text = file.steps.get(answer.step ?? 0);
+        // Step 0: the test's auth profile login (only for tests with auth: <profile>).
+        const profile = file.frontmatter.auth;
+        const text =
+          answer.step === 0 && typeof profile === "string" && profile !== "none"
+            ? `auth: ${profile}`
+            : file.steps.get(answer.step ?? -1);
         expect(text, `${test} × ${variant} step ${answer.step}`).toBeDefined();
+        // A broken profile login is a failure too, never blocked.
+        if (text?.startsWith("auth:"))
+          expect(answer.verdict, `${test} × ${variant}`).not.toBe("blocked");
         // Blocked means "couldn't run" (missing secret, app down…); a broken flow is a failure.
         if (text?.startsWith("Use:"))
           expect(answer.verdict, `${test} × ${variant}`).not.toBe("blocked");
@@ -108,11 +117,21 @@ describe("gold manifest", () => {
     const users = testNames.filter((t) =>
       [...readTestFile(t).steps.values()].some((s) => s === "Use: flows/login.test.md"),
     );
+    // Tests that log in through the ada profile (SEC-3) fail at its login, step 0.
+    const profiled = testNames.filter((t) => readTestFile(t).frontmatter.auth === "ada");
     expect(users.length).toBeGreaterThan(1);
+    expect(profiled.length).toBeGreaterThan(1);
     for (const test of users) {
       expect(expectation(manifest, test, "broken-login-redirect"), test).toMatchObject({
         verdict: "failed",
         step: 1,
+        cause: "product_bug",
+      });
+    }
+    for (const test of profiled) {
+      expect(expectation(manifest, test, "broken-login-redirect"), test).toMatchObject({
+        verdict: "failed",
+        step: 0,
         cause: "product_bug",
       });
     }

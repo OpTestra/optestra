@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import * as pages from "./pages.js";
 import { parseSmtpTarget, type SmtpTarget, sendSmtp } from "./smtp.js";
+import { isBase32, verifyTotp } from "./totp.js";
 import {
   findPlan,
   type SeedInput,
@@ -30,7 +31,20 @@ export interface ShopOptions {
 export interface RunningShop {
   url: string;
   variant: Variant;
+  /**
+   * The emails the shop sent since the last reset, newest last, read in process
+   * (no network): a stand-in test inbox for tests and the Bench when Mailpit
+   * isn't running.
+   */
+  outbox(): readonly SentEmail[];
   stop(): Promise<void>;
+}
+
+export interface SentEmail {
+  to: string;
+  subject: string;
+  text: string;
+  sentAt: string;
 }
 
 const PUBLIC_DIR = new URL("../public/", import.meta.url);
@@ -316,6 +330,34 @@ export async function startShop(options: ShopOptions = {}): Promise<RunningShop>
           return redirect(res, `/verify?${new URLSearchParams({ email: user.email })}`);
         }
         if (bugs.loginRedirectsToError) return redirect(res, "/error?reason=login");
+        if (user.totp) {
+          // Two-factor: the password was right; now the authentication code.
+          const token = `code-${store.pendingCodes.size + 1}-${user.id}`;
+          store.pendingCodes.set(token, user.id);
+          return redirect(res, `/login/code?${new URLSearchParams({ token, next })}`);
+        }
+        return redirect(res, next, { "set-cookie": sessionCookie(store.startSession(user)) });
+      }
+
+      case "GET /login/code": {
+        const token = url.searchParams.get("token") ?? "";
+        if (!store.pendingCodes.has(token)) return redirect(res, "/login");
+        const next = safeNext(url.searchParams.get("next"));
+        return html(res, 200, pages.loginCodePage(ctx(req), { token, next }));
+      }
+
+      case "POST /login/code": {
+        const data = form(req);
+        const token = data.get("token") ?? "";
+        const next = safeNext(data.get("next"));
+        const userId = store.pendingCodes.get(token);
+        const user = store.users.find((u) => u.id === userId);
+        if (!user?.totp) return redirect(res, "/login");
+        if (!verifyTotp(user.totp, data.get("code") ?? "")) {
+          const error = "That code isn't right. Use the current code from your authenticator app.";
+          return html(res, 400, pages.loginCodePage(ctx(req), { token, next, error }));
+        }
+        store.pendingCodes.delete(token);
         return redirect(res, next, { "set-cookie": sessionCookie(store.startSession(user)) });
       }
 
@@ -453,6 +495,10 @@ export async function startShop(options: ShopOptions = {}): Promise<RunningShop>
           if (!findPlan(str(body.trial))) throw new HttpError(400, "Unknown plan for trial");
           input.trial = str(body.trial);
         }
+        if (body.totp !== undefined) {
+          if (!isBase32(str(body.totp))) throw new HttpError(400, "totp must be a base32 seed");
+          input.totp = str(body.totp);
+        }
         if (body.projects !== undefined) {
           if (!Array.isArray(body.projects)) throw new HttpError(400, "projects must be a list");
           input.projects = body.projects.map(str);
@@ -465,7 +511,9 @@ export async function startShop(options: ShopOptions = {}): Promise<RunningShop>
 
       case "GET /__test/outbox": {
         const to = url.searchParams.get("to")?.toLowerCase();
-        const emails = store.outbox.filter((mail) => !to || mail.to === to);
+        const emails = store.outbox
+          .filter((mail) => !to || mail.to === to)
+          .map(({ to, subject, text }) => ({ to, subject, text }));
         return json(res, 200, { emails });
       }
 
@@ -519,6 +567,13 @@ export async function startShop(options: ShopOptions = {}): Promise<RunningShop>
 
   return {
     url: `http://${HOST}:${port}`,
+    outbox: () =>
+      store.outbox.map((mail) => ({
+        to: mail.to,
+        subject: mail.subject,
+        text: mail.text,
+        sentAt: mail.sentAt ?? new Date(0).toISOString(),
+      })),
     variant,
     stop: () =>
       new Promise<void>((resolve, reject) => {

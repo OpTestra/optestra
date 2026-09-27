@@ -16,6 +16,7 @@ import type {
 } from "./model.js";
 import { specSteps } from "./model.js";
 import { type ParseOptions, type ParseResult, parseTest } from "./parse.js";
+import { parseTemplate } from "./template.js";
 import { Reporter } from "./text.js";
 
 /** Reads a project-relative, `/`-separated path; `undefined` when there is no such file. */
@@ -44,6 +45,12 @@ export interface ExpandContext extends ParseOptions {
   emailDomain?: string | undefined;
   /** Maximum flow nesting. Default 8. */
   maxDepth?: number | undefined;
+  /**
+   * For a flow run on its own (an auth profile's login, SEC-3): params given as
+   * templates, e.g. `{ email: "{{env.ADMIN_EMAIL}}" }`. They replace the flow's
+   * defaults and are bound in the flow's own data.
+   */
+  params?: Readonly<Record<string, string>> | undefined;
 }
 
 /**
@@ -551,11 +558,27 @@ export async function expandTest(spec: TestSpec, ctx: ExpandContext): Promise<Ex
   const values = x.bindData(data, "|", report);
 
   const params = new Map<string, BoundSegment[]>();
+  const given = fm.kind === "flow" ? (ctx.params ?? {}) : {};
+  for (const name of Object.keys(given)) {
+    if (!Object.hasOwn(fm.params, name))
+      report.error(
+        "FLOW_PARAM_UNKNOWN",
+        undefined,
+        `Flow ${spec.path} has no param "${name}".`,
+        Object.keys(fm.params).length > 0
+          ? `Use one of: ${Object.keys(fm.params).join(", ")}.`
+          : "Remove it; this flow takes no params.",
+        "params",
+      );
+  }
   for (const [name, fallback] of Object.entries(fm.params)) {
-    if (fallback)
+    const value = Object.hasOwn(given, name)
+      ? parseTemplate(given[name] as string, undefined, report)
+      : fallback;
+    if (value)
       params.set(
         name,
-        x.bind(fallback, { data: values, params: new Map() }, `|default.${name}`, report),
+        x.bind(value, { data: values, params: new Map() }, `|default.${name}`, report),
       );
     else if (fm.kind === "flow") {
       report.error(

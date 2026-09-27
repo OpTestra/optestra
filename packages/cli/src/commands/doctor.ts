@@ -592,6 +592,41 @@ async function recordingsChecks(
     (test) => !existsSync(join(dir, recordingPath(testsDir, test.id))),
   );
   const checks: DoctorCheck[] = [];
+  // Auth profiles (SEC-3): their login flow must exist, and should be recorded (else the first run uses AI).
+  const profiles = Object.entries(config.auth?.profiles ?? {});
+  if (profiles.length > 0) {
+    const rows = profiles.map(([name, profile]) => {
+      const path = `${testsDir.replace(/\/+$/, "")}/${profile.flow}`;
+      const flow = tests.flows.find((f) => f.path === path);
+      const status = !flow
+        ? "missing"
+        : existsSync(join(dir, recordingPath(testsDir, flow.id)))
+          ? "recorded"
+          : "not recorded";
+      return { name, path, status };
+    });
+    const missing = rows.filter((r) => r.status === "missing");
+    const unrecorded = rows.filter((r) => r.status === "not recorded");
+    checks.push({
+      id: "profiles",
+      title: "Profile flows recorded",
+      status: missing.length > 0 ? "fail" : unrecorded.length > 0 ? "warn" : "ok",
+      message:
+        missing.length > 0
+          ? `${missing.map((r) => `${r.name} logs in with ${r.path}, which doesn't exist`).join("; ")}.`
+          : unrecorded.length > 0
+            ? `${unrecorded.map((r) => r.name).join(", ")}: the login flow isn't recorded yet; the first run records it with the AI.`
+            : `${rows.length} profile${rows.length === 1 ? "" : "s"}, every login flow recorded.`,
+      ...(missing.length > 0
+        ? {
+            fix: `Create the flow (kind: flow) or fix auth.profiles.<name>.flow in ${brand.configFileName}.`,
+          }
+        : unrecorded.length > 0
+          ? { fix: `Run a test that uses the profile once: \`${brand.cliName} run --tag <tag>\`.` }
+          : {}),
+      details: rows.map((r) => `${r.name}: ${r.path} (${r.status})`),
+    });
+  }
   const total = tests.tests.length;
   if (total === 0) return checks;
   const recorded = total - missing.length;

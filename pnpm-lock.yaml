@@ -181,6 +181,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@testament/auth':
+        specifier: workspace:^
+        version: link:../auth
       '@testament/brand':
         specifier: workspace:^
         version: link:../brand

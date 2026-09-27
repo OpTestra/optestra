@@ -40,8 +40,11 @@ export type Target = { ref: string } | LocatorSpec;
 
 export type FillValue = string | { secret: string };
 
+/** A page to open: a URL, or a secret holding one (a magic link from a test inbox, SEC-5). */
+export type GotoUrl = string | { secret: string };
+
 export type Action =
-  | { type: "goto"; url: string }
+  | { type: "goto"; url: GotoUrl }
   | { type: "click"; target: Target }
   | { type: "dblclick"; target: Target }
   | { type: "fill"; target: Target; value: FillValue }
@@ -93,6 +96,8 @@ export type OutcomeStatus = "ok" | "refused" | "not_found" | "timeout" | "error"
 export type RefusalReason =
   | "disallowed_domain"
   | "missing_secret"
+  /** A dynamic secret (a TOTP code, an inbox code or link) could not produce its value. */
+  | "secret_unavailable"
   | "upload_not_allowed"
   | "file_outside_folder"
   | "invalid_action";

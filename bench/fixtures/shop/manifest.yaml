@@ -9,7 +9,8 @@
 #             `failed` at the `Use:` step, with the flow's cause (a broken login
 #             must fail CI, not turn it neutral).
 # Causes: product_bug | test_drift | environment | test_data | blocked
-# `step` is the step number in the .test.md file.
+# `step` is the step number in the .test.md file. Step 0 is a test's `auth:`
+# profile login (SEC-3): it runs before step 1, and a broken login fails there.
 # Shorthand: `variant: passed` means { verdict: passed }.
 
 version: 1
@@ -126,14 +127,14 @@ tests:
     broken-signup: passed
     broken-total:
       verdict: failed
-      step: 4
+      step: 3
       cause: product_bug
       reason: Billing shows "$29.00 due today" during a free trial.
     broken-login-redirect:
       verdict: failed
-      step: 1
+      step: 0
       cause: product_bug
-      reason: The login flow fails, so the test never reaches its own steps.
+      reason: The auth profile's login fails, so the test never reaches its own steps.
     broken-silent-click: passed
     broken-not-saved: passed
     env-flaky: passed
@@ -159,9 +160,9 @@ tests:
     broken-total: passed
     broken-login-redirect:
       verdict: failed
-      step: 1
+      step: 0
       cause: product_bug
-      reason: The login flow fails, so the test never reaches its own steps.
+      reason: The auth profile's login fails, so the test never reaches its own steps.
     broken-silent-click: passed
     broken-not-saved: passed
     env-flaky: passed
@@ -201,9 +202,9 @@ tests:
     broken-total: passed
     broken-login-redirect:
       verdict: failed
-      step: 1
+      step: 0
       cause: product_bug
-      reason: The login flow fails, so the test never reaches its own steps.
+      reason: The auth profile's login fails, so the test never reaches its own steps.
     broken-silent-click: passed
     broken-not-saved: passed
     env-flaky: passed

@@ -144,6 +144,12 @@ export async function authorTest(
       }
     }
 
+    // The test's login (auth: <profile>, SEC-3): after the setup hooks, before the start page.
+    if (!stop && options.prepare) {
+      const prepared = await options.prepare();
+      if (!prepared.ok) stop = { reason: prepared.reason, message: redact(prepared.message) };
+    }
+
     if (!stop && test.start && (options.openStart ?? true)) {
       const url = test.start.display;
       const outcome = await session.act({ type: "goto", url });
@@ -290,6 +296,7 @@ export async function authorTest(
             guardLines: guardSteps.map((g) => g.display),
             signal: controller.signal,
             tags: { test: test.id },
+            inbox: { runtime: options.inbox, test },
           },
           step,
           variables,

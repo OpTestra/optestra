@@ -6,9 +6,11 @@ inboxes** (Mailpit, Mailosaur, MailSlurp) that hand back a verification code or
 a magic link. Node only; the pure code/link extraction is also
 `@testament/auth/extract` (browser-safe).
 
-AUTH-0 builds and tests the parts. AUTH-1 wires them into the agent and the
-replayer: it runs profile flows, opens sessions with the saved state and
-connects `{{inbox.…}}` to `InboxValues`.
+AUTH-0 built and tested the parts. AUTH-1 wired them into runs and authoring
+(see `packages/core/README.md`, "Auth profiles" and "Test inboxes"): the runner
+calls `ensureProfile` with the real login flow and a `check.url` validation,
+opens sessions with the saved state, and connects `{{inbox.…}}` and the agent's
+`read_inbox` tool to `InboxValues`.
 
 Importing `@testament/auth` registers the `auth` and `inbox` config sections and
 the `totp` secret type. Import it before loading config or resolving secrets.
@@ -66,8 +68,8 @@ const result = await ensureProfile("admin", {
   auth: config.auth,
   environment: "staging",
   worker: 0,
-  runFlow: async ({ profile }) => ({ ok: true, storageState }),   // AUTH-1: the real runner
-  validate: async ({ storageState, check }) => true,            // AUTH-1: open check.url
+  runFlow: async ({ profile }) => ({ ok: true, storageState }),   // the runner replays the flow
+  validate: async ({ storageState, check }) => true,            // the runner opens check.url
 });
 // { status: "ready", storageState, source: "saved" | "login", expiresAt }
 // { status: "failed", reason: "unknown_profile" | "login_failed" | "store_error", message }
@@ -216,8 +218,12 @@ reason (`InboxValueError`).
 
 - `testament auth` lists profiles with their saved-session status per
   environment: valid until …, expired, or none. It also reports profiles
-  whose flow is missing (exit 1). It never shows a cookie. With
+  whose flow is missing (exit 1), then each saved session by profile,
+  environment and worker. It never shows a cookie. With
   `--clear [profile] [-e env]` it deletes saved sessions instead.
+- `testament doctor` checks "Profile flows recorded": every profile's login
+  flow exists (fail) and has a recording (warn: the first run records it with
+  the AI).
 - `testament inbox check` checks the configured provider: reachable, and key
   valid. Exit 0 when OK, 1 when the check fails, 2 when no inbox is configured.
 - `testament inbox last --to <address> [--wait 5]` prints the latest email's

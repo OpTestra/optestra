@@ -69,6 +69,8 @@ export interface LoadTestsOptions {
   seed?: string | undefined;
   generators?: GeneratorRegistry | undefined;
   emailDomain?: string | undefined;
+  /** For a flow loaded on its own (an auth profile's login): its params, as templates. */
+  params?: Readonly<Record<string, string>> | undefined;
 }
 
 export interface LoadedTest {
@@ -116,6 +118,7 @@ export async function loadTest(
     config,
     generators: options.generators,
     emailDomain: options.emailDomain,
+    params: options.params,
   });
   const own =
     parsed.spec.frontmatter.kind === "flow"

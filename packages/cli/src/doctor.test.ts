@@ -97,8 +97,13 @@ describe("doctor", () => {
       "provider:local ok",
       "decisions ok",
       "inbox skip",
+      "profiles ok",
       "recordings warn",
       "specs ok",
+    ]);
+    // The ada profile's login flow exists and is recorded (SEC-3).
+    expect(check(report, "profiles").details).toEqual([
+      "ada: tests/flows/login.test.md (recorded)",
     ]);
     expect(check(report, "models").message).toBe(
       "planner → local / test-model, fixer → local / test-model",
