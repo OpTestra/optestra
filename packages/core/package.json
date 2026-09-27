@@ -15,6 +15,7 @@
     }
   },
   "dependencies": {
+    "@testament/auth": "workspace:^",
     "@testament/brand": "workspace:^",
     "@testament/browser": "workspace:^",
     "@testament/codegen": "workspace:^",

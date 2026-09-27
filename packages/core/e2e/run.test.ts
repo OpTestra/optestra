@@ -169,12 +169,24 @@ describe("runTests on the shop (real browser)", () => {
   });
 
   it("fails every login-flow test on broken-login-redirect (never blocked) as one group", async () => {
-    const { result } = await run("broken-login-redirect", ["billing-zero-due", "settings-profile"]);
+    const { result } = await run("broken-login-redirect", ["avatar-upload", "declined-card"]);
     expect(result.tests.map((t) => [t.verdict, t.failureCause])).toEqual([
       ["failed", "product_bug"],
       ["failed", "product_bug"],
     ]);
     expect(result.tests[0]?.headline).toMatch(/^Step 1 \(Use: (tests\/)?flows\/login\.test\.md\)/);
+    expect(result.groups.filter((g) => g.testIds.length === 2)).toHaveLength(1);
+  });
+
+  it("fails every test whose auth profile can't log in, at the login, as one group", async () => {
+    const { result } = await run("broken-login-redirect", ["billing-zero-due", "settings-profile"]);
+    expect(result.tests.map((t) => [t.verdict, t.failureCause])).toEqual([
+      ["failed", "product_bug"],
+      ["failed", "product_bug"],
+    ]);
+    expect(result.tests[0]?.headline).toMatch(
+      /^auth: ada: logging in with flows\/login\.test\.md failed/,
+    );
     expect(result.groups.filter((g) => g.testIds.length === 2)).toHaveLength(1);
   });
 

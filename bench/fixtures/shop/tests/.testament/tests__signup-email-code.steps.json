@@ -10,9 +10,9 @@
     "device": "desktop",
     "environment": "local",
     "model": "claude-code/sonnet",
-    "promptVersion": "planner-v2"
+    "promptVersion": "planner-v3"
   },
-  "updatedAt": "2026-09-27T09:17:32.905Z",
+  "updatedAt": "2026-09-27T12:30:31.730Z",
   "steps": [
     {
       "key": "a31b5670ce195ea1",
@@ -94,7 +94,7 @@
       ],
       "reasoning": "Email field now contains {{data.email}}",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:54:03.065Z"
+      "recordedAt": "2026-09-27T12:30:05.813Z"
     },
     {
       "key": "ce1b52e567e39fcc",
@@ -174,9 +174,9 @@
           }
         }
       ],
-      "reasoning": "Password field shows masked value entered",
+      "reasoning": "Password field now contains the secret password value",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:54:08.667Z"
+      "recordedAt": "2026-09-27T12:30:10.691Z"
     },
     {
       "key": "389a09d7e3f9c515",
@@ -325,16 +325,273 @@
           "wait": {
             "settledMs": 365,
             "waitedFor": {
-              "network": 287,
+              "network": 288,
               "dom": 313,
               "busy": 0
             }
           }
         }
       ],
-      "reasoning": "Navigated to email verification page with 'Check your email' heading and code input.",
+      "reasoning": "Navigated to verification page with code entry form",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:54:16.330Z"
+      "recordedAt": "2026-09-27T12:30:17.995Z"
+    },
+    {
+      "key": "4271edb0347e0034",
+      "textKey": "c247983aef90acd9",
+      "route": "/verify",
+      "text": "Enter the code from the verification email into \"Verification code\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Verification code",
+              "exact": true
+            },
+            "value": "{{inbox.code}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Verification code",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Verification code",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#verify-code"
+              }
+            ],
+            "role": "textbox",
+            "name": "Verification code",
+            "tag": "input",
+            "attributes": {
+              "id": "verify-code",
+              "name": "code",
+              "type": "text"
+            },
+            "anchorText": "Check your email",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 239.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Verification code",
+                "text": "{{secret.INBOX_CODE}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Verification code"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Verification code entered into the input field",
+      "source": "ai",
+      "recordedAt": "2026-09-27T12:30:24.103Z"
+    },
+    {
+      "key": "95eab3619051d6e6",
+      "textKey": "9c71b64ff29586b6",
+      "route": "/verify",
+      "text": "Click \"Verify\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Verify",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Verify",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Verify",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "html > body > main > form > button"
+              }
+            ],
+            "role": "button",
+            "name": "Verify",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Check your email",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 297.4375,
+              "width": 75.796875,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "urlChange": "/dashboard",
+            "appeared": [
+              {
+                "role": "link",
+                "name": "Dashboard"
+              },
+              {
+                "role": "link",
+                "name": "Orders"
+              },
+              {
+                "role": "link",
+                "name": "Billing"
+              },
+              {
+                "role": "link",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Log out"
+              },
+              {
+                "role": "heading",
+                "name": "Dashboard"
+              },
+              {
+                "role": "region",
+                "name": ""
+              },
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "Create project"
+              },
+              {
+                "role": "listitem",
+                "name": "",
+                "text": "No projects yet."
+              }
+            ],
+            "removed": [
+              {
+                "role": "link",
+                "name": "Pricing"
+              },
+              {
+                "role": "link",
+                "name": "Log in"
+              },
+              {
+                "role": "link",
+                "name": "Sign up"
+              },
+              {
+                "role": "heading",
+                "name": "Check your email"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "We sent a 6-digit code to"
+              },
+              {
+                "role": "strong",
+                "name": "",
+                "text": "{{data.email}}"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "."
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Verification code"
+              },
+              {
+                "role": "textbox",
+                "name": "Verification code",
+                "text": "{{secret.INBOX_CODE}}"
+              },
+              {
+                "role": "button",
+                "name": "Verify"
+              }
+            ],
+            "requests": [
+              {
+                "method": "POST",
+                "route": "/verify",
+                "status": 303
+              },
+              {
+                "method": "GET",
+                "route": "/dashboard",
+                "status": 200
+              },
+              {
+                "method": "GET",
+                "route": "/api/projects",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 960,
+            "waitedFor": {
+              "network": 611,
+              "dom": 583,
+              "busy": 615
+            }
+          }
+        }
+      ],
+      "reasoning": "Navigated to Dashboard page after verification",
+      "source": "ai",
+      "recordedAt": "2026-09-27T12:30:31.617Z"
     }
   ],
   "checks": [
@@ -365,7 +622,7 @@
         },
         "provesNothing": false
       },
-      "recordedAt": "2026-09-27T09:17:28.567Z"
+      "recordedAt": "2026-09-27T12:30:18.094Z"
     },
     {
       "key": "4e19e68bc93dcac0",
@@ -373,10 +630,28 @@
       "text": "the page heading is \"Dashboard\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Dashboard"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:32:14.307Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Dashboard'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T12:30:31.670Z"
     },
     {
       "key": "6155819c3f768a7c",
@@ -384,10 +659,29 @@
       "text": "the projects list says \"No projects yet.\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "list",
+          "name": "Projects",
+          "exact": true
+        },
+        "match": "contains",
+        "value": "No projects yet."
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:32:14.307Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the list 'Projects' contains 'No projects yet.'",
+      "rule": "container-text",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T12:30:31.685Z"
     }
   ]
 }

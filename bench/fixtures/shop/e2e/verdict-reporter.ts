@@ -23,7 +23,18 @@ interface Row {
 }
 
 function failedStep(steps: readonly TestStep[]): string | null {
-  return steps.find((step) => step.category === "test.step" && step.error)?.title ?? null;
+  for (const step of steps) {
+    if (step.category === "test.step") {
+      if (step.error) return step.title;
+      continue;
+    }
+    // The spec fixture's own steps (an auth: profile's "0. auth: ada" login) sit under the fixture.
+    if (step.category === "fixture" || step.category === "hook") {
+      const inner = failedStep(step.steps);
+      if (inner) return inner;
+    }
+  }
+  return null;
 }
 
 export default class VerdictReporter implements Reporter {

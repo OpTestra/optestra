@@ -11,6 +11,7 @@ import type { AttemptObservations, Decisions } from "@testament/decide";
 import type { BudgetMeter, Models } from "@testament/models";
 import type { CheckRecording, Recording, StepRecording } from "@testament/recording";
 import type { ExpandedTest } from "@testament/spec";
+import type { TestInbox } from "../author/inbox.js";
 import type { HealPatch } from "../heal/patch.js";
 import type { AttemptRecord } from "./verdict.js";
 
@@ -73,6 +74,31 @@ export interface ReplayOptions {
   newId: () => string;
   redact?: (text: string) => string;
   now?: () => Date;
+  /** The attempt's test inbox (AUTH-1): {{inbox.code}} / {{inbox.link}} and read_inbox. */
+  inbox?: TestInbox | undefined;
+  /**
+   * Runs after the setup hooks, before the start page: the test's login
+   * (`auth: <profile>`, SEC-3). Its step, if any, is reported first.
+   */
+  prepare?: () => Promise<PrepareOutcome>;
+}
+
+/** What the test's login did (see `ReplayOptions.prepare`). */
+export interface PrepareOutcome {
+  status: "ready" | "failed" | "blocked";
+  /** For failed / blocked: the headline. */
+  message: string;
+  /** For blocked: the contract's blocked reason. */
+  reason?: string;
+  /** The login as one step (kind `flow`), when it ran or failed. */
+  step?: StepResult;
+  modelCalls?: ModelCall[];
+  heals?: HealProposal[];
+  logs?: string[];
+  /** Where the login stopped (its page, requests), for the failure classifier. */
+  observations?: AttemptObservations;
+  /** The login flow's path, for the classifier's flow chain. */
+  flowPath?: string;
 }
 
 /** A step's time span, for the video chapters. */

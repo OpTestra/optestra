@@ -25,6 +25,7 @@ export type StopReason =
   | "guard_refused"
   | "disallowed_domain"
   | "missing_secret"
+  | "inbox_unavailable"
   | "budget_exceeded"
   | "ai_unavailable"
   | "limit_reached"
@@ -72,6 +73,16 @@ export interface AuthorOptions {
   openStart?: boolean;
   /** The previous recording, so steps not re-recorded keep their commands. */
   previous?: Recording;
+  /**
+   * The test inbox (AUTH-1): read_inbox and {{inbox.code}} / {{inbox.link}}. Open
+   * the session with its `secrets` too. Without it, steps that read an email stop.
+   */
+  inbox?: import("./inbox.js").TestInbox;
+  /**
+   * Runs after the setup hooks, before the start page: the test's login
+   * (`auth: <profile>`, SEC-3). A login that can't complete stops the test.
+   */
+  prepare?: () => Promise<{ ok: true } | { ok: false; reason: StopReason; message: string }>;
   meta: {
     /** Project-relative test path with "/". */
     testPath: string;

@@ -91,8 +91,11 @@ test("A new project is saved", { tag: ["@smoke", "@projects"] }, async ({ page, 
   never following redirects. `teardown:` hooks go in `test.afterEach`.
   `run`/`sql` hooks give a clear `test.skip` until they are implemented.
 - `start:` opens first; `timeout:` becomes `test.setTimeout`.
-- The test's `auth:` profile can't be reproduced yet, so such a test skips, with
-  the reason.
+- A test with `auth: <profile>` logs in first with the profile's flow, from the
+  flow's own recording (`tests__flows__login.steps.json`), as one
+  `test.step("auth: ada (tests/flows/login.test.md)")` before the start page.
+  The runner reuses a saved session; the spec logs in every time. A profile
+  whose flow isn't recorded yet makes the test skip, with the reason.
 - A step that was never recorded skips the test there, telling you how to
   record it.
 
@@ -183,7 +186,8 @@ package doesn't know (from a newer LOOP-2) is noted, not an error.
 | Secrets | from env vars, domain-checked, masked, scrubbed from kept traces | from the keychain/vault, domain-checked, kept out of traces and evidence |
 | Healing (fallbacks, fingerprints, AI) | no: a changed page fails | yes |
 | Model-judged checks (`soft_judgment`), `Never:` guards, pending checks | noted only | evaluated |
-| Auth profiles, `run`/`sql` hooks | skip, with the reason | yes (AUTH, ADV) |
+| Auth profiles | logs in with the flow each time | saved sessions, reused (AUTH) |
+| `run`/`sql` hooks | skip, with the reason | yes (ADV) |
 | Verdicts, failure causes, flaky detection | Playwright's pass/fail | yes |
 
 ## Secrets in traces and video

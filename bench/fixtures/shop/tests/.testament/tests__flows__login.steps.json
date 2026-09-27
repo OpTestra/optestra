@@ -1,0 +1,424 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__flows__login",
+  "testPath": "tests/flows/login.test.md",
+  "target": "web",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "chromium",
+    "device": "desktop",
+    "environment": "local",
+    "model": "claude-code/sonnet",
+    "promptVersion": "planner-v3"
+  },
+  "updatedAt": "2026-09-27T12:29:03.511Z",
+  "steps": [
+    {
+      "key": "7a069f78fe06210b",
+      "textKey": "82a8d5a9378fbeac",
+      "route": "/login",
+      "text": "Go to /login",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "goto",
+            "url": "/login"
+          },
+          "fingerprint": null,
+          "expectPost": {
+            "requests": [
+              {
+                "method": "GET",
+                "route": "/login",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 365,
+            "waitedFor": {
+              "network": 287,
+              "dom": 313,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Navigated to /login page showing the Log in form",
+      "source": "ai",
+      "recordedAt": "2026-09-27T12:28:47.818Z"
+    },
+    {
+      "key": "00de6ef1a3dd21b0",
+      "textKey": "30499eaf01a27772",
+      "route": "/login",
+      "text": "Fill \"Email\" with {{params.email}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "{{params.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#login-email"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "input",
+            "attributes": {
+              "id": "login-email",
+              "name": "email",
+              "type": "email"
+            },
+            "anchorText": "Log in",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 199.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Email field now contains {{params.email}}",
+      "source": "ai",
+      "recordedAt": "2026-09-27T12:28:50.516Z"
+    },
+    {
+      "key": "f7b3b9350418c615",
+      "textKey": "227afe4ba13d1730",
+      "route": "/login",
+      "text": "Fill \"Password\" with {{params.password}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#login-password"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "input",
+            "attributes": {
+              "id": "login-password",
+              "name": "password",
+              "type": "password"
+            },
+            "anchorText": "Log in",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 285.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Password field now shows masked secret value",
+      "source": "ai",
+      "recordedAt": "2026-09-27T12:28:56.446Z"
+    },
+    {
+      "key": "7e031a34ba5f0975",
+      "textKey": "0fe721c063ff84ea",
+      "route": "/login",
+      "text": "Click \"Log in\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Log in",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Log in",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#login-form > button"
+              },
+              {
+                "kind": "text",
+                "text": "Log in",
+                "exact": true
+              }
+            ],
+            "role": "button",
+            "name": "Log in",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Log in",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 343.4375,
+              "width": 77.8125,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "urlChange": "/dashboard",
+            "appeared": [
+              {
+                "role": "link",
+                "name": "Dashboard"
+              },
+              {
+                "role": "link",
+                "name": "Orders"
+              },
+              {
+                "role": "link",
+                "name": "Billing"
+              },
+              {
+                "role": "link",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Log out"
+              },
+              {
+                "role": "heading",
+                "name": "Dashboard"
+              },
+              {
+                "role": "region",
+                "name": ""
+              },
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "Create project"
+              },
+              {
+                "role": "listitem",
+                "name": "",
+                "text": "No projects yet."
+              }
+            ],
+            "removed": [
+              {
+                "role": "link",
+                "name": "Pricing"
+              },
+              {
+                "role": "link",
+                "name": "Log in"
+              },
+              {
+                "role": "link",
+                "name": "Sign up"
+              },
+              {
+                "role": "heading",
+                "name": "Log in"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Email"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Password"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              },
+              {
+                "role": "button",
+                "name": "Log in"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "New here?"
+              }
+            ],
+            "requests": [
+              {
+                "method": "POST",
+                "route": "/login",
+                "status": 303
+              },
+              {
+                "method": "GET",
+                "route": "/dashboard",
+                "status": 200
+              },
+              {
+                "method": "GET",
+                "route": "/api/projects",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 961,
+            "waitedFor": {
+              "network": 595,
+              "dom": 598,
+              "busy": 624
+            }
+          }
+        }
+      ],
+      "reasoning": "Navigated to Dashboard page with Orders, Billing, Settings links and Log out button",
+      "source": "ai",
+      "recordedAt": "2026-09-27T12:29:03.445Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "4e19e68bc93dcac0",
+      "textKey": "b67f863f0801c70e",
+      "text": "the page heading is \"Dashboard\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Dashboard"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Dashboard'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T12:29:03.504Z"
+    }
+  ]
+}

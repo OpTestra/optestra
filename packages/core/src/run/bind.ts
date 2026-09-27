@@ -1,6 +1,6 @@
 import type { Action, LocatorSpec } from "@testament/browser";
 import { type Locator, type RecordedAction, templateParts } from "@testament/recording";
-import { harnessValue, type StepVariables } from "../author/variables.js";
+import { harnessValue, inboxMemberOf, type StepVariables } from "../author/variables.js";
 
 // Binding a recorded command for this run (REP-7): templates get this run's
 // values (data, params, env, generated unique/faker values); secrets stay
@@ -40,6 +40,13 @@ function text(
 export function bindAction(recorded: RecordedAction, variables: StepVariables): BoundAction {
   switch (recorded.type) {
     case "goto": {
+      // A magic link ({{inbox.link}}, SEC-5) is opened by the harness, like a secret.
+      if (inboxMemberOf(recorded.url) === "link") {
+        const link = harnessValue(recorded.url, variables);
+        return link.ok && typeof link.value !== "string"
+          ? { ok: true, action: { type: "goto", url: link.value } }
+          : { ok: false, reason: "unresolved", message: link.ok ? "" : link.error };
+      }
       const url = text(recorded.url, variables);
       return url.ok ? { ok: true, action: { type: "goto", url: url.text } } : url;
     }

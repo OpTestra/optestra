@@ -74,9 +74,13 @@ export async function runAuthorCommand(
   }
   const config = loaded.config;
   const path = posix(relative(dir, absolute));
+  const auth = await import("@testament/auth");
+  const usesInbox = config.inbox !== undefined && config.inbox.provider !== "none";
   const test = await loadTest(dir, path, config, {
     environment: environment.name,
     seed: `author-${Date.now().toString(36)}`,
+    // {{unique.email}} lands in the test inbox (ENV-3).
+    emailDomain: usesInbox ? auth.inboxEmailDomain(config.inbox) : undefined,
   });
   if (!test) {
     io.stdout(`Could not read ${path}.\n`);
@@ -113,6 +117,26 @@ export async function runAuthorCommand(
     return 2;
   }
 
+  // The test inbox (SEC-5): read_inbox and {{inbox.code}} / {{inbox.link}}.
+  let inbox: import("@testament/core").TestInbox | undefined;
+  if (usesInbox) {
+    const created = auth.createInbox(config, { sources, environment: environment.name });
+    if (created.ok)
+      inbox = core.createTestInbox({
+        values: auth.createInboxValues({
+          inbox: created.inbox,
+          allowedDomains: settings.allowedDomains,
+          timeoutMs: config.inbox.timeoutSeconds * 1000,
+        }),
+        provider: created.inbox.provider,
+        allowedDomains: settings.allowedDomains,
+        since: new Date(),
+      });
+    else
+      io.stdout(`The test inbox can't be used: ${created.message}
+`);
+  }
+
   const device = options.device ?? browser.DEFAULT_DEVICE;
   let session: Awaited<ReturnType<typeof browser.openSession>>;
   try {
@@ -122,7 +146,7 @@ export async function runAuthorCommand(
       device,
       baseUrl: settings.baseUrl,
       allowedDomains: settings.allowedDomains,
-      secrets: secrets.secrets,
+      secrets: { ...secrets.secrets, ...inbox?.secrets },
       allowUpload: { dir: dirname(absolute) },
       evidence: { trace: true, console: true, network: true, video: options.video ?? false },
     });
@@ -131,6 +155,54 @@ export async function runAuthorCommand(
     io.stdout(`${error instanceof Error ? error.message : String(error)}${fix}\n`);
     return 2;
   }
+
+  // auth: <profile> (SEC-3): log in like a run does, before the start page.
+  const profileName = test.expanded.auth;
+  const profile =
+    profileName && profileName !== "none" ? config.auth?.profiles?.[profileName] : undefined;
+  if (profileName && profileName !== "none" && !profile) {
+    io.stdout(`auth: ${profileName} is not a profile in the project settings.\n`);
+    await session.close();
+    return 2;
+  }
+  const { createDecisions } = await import("@testament/decide");
+  const { ulid } = await import("@testament/contract");
+  const prepare =
+    profileName && profile
+      ? coreNode.authoringLogin({
+          projectDir: dir,
+          config,
+          environment: environment.name,
+          name: profileName,
+          profile,
+          session,
+          emailDomain: usesInbox ? auth.inboxEmailDomain(config.inbox) : undefined,
+          openSession: (extra) =>
+            browser.openSession({
+              browser:
+                (options.browser as "chromium" | "firefox" | "webkit" | undefined) ?? "chromium",
+              headless: !options.headed,
+              device,
+              baseUrl: settings.baseUrl as string,
+              allowedDomains: settings.allowedDomains,
+              secrets: { ...secrets.secrets, ...extra },
+              evidence: { trace: false, console: false, network: false, video: false },
+            }),
+          replay: {
+            mode: "normal",
+            policy: config.run.healPolicy as "strict" | "review" | "auto",
+            decisions: createDecisions(),
+            models: client,
+            budget,
+            fixerAvailable: false,
+            plannerAvailable: true,
+            production: settings.production,
+            newId: ulid,
+          },
+          meta: { engineVersion: core.version(), browser: session.browserName, device },
+          onLog: (message) => io.stdout(`  ${message}\n`),
+        })
+      : undefined;
 
   const testsDir = resolve(dir, config.tests?.dir ?? "tests");
   const previous = readRecording(recordingPath(testsDir, test.id));
@@ -143,6 +215,8 @@ export async function runAuthorCommand(
       models: client,
       budget,
       production: settings.production,
+      ...(inbox ? { inbox } : {}),
+      ...(prepare ? { prepare } : {}),
       timeoutMs: (test.expanded.timeout ?? config.run.timeoutSeconds) * 1000,
       ...(previous?.ok ? { previous: previous.recording } : {}),
       meta: {

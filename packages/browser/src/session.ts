@@ -72,10 +72,13 @@ import type {
   SessionOptions,
   SettleOptions,
   SettleResult,
+  StorageState,
   Target,
 } from "./types.js";
 
 const ACTION_TIMEOUT_MS = 5_000;
+/** Storage values shorter than this aren't scrubbed (a "1" would scrub every 1), as in @testament/auth. */
+const MIN_STATE_VALUE = 6;
 const NAVIGATION_TIMEOUT_MS = 30_000;
 const MODEL_MAX_WIDTH = 1280;
 const MAX_ELEMENTS = 400;
@@ -187,6 +190,12 @@ export class Session {
     for (const secret of Object.values(options.secrets ?? {})) {
       own.register(revealSecret(secret), secret.label);
     }
+    // A saved login's cookies and storage are scrubbed like secrets (SEC-3).
+    for (const cookie of options.storageState?.cookies ?? [])
+      if (cookie.value.length >= MIN_STATE_VALUE) own.register(cookie.value, "[session]");
+    for (const origin of options.storageState?.origins ?? [])
+      for (const item of origin.localStorage)
+        if (item.value.length >= MIN_STATE_VALUE) own.register(item.value, "[session]");
     const outer = options.redact ?? ((text: string) => defaultRedactor.redact(text));
     const redact = (text: string) => outer(own.redact(text));
 
@@ -755,6 +764,38 @@ export class Session {
   }
 
   /**
+   * The session's cookies and local storage (Playwright storage state), so a
+   * login flow's result can be saved (SEC-3). Not an agent action. Every value
+   * is registered with the session's redactor, so no evidence, outcome or log
+   * of this session can show it; callers must never log the result.
+   */
+  async storageState(): Promise<StorageState> {
+    const state = (await this.#context.storageState()) as StorageState;
+    this.#registerState(state);
+    return state;
+  }
+
+  /**
+   * Replaces the session's cookies and local storage with a saved login
+   * (`auth: <profile>`), e.g. after the setup hooks ran. Not an agent action;
+   * the values are registered with the session's redactor first.
+   */
+  async useStorageState(state: StorageState): Promise<void> {
+    this.#registerState(state);
+    await this.#context.setStorageState(state);
+  }
+
+  #registerState(state: StorageState): void {
+    const values = [
+      ...(state.cookies ?? []).map((cookie) => cookie.value),
+      ...(state.origins ?? []).flatMap((origin) => origin.localStorage.map((item) => item.value)),
+    ];
+    for (const value of values)
+      if (typeof value === "string" && value.length >= MIN_STATE_VALUE)
+        this.#secretRedactor.register(value, "[session]");
+  }
+
+  /**
    * Ends the session: closes the context (and the browser if this session
    * launched it) and returns the scrubbed evidence files. Safe to call twice.
    */
@@ -897,7 +938,8 @@ export class Session {
     if (action.type === "fill" && typeof action.value === "string") {
       return { ...action, value: this.#redact(action.value) };
     }
-    if (action.type === "goto") return { ...action, url: this.#redact(action.url) };
+    if (action.type === "goto" && typeof action.url === "string")
+      return { ...action, url: this.#redact(action.url) };
     return action;
   }
 
@@ -950,7 +992,9 @@ export class Session {
     };
     switch (action.type) {
       case "goto":
-        return this.#goto(action.url);
+        return typeof action.url === "string"
+          ? this.#goto(action.url)
+          : this.#gotoSecret(action.url.secret);
       case "click":
         return withTarget(action.target, (l) => l.click({ timeout }));
       case "dblclick":
@@ -1019,6 +1063,50 @@ export class Session {
     }
   }
 
+  /**
+   * Opens a URL held by a secret (a magic link, SEC-5): allowlisted like any
+   * page and only on the secret's own domains, navigated inside the paused
+   * trace, and scrubbed everywhere as `[secret:NAME]`.
+   */
+  async #gotoSecret(name: string): Promise<Result> {
+    const secret = this.#options.secrets?.[name];
+    if (!secret) return refused("missing_secret", `Secret ${name} is not available.`);
+    let value: string;
+    try {
+      value = await prepareSecret(secret);
+    } catch (error) {
+      return refused(
+        "secret_unavailable",
+        `Secret ${name} has no value to open: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    this.#secretRedactor.register(value, secret.label);
+    const url = parseUrl(value);
+    if (!url || !isHttp(url))
+      return refused("invalid_action", `Secret ${name} is not an http(s) URL.`);
+    if (!this.#allowlist.allowsUrl(url) || !new Allowlist(secret.domains).allowsUrl(url)) {
+      this.#refuse({ url: url.href, type: "navigation", frame: "" });
+      return refused(
+        "disallowed_domain",
+        `Secret ${name} leads to ${url.host}, which is not in the allowed domains.`,
+      );
+    }
+    await this.#evidence.pauseTrace();
+    try {
+      await this.#page.goto(url.href, {
+        timeout: NAVIGATION_TIMEOUT_MS,
+        waitUntil: "domcontentloaded",
+      });
+      return ok;
+    } catch (error) {
+      const result = errorResult(error);
+      if (/interrupted by another navigation/.test(result.message ?? "")) return ok;
+      return result;
+    } finally {
+      await this.#evidence.resumeTrace();
+    }
+  }
+
   async #goto(input: string): Promise<Result> {
     let url: URL;
     try {
@@ -1078,8 +1166,17 @@ export class Session {
           (element as HTMLElement).style.setProperty("-webkit-text-security", "disc");
         }
       }, this.#secretAttribute);
-      // The value to type now: a TOTP secret produces its current code here (AUTH-0).
-      const value = await prepareSecret(secret);
+      // The value to type now: a TOTP secret produces its current code here (AUTH-0),
+      // an inbox secret reads the email (AUTH-1).
+      let value: string;
+      try {
+        value = await prepareSecret(secret);
+      } catch (error) {
+        return refused(
+          "secret_unavailable",
+          `Secret ${name} has no value to type: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
       this.#secretRedactor.register(value, secret.label);
       await this.#evidence.pauseTrace();
       try {

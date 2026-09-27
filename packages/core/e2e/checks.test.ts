@@ -1,5 +1,10 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { brand } from "@testament/brand";
+import { ulid } from "@testament/contract";
+import { createDecisions } from "@testament/decide";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   type CheckOptions,
@@ -9,13 +14,14 @@ import {
   openSession,
   type Session,
 } from "@testament/browser";
-import { createSecretValue } from "@testament/config/node";
+import { createSecretValue, loadProject } from "@testament/config/node";
 import type { ScriptedCall, ScriptedReply } from "@testament/models/testing";
 import { type CheckOp, type Recording, serializeRecording } from "@testament/recording";
 import { expandTest, type ExpandedTest, mapReader, parseTest } from "@testament/spec";
 import { loadTest } from "@testament/spec/node";
 import { startShop, type Variant, verificationCode } from "@testament/fixture-shop";
 import { authorTest } from "../src/author/author.js";
+import { authoringLogin } from "../src/run/author-login.js";
 import type { AuthoringReport } from "../src/author/types.js";
 import {
   agentScript,
@@ -253,6 +259,17 @@ interface Authored {
   captures: Capture[];
 }
 
+/** A private copy of the shop project (its saved sessions must not land in the fixture). */
+function loginProject() {
+  const dir = mkdtempSync(join(tmpdir(), "checks-login-"));
+  cpSync(join(SHOP, brand.configFileName), join(dir, brand.configFileName));
+  cpSync(join(SHOP, "tests"), join(dir, "tests"), {
+    recursive: true,
+    filter: (source) => !/\.ts$/.test(source),
+  });
+  return { dir, config: loadProject(dir, { environment: "local" }).config };
+}
+
 async function author(
   variant: Variant,
   test: string | ExpandedTest,
@@ -281,8 +298,38 @@ async function author(
         .filter((s) => s.kind === "expect" || s.kind === "soft")
         .map((s) => [s.index, s]),
     );
+    // auth: ada (SEC-3): logged in from the profile's committed flow recording, no AI.
+    const login = expanded.auth && expanded.auth !== "none" ? loginProject() : undefined;
+    const prepare = login
+      ? authoringLogin({
+          projectDir: login.dir,
+          config: login.config,
+          environment: "local",
+          name: expanded.auth as string,
+          profile: login.config.auth.profiles[expanded.auth as string] as never,
+          session,
+          openSession: (extra) =>
+            openSession({
+              browser,
+              baseUrl: shop.url,
+              allowedDomains: ["127.0.0.1"],
+              secrets: { ...secrets, ...extra },
+            }),
+          replay: {
+            mode: "replay-only",
+            policy: "review",
+            decisions: createDecisions(),
+            fixerAvailable: false,
+            plannerAvailable: false,
+            production: false,
+            newId: ulid,
+          },
+          meta: { engineVersion: "0.1.0", browser: "chromium", device: "desktop" },
+        })
+      : undefined;
     const result = await authorTest(expanded, {
       session: capturing(session, sink),
+      ...(prepare ? { prepare } : {}),
       models,
       timeoutMs: 90_000,
       screenshots: false,
@@ -305,6 +352,7 @@ async function author(
       },
     });
     await session.close();
+    if (login) rmSync(login.dir, { recursive: true, force: true });
     for (const capture of captures) {
       const op = result.recording.checks.find((c) => c.text === capture.line)?.check;
       if (op) capture.op = op;

@@ -42,6 +42,8 @@ export interface User {
   verified: boolean;
   subscription: { planId: string; trialEndsOn: string } | null;
   avatar: { type: string; data: Buffer; version: number } | null;
+  /** Base32 TOTP seed: logging in then asks for an authentication code (two-factor). */
+  totp?: string;
 }
 
 export interface Project {
@@ -63,6 +65,8 @@ export interface Email {
   to: string;
   subject: string;
   text: string;
+  /** When it was sent (ISO). */
+  sentAt?: string;
 }
 
 export const TIMEZONES = ["UTC", "Europe/London", "America/New_York", "Asia/Tokyo"] as const;
@@ -101,6 +105,8 @@ export interface SeedInput {
   name?: string;
   trial?: string;
   projects?: string[];
+  /** Turn on two-factor login with this base32 TOTP seed. */
+  totp?: string;
 }
 
 export class Store {
@@ -110,6 +116,8 @@ export class Store {
   outbox: Email[] = [];
   sessions = new Map<string, number>();
   cardTokens = new Map<string, string>();
+  /** Password-checked logins waiting for their authentication code: token → user id. */
+  pendingCodes = new Map<string, number>();
   private next = { user: 1, project: 1, session: 1, token: 1 };
 
   reset(): void {
@@ -119,6 +127,7 @@ export class Store {
     this.outbox = [];
     this.sessions.clear();
     this.cardTokens.clear();
+    this.pendingCodes.clear();
     this.next = { user: 1, project: 1, session: 1, token: 1 };
   }
 
@@ -182,7 +191,7 @@ export class Store {
   }
 
   sendEmail(email: Email): void {
-    this.outbox.push(email);
+    this.outbox.push({ ...email, sentAt: email.sentAt ?? new Date().toISOString() });
   }
 
   tokenizeCard(cardNumber: string): string {
@@ -195,6 +204,10 @@ export class Store {
   seed(input: SeedInput = {}): User {
     const email = input.email ?? DEFAULT_USER.email;
     const existing = this.userByEmail(email);
+    // Seeding resets the user's data, not their logins: a saved session (auth profiles, SEC-3) stays valid.
+    const sessions = existing
+      ? [...this.sessions].filter(([, userId]) => userId === existing.id).map(([id]) => id)
+      : [];
     if (existing) this.deleteUser(existing);
     const user = this.createUser(
       email,
@@ -202,9 +215,11 @@ export class Store {
       input.name ?? DEFAULT_USER.name,
     );
     user.verified = true;
+    if (input.totp) user.totp = input.totp;
     if (input.trial) this.startTrial(user, input.trial);
     for (const name of input.projects ?? []) this.saveProject(this.addProject(user, name));
     for (const row of ORDER_ROWS) this.orders.push({ ...row, userId: user.id });
+    for (const id of sessions) this.sessions.set(id, user.id);
     return user;
   }
 }

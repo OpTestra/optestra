@@ -10,5 +10,15 @@ export {
   parseGuard,
   type ProposedAction,
 } from "./guards.js";
+export {
+  createTestInbox,
+  INBOX_SECRETS,
+  type InboxPrepared,
+  type InboxRead,
+  inboxAddressFor,
+  prepareInbox,
+  type TestInbox,
+  type TestInboxOptions,
+} from "./inbox.js";
 export { PLANNER_TOOLS } from "./tools.js";
 export * from "./types.js";

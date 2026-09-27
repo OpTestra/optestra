@@ -10,9 +10,9 @@
     "device": "desktop",
     "environment": "local",
     "model": "claude-code/sonnet",
-    "promptVersion": "planner-v2"
+    "promptVersion": "planner-v3"
   },
-  "updatedAt": "2026-09-27T09:16:55.933Z",
+  "updatedAt": "2026-09-27T12:30:02.600Z",
   "steps": [
     {
       "key": "2e804e233a67bf9c",
@@ -169,18 +169,18 @@
             ]
           },
           "wait": {
-            "settledMs": 365,
+            "settledMs": 361,
             "waitedFor": {
-              "network": 287,
-              "dom": 313,
+              "network": 283,
+              "dom": 310,
               "busy": 0
             }
           }
         }
       ],
-      "reasoning": "Clicked Start free trial on Pro plan; navigated to signup page showing 'You're starting a free trial of Pro.'",
+      "reasoning": "Navigated to signup page for Pro plan trial",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:54:27.236Z"
+      "recordedAt": "2026-09-27T12:29:29.322Z"
     },
     {
       "key": "1cae53be5bedaf47",
@@ -472,18 +472,821 @@
             ]
           },
           "wait": {
-            "settledMs": 364,
+            "settledMs": 363,
             "waitedFor": {
-              "network": 286,
-              "dom": 312,
+              "network": 285,
+              "dom": 310,
               "busy": 0
             }
           }
         }
       ],
-      "reasoning": "Signed up and redirected to email verification page for {{data.email}}",
+      "reasoning": "Signed up; redirected to verify-email page showing code input for {{data.email}}",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:54:35.921Z"
+      "recordedAt": "2026-09-27T12:29:38.925Z"
+    },
+    {
+      "key": "edb44045d4f358a7",
+      "textKey": "3a4b61dbe8152629",
+      "route": "/verify",
+      "text": "Enter the code from the verification email and click \"Verify\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Verification code",
+              "exact": true
+            },
+            "value": "{{inbox.code}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Verification code",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Verification code",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "#verify-code"
+              }
+            ],
+            "role": "textbox",
+            "name": "Verification code",
+            "tag": "input",
+            "attributes": {
+              "id": "verify-code",
+              "name": "code",
+              "type": "text"
+            },
+            "anchorText": "Check your email",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 239.4375,
+              "width": 360,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Verification code",
+                "text": "{{secret.INBOX_CODE}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Verification code"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Verify",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Verify",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Verify",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "html > body > main > form > button"
+              }
+            ],
+            "role": "button",
+            "name": "Verify",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Check your email",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 297.4375,
+              "width": 75.796875,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "urlChange": "/checkout",
+            "appeared": [
+              {
+                "role": "link",
+                "name": "Dashboard"
+              },
+              {
+                "role": "link",
+                "name": "Orders"
+              },
+              {
+                "role": "link",
+                "name": "Billing"
+              },
+              {
+                "role": "link",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Log out"
+              },
+              {
+                "role": "heading",
+                "name": "Start your Pro trial"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "14 days free, then $29.00/month. You won't be charged today."
+              },
+              {
+                "role": "iframe",
+                "name": ""
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Card number"
+              },
+              {
+                "role": "textbox",
+                "name": "Card number"
+              }
+            ],
+            "removed": [
+              {
+                "role": "link",
+                "name": "Pricing"
+              },
+              {
+                "role": "link",
+                "name": "Log in"
+              },
+              {
+                "role": "link",
+                "name": "Sign up"
+              },
+              {
+                "role": "heading",
+                "name": "Check your email"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "We sent a 6-digit code to"
+              },
+              {
+                "role": "strong",
+                "name": "",
+                "text": "{{data.email}}"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "."
+              },
+              {
+                "role": "generic",
+                "name": "",
+                "text": "Verification code"
+              },
+              {
+                "role": "textbox",
+                "name": "Verification code",
+                "text": "{{secret.INBOX_CODE}}"
+              },
+              {
+                "role": "button",
+                "name": "Verify"
+              }
+            ],
+            "requests": [
+              {
+                "method": "POST",
+                "route": "/verify",
+                "status": 303
+              },
+              {
+                "method": "GET",
+                "route": "/checkout",
+                "status": 200
+              },
+              {
+                "method": "GET",
+                "route": "/pay/frame",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 365,
+            "waitedFor": {
+              "network": 313,
+              "dom": 339,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Verification code entered and Verify clicked; user logged in and redirected to checkout page.",
+      "source": "ai",
+      "recordedAt": "2026-09-27T12:29:48.259Z"
+    },
+    {
+      "key": "4ee09cdb9ab67df4",
+      "textKey": "34b5075a397fe329",
+      "route": "/checkout",
+      "text": "Fill the card form with test card 4242 4242 4242 4242, expiry 12/34, CVC 123",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Card number",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "value": "4242 4242 4242 4242"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Card number",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Card number",
+                "exact": true,
+                "frame": [
+                  {
+                    "kind": "title",
+                    "text": "Secure card payment",
+                    "exact": true
+                  }
+                ]
+              },
+              {
+                "kind": "placeholder",
+                "text": "1234 1234 1234 1234",
+                "exact": true,
+                "frame": [
+                  {
+                    "kind": "title",
+                    "text": "Secure card payment",
+                    "exact": true
+                  }
+                ]
+              },
+              {
+                "kind": "css",
+                "selector": "#card-number",
+                "frame": [
+                  {
+                    "kind": "title",
+                    "text": "Secure card payment",
+                    "exact": true
+                  }
+                ]
+              }
+            ],
+            "role": "textbox",
+            "name": "Card number",
+            "tag": "input",
+            "attributes": {
+              "id": "card-number",
+              "name": "number",
+              "placeholder": "1234 1234 1234 1234"
+            },
+            "anchorText": "",
+            "framePath": [
+              {
+                "kind": "title",
+                "text": "Secure card payment",
+                "exact": true
+              }
+            ],
+            "box": {
+              "x": 586,
+              "y": 268.625,
+              "width": 386,
+              "height": 39
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Card number",
+                "text": "4242 4242 4242 4242"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Card number"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Expiry date",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "value": "12 / 34"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Expiry date",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "Expiry date",
+                "exact": true,
+                "frame": [
+                  {
+                    "kind": "title",
+                    "text": "Secure card payment",
+                    "exact": true
+                  }
+                ]
+              },
+              {
+                "kind": "placeholder",
+                "text": "MM / YY",
+                "exact": true,
+                "frame": [
+                  {
+                    "kind": "title",
+                    "text": "Secure card payment",
+                    "exact": true
+                  }
+                ]
+              },
+              {
+                "kind": "css",
+                "selector": "#card-expiry",
+                "frame": [
+                  {
+                    "kind": "title",
+                    "text": "Secure card payment",
+                    "exact": true
+                  }
+                ]
+              }
+            ],
+            "role": "textbox",
+            "name": "Expiry date",
+            "tag": "input",
+            "attributes": {
+              "id": "card-expiry",
+              "name": "expiry",
+              "placeholder": "MM / YY"
+            },
+            "anchorText": "",
+            "framePath": [
+              {
+                "kind": "title",
+                "text": "Secure card payment",
+                "exact": true
+              }
+            ],
+            "box": {
+              "x": 586,
+              "y": 341.8125,
+              "width": 187,
+              "height": 39
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Expiry date",
+                "text": "12 / 34"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Expiry date"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "CVC",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "value": "123"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "CVC",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "fallbacks": [
+              {
+                "kind": "label",
+                "text": "CVC",
+                "exact": true,
+                "frame": [
+                  {
+                    "kind": "title",
+                    "text": "Secure card payment",
+                    "exact": true
+                  }
+                ]
+              },
+              {
+                "kind": "placeholder",
+                "text": "123",
+                "exact": true,
+                "frame": [
+                  {
+                    "kind": "title",
+                    "text": "Secure card payment",
+                    "exact": true
+                  }
+                ]
+              },
+              {
+                "kind": "css",
+                "selector": "#card-cvc",
+                "frame": [
+                  {
+                    "kind": "title",
+                    "text": "Secure card payment",
+                    "exact": true
+                  }
+                ]
+              }
+            ],
+            "role": "textbox",
+            "name": "CVC",
+            "tag": "input",
+            "attributes": {
+              "id": "card-cvc",
+              "name": "cvc",
+              "placeholder": "123"
+            },
+            "anchorText": "",
+            "framePath": [
+              {
+                "kind": "title",
+                "text": "Secure card payment",
+                "exact": true
+              }
+            ],
+            "box": {
+              "x": 785,
+              "y": 341.8125,
+              "width": 187,
+              "height": 39
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "CVC",
+                "text": "123"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "CVC"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Card form filled: number 4242 4242 4242 4242, expiry 12/34, CVC 123",
+      "source": "ai",
+      "recordedAt": "2026-09-27T12:29:53.815Z"
+    },
+    {
+      "key": "0754c0bdd7555992",
+      "textKey": "a6df31940326d9d3",
+      "route": "/checkout",
+      "text": "Click \"Start trial\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Start trial",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Start trial",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Start trial",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "html > body > main > form > button"
+              }
+            ],
+            "role": "button",
+            "name": "Start trial",
+            "tag": "button",
+            "attributes": {
+              "type": "submit",
+              "class": "btn btn-primary"
+            },
+            "anchorText": "Start your Pro trial",
+            "framePath": [],
+            "box": {
+              "x": 569,
+              "y": 471.4375,
+              "width": 100.703125,
+              "height": 42
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "button",
+                "name": "Start trial"
+              }
+            ],
+            "removed": [
+              {
+                "role": "button",
+                "name": "Start trial"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 0,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Clicked Start trial button to submit the checkout form",
+      "source": "ai",
+      "recordedAt": "2026-09-27T12:29:55.848Z"
+    },
+    {
+      "key": "70bd6612d79b3476",
+      "textKey": "22cbbde96460059d",
+      "route": "/dashboard",
+      "text": "Go to the billing page",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "link",
+              "name": "Billing",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "link",
+              "name": "Billing",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Billing",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "html > body > header > nav > ul > li:nth-of-type(3) > a"
+              }
+            ],
+            "role": "link",
+            "name": "Billing",
+            "tag": "a",
+            "attributes": {
+              "href": "/billing"
+            },
+            "anchorText": "Main",
+            "framePath": [],
+            "box": {
+              "x": 1655.890625,
+              "y": 24,
+              "width": 43.421875,
+              "height": 18
+            }
+          },
+          "expectPost": {
+            "urlChange": "/billing",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Billing"
+              },
+              {
+                "role": "heading",
+                "name": "Current plan"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "Pro plan · free trial until January 29, 2026"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "$0.00 due today"
+              },
+              {
+                "role": "paragraph",
+                "name": "",
+                "text": "Then $29.00/month."
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Welcome to Pro"
+              },
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "Create project"
+              },
+              {
+                "role": "listitem",
+                "name": "",
+                "text": "No projects yet."
+              }
+            ],
+            "requests": [
+              {
+                "method": "GET",
+                "route": "/billing",
+                "status": 200
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 341,
+            "waitedFor": {
+              "network": 287,
+              "dom": 288,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Billing page displayed with Current plan details",
+      "source": "ai",
+      "recordedAt": "2026-09-27T12:30:02.488Z"
     }
   ],
   "checks": [
@@ -514,7 +1317,7 @@
         },
         "provesNothing": false
       },
-      "recordedAt": "2026-09-27T09:16:50.995Z"
+      "recordedAt": "2026-09-27T12:29:39.007Z"
     },
     {
       "key": "ef8f9dafb38b2835",
@@ -522,10 +1325,28 @@
       "text": "the page heading is \"Welcome to Pro\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Welcome to Pro"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:32:33.457Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Welcome to Pro'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T12:29:56.913Z"
     },
     {
       "key": "6e90a80a89e956ad",
@@ -533,10 +1354,23 @@
       "text": "the URL contains /dashboard",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "url",
+        "match": "contains",
+        "value": "/dashboard"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:32:33.457Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the URL contains '/dashboard'",
+      "rule": "url",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T12:29:56.923Z"
     },
     {
       "key": "ccce4275d1ce98a5",
@@ -544,10 +1378,27 @@
       "text": "the page shows \"$0.00 due today\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "body"
+        },
+        "match": "contains",
+        "value": "$0.00 due today"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:32:33.457Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the page shows '$0.00 due today'",
+      "rule": "visible-text",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T12:30:02.537Z"
     }
   ]
 }

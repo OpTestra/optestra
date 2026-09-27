@@ -91,8 +91,13 @@ by **verdict and cause**:
   in normal mode with no AI model: heals without AI are expected there, and
   `healed` counts as `passed` (`also_accept`). A miss that only an AI heal could
   fix counts as **needs AI** (reported, not wrong);
-- tests that read an email (`checkout-trial`, `signup-email-code`) are
-  **deferred** (blocked `inbox_unavailable`) until AUTH-1 wires inboxes into runs;
+- tests that read an email (`checkout-trial`, `signup-email-code`) read their
+  code from a real Mailpit when one answers at `MAILPIT_URL` (the shop then sends
+  over `MAILPIT_SMTP`), else from the shop's own outbox, read in process
+  (`shopInbox`). `REQUIRE_MAILPIT=1` (CI) makes a missing Mailpit an error.
+  Without Mailpit their generated specs can't read the email, so they aren't
+  compared for equivalence;
+- a test's `auth:` profile login is step 0 in the manifest (it runs before step 1);
 - `correct` must use zero AI calls;
 - `--equivalence`: for `correct`, `broken-total` and `broken-silent-click`, the
   replay verdict (first attempt) and the generated spec's plain-Playwright verdict

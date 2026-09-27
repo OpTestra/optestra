@@ -77,8 +77,47 @@ the LOOP-1 agent authors just that step in place and the run continues; the
 step is added to the recording (never touching steps that weren't
 re-authored). `--replay-only` fails it; with no planner model it is blocked
 (`ai_unavailable`); `--rerecord` authors every step. A step that reads a test
-inbox (`{{inbox.…}}`, or "the code from the verification email") is blocked
-with `inbox_unavailable` until AUTH-1 wires inboxes into runs.
+inbox (`{{inbox.…}}`, or "the code from the verification email") needs one
+configured (`inbox:`); without it the step is blocked `inbox_unavailable` before
+any AI is spent.
+
+**Auth profiles (SEC-3, AUTH-1).** A test with `auth: <profile>` starts logged
+in. After its setup hooks and before its start page, the runner calls
+`ensureProfile` (`@testament/auth`):
+1. A saved session for (environment, profile, worker; `shared` profiles use one
+   for all workers) is reused when it is younger than `ttlMinutes`, was made for
+   this profile definition, and passes the profile's `check`: the test's own
+   session loads it (`session.useStorageState`) and opens `check.url`; landing
+   anywhere else (the login page) means it no longer works.
+2. Otherwise the profile's flow is **replayed like a test**
+   (`replayProfileFlow`): from its own recording
+   (`tests__flows__login.steps.json`), authored in place in normal mode if it
+   isn't recorded, with the profile's `params`, in a separate session with no
+   trace, video or HAR. Its storage state (`session.storageState()`) is saved,
+   owner-only, and loaded into the test's session.
+
+So the test's trace never contains the login, and later tests skip the login
+steps entirely. When the flow ran, the attempt shows one `flow` step, `auth:
+ada (logs in with flows/login.test.md)`, after the test's own step indexes (it
+isn't one of them). A login flow that **fails** makes the test **failed**, like
+a failing `Use:` flow (headline `auth: ada: logging in with … failed: …`; the
+classifier sees the login's page). One that can't run for our reasons stays
+**blocked** with that reason (`missing_secret`, `inbox_unavailable`, …), and
+anything else is `login_failed`. `auth: none` starts with a clean session;
+an unknown profile blocks the test (`AUTH_PROFILE_UNKNOWN`, `config_error`).
+
+**Test inboxes (SEC-5, AUTH-1).** Each attempt gets a test inbox
+(`createTestInbox`) over the project's `inbox:` provider, and its session is
+opened with two extra secrets, `INBOX_CODE` and `INBOX_LINK`. A recorded fill of
+`{{inbox.code}}` (or a `goto {{inbox.link}}`) first waits for the email to the
+test's address: the latest address the test generated (`{{unique.email}}`,
+directly or through its data), the same rule as the generated spec. The code is
+extracted and typed by the harness like a secret (scrubbed as
+`[secret:INBOX_CODE]`); a link is opened only on the allowed domains. No email
+in `inbox.timeoutSeconds` blocks the test `inbox_unavailable` (the app may be
+fine); an email without a code fails it; a link to another host blocks it
+`disallowed_domain`. `{{unique.email}}` uses the inbox's domain (ENV-3), so
+every attempt gets a fresh deliverable address.
 
 **An Expect / Soft step** evaluates its stored check fresh (LRN-2, VER-1…VER-3)
 with `session.check(op, { since: requestMark })`: network checks count from
@@ -333,13 +372,24 @@ a snapshot reports no change, the agent:
 The tools mirror LOOP-0's closed action set exactly: `click dblclick fill select
 check uncheck press hover scroll upload goto back reload wait_for`. Targets are
 refs such as `e12`. Values are literals or templates of the step's variables;
-secrets are typed as `{{secret.NAME}}` and must be the whole value. Three control
-tools complete the set: `look`, `step_done { visible_effect }` and
+secrets are typed as `{{secret.NAME}}` and must be the whole value.
+
+`read_inbox { want: code | link, to? }` (AUTH-1) waits for the email the app
+sent to the test's address and answers with a **handle**, never the value:
+"its code is ready as {{inbox.code}}". The model then fills `{{inbox.code}}`
+into the field, or opens `goto {{inbox.link}}`; the harness types or opens the
+real value, and the recording keeps the template. `to` may only name the test's
+own address (what a replay reads). A step whose text already has
+`{{inbox.code}}` needs no read_inbox: the email is read before the fill. The
+variables list shows inbox values as "(from the test inbox, never shown)".
+
+Three control tools complete the set: `look`, `step_done { visible_effect }` and
 `step_impossible { reason }`. There are no other tools.
 
 ### Prompt
 
-The prompt lives in `src/author/planner-prompt.json` (`planner-v2`), which is
+The prompt lives in `src/author/planner-prompt.json` (`planner-v3`: v3 adds the
+read_inbox rule), which is
 data, not code. Bump its `version` on any change; the version is recorded in the
 recording and the report, so evals can compare prompts (LRN-10). Key rules:
 - only this step; never later steps or expectations;
@@ -349,6 +399,8 @@ recording and the report, so evals can compare prompts (LRN-10). Key rules:
   `{{secret.NAME}}`;
 - always perform the action;
 - `step_done` with the visible effect, or `step_impossible` with the reason;
+- a code or link from an email: `read_inbox`, then `{{inbox.code}}` /
+  `{{inbox.link}}`; never guess a code;
 - never do what the Never lines forbid;
 - keep text short.
 

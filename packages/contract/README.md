@@ -40,7 +40,7 @@ prove 1.0 readers still read it.
 |---|---|
 | Verdict | `passed healed failed flaky blocked` |
 | FailureCause | `product_bug test_drift environment test_data blocked` |
-| BlockedReason (open) | `captcha missing_secret disallowed_domain ai_unavailable budget_exceeded app_down app_install_failed config_error aborted` |
+| BlockedReason (open) | `captcha missing_secret disallowed_domain ai_unavailable budget_exceeded app_down app_install_failed config_error aborted inbox_unavailable login_failed setup_failed` (the last three since 1.2) |
 | StepKind | `action expect soft guard exact flow` |
 | RecoveryLevel | `replay refind fixer none` |
 | Trigger | `desktop web cloud ci cli agent schedule` |

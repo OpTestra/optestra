@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSyn
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { brand } from "@testament/brand";
 import { type Config, hasErrors } from "@testament/config";
-import { loadProject } from "@testament/config/node";
+import { loadProject, parseYaml } from "@testament/config/node";
 import { DEFAULT_EMAIL_DOMAIN, parseTest, type TestSpec } from "@testament/spec";
 import { DEFAULT_TESTS, findTestFiles, loadTest, nodeFileReader } from "@testament/spec/node";
 import { fileState } from "../header.js";
@@ -200,8 +200,44 @@ export async function generateProject(
       const text = await readFile(file);
       if (text !== undefined) specs[file] = parseTest(text, file, { config }).spec;
     }
+    // auth: <profile> (SEC-3): the spec logs in with the profile's flow, from its own recording.
+    let profile: Parameters<typeof generateSpec>[1]["profile"];
+    const auth = test.expanded.auth;
+    const profiles = authProfiles(config, loaded.file);
+    const settings = auth && auth !== "none" ? profiles?.[auth] : undefined;
+    if (auth && settings) {
+      const flowPath = posix(join(testsDir, settings.flow));
+      const flow = await loadTest(projectDir, flowPath, config, {
+        environment: loaded.environment?.name,
+        seed: "codegen",
+        params: settings.params,
+      });
+      const flowFile = flow ? join(recordingsDir, recordingFileName(flow.id)) : undefined;
+      const flowRecording =
+        flowFile && existsSync(flowFile)
+          ? readCodegenRecording(readFileSync(flowFile, "utf8"))
+          : undefined;
+      if (flow && flowRecording?.ok) {
+        for (const file of [flowPath, ...flow.expanded.files]) {
+          if (specs[file]) continue;
+          const text = await readFile(file);
+          if (text !== undefined) specs[file] = parseTest(text, file, { config }).spec;
+        }
+        profile = {
+          name: auth,
+          path: flowPath,
+          expanded: flow.expanded,
+          recording: flowRecording.recording,
+          params: settings.params ?? {},
+        };
+      }
+    }
     generated.push({
-      file: generateSpec(recording.recording, { expanded: test.expanded, specs }),
+      file: generateSpec(recording.recording, {
+        expanded: test.expanded,
+        specs,
+        ...(profile ? { profile } : {}),
+      }),
       test: path,
     });
   }
@@ -214,6 +250,44 @@ export async function generateProject(
     result.files.push({ path: `${specDir}/${file.name}`, status, ...(test ? { test } : {}) });
   }
   return result;
+}
+
+interface ProfileSettings {
+  flow: string;
+  params?: Record<string, string>;
+}
+
+/**
+ * The project's auth profiles (flow and params only). The `auth` section belongs
+ * to @testament/auth, which codegen doesn't import: when it isn't registered the
+ * section is read from the project file itself.
+ */
+function authProfiles(config: object, file: string): Record<string, ProfileSettings> {
+  const registered = (config as { auth?: { profiles?: Record<string, ProfileSettings> } }).auth;
+  if (registered) return registered.profiles ?? {};
+  let raw: unknown;
+  try {
+    raw = parseYaml(readFileSync(file, "utf8"), file).value;
+  } catch {
+    return {};
+  }
+  const profiles = (raw as { auth?: { profiles?: unknown } } | undefined)?.auth?.profiles;
+  if (!profiles || typeof profiles !== "object") return {};
+  const out: Record<string, ProfileSettings> = {};
+  for (const [name, value] of Object.entries(profiles as Record<string, unknown>)) {
+    const entry = value as { flow?: unknown; params?: unknown };
+    if (typeof entry?.flow !== "string") continue;
+    const params =
+      entry.params && typeof entry.params === "object"
+        ? Object.fromEntries(
+            Object.entries(entry.params as Record<string, unknown>).filter(
+              (p): p is [string, string] => typeof p[1] === "string",
+            ),
+          )
+        : undefined;
+    out[name] = { flow: entry.flow, ...(params ? { params } : {}) };
+  }
+  return out;
 }
 
 /**

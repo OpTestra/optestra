@@ -140,7 +140,7 @@ export function runAuthCommand(options: AuthCommandOptions, io: CommandIo): numb
 
   if (options.json) {
     io.stdout(
-      `${defaultRedactor.redact(JSON.stringify({ sessionsDir: store.dir, profiles: rows, diagnostics }, null, 2))}\n`,
+      `${defaultRedactor.redact(JSON.stringify({ sessionsDir: store.dir, profiles: rows, sessions: entries, diagnostics }, null, 2))}\n`,
     );
     return diagnostics.length > 0 ? 1 : 0;
   }
@@ -172,8 +172,26 @@ export function runAuthCommand(options: AuthCommandOptions, io: CommandIo): numb
           ...environments.map((e) => cell(r.environments[e] ?? { status: "none", workers: 0 })),
         ]),
       ]),
+    );
+    if (entries.length > 0)
+      lines.push(
+        "",
+        "Saved sessions (per profile, environment and worker)",
+        table([
+          ["PROFILE", "ENVIRONMENT", "WORKER", "STATUS"],
+          ...entries.map((e) => [
+            e.profile,
+            e.environment,
+            e.worker,
+            e.status === "valid"
+              ? `valid until ${e.expiresAt?.slice(0, 16).replace("T", " ")} UTC`
+              : e.status,
+          ]),
+        ]),
+      );
+    lines.push(
       "",
-      `Saved sessions: ${store.dir} (owner-only, git-ignored)`,
+      `Saved sessions: ${store.dir} (owner-only, git-ignored). Delete them with --clear [profile] [-e env].`,
     );
   }
   if (diagnostics.length > 0) lines.push("", "Problems", ...diagnostics.map(problem));

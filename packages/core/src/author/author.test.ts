@@ -526,7 +526,7 @@ describe("authorTest (no browser)", () => {
     expect(second.recording.steps).toEqual(first.recording.steps);
   });
 
-  it("gives the model exactly the harness actions plus three control tools", () => {
+  it("gives the model exactly the harness actions, read_inbox and three control tools", () => {
     expect(PLANNER_TOOLS.map((t) => t.name)).toEqual([
       "click",
       "dblclick",
@@ -542,6 +542,7 @@ describe("authorTest (no browser)", () => {
       "back",
       "reload",
       "wait_for",
+      "read_inbox",
       "look",
       "step_done",
       "step_impossible",

@@ -464,14 +464,13 @@ exports[`Acme Shop tests > tests/avatar-upload.test.md parses with no problems a
 exports[`Acme Shop tests > tests/billing-zero-due.test.md parses with no problems and matches its expanded snapshot 1`] = `
 {
   "allowDestructive": [],
-  "auth": null,
+  "auth": "ada",
   "data": {},
   "dataset": null,
   "diagnostics": [],
   "environment": null,
   "files": [
     "tests/billing-zero-due.test.md",
-    "tests/flows/login.test.md",
   ],
   "guards": [],
   "heal": null,
@@ -491,270 +490,16 @@ exports[`Acme Shop tests > tests/billing-zero-due.test.md parses with no problem
     },
   ],
   "start": {
-    "display": "/login",
-    "raw": "/login",
+    "display": "/dashboard",
+    "raw": "/dashboard",
     "segments": [
       {
         "kind": "text",
-        "text": "/login",
+        "text": "/dashboard",
       },
     ],
   },
   "steps": [
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Go to /login",
-        },
-      ],
-      "display": "Go to /login",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 0,
-      "kind": "action",
-      "number": 1,
-      "origin": [
-        {
-          "file": "tests/billing-zero-due.test.md",
-          "line": 10,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 10,
-            },
-            "start": {
-              "column": 1,
-              "line": 10,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 10,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 16,
-              "line": 10,
-            },
-            "start": {
-              "column": 1,
-              "line": 10,
-            },
-          },
-        },
-      ],
-      "text": "Go to /login",
-      "textKey": "c4f3a1c2c1ab8ab2",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Fill "Email" with ",
-        },
-        {
-          "kind": "value",
-          "ref": "params.email",
-          "text": "ada@example.com",
-        },
-      ],
-      "display": "Fill "Email" with ada@example.com",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 1,
-      "kind": "action",
-      "number": 2,
-      "origin": [
-        {
-          "file": "tests/billing-zero-due.test.md",
-          "line": 10,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 10,
-            },
-            "start": {
-              "column": 1,
-              "line": 10,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 11,
-          "number": 2,
-          "range": {
-            "end": {
-              "column": 38,
-              "line": 11,
-            },
-            "start": {
-              "column": 1,
-              "line": 11,
-            },
-          },
-        },
-      ],
-      "text": "Fill "Email" with {{params.email}}",
-      "textKey": "99b98ca7e73a3ac0",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Fill "Password" with ",
-        },
-        {
-          "kind": "secret",
-          "name": "SHOP_PASSWORD",
-        },
-      ],
-      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 2,
-      "kind": "action",
-      "number": 3,
-      "origin": [
-        {
-          "file": "tests/billing-zero-due.test.md",
-          "line": 10,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 10,
-            },
-            "start": {
-              "column": 1,
-              "line": 10,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 12,
-          "number": 3,
-          "range": {
-            "end": {
-              "column": 44,
-              "line": 12,
-            },
-            "start": {
-              "column": 1,
-              "line": 12,
-            },
-          },
-        },
-      ],
-      "text": "Fill "Password" with {{params.password}}",
-      "textKey": "601e4c8b381cca3e",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Click "Log in"",
-        },
-      ],
-      "display": "Click "Log in"",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 3,
-      "kind": "action",
-      "number": 4,
-      "origin": [
-        {
-          "file": "tests/billing-zero-due.test.md",
-          "line": 10,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 10,
-            },
-            "start": {
-              "column": 1,
-              "line": 10,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 13,
-          "number": 4,
-          "range": {
-            "end": {
-              "column": 18,
-              "line": 13,
-            },
-            "start": {
-              "column": 1,
-              "line": 13,
-            },
-          },
-        },
-      ],
-      "text": "Click "Log in"",
-      "textKey": "b47d7fbd6902a574",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "the page heading is "Dashboard"",
-        },
-      ],
-      "display": "the page heading is "Dashboard"",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 4,
-      "kind": "expect",
-      "number": 5,
-      "origin": [
-        {
-          "file": "tests/billing-zero-due.test.md",
-          "line": 10,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 10,
-            },
-            "start": {
-              "column": 1,
-              "line": 10,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 14,
-          "number": 5,
-          "range": {
-            "end": {
-              "column": 43,
-              "line": 14,
-            },
-            "start": {
-              "column": 1,
-              "line": 14,
-            },
-          },
-        },
-      ],
-      "text": "the page heading is "Dashboard"",
-      "textKey": "5c6d25b275ab76c6",
-    },
     {
       "bound": [
         {
@@ -764,14 +509,14 @@ exports[`Acme Shop tests > tests/billing-zero-due.test.md parses with no problem
       ],
       "display": "Go to the billing page",
       "flowPath": [],
-      "index": 5,
+      "index": 0,
       "kind": "action",
-      "number": 2,
+      "number": 1,
       "origin": [
         {
           "file": "tests/billing-zero-due.test.md",
           "line": 11,
-          "number": 2,
+          "number": 1,
           "range": {
             "end": {
               "column": 26,
@@ -796,14 +541,14 @@ exports[`Acme Shop tests > tests/billing-zero-due.test.md parses with no problem
       ],
       "display": "the page shows "Pro plan"",
       "flowPath": [],
-      "index": 6,
+      "index": 1,
       "kind": "expect",
-      "number": 3,
+      "number": 2,
       "origin": [
         {
           "file": "tests/billing-zero-due.test.md",
           "line": 12,
-          "number": 3,
+          "number": 2,
           "range": {
             "end": {
               "column": 37,
@@ -828,14 +573,14 @@ exports[`Acme Shop tests > tests/billing-zero-due.test.md parses with no problem
       ],
       "display": "the page shows "$0.00 due today"",
       "flowPath": [],
-      "index": 7,
+      "index": 2,
       "kind": "expect",
-      "number": 4,
+      "number": 3,
       "origin": [
         {
           "file": "tests/billing-zero-due.test.md",
           "line": 13,
-          "number": 4,
+          "number": 3,
           "range": {
             "end": {
               "column": 44,
@@ -3357,14 +3102,13 @@ exports[`Acme Shop tests > tests/login.test.md parses with no problems and match
 exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problems and matches its expanded snapshot 1`] = `
 {
   "allowDestructive": [],
-  "auth": null,
+  "auth": "ada",
   "data": {},
   "dataset": null,
   "diagnostics": [],
   "environment": null,
   "files": [
     "tests/settings-profile.test.md",
-    "tests/flows/login.test.md",
   ],
   "guards": [],
   "heal": null,
@@ -3381,270 +3125,16 @@ exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problem
     },
   ],
   "start": {
-    "display": "/login",
-    "raw": "/login",
+    "display": "/dashboard",
+    "raw": "/dashboard",
     "segments": [
       {
         "kind": "text",
-        "text": "/login",
+        "text": "/dashboard",
       },
     ],
   },
   "steps": [
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Go to /login",
-        },
-      ],
-      "display": "Go to /login",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 0,
-      "kind": "action",
-      "number": 1,
-      "origin": [
-        {
-          "file": "tests/settings-profile.test.md",
-          "line": 9,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 9,
-            },
-            "start": {
-              "column": 1,
-              "line": 9,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 10,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 16,
-              "line": 10,
-            },
-            "start": {
-              "column": 1,
-              "line": 10,
-            },
-          },
-        },
-      ],
-      "text": "Go to /login",
-      "textKey": "c4f3a1c2c1ab8ab2",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Fill "Email" with ",
-        },
-        {
-          "kind": "value",
-          "ref": "params.email",
-          "text": "ada@example.com",
-        },
-      ],
-      "display": "Fill "Email" with ada@example.com",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 1,
-      "kind": "action",
-      "number": 2,
-      "origin": [
-        {
-          "file": "tests/settings-profile.test.md",
-          "line": 9,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 9,
-            },
-            "start": {
-              "column": 1,
-              "line": 9,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 11,
-          "number": 2,
-          "range": {
-            "end": {
-              "column": 38,
-              "line": 11,
-            },
-            "start": {
-              "column": 1,
-              "line": 11,
-            },
-          },
-        },
-      ],
-      "text": "Fill "Email" with {{params.email}}",
-      "textKey": "99b98ca7e73a3ac0",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Fill "Password" with ",
-        },
-        {
-          "kind": "secret",
-          "name": "SHOP_PASSWORD",
-        },
-      ],
-      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 2,
-      "kind": "action",
-      "number": 3,
-      "origin": [
-        {
-          "file": "tests/settings-profile.test.md",
-          "line": 9,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 9,
-            },
-            "start": {
-              "column": 1,
-              "line": 9,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 12,
-          "number": 3,
-          "range": {
-            "end": {
-              "column": 44,
-              "line": 12,
-            },
-            "start": {
-              "column": 1,
-              "line": 12,
-            },
-          },
-        },
-      ],
-      "text": "Fill "Password" with {{params.password}}",
-      "textKey": "601e4c8b381cca3e",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Click "Log in"",
-        },
-      ],
-      "display": "Click "Log in"",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 3,
-      "kind": "action",
-      "number": 4,
-      "origin": [
-        {
-          "file": "tests/settings-profile.test.md",
-          "line": 9,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 9,
-            },
-            "start": {
-              "column": 1,
-              "line": 9,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 13,
-          "number": 4,
-          "range": {
-            "end": {
-              "column": 18,
-              "line": 13,
-            },
-            "start": {
-              "column": 1,
-              "line": 13,
-            },
-          },
-        },
-      ],
-      "text": "Click "Log in"",
-      "textKey": "b47d7fbd6902a574",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "the page heading is "Dashboard"",
-        },
-      ],
-      "display": "the page heading is "Dashboard"",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 4,
-      "kind": "expect",
-      "number": 5,
-      "origin": [
-        {
-          "file": "tests/settings-profile.test.md",
-          "line": 9,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 9,
-            },
-            "start": {
-              "column": 1,
-              "line": 9,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 14,
-          "number": 5,
-          "range": {
-            "end": {
-              "column": 43,
-              "line": 14,
-            },
-            "start": {
-              "column": 1,
-              "line": 14,
-            },
-          },
-        },
-      ],
-      "text": "the page heading is "Dashboard"",
-      "textKey": "5c6d25b275ab76c6",
-    },
     {
       "bound": [
         {
@@ -3654,14 +3144,14 @@ exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problem
       ],
       "display": "Go to the settings page",
       "flowPath": [],
-      "index": 5,
+      "index": 0,
       "kind": "action",
-      "number": 2,
+      "number": 1,
       "origin": [
         {
           "file": "tests/settings-profile.test.md",
           "line": 10,
-          "number": 2,
+          "number": 1,
           "range": {
             "end": {
               "column": 27,
@@ -3686,14 +3176,14 @@ exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problem
       ],
       "display": "Fill "Full name" with Ada King",
       "flowPath": [],
-      "index": 6,
+      "index": 1,
       "kind": "action",
-      "number": 3,
+      "number": 2,
       "origin": [
         {
           "file": "tests/settings-profile.test.md",
           "line": 11,
-          "number": 3,
+          "number": 2,
           "range": {
             "end": {
               "column": 34,
@@ -3718,14 +3208,14 @@ exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problem
       ],
       "display": "Select "Europe/London" in "Time zone"",
       "flowPath": [],
-      "index": 7,
+      "index": 2,
       "kind": "action",
-      "number": 4,
+      "number": 3,
       "origin": [
         {
           "file": "tests/settings-profile.test.md",
           "line": 12,
-          "number": 4,
+          "number": 3,
           "range": {
             "end": {
               "column": 41,
@@ -3750,14 +3240,14 @@ exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problem
       ],
       "display": "Click "Save changes"",
       "flowPath": [],
-      "index": 8,
+      "index": 3,
       "kind": "action",
-      "number": 5,
+      "number": 4,
       "origin": [
         {
           "file": "tests/settings-profile.test.md",
           "line": 13,
-          "number": 5,
+          "number": 4,
           "range": {
             "end": {
               "column": 24,
@@ -3782,14 +3272,14 @@ exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problem
       ],
       "display": "a message says "Profile saved"",
       "flowPath": [],
-      "index": 9,
+      "index": 4,
       "kind": "expect",
-      "number": 6,
+      "number": 5,
       "origin": [
         {
           "file": "tests/settings-profile.test.md",
           "line": 14,
-          "number": 6,
+          "number": 5,
           "range": {
             "end": {
               "column": 42,
@@ -3814,14 +3304,14 @@ exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problem
       ],
       "display": "Reload the page",
       "flowPath": [],
-      "index": 10,
+      "index": 5,
       "kind": "action",
-      "number": 7,
+      "number": 6,
       "origin": [
         {
           "file": "tests/settings-profile.test.md",
           "line": 15,
-          "number": 7,
+          "number": 6,
           "range": {
             "end": {
               "column": 19,
@@ -3846,14 +3336,14 @@ exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problem
       ],
       "display": ""Full name" contains "Ada King"",
       "flowPath": [],
-      "index": 11,
+      "index": 6,
       "kind": "expect",
-      "number": 8,
+      "number": 7,
       "origin": [
         {
           "file": "tests/settings-profile.test.md",
           "line": 16,
-          "number": 8,
+          "number": 7,
           "range": {
             "end": {
               "column": 43,
@@ -3878,14 +3368,14 @@ exports[`Acme Shop tests > tests/settings-profile.test.md parses with no problem
       ],
       "display": ""Time zone" is "Europe/London"",
       "flowPath": [],
-      "index": 12,
+      "index": 7,
       "kind": "expect",
-      "number": 9,
+      "number": 8,
       "origin": [
         {
           "file": "tests/settings-profile.test.md",
           "line": 17,
-          "number": 9,
+          "number": 8,
           "range": {
             "end": {
               "column": 42,
@@ -4464,14 +3954,13 @@ exports[`Acme Shop tests > tests/signup-validation.test.md parses with no proble
 exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and matches its expanded snapshot 1`] = `
 {
   "allowDestructive": [],
-  "auth": null,
+  "auth": "ada",
   "data": {},
   "dataset": null,
   "diagnostics": [],
   "environment": null,
   "files": [
     "tests/sort-orders.test.md",
-    "tests/flows/login.test.md",
   ],
   "guards": [],
   "heal": null,
@@ -4488,270 +3977,16 @@ exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and
     },
   ],
   "start": {
-    "display": "/login",
-    "raw": "/login",
+    "display": "/dashboard",
+    "raw": "/dashboard",
     "segments": [
       {
         "kind": "text",
-        "text": "/login",
+        "text": "/dashboard",
       },
     ],
   },
   "steps": [
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Go to /login",
-        },
-      ],
-      "display": "Go to /login",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 0,
-      "kind": "action",
-      "number": 1,
-      "origin": [
-        {
-          "file": "tests/sort-orders.test.md",
-          "line": 9,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 9,
-            },
-            "start": {
-              "column": 1,
-              "line": 9,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 10,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 16,
-              "line": 10,
-            },
-            "start": {
-              "column": 1,
-              "line": 10,
-            },
-          },
-        },
-      ],
-      "text": "Go to /login",
-      "textKey": "c4f3a1c2c1ab8ab2",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Fill "Email" with ",
-        },
-        {
-          "kind": "value",
-          "ref": "params.email",
-          "text": "ada@example.com",
-        },
-      ],
-      "display": "Fill "Email" with ada@example.com",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 1,
-      "kind": "action",
-      "number": 2,
-      "origin": [
-        {
-          "file": "tests/sort-orders.test.md",
-          "line": 9,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 9,
-            },
-            "start": {
-              "column": 1,
-              "line": 9,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 11,
-          "number": 2,
-          "range": {
-            "end": {
-              "column": 38,
-              "line": 11,
-            },
-            "start": {
-              "column": 1,
-              "line": 11,
-            },
-          },
-        },
-      ],
-      "text": "Fill "Email" with {{params.email}}",
-      "textKey": "99b98ca7e73a3ac0",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Fill "Password" with ",
-        },
-        {
-          "kind": "secret",
-          "name": "SHOP_PASSWORD",
-        },
-      ],
-      "display": "Fill "Password" with {{secret.SHOP_PASSWORD}}",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 2,
-      "kind": "action",
-      "number": 3,
-      "origin": [
-        {
-          "file": "tests/sort-orders.test.md",
-          "line": 9,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 9,
-            },
-            "start": {
-              "column": 1,
-              "line": 9,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 12,
-          "number": 3,
-          "range": {
-            "end": {
-              "column": 44,
-              "line": 12,
-            },
-            "start": {
-              "column": 1,
-              "line": 12,
-            },
-          },
-        },
-      ],
-      "text": "Fill "Password" with {{params.password}}",
-      "textKey": "601e4c8b381cca3e",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "Click "Log in"",
-        },
-      ],
-      "display": "Click "Log in"",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 3,
-      "kind": "action",
-      "number": 4,
-      "origin": [
-        {
-          "file": "tests/sort-orders.test.md",
-          "line": 9,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 9,
-            },
-            "start": {
-              "column": 1,
-              "line": 9,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 13,
-          "number": 4,
-          "range": {
-            "end": {
-              "column": 18,
-              "line": 13,
-            },
-            "start": {
-              "column": 1,
-              "line": 13,
-            },
-          },
-        },
-      ],
-      "text": "Click "Log in"",
-      "textKey": "b47d7fbd6902a574",
-    },
-    {
-      "bound": [
-        {
-          "kind": "text",
-          "text": "the page heading is "Dashboard"",
-        },
-      ],
-      "display": "the page heading is "Dashboard"",
-      "flowPath": [
-        "tests/flows/login.test.md",
-      ],
-      "index": 4,
-      "kind": "expect",
-      "number": 5,
-      "origin": [
-        {
-          "file": "tests/sort-orders.test.md",
-          "line": 9,
-          "number": 1,
-          "range": {
-            "end": {
-              "column": 28,
-              "line": 9,
-            },
-            "start": {
-              "column": 1,
-              "line": 9,
-            },
-          },
-        },
-        {
-          "file": "tests/flows/login.test.md",
-          "line": 14,
-          "number": 5,
-          "range": {
-            "end": {
-              "column": 43,
-              "line": 14,
-            },
-            "start": {
-              "column": 1,
-              "line": 14,
-            },
-          },
-        },
-      ],
-      "text": "the page heading is "Dashboard"",
-      "textKey": "5c6d25b275ab76c6",
-    },
     {
       "bound": [
         {
@@ -4761,14 +3996,14 @@ exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and
       ],
       "display": "Go to the orders page",
       "flowPath": [],
-      "index": 5,
+      "index": 0,
       "kind": "action",
-      "number": 2,
+      "number": 1,
       "origin": [
         {
           "file": "tests/sort-orders.test.md",
           "line": 10,
-          "number": 2,
+          "number": 1,
           "range": {
             "end": {
               "column": 25,
@@ -4793,14 +4028,14 @@ exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and
       ],
       "display": "the orders table shows 5 orders",
       "flowPath": [],
-      "index": 6,
+      "index": 1,
       "kind": "expect",
-      "number": 3,
+      "number": 2,
       "origin": [
         {
           "file": "tests/sort-orders.test.md",
           "line": 11,
-          "number": 3,
+          "number": 2,
           "range": {
             "end": {
               "column": 43,
@@ -4825,14 +4060,14 @@ exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and
       ],
       "display": "Click the "Total" column header",
       "flowPath": [],
-      "index": 7,
+      "index": 2,
       "kind": "action",
-      "number": 4,
+      "number": 3,
       "origin": [
         {
           "file": "tests/sort-orders.test.md",
           "line": 12,
-          "number": 4,
+          "number": 3,
           "range": {
             "end": {
               "column": 35,
@@ -4857,14 +4092,14 @@ exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and
       ],
       "display": "the first order in the table is A-1002 ($8.90)",
       "flowPath": [],
-      "index": 8,
+      "index": 3,
       "kind": "expect",
-      "number": 5,
+      "number": 4,
       "origin": [
         {
           "file": "tests/sort-orders.test.md",
           "line": 13,
-          "number": 5,
+          "number": 4,
           "range": {
             "end": {
               "column": 58,
@@ -4889,14 +4124,14 @@ exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and
       ],
       "display": "Click the "Total" column header again",
       "flowPath": [],
-      "index": 9,
+      "index": 4,
       "kind": "action",
-      "number": 6,
+      "number": 5,
       "origin": [
         {
           "file": "tests/sort-orders.test.md",
           "line": 14,
-          "number": 6,
+          "number": 5,
           "range": {
             "end": {
               "column": 41,
@@ -4921,14 +4156,14 @@ exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and
       ],
       "display": "the first order in the table is A-1004 ($150.00)",
       "flowPath": [],
-      "index": 10,
+      "index": 5,
       "kind": "expect",
-      "number": 7,
+      "number": 6,
       "origin": [
         {
           "file": "tests/sort-orders.test.md",
           "line": 15,
-          "number": 7,
+          "number": 6,
           "range": {
             "end": {
               "column": 60,
@@ -4953,14 +4188,14 @@ exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and
       ],
       "display": "Click "Show refunded orders"",
       "flowPath": [],
-      "index": 11,
+      "index": 6,
       "kind": "action",
-      "number": 8,
+      "number": 7,
       "origin": [
         {
           "file": "tests/sort-orders.test.md",
           "line": 16,
-          "number": 8,
+          "number": 7,
           "range": {
             "end": {
               "column": 32,
@@ -4985,14 +4220,14 @@ exports[`Acme Shop tests > tests/sort-orders.test.md parses with no problems and
       ],
       "display": "the orders table shows 6 orders",
       "flowPath": [],
-      "index": 12,
+      "index": 7,
       "kind": "expect",
-      "number": 9,
+      "number": 8,
       "origin": [
         {
           "file": "tests/sort-orders.test.md",
           "line": 17,
-          "number": 9,
+          "number": 8,
           "range": {
             "end": {
               "column": 43,

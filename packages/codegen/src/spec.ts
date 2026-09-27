@@ -62,6 +62,20 @@ export interface SpecSource {
   expanded: ExpandedTest;
   /** The parsed test and flow files, by project-relative path. */
   specs: Readonly<Record<string, TestSpec>>;
+  /**
+   * The test's `auth: <profile>` login (SEC-3): the profile's flow, run on its
+   * own, and its recording. The spec logs in with it before the start page.
+   * Absent for a profile whose flow isn't recorded (the spec then skips).
+   */
+  profile?: {
+    name: string;
+    /** Project-relative path of the flow file. */
+    path: string;
+    expanded: ExpandedTest;
+    recording: CodegenRecording;
+    /** The profile's params, as templates (they replace the flow's defaults). */
+    params: Readonly<Record<string, string>>;
+  };
 }
 
 export interface GeneratedFile {
@@ -249,9 +263,10 @@ function jsonExpr(value: unknown): Expr {
 class SpecWriter {
   readonly needs: Needs = { fixtures: new Set(), imports: new Set(["expect", "test"]) };
   readonly taken = new Set(RESERVED);
-  readonly steps: ExpandedStep[];
-  readonly checks: Map<string, CodegenCheck>;
-  readonly recorded: Map<string, CodegenRecording["steps"][number]>;
+  // Swapped while writing a profile's login flow (its own steps and recording).
+  steps: ExpandedStep[];
+  checks: Map<string, CodegenCheck>;
+  recorded: Map<string, CodegenRecording["steps"][number]>;
   readonly marksNetwork: boolean;
 
   constructor(
@@ -822,6 +837,52 @@ class SpecWriter {
     ];
   }
 
+  /** `auth: <profile>`: the profile's login flow as one step, from the flow's own recording. */
+  profileLogin(profile: NonNullable<SpecSource["profile"]>): Stmt[] {
+    const flow = this.source.specs[profile.path];
+    const saved = { steps: this.steps, checks: this.checks, recorded: this.recorded };
+    this.steps = profile.expanded.steps;
+    this.checks = new Map(profile.recording.checks.map((check) => [check.textKey, check]));
+    this.recorded = new Map(profile.recording.steps.map((step) => [step.textKey, step]));
+    try {
+      const base = camel([
+        profile.path
+          .split("/")
+          .pop()
+          ?.replace(/\.test\.md$|\.md$/, "") ?? "login",
+      ]);
+      const dataVar = uniqueName(`${base}Data`, this.taken);
+      const paramsVar = uniqueName(`${base}Params`, this.taken);
+      const flowData: Record<string, Part[]> = {};
+      for (const [key, template] of Object.entries(flow?.frontmatter.data ?? {}))
+        flowData[key] = templateParts(template);
+      const dataScope = createScope(dataVar, flowData);
+      const params: Scope["params"] = {};
+      for (const [name, fallback] of Object.entries(flow?.frontmatter.params ?? {})) {
+        const given = profile.params[name];
+        if (given !== undefined)
+          params[name] = { parts: templateParts(parseTemplate(given)), scope: dataScope };
+        else if (fallback) params[name] = { parts: templateParts(fallback), scope: dataScope };
+      }
+      const scope: Scope = { ...dataScope, paramsVar, params };
+      const inner = this.items(flowTree(profile.expanded.steps), scope);
+      return [
+        ...this.declare(scope, "data"),
+        ...this.declare(scope, "params"),
+        comment(
+          `auth: ${profile.name}. ${brand.productName} reuses a saved session; this spec logs in each time.`,
+        ),
+        stmt(
+          awaited(
+            call("test.step", str(`auth: ${profile.name} (${profile.path})`), arrow(null, inner)),
+          ),
+        ),
+      ];
+    } finally {
+      Object.assign(this, saved);
+    }
+  }
+
   // ── the test ──
 
   hooks(): Stmt[] {
@@ -887,12 +948,15 @@ class SpecWriter {
     );
     const body: Stmt[] = [];
     if (test.timeout) body.push(stmt(call("test.setTimeout", num(test.timeout * 1000))));
+    const login: Stmt[] = [];
     if (test.auth && test.auth !== "none") {
-      body.push(
-        ...this.skip(
-          `Signs in with the auth profile "${test.auth}", which only ${brand.productName} can do`,
-        ),
-      );
+      if (this.source.profile) login.push(...this.profileLogin(this.source.profile));
+      else
+        body.push(
+          ...this.skip(
+            `Signs in with the auth profile "${test.auth}", whose login flow isn't recorded yet`,
+          ),
+        );
     }
     const start: Stmt[] = [];
     if (test.start) {
@@ -911,6 +975,7 @@ class SpecWriter {
     const data = this.declare(testScope, "data");
     body.push(...data);
     if (body.length > 0) body.push(blank);
+    if (login.length > 0) body.push(...login, blank);
     if (start.length > 0) body.push(...start, blank);
     body.push(...steps);
 

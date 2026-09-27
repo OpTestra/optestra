@@ -47,8 +47,14 @@ import type { BoundText, ExactOp, ExpandedStep } from "@testament/spec";
 import { runActionStep } from "../author/agent.js";
 import { authorCheck, exactCheck, runExactOp, runHook } from "../author/author.js";
 import { parseGuard } from "../author/guards.js";
+import { inboxMemberOfAction, prepareInbox } from "../author/inbox.js";
 import { DEFAULT_LIMITS } from "../author/types.js";
-import { type StepVariables, stepVariables } from "../author/variables.js";
+import {
+  inboxMemberOf,
+  type StepVariables,
+  stepVariables,
+  withInbox,
+} from "../author/variables.js";
 import { evaluateCheck } from "../checks/evaluate.js";
 import { runFixer } from "../heal/fixer.js";
 import { type HealPatch, HEAL_PATCH_VERSION, relocatedCommand } from "../heal/patch.js";
@@ -99,6 +105,7 @@ type CommandResult =
 const BLOCKING_REASONS = new Set([
   "disallowed_domain",
   "missing_secret",
+  "inbox_unavailable",
   "ai_unavailable",
   "budget_exceeded",
   "captcha",
@@ -131,8 +138,8 @@ const EMAIL_READ =
 
 /**
  * The step reads a test inbox: an `{{inbox.…}}` value, or plain words like "the
- * code from the verification email". Inboxes aren't wired into runs until
- * AUTH-1, so such a step can't run yet (blocked, not a failure, no AI spent).
+ * code from the verification email". Without a configured inbox such a step
+ * can't run (blocked `inbox_unavailable`, no AI spent).
  */
 export function readsInbox(step: ExpandedStep): string | null {
   const ref = step.bound.find((s) => s.kind === "unresolved" && s.ref.startsWith("inbox."));
@@ -172,6 +179,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
   let lastShot: { bytes: Uint8Array; path: string | null } | undefined;
   // The page where the attempt stopped (for the failure classifier).
   let observationsAt: Awaited<ReturnType<typeof pageInfo>> | undefined;
+  // Where a failed login stopped (it ran in its own session).
+  let preparedObservations: ReplayResult["observations"] | undefined;
 
   const recordedSteps = new Map((recording?.steps ?? []).map((s) => [s.key, s]));
   const recordedByText = new Map((recording?.steps ?? []).map((s) => [s.textKey, s]));
@@ -297,6 +306,35 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
             : block("setup_failed", message, null);
     break;
   }
+  // The test's login (auth: <profile>, SEC-3): after the setup hooks, before the start page.
+  if (!stop && options.prepare) {
+    const prepared = await options.prepare();
+    for (const call of prepared.modelCalls ?? []) emitCall(call);
+    for (const heal of prepared.heals ?? []) {
+      heals.push(heal);
+      healedWithoutAi++;
+      options.emit({ type: "heal.proposed", heal });
+    }
+    for (const line of prepared.logs ?? [])
+      options.emit({ type: "log", level: "info", message: line });
+    if (prepared.step) push(prepared.step);
+    if (prepared.observations && prepared.status !== "ready")
+      preparedObservations = prepared.observations;
+    if (prepared.status === "failed" && prepared.step)
+      stop = {
+        kind: "failed",
+        failure: {
+          decider: { kind: "step", attempt, stepIndex: prepared.step.index },
+          headline: redact(prepared.message),
+        },
+      };
+    else if (prepared.status === "blocked" || prepared.status === "failed")
+      stop = block(
+        prepared.reason ?? "login_failed",
+        prepared.message,
+        prepared.step?.index ?? null,
+      );
+  }
   if (!stop && test.start) {
     const url = test.start.display;
     const outcome = await session.act({ type: "goto", url });
@@ -381,21 +419,35 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     key: string,
     command: Command,
     commandIndex: number,
-    variables: StepVariables,
+    stepVariables: StepVariables,
   ): Promise<CommandResult> => {
+    // A recorded {{inbox.code}} / {{inbox.link}} (AUTH-1): typed by the harness from the email.
+    const recordedMember =
+      command.action.type === "fill"
+        ? inboxMemberOf(command.action.value)
+        : command.action.type === "goto"
+          ? inboxMemberOf(command.action.url)
+          : null;
+    const variables = recordedMember ? withInbox(stepVariables, recordedMember) : stepVariables;
     const bound = bindAction(command.action, variables);
     if (!bound.ok) {
-      if (bound.reason === "unresolved") {
-        const inbox = /\{\{inbox\./.test(bound.message);
+      if (bound.reason === "unresolved")
         return {
           kind: "blocked",
-          reason: inbox ? "inbox_unavailable" : "config_error",
-          message: inbox
-            ? `${bound.message} Test inboxes aren't wired into runs yet.`
-            : `${bound.message} Set it for this environment.`,
+          reason: "config_error",
+          message: `${bound.message} Set it for this environment.`,
         };
-      }
       return { kind: "failed", error: bound.message, post: null, notFound: false };
+    }
+    const member = inboxMemberOfAction(bound.action);
+    if (member) {
+      const read = await prepareInbox(options.inbox, test, step, member, {
+        signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
+      });
+      if (!read.ok)
+        return read.outcome === "blocked"
+          ? { kind: "blocked", reason: read.reason, message: read.message }
+          : { kind: "failed", error: read.message, post: null, notFound: false };
     }
     const target = targetOf(command.action);
     const fingerprint = command.fingerprint;
@@ -1153,7 +1205,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
           headline: `${where(step)}: ${result.error}`,
         },
       };
-    } else if (!recorded && inbox) {
+    } else if (!recorded && inbox && !options.inbox) {
       result = {
         ...base,
         status: "blocked",
@@ -1162,11 +1214,11 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
         postState: null,
         durationMs: Date.now() - t0,
         settledMs: null,
-        error: `This step reads ${inbox} from a test inbox; inboxes aren't wired into runs yet.`,
+        error: `This step reads ${inbox} from a test inbox, and no inbox is configured.`,
       };
       stop = block(
         "inbox_unavailable",
-        `${where(step)} "${step.text}" reads ${inbox} from a test inbox, and inboxes aren't wired into runs yet.`,
+        `${where(step)} "${step.text}" reads ${inbox} from a test inbox, but no inbox is configured (inbox.provider: none).`,
         step.index,
       );
     } else if (!recorded) {
@@ -1243,6 +1295,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
                   guardLines: test.guards.map((g) => g.display),
                   signal: controller.signal,
                   tags: { test: test.id },
+                  inbox: { runtime: options.inbox, test },
                 },
                 step,
                 variables,
@@ -1459,7 +1512,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
   }
 
   const status = !stop ? "passed" : stop.kind === "blocked" ? "blocked" : "failed";
-  const observations = {
+  const observations = preparedObservations ?? {
     requests: (observationsAt?.requests ?? toObserved(lastOutcome)).slice(0, 30),
     page: observationsAt ? observationsAt.page : null,
     pageIsError: observationsAt?.isError ?? null,

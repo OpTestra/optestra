@@ -89,6 +89,14 @@ These hold by construction; each has a test that fails if it breaks
    context, and no persistent profile is ever used. No cookies or storage are
    shared between sessions unless `storageState` is passed in explicitly.
    Permissions are empty.
+
+   Saved logins (SEC-3, AUTH-1) are the one way state moves between sessions,
+   and never through the agent: `await session.storageState()` exports the
+   cookies and local storage after a login flow, and
+   `await session.useStorageState(state)` replaces a session's state (e.g. after
+   its setup hooks ran). Both register every value of 6 characters or more with
+   the session's redactor (`[session]`), so evidence, outcomes and messages
+   can't show them; the caller must never log the state itself.
 6. **Nothing is thrown for app or network trouble.** Refusals, timeouts,
    missing elements, crashes and closed pages come back as outcomes.
    `openSession` and `launchBrowser` throw `BrowserSetupError` (with a `fix`)
@@ -118,7 +126,7 @@ that matches nothing, or matches several elements, gives `not_found`.
 
 | Action | Fields |
 |---|---|
-| `goto` | `url` (resolved against `baseUrl`; allowlisted; http(s) or `about:blank`) |
+| `goto` | `url` (resolved against `baseUrl`; allowlisted; http(s) or `about:blank`), or `url: { secret: NAME }`: a URL held by a secret (a magic link from a test inbox), opened only on the allowlist and the secret's domains, inside the paused trace |
 | `click`, `dblclick`, `hover`, `check`, `uncheck` | `target` |
 | `fill` | `target`, `value: string \| { secret: NAME }` |
 | `select` | `target`, `option` (value or label, or a list) |
@@ -134,7 +142,7 @@ that matches nothing, or matches several elements, gives `not_found`.
 interface ActionOutcome {
   action: Action;            // echoed, scrubbed (secret fills show { secret: NAME })
   status: "ok" | "refused" | "not_found" | "timeout" | "error";
-  reason?: "disallowed_domain" | "missing_secret" | "upload_not_allowed" | "file_outside_folder" | "invalid_action";
+  reason?: "disallowed_domain" | "missing_secret" | "secret_unavailable" | "upload_not_allowed" | "file_outside_folder" | "invalid_action";
   message?: string;
   ms: number;                // doing the action
   settledMs: number;         // settling afterwards
@@ -154,7 +162,9 @@ interface PostState {
 ```
 
 `disallowed_domain` and `missing_secret` are the contract's `BlockedReason`
-values. The other reasons are the agent's own mistakes. `changed: false` is the
+values. `secret_unavailable` means a dynamic secret (a TOTP code, an inbox
+code or link) couldn't produce its value; the message says why. The other
+reasons are the agent's own mistakes. `changed: false` is the
 VER-5 signal: the shop's `broken-silent-click` variant gives exactly that for
 "Create project". Focus moving is not counted as a change.
 

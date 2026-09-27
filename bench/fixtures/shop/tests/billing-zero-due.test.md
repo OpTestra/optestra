@@ -1,13 +1,13 @@
 ---
 name: A trial costs nothing today
 tags: [payments]
-start: /login
+start: /dashboard
+auth: ada
 setup:
   - request: POST /__test/seed
     body: { trial: pro }
 ---
 
-1. Use: flows/login.test.md
-2. Go to the billing page
-3. Expect: the page shows "Pro plan"
-4. Expect: the page shows "$0.00 due today"
+1. Go to the billing page
+2. Expect: the page shows "Pro plan"
+3. Expect: the page shows "$0.00 due today"

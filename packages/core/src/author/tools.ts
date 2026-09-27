@@ -4,7 +4,8 @@ import { z } from "zod";
 // The planner's tools mirror LOOP-0's closed action set exactly, plus three
 // control tools. Schemas are small and explicit so cheap models can use them
 // (MOD-9). Targets are refs from the latest observation; values are literals or
-// `{{ns.name}}` templates of the step's variables.
+// `{{ns.name}}` templates of the step's variables. read_inbox (AUTH-1) returns
+// only a handle to an email's code or link, never the value.
 
 const ref = { type: "string", description: "Element ref from the page snapshot, e.g. e12." };
 const object = (properties: Record<string, unknown>, required: string[] = []) => ({
@@ -81,6 +82,15 @@ export const PLANNER_TOOLS: ToolDefinition[] = [
     parameters: object({ text: { type: "string" }, ref, seconds: { type: "number" } }),
   },
   {
+    name: "read_inbox",
+    description:
+      "Wait for the email the app sent to the test's address and get its verification code or link as a handle ({{inbox.code}} / {{inbox.link}}). The value is never shown: fill {{inbox.code}} into the field, or goto {{inbox.link}}. to: optional, the address template, e.g. {{data.email}}.",
+    parameters: object(
+      { want: { type: "string", enum: ["code", "link"] }, to: { type: "string" } },
+      ["want"],
+    ),
+  },
+  {
     name: "look",
     description:
       "Get a screenshot of the page with the next snapshot, when the snapshot isn't enough.",
@@ -131,6 +141,10 @@ export const ToolCallSchema = z.discriminatedUnion("name", [
       ref: refField.optional(),
       seconds: z.number().positive().max(30).optional(),
     }),
+  }),
+  z.object({
+    name: z.literal("read_inbox"),
+    input: z.object({ want: z.enum(["code", "link"]), to: z.string().min(1).optional() }),
   }),
   z.object({ name: z.literal("look"), input: z.object({}).loose() }),
   z.object({ name: z.literal("step_done"), input: z.object({ visible_effect: z.string() }) }),

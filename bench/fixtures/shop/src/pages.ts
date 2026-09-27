@@ -235,6 +235,25 @@ ${field(s, { id: s.id.loginPassword, name: "password", label: "Password", type: 
   });
 }
 
+/** Two-factor login: the authentication code from an authenticator app (TOTP). */
+export function loginCodePage(
+  ctx: PageContext,
+  state: { token: string; next: string; error?: string },
+): string {
+  const { s } = ctx;
+  return layout(ctx, {
+    title: "Two-factor authentication",
+    body: `<h1>Two-factor authentication</h1>
+<p>Enter the 6-digit code from your authenticator app.</p>
+<form class="${s.cls.panel}" method="post" action="/login/code" novalidate>
+<input type="hidden" name="token" value="${esc(state.token)}">
+<input type="hidden" name="next" value="${esc(state.next)}">
+${field(s, { id: "login-code", name: "code", label: "Authentication code", error: state.error, autocomplete: "one-time-code" })}
+<button type="submit" class="${s.cls.button} ${s.cls.primary}">Verify</button>
+</form>`,
+  });
+}
+
 export function dashboardPage(ctx: PageContext, welcomePlan: Plan | undefined): string {
   const { s, bugs } = ctx;
   const hook = bugs.createButtonUnwired ? "" : ' data-js="open-create"';

@@ -78,6 +78,13 @@ export const test = base.extend<{ spec: Spec }>({
       },
       filePath: (relative) => `${TESTS_DIR}${relative}`,
     };
+    // `auth: <profile>` (SEC-3): the test starts logged in. The reference logs in as
+    // step "0. auth: ada", so a broken login is a failure at step 0, not a skipped test.
+    const auth = file.frontmatter.auth;
+    if (typeof auth === "string" && auth !== "none") {
+      if (auth !== "ada") throw new Error(`${file.name}.test.md: unknown auth profile ${auth}`);
+      await test.step(`0. auth: ${auth} (flows/login.test.md)`, () => useLogin(page));
+    }
     await page.goto(file.start);
     await use(spec);
     // A pass only counts if every step of the .test.md was mirrored, in order.
