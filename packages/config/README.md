@@ -117,6 +117,17 @@ value, so the rest of the file stays byte-identical. Adding or removing keys,
 or replacing lists, goes through the YAML document model: comments and key order
 are kept, but spacing in the file may be normalised.
 
+## Creating a project
+
+`createProject(dir, { name, target, baseUrl?, app?, testsDir?, envNames? })`
+writes a commented project file, `.env.example` (listing `envNames` without
+values) and `.gitignore` lines. It never overwrites a file and only appends
+missing `.gitignore` lines, so running it twice changes nothing. The lines
+ignore `.env`, `.env.*` (but not `.env.example`) and the local data folder,
+and re-include `/<testsDir>/<data dir>/` (recordings and generated specs are
+committed) except its `authoring/` folder. `testament init` and the apps' "New
+project" use it.
+
 ## Adding a section (later phases)
 
 ```ts

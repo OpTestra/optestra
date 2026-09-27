@@ -19,7 +19,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/recording` | The recording format: per test, the commands for each step (locators, fingerprints, templates, learned waits) and the typed checks with their summaries (`describeCheck`) and sanity results; keys (`routeOf`, `stepKey`, `RECORDING_EPOCH`). Browser-safe + `/node` reader/writer | LOOP-1, LOOP-2 |
 | `packages/codegen` | Generated Playwright specs: a recording → a plain `@playwright/test` spec next to the test, plus the shared fixtures module (allowlist route, secrets, values, network and inbox helpers) and Playwright config; hand-edit protection; `generateProject` in `/node`. The output imports nothing from the engine | LOOP-3 |
 | `packages/core` | The engine: run, record, replay, heal, verdicts. Today the author (`authorTest`: agent loop, guards, VER-5 check, authoring report; `/node` `saveAuthoring`) and the check compiler (`src/checks/`: phrase rules, AI fallback, sanity test, soft judgments); re-exports the redacting `logger` | LOOP-1 onward |
-| `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
+| `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users; `init`, `doctor` (also `runDoctor()` from the package entry, for the apps' Setup check) and `export` | engine phases, CLI-0 |
 | `packages/mcp` | MCP server for coding agents | agents phase |
 | `packages/action` | GitHub Action (`action.yml`) | GitHub/CI phase |
 | `bench/fixtures/shop` | Acme Shop (`@testament/fixture-shop`, private): the demo project and first Bench fixture, with variants, plain-English tests, gold `manifest.yaml` and a Playwright reference suite. See `bench/README.md` | FND-4 |

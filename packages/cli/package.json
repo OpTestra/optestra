@@ -30,13 +30,17 @@
     "@testament/spec": "workspace:^",
     "commander": "^15.0.0"
   },
+  "devDependencies": {
+    "@testament/fixture-shop": "workspace:*"
+  },
   "files": [
     "bin",
     "dist",
     "!dist/**/*.test.*"
   ],
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "test:browser": "tsc -b ../../bench/fixtures/shop . && vitest run --config vitest.config.ts"
   },
   "engines": {
     "node": ">=24"

@@ -12,7 +12,7 @@ blocks are the exception: LOOP-4 runs those through this spec.
 | Import | Use |
 |---|---|
 | `@testament/codegen` | `generateSpec(recording, { expanded, specs })`, `generateSupportFiles(environment)`, `readCodegenRecording`, `fileState`, `withHeader` |
-| `@testament/codegen/node` | `generateProject({ projectDir, tests?, environment?, force?, check? })`, `generateAfterRecording(projectDir, testPath)` |
+| `@testament/codegen/node` | `generateProject({ projectDir, tests?, environment?, force?, check?, out? })`, `generateAfterRecording(projectDir, testPath)`. `out: { dir, label }` writes elsewhere (the CLI's `export`) |
 
 Node only: the runtime templates in `runtime/` are read from disk.
 
