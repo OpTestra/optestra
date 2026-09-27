@@ -67,6 +67,9 @@ jobs:
           MAILPIT_SMTP: 127.0.0.1:1025
           # A missing Mailpit fails the auth e2e here instead of skipping it.
           REQUIRE_MAILPIT: "1"
+      # LOOP-4: `run` on every shop variant from the committed recordings, scored
+      # against the manifest, plus replay vs generated-spec equivalence.
+      - run: pnpm bench:replay
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@v4

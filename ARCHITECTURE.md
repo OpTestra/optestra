@@ -19,7 +19,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/recording` | The recording format: per test, the commands for each step (locators, fingerprints, templates, learned waits) and the typed checks with their summaries (`describeCheck`) and sanity results; keys (`routeOf`, `stepKey`, `RECORDING_EPOCH`). Browser-safe + `/node` reader/writer | LOOP-1, LOOP-2 |
 | `packages/codegen` | Generated Playwright specs: a recording → a plain `@playwright/test` spec next to the test, plus the shared fixtures module (allowlist route, secrets, values, network and inbox helpers) and Playwright config; hand-edit protection; `generateProject` in `/node`. The output imports nothing from the engine | LOOP-3 |
 | `packages/report` | What people read from a run folder: the offline HTML report, JUnit XML, the versioned JSON summary for agents (with JSON Schema), the Markdown summary for the PR comment and job summary, and the quiet terminal formatter. Pure functions of the contract documents (browser-safe) + `/node` (read a run folder, write files, latest run, colour, `openFile`). Look from one tokens file | EVD-0 |
-| `packages/core` | The engine: run, record, replay, heal, verdicts. Today the author (`authorTest`: agent loop, guards, VER-5 check, authoring report; `/node` `saveAuthoring`) and the check compiler (`src/checks/`: phrase rules, AI fallback, sanity test, soft judgments); re-exports the redacting `logger` | LOOP-1 onward |
+| `packages/core` | The engine: run, record, replay, heal, verdicts. The author (`authorTest`: agent loop, guards, VER-5 check, authoring report; `/node` `saveAuthoring`), the check compiler (`src/checks/`: phrase rules, AI fallback, sanity test, soft judgments) and the runner (`src/run/`: `replayAttempt`, `decideVerdict`; `/node` `runTests` → a contract run folder); re-exports the redacting `logger` | LOOP-1 onward |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users; `init`, `doctor` (also `runDoctor()` from the package entry, for the apps' Setup check) and `export` | engine phases, CLI-0 |
 | `packages/mcp` | MCP server for coding agents | agents phase |
 | `packages/action` | GitHub Action (`action.yml`) | GitHub/CI phase |
@@ -40,7 +40,7 @@ cli ──► core ──► config ──► brand
  │                its output imports only @playwright/test)
  ├──► report ──► contract, brand     (browser-safe renderers; never imports core, browser,
  │                models or decide; reads documents, never artifact contents)
- core ──► browser, models, spec, recording, contract, config
+ core ──► browser, models, spec, recording, contract, config, decide, codegen
  └──► contract                     (cli reads run folders through the contract)
 mcp, action ──► core, contract (later)
 contract ──► zod only (bottom of the graph)
@@ -120,7 +120,8 @@ contract ──► zod only (bottom of the graph)
   `openSession({ browser, baseUrl, allowedDomains, secrets, device, evidence, … })`
   once per test, then `observe()` → `renderForModel()` for the model,
   `act(action)` → `ActionOutcome` (status, reason, post-state, settle time),
-  `candidates(ref)` for fingerprints, `screenshot()` and `close()` → scrubbed
+  `candidates(ref)` for fingerprints (LOOP-4: `inspect(locator)` / `factsOf(ref)` for
+  replay validation), `screenshot()` and `close()` → scrubbed
   evidence files for `RunWriter.writeArtifact`. Refusals map to the contract's
   `disallowed_domain` / `missing_secret` blocked reasons. CLI `install-browsers`
   and `snapshot` (debug). Real-browser tests run in `bench:fixtures:test` (CI job
@@ -227,6 +228,24 @@ contract ──► zod only (bottom of the graph)
   CLI `report [runDir] [--out] [--open]` and `results --junit/--json [file]/--markdown`.
   The CI `fixtures` job runs the report in Chromium (axe, no network, JS off).
   See `packages/report/README.md`.
+
+- LOOP-4 (done): the runner in `packages/core/src/run/`. `runTests({ projectDir,
+  tests, tags, grep, environment, mode, retries, workers, budgetUsd, onEvent })`
+  (`@testament/core/node`) runs a project: one browser per worker, one session per
+  attempt, setup hooks, the start page, then `replayAttempt` per step: bind the
+  recorded command, validate the element against its fingerprint
+  (`decideSameElement`, REP-5), act, check the recorded post-state (VER-5), and on
+  a miss the DEC-3 ladder (no-AI `replay_fallback` / `refind` become pending heal
+  proposals; `call_fixer` is reported as "needs an AI heal" until HEAL). Steps
+  without a recording are authored in place (normal mode), pending checks
+  compiled in place; code-step tests run through their generated spec. Verdicts
+  come from `decideVerdict` (code), causes from `classifyFailure`, groups from
+  `groupFailures`; evidence (screenshots, video + WebVTT chapters, trace, console,
+  HAR) and events go through the RunWriter. The harness gained `inspect(locator)`,
+  `factsOf(ref)`, `post.reordered` and a table's sort state in observations. CLI
+  `run`. `pnpm bench:replay` scores every shop variant against the manifest and
+  checks replay/spec equivalence (CI `fixtures`). See "How a run works" in
+  `packages/core/README.md`.
 
 ## Results contract (`packages/contract`)
 

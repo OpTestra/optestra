@@ -12,7 +12,7 @@
     "model": "claude-code/sonnet",
     "promptVersion": "planner-v2"
   },
-  "updatedAt": "2026-09-26T17:48:38.448Z",
+  "updatedAt": "2026-09-27T09:17:16.114Z",
   "steps": [
     {
       "key": "1082882d40e5ab53",
@@ -511,10 +511,28 @@
       "text": "the page heading is \"Dashboard\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Dashboard"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:27:58.211Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Dashboard'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:15.545Z"
     },
     {
       "key": "6e90a80a89e956ad",
@@ -522,10 +540,23 @@
       "text": "the URL contains /dashboard",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "url",
+        "match": "contains",
+        "value": "/dashboard"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:27:58.211Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the URL contains '/dashboard'",
+      "rule": "url",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:15.553Z"
     },
     {
       "key": "164659ba40bce75e",
@@ -533,10 +564,28 @@
       "text": "the page heading is \"Acme Shop\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Acme Shop"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:27:58.211Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Acme Shop'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:16.058Z"
     }
   ]
 }

@@ -12,7 +12,7 @@
     "model": "claude-code/sonnet",
     "promptVersion": "planner-v2"
   },
-  "updatedAt": "2026-09-26T17:53:29.172Z",
+  "updatedAt": "2026-09-27T09:17:34.696Z",
   "steps": [
     {
       "key": "dce20d0fc772664c",
@@ -293,10 +293,27 @@
       "text": "the text \"Enter a valid email address, like name@example.com.\" is shown",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "body"
+        },
+        "match": "contains",
+        "value": "Enter a valid email address, like name@example.com."
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:31:31.494Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the page shows 'Enter a valid email address, like name@example.com.'",
+      "rule": "visible-text",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:34.619Z"
     },
     {
       "key": "931e26e1db57d6a6",
@@ -304,10 +321,27 @@
       "text": "the text \"Password must be at least 8 characters.\" is shown",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "body"
+        },
+        "match": "contains",
+        "value": "Password must be at least 8 characters."
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:31:31.494Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the page shows 'Password must be at least 8 characters.'",
+      "rule": "visible-text",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:34.634Z"
     },
     {
       "key": "53cbf47e7101e8eb",
@@ -315,10 +349,29 @@
       "text": "the page heading is \"Create your account\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Create your account"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:31:31.494Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Create your account'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "skipped",
+          "note": "The preceding action didn't change what this check looks at."
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:34.648Z"
     }
   ]
 }

@@ -84,6 +84,7 @@ export function expectPostOf(
       return request;
     });
   if (requests.length) expect.requests = requests;
+  if (post.reordered) expect.reordered = true;
   return expect;
 }
 

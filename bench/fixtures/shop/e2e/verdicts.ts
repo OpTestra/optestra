@@ -25,8 +25,9 @@ export function outcomeOf(attempts: readonly Attempt[]): Outcome {
   if (first.passed) return { verdict: "passed", step: null, failedStep: null };
   const failed = { step: stepNumber(first.failedStep), failedStep: first.failedStep };
   if (attempts.some((attempt) => attempt.passed)) return { verdict: "flaky", ...failed };
-  const blocked = /^\d+\.\s+Use:/.test(first.failedStep ?? "");
-  return { verdict: blocked ? "blocked" : "failed", ...failed };
+  // A failing `Use:` flow (e.g. a broken login) is a failure at the Use: step, never
+  // blocked: blocked would turn a broken login into a neutral CI result.
+  return { verdict: "failed", ...failed };
 }
 
 /** Null when the outcome matches the gold answer, else what is wrong. */

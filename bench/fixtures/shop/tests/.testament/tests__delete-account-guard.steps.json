@@ -12,7 +12,7 @@
     "model": "claude-code/sonnet",
     "promptVersion": "planner-v2"
   },
-  "updatedAt": "2026-09-26T17:52:30.680Z",
+  "updatedAt": "2026-09-27T09:17:13.190Z",
   "steps": [
     {
       "key": "ba8ec515221832df",
@@ -706,10 +706,28 @@
       "text": "the page heading is \"Dashboard\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Dashboard"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:30:38.638Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Dashboard'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:11.773Z"
     },
     {
       "key": "bf8c7472016b7022",
@@ -717,10 +735,28 @@
       "text": "a \"Delete account\" button is shown",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "element_state",
+        "target": {
+          "kind": "role",
+          "role": "button",
+          "name": "Delete account",
+          "exact": true
+        },
+        "state": "visible"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:30:38.638Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the button 'Delete account' is visible",
+      "rule": "element",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:12.276Z"
     },
     {
       "key": "1f632852116d6420",
@@ -728,10 +764,27 @@
       "text": "a message says \"Profile saved\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "status"
+        },
+        "match": "contains",
+        "value": "Profile saved"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:30:38.638Z"
+      "generatedBy": "rules",
+      "summary": "Checked that a status message contains 'Profile saved'",
+      "rule": "message",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:13.129Z"
     }
   ]
 }

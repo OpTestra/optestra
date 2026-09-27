@@ -15,12 +15,18 @@ function exactOption(spec: Spec): Array<[string, Expr]> {
 function within(scope: Expr, spec: Spec): Expr {
   switch (spec.kind) {
     case "role": {
-      if (spec.name === undefined) return method(scope, "getByRole", str(spec.role));
+      // A heading level (checks: "the page heading" is the h1) narrows it like the harness does.
+      const level: Array<[string, Expr]> =
+        "level" in spec && spec.level !== undefined ? [["level", num(spec.level)]] : [];
+      if (spec.name === undefined)
+        return level.length > 0
+          ? method(scope, "getByRole", str(spec.role), obj(level))
+          : method(scope, "getByRole", str(spec.role));
       return method(
         scope,
         "getByRole",
         str(spec.role),
-        obj([["name", str(spec.name)], ...exactOption(spec)]),
+        obj([["name", str(spec.name)], ...exactOption(spec), ...level]),
       );
     }
     case "label":

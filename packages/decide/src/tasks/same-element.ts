@@ -245,6 +245,24 @@ export const sameElement = defineTask({
       return answer(true, 0.95, "same unique test id and role");
     if (s.nameSameMeaning && s.anchorSame && clean)
       return answer(true, 0.9, "same role, name and section");
+    // No section on either side (a lone field in a small frame): the same name and
+    // key attributes, in the same place (or, when it moved, with two key attributes
+    // agreeing) say it all; nothing may disagree.
+    const noSection = !input.recorded.anchorText && !input.candidate.anchorText;
+    const attributes = s.signals.find((x) => x.signal === "attributes")?.score ?? null;
+    const agreeing = data.keyAttributes.filter((key) => {
+      const value = input.recorded.attributes[key];
+      return value !== undefined && value === input.candidate.attributes[key];
+    }).length;
+    if (
+      noSection &&
+      s.name === "equal" &&
+      clean &&
+      !s.ambiguous &&
+      attributes === 1 &&
+      (s.near || agreeing >= 2)
+    )
+      return answer(true, 0.88, "same role, name and key attributes, no section on either side");
     // In between: never a guess. The best view goes along as evidence.
     return { answers: { same: s.combined > 0 }, confidence: 0.5, evidence };
   },

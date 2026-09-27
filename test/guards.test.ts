@@ -144,6 +144,8 @@ describe("engine guards", () => {
   const SPAWN_ALLOWED = [
     "packages/brand/src/run.ts",
     "packages/browser/src/launch.ts",
+    // Tests with code steps run through their generated spec: Node + Playwright Test's CLI (LOOP-4).
+    "packages/core/src/run/spec-run.ts",
     "packages/models/src/delegated/process.ts",
     // `report --open`: the system opener with the report path, no shell.
     "packages/report/src/node/open.ts",
@@ -167,6 +169,11 @@ describe("engine guards", () => {
       'spawn(command, [path], { detached: true, stdio: "ignore", shell: false });',
     );
     expect([...opener.matchAll(/spawn\(/g)]).toHaveLength(1);
+    // The spec runner starts only Node itself, without a shell.
+    const spec = readFileSync(join(root, "packages/core/src/run/spec-run.ts"), "utf8");
+    expect([...spec.matchAll(/spawn\(/g)]).toHaveLength(1);
+    expect(spec).toContain("spawn(process.execPath, args,");
+    expect(spec).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
   });
 
   it("keeps fixtures out of engine packages (tests may use them)", () => {

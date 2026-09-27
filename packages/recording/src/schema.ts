@@ -208,6 +208,8 @@ export const ExpectPostSchema = z.object({
   requests: z
     .array(z.object({ method: z.string(), route: z.string(), status: z.number().int().optional() }))
     .optional(),
+  /** The same elements as before, in another order (a table sort): replay expects a reorder too. */
+  reordered: z.literal(true).optional(),
 });
 export type ExpectPost = z.infer<typeof ExpectPostSchema>;
 

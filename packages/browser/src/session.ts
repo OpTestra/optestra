@@ -38,7 +38,13 @@ import {
   toFacts,
   toLocator,
 } from "./locators.js";
-import { type AriaNode, buildObservation, diffElements, type RefTarget } from "./observe.js";
+import {
+  type AriaNode,
+  buildObservation,
+  diffElements,
+  type RefTarget,
+  reorderedElements,
+} from "./observe.js";
 import { type RefusalProxy, startRefusalProxy } from "./refusal-proxy.js";
 import { ActivityTracker, DEFAULT_SETTLE, mutationScript } from "./settle.js";
 import type {
@@ -48,8 +54,10 @@ import type {
   CandidatesResult,
   CloseResult,
   DialogSummary,
+  ElementFacts,
   HookRequest,
   HookResult,
+  InspectResult,
   LocatorCandidate,
   LocatorSpec,
   Observation,
@@ -474,6 +482,7 @@ export class Session {
       maxElements: this.#options.maxElements ?? MAX_ELEMENTS,
       redact: this.#redact,
       frameInfo: (ariaRef) => snapshot.frames.get(ariaRef) ?? { url: "", title: "" },
+      sortStates: snapshot.sorts,
     });
     this.#refs = built.refs;
     this.#observation = built.observation;
@@ -504,6 +513,85 @@ export class Session {
     } catch {
       return none;
     }
+  }
+
+  /**
+   * What a locator finds right now: how many elements, and the facts of the one
+   * element when it is unique (LOOP-4 validates them against the recorded
+   * fingerprint before acting). Read-only; not an action.
+   */
+  async inspect(target: LocatorSpec): Promise<InspectResult> {
+    if (this.#unusable())
+      return { status: "error", matches: 0, facts: null, message: "The page is closed." };
+    let locator: Locator;
+    try {
+      locator = toLocator(this.#page, target);
+    } catch (error) {
+      return {
+        status: "error",
+        matches: 0,
+        facts: null,
+        message: errorResult(error).message ?? "",
+      };
+    }
+    let matches: number;
+    try {
+      matches = await locator.count();
+    } catch {
+      matches = 0;
+    }
+    if (matches === 0) return { status: "not_found", matches, facts: null };
+    if (matches > 1) return { status: "multiple", matches, facts: null };
+    try {
+      const facts = await this.#factsOfLocator(locator, target.frame ?? [], undefined);
+      return facts
+        ? { status: "ok", matches, facts }
+        : { status: "not_found", matches: 0, facts: null };
+    } catch (error) {
+      return { status: "error", matches, facts: null, message: errorResult(error).message ?? "" };
+    }
+  }
+
+  /**
+   * Facts of an element from the latest observation, without ranking locators
+   * (cheaper than `candidates`; LOOP-4 uses it to re-find an element over the page).
+   */
+  async factsOf(ref: string): Promise<ElementFacts | null> {
+    const target = this.#refs.get(ref);
+    if (!target || this.#unusable()) return null;
+    try {
+      const locator = this.#page.locator(`aria-ref=${target.ariaRef}`);
+      if ((await locator.count()) !== 1) return null;
+      const framePath = await this.#framePath(target.frame, 0);
+      return await this.#factsOfLocator(locator, framePath, target.element);
+    } catch {
+      return null;
+    }
+  }
+
+  async #factsOfLocator(
+    locator: Locator,
+    framePath: readonly LocatorSpec[],
+    element: ObservedElement | undefined,
+  ): Promise<ElementFacts | null> {
+    const raw = this.#scrubFacts(
+      await locator.evaluate(readFacts, FACT_ATTRIBUTES, { timeout: ACTION_TIMEOUT_MS }),
+    );
+    const box = await locator.boundingBox({ timeout: ACTION_TIMEOUT_MS }).catch(() => null);
+    const identity = element ?? (await this.#identityOf(locator));
+    return toFacts(identity, raw, [...framePath], box);
+  }
+
+  /** Role and accessible name of an element found by a locator (from its own aria snapshot). */
+  async #identityOf(locator: Locator): Promise<{ role: string; name: string }> {
+    const nodes = (await locator
+      .ariaSnapshotJSON({ mode: "ai", timeout: ACTION_TIMEOUT_MS })
+      .catch(() => [])) as unknown as Array<AriaNode | string>;
+    const first = nodes.find((n): n is AriaNode => typeof n !== "string");
+    return {
+      role: first?.role ?? "generic",
+      name: this.#redact((first?.name ?? "").replace(/\s+/g, " ").trim()),
+    };
   }
 
   /** Performs one action from the closed set and reports what changed. */
@@ -572,6 +660,7 @@ export class Session {
         requests.some((r) => r.status !== "refused") ||
         dialogs.length > 0 ||
         popups.length > 0,
+      reordered: added.length === 0 && removed.length === 0 && reorderedElements(before, after),
     };
     const outcome: ActionOutcome = {
       action: this.#scrubAction(action),
@@ -698,6 +787,7 @@ export class Session {
         nodes: Array<AriaNode | string>;
         title: string;
         frames: Map<string, { url: string; title: string }>;
+        sorts: Map<string, string>;
       }
     | undefined
   > {
@@ -724,7 +814,7 @@ export class Session {
       };
       for (const node of nodes) await visit(node);
       const title = await this.#page.title().catch(() => "");
-      return { nodes, title, frames };
+      return { nodes, title, frames, sorts: await this.#sortStates() };
     } catch {
       return undefined;
     }
@@ -745,10 +835,26 @@ export class Session {
         maxElements: 2000,
         redact: this.#redact,
         frameInfo: () => ({ url: "", title: "" }),
+        sortStates: await this.#sortStates(),
       }).observation.elements;
     } catch {
       return undefined;
     }
+  }
+
+  /** `aria-sort` of the page's sortable headers by their text; the aria snapshot doesn't carry it. */
+  async #sortStates(): Promise<Map<string, string>> {
+    const pairs = await this.#page
+      .evaluate(() =>
+        Array.from(document.querySelectorAll("[aria-sort]")).map((element) => [
+          ((element as HTMLElement).innerText ?? element.textContent ?? "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          element.getAttribute("aria-sort") ?? "",
+        ]),
+      )
+      .catch(() => [] as string[][]);
+    return new Map(pairs.map(([name, sort]) => [this.#redact(name ?? ""), sort ?? ""]));
   }
 
   async #framePath(frame: number, depth: number): Promise<LocatorSpec[]> {

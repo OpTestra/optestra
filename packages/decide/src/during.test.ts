@@ -47,6 +47,60 @@ const live = (
 });
 
 describe("same_element rules", () => {
+  describe("a lone field with no section on either side (the card frame)", () => {
+    const frame = [{ kind: "title", text: "Secure card payment", exact: true }];
+    const field: FingerprintLike = {
+      role: "textbox",
+      name: "Card number",
+      tag: "input",
+      attributes: { id: "card-number", name: "number", placeholder: "1234 1234 1234 1234" },
+      anchorText: "",
+      framePath: frame,
+      box: { x: 586, y: 268, width: 386, height: 39 },
+    };
+    const seen = (patch: Partial<ElementFactsLike> = {}): LiveCandidate => ({
+      facts: { ...field, text: "", ...patch } as ElementFactsLike,
+      foundBy: "primary",
+      matches: 1,
+    });
+
+    it("same: the same name and key attributes, in the same place", async () => {
+      expect((await decideSameElement(field, seen())).same).toBe(true);
+    });
+
+    it("same: moved by the layout, with two key attributes agreeing", async () => {
+      expect(
+        (await decideSameElement(field, seen({ box: { x: 586, y: 480, width: 386, height: 39 } })))
+          .same,
+      ).toBe(true);
+    });
+
+    it("escalates: moved, and only one key attribute to go by", async () => {
+      const one = { ...field, attributes: { name: "number" } };
+      const answer = await decideSameElement(one, {
+        ...seen({ box: { x: 586, y: 480, width: 386, height: 39 } }),
+        facts: {
+          ...seen().facts,
+          attributes: { name: "number" },
+          box: { x: 586, y: 480, width: 386, height: 39 },
+        },
+      });
+      expect(answer.same).toBeNull();
+    });
+
+    it("escalates: a different placeholder or a second match", async () => {
+      expect(
+        (
+          await decideSameElement(
+            field,
+            seen({ attributes: { ...field.attributes, placeholder: "MM / YY" } }),
+          )
+        ).same,
+      ).toBeNull();
+      expect((await decideSameElement(field, { ...seen(), matches: 2 })).same).toBeNull();
+    });
+  });
+
   it("same: role, a reworded name and the same section (a cosmetic change)", async () => {
     const answer = await decideSameElement(recorded, live());
     expect(answer).toMatchObject({ same: true, decided: true, source: "rules" });

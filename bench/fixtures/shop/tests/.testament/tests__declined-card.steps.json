@@ -12,7 +12,7 @@
     "model": "claude-code/sonnet",
     "promptVersion": "planner-v2"
   },
-  "updatedAt": "2026-09-26T17:51:51.143Z",
+  "updatedAt": "2026-09-27T09:19:36.015Z",
   "steps": [
     {
       "key": "ba8ec515221832df",
@@ -1116,10 +1116,28 @@
       "text": "the page heading is \"Dashboard\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Dashboard"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:30:31.776Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Dashboard'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:07.860Z"
     },
     {
       "key": "9036b6e7779007d6",
@@ -1127,10 +1145,27 @@
       "text": "an error says \"Your card was declined.\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "alert"
+        },
+        "match": "contains",
+        "value": "Your card was declined."
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:30:31.776Z"
+      "generatedBy": "rules",
+      "summary": "Checked that an alert contains 'Your card was declined.'",
+      "rule": "error",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:19:35.924Z"
     },
     {
       "key": "016451c40b73c36a",
@@ -1138,10 +1173,24 @@
       "text": "the URL contains /checkout",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "url",
+        "match": "contains",
+        "value": "/checkout"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:30:31.776Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the URL contains '/checkout'",
+      "rule": "url",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "skipped",
+          "note": "The preceding action didn't change what this check looks at."
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:19:35.940Z"
     }
   ]
 }

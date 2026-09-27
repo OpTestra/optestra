@@ -18,6 +18,7 @@ import { runLoginCommand } from "./commands/login.js";
 import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
 import type { ReportCommandOptions } from "./commands/report.js";
 import { type ResultsCommandOptions, runResultsCommand } from "./commands/results.js";
+import { type RunCommandOptions, runRunCommand } from "./commands/run.js";
 import {
   type ListCommandOptions,
   runListCommand,
@@ -227,6 +228,39 @@ export function createProgram(): Command {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("run")
+    .description(
+      "run tests: replay each recording with no AI, evaluate every check, write a results folder (exit 0 passed, 1 failed, 2 blocked)",
+    )
+    .argument("[tests...]", "test files or folders (default: every test)")
+    .option("-t, --tag <tag...>", "only tests with this tag (repeatable)")
+    .option("--grep <text>", "only tests whose name contains this")
+    .option("-e, --env <name>", "environment to run against")
+    .option("--replay-only", "no AI at all: a missed or unrecorded step fails (strict CI)")
+    .option("--rerecord", "ignore the recordings and record every step again with AI")
+    .option("--retries <n>", "extra attempts after a failure (default: run.retries)")
+    .option("--workers <n>", "tests in parallel, one browser each (default 1)")
+    .option(
+      "--budget <usd>",
+      "AI budget for this run in dollars (default: run.budget.maxPerRunUsd)",
+    )
+    .option("--headed", "show the browser windows")
+    .option("--browser <name>", "chromium (default), firefox or webkit")
+    .option("--device <preset>", "device preset, e.g. desktop, laptop, iphone-15")
+    .option("--no-video", "don't record a video per attempt")
+    .option("--verbose", "print every step, heal and warning")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (tests: string[], options: RunCommandOptions) => {
+      const { shouldUseColor } = await import("@testament/report/node");
+      process.exitCode = await runRunCommand(tests, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+        color: shouldUseColor(process.stdout),
       });
     });
 

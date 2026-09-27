@@ -12,7 +12,7 @@
     "model": "claude-code/sonnet",
     "promptVersion": "planner-v2"
   },
-  "updatedAt": "2026-09-26T17:50:04.344Z",
+  "updatedAt": "2026-09-27T09:17:21.122Z",
   "steps": [
     {
       "key": "ba8ec515221832df",
@@ -831,10 +831,28 @@
       "text": "the page heading is \"Dashboard\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Dashboard"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:29:17.379Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Dashboard'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:18.861Z"
     },
     {
       "key": "1f632852116d6420",
@@ -842,10 +860,27 @@
       "text": "a message says \"Profile saved\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "status"
+        },
+        "match": "contains",
+        "value": "Profile saved"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:29:17.379Z"
+      "generatedBy": "rules",
+      "summary": "Checked that a status message contains 'Profile saved'",
+      "rule": "message",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:20.548Z"
     },
     {
       "key": "5fb1490c9ca246ed",
@@ -853,10 +888,29 @@
       "text": "\"Full name\" contains \"Ada King\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "value",
+        "target": {
+          "kind": "label",
+          "text": "Full name",
+          "exact": true
+        },
+        "match": "contains",
+        "value": "Ada King"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:29:17.379Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the field labelled 'Full name' contains 'Ada King'",
+      "rule": "field-value",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "skipped",
+          "note": "The preceding action didn't change what this check looks at."
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:21.027Z"
     },
     {
       "key": "579a6a2bcde60ccd",
@@ -864,10 +918,29 @@
       "text": "\"Time zone\" is \"Europe/London\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "value",
+        "target": {
+          "kind": "label",
+          "text": "Time zone",
+          "exact": true
+        },
+        "match": "equals",
+        "value": "Europe/London"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:29:17.379Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the field labelled 'Time zone' has the value 'Europe/London'",
+      "rule": "field-value",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "skipped",
+          "note": "The preceding action didn't change what this check looks at."
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:21.048Z"
     }
   ]
 }

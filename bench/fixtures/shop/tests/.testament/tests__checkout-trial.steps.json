@@ -12,7 +12,7 @@
     "model": "claude-code/sonnet",
     "promptVersion": "planner-v2"
   },
-  "updatedAt": "2026-09-26T17:54:40.174Z",
+  "updatedAt": "2026-09-27T09:16:55.933Z",
   "steps": [
     {
       "key": "2e804e233a67bf9c",
@@ -493,10 +493,28 @@
       "text": "the page heading is \"Check your email\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Check your email"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:32:33.457Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Check your email'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:16:50.995Z"
     },
     {
       "key": "ef8f9dafb38b2835",

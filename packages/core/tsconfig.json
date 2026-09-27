@@ -14,10 +14,16 @@
       "path": "../browser"
     },
     {
+      "path": "../codegen"
+    },
+    {
       "path": "../config"
     },
     {
       "path": "../contract"
+    },
+    {
+      "path": "../decide"
     },
     {
       "path": "../models"

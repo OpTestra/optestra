@@ -1,15 +1,144 @@
 # @testament/core
 
-The engine. Today it holds the **author** (LOOP-1): the first AI run of a test,
-which records every action step so that later runs can replay it without AI,
-and the **check compiler** (LOOP-2), which turns every `Expect:` and `Soft:`
-line into a typed, deterministic check at authoring time. Replay, verdicts and
-healing come in LOOP-4 and HEAL.
+The engine. It holds the **author** (LOOP-1): the first AI run of a test,
+which records every action step so that later runs can replay it without AI;
+the **check compiler** (LOOP-2), which turns every `Expect:` and `Soft:` line
+into a typed, deterministic check; and the **runner** (LOOP-4): `runTests`,
+which replays every test from its recording with no AI, evaluates every check
+fresh, and writes an honest verdict with evidence into a contract run folder.
+AI-backed healing (the fixer model, heal review) comes in HEAL.
 
 | Import | Use |
 |---|---|
-| `@testament/core` | `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `PROMPT_VERSION`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION` |
-| `@testament/core/node` | `saveAuthoring` (writes the recording, report, screenshots and evidence) |
+| `@testament/core` | `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `PROMPT_VERSION`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `chaptersVtt` |
+| `@testament/core/node` | `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `mergeRecording`, `recentAiUsage`, `runSpecTest` |
+
+## How a run works (LOOP-4)
+
+```ts
+import { runTests } from "@testament/core/node";
+
+const result = await runTests({
+  projectDir,             // the project folder
+  tests, tags, grep,      // selection (files or folders, tags, name contains)
+  environment,            // default: the project's defaultEnvironment
+  mode,                   // "replay-only" | "normal" | "rerecord" (default run.mode)
+  retries,                // default run.retries (1)
+  workers,                // parallel browsers (default 1)
+  budgetUsd,              // default run.budget.maxPerRunUsd
+  onEvent,                // every contract event as it is written
+});
+// result.dir: <project>/<data dir>/runs/<runId>/ (run.json, events.ndjson, tests/…)
+// result.run, result.tests: the contract documents; result.groups: failure groups (DIA-4)
+```
+
+One browser per worker, one fresh session per test attempt. Each attempt runs
+the test's `setup` request hooks, opens its `start` page, then goes through the
+expanded steps (flows inlined):
+
+**An action step with a recording** is replayed with no AI (REP-3). For each
+recorded command:
+1. **Bind** its templates to this run's values: data, params, env, fresh
+   `unique`/`faker` values per attempt. Secrets stay `{{secret.NAME}}`; only the
+   harness types them (SEC-1). A missing env value blocks (`config_error`).
+2. **Validate the target** (REP-5): `session.inspect(primary)` must find exactly
+   one element, and `decideSameElement` must say it is the recorded one (its
+   fingerprint). Anything else (none, several, a different element) is a
+   **miss**, never a silent success.
+3. **Act** through the harness. A refused action blocks (`disallowed_domain`,
+   `missing_secret`).
+4. **Check the post-state** (VER-5, guarantee 5): some of the recorded effect
+   must show up, compared in template form: the recorded URL change, an element
+   that appeared or went away, a request (method + route), or a reorder (a table
+   sort). Whether it was the *right* effect is the checks' job. If none shows,
+   the runner waits the learned time (LRN-4: the recorded settle time, at least
+   400 ms, at most 3 s) and looks again. Still nothing is a
+   **post-state mismatch**.
+
+**A miss goes up the DEC-3 ladder** (`missContext` → `decideMiss`):
+
+| Rung | When | What LOOP-4 does |
+|---|---|---|
+| `block` | refused action; no AI left; app unreachable | Blocked with the reason. An error page or a 5xx is **not** "couldn't run": the step fails and `failure_cause` decides (product bug, or environment if it passes on retry) |
+| `no_heal` | the validated element did nothing (post-state mismatch) | the step fails: "the right element was used, but nothing happened" (the silent-click trap) |
+| `replay_fallback` | a stored fallback locator finds the same element | acts on it; a pending **heal proposal** |
+| `refind` | `rankCandidates` over the page's elements has one clear winner | acts on it (its top unique locator); a pending **heal proposal** |
+| `no_heal` | policy `strict` | the step fails (test drift) |
+| `call_fixer` | a fixer model is available and budget is left | **not done in LOOP-4**: the step fails with "needs an AI heal" (HEAL wires the fixer in) |
+
+Heals change only the locator (HEAL-3), carry DEC-3's signals and confidence,
+are classified by `heal_class`, and stay **pending**: the recording is not
+changed. `--replay-only` never heals (REP-6: fail on any miss).
+
+**An action step without a recording** (new or edited, REP-4): in normal mode
+the LOOP-1 agent authors just that step in place and the run continues; the
+step is added to the recording (never touching steps that weren't
+re-authored). `--replay-only` fails it; with no planner model it is blocked
+(`ai_unavailable`); `--rerecord` authors every step. A step that reads a test
+inbox (`{{inbox.…}}`, or "the code from the verification email") is blocked
+with `inbox_unavailable` until AUTH-1 wires inboxes into runs.
+
+**An Expect / Soft step** evaluates its stored check fresh (LRN-2, VER-1…VER-3)
+with `session.check(op, { since: requestMark })`: network checks count from
+the start of the current action step. A `soft_judgment` goes through
+`evaluateCheck` (a model; warn only). A `pending` check is compiled in place in
+normal mode (rules first; stored in the recording) and fails the test in
+replay-only mode; a check whose sanity test says it proves nothing can never
+count as proof (guarantee 4). A failed hard check ends the attempt (later steps
+are skipped); a failed soft check is a warning.
+
+**Tests with ```` ```ts ```` code steps** run through their generated spec
+(`runSpecTest`: regenerated first if stale, then Playwright Test with the JSON
+reporter, mapped into the contract; no healing). The project needs
+`@playwright/test`.
+
+### Verdicts (HEAL-2)
+
+Decided by code from the checks and steps (`decideVerdict`), never by a model:
+
+| Verdict | decidedBy | When |
+|---|---|---|
+| `passed` | every hard check of the final attempt (else every step that ran) | all hard checks passed, no heal |
+| `healed` | the same | passed, with a no-AI heal proposal in the final attempt |
+| `failed` | the failing check, or the failing step | the final attempt failed (after retries) |
+| `flaky` | the failed attempt's decider + the final attempt's passing ones | failed, then passed on a retry (DIA-2) |
+| `blocked` | the blocked reason | couldn't run: missing secret, disallowed domain, AI unavailable, budget, app unreachable, inbox, config |
+
+A failed step inside a `Use:` flow (a broken login) makes the test **failed**,
+never blocked, and the headline names the `Use:` step. Retries (`run.retries`,
+default 1) re-run a failed attempt from scratch; a blocked attempt isn't
+retried.
+
+After each test, `classifyFailure` (with the requests, console errors, the
+page at the failure, `page_is_error`, the route and the flow chain) sets
+`failureCause` and its evidence (the deciding check or step, the screenshot,
+the trace, the decision); after the run, `groupFailures` groups the failures
+(DIA-4). The headline is the one line that matters (DIA-3): the failing check's
+expected vs actual, or the step's reason. `checkedSummary` lists what was
+checked, from the checks (EVD-3). `ai.recent` is the test's AI calls over its
+last 20 runs (LRN-5). Decisions land in their attempt as `DecisionRecord`s,
+model calls (only for authoring and compiling) as `ModelCall`s with billing.
+
+### Evidence (EVD-1)
+
+Per attempt, written through the RunWriter (scrubbed): a before/after
+screenshot per action step (`steps/<i>-before.png`, `-after.png`), the video
+(`video.webm`) with a WebVTT chapters file (`chapters.vtt`, one cue per step),
+the trace, the console log and the network HAR.
+
+### CLI
+
+```bash
+testament run [tests…] [--tag t] [--grep name] [--env local] [--replay-only | --rerecord] \
+  [--retries n] [--workers n] [--headed] [--budget 0.50] [--no-video] [--verbose]
+```
+
+One quiet line per test (verdict, duration, AI calls, cost; "via your
+subscription" for subscription calls), the headline and cause of each failure,
+the failure groups, then the summary and the results folder. `--verbose`
+prints every step, heal and warning. Exit code via `exitCodeFor` (CLI-5): 0
+passed, 1 failed/flaky (and healed unless the heal policy is `auto`), 2
+blocked or config error. `testament results <runDir>` reads the same folder.
 
 ## authorTest
 
