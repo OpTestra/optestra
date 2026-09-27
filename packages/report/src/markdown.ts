@@ -134,7 +134,18 @@ function healsBlock(parts: Parts, limit: number): string {
     const signals = heal.signals
       .map((s) => `${words(s.name)} ${Math.round(s.score * 100)}%`)
       .join(", ");
-    return `- ${md(test.name)}, step ${heal.stepIndex + 1}: ${change.join("; ")} (confidence ${Math.round(heal.confidence * 100)}%, ${md(words(heal.classification))}${signals ? `; ${md(signals)}` : ""})`;
+    const how = heal.level === "fixer" ? "by AI, " : heal.level ? "no AI, " : "";
+    const state =
+      heal.status === "accepted"
+        ? `, applied${heal.appliedBy === "auto" ? " by the auto policy" : ""}`
+        : heal.status === "rejected"
+          ? ", rejected"
+          : "";
+    const warn =
+      heal.classification === "behavior_change"
+        ? " **The app's behaviour may have changed — check before accepting.**"
+        : "";
+    return `- ${md(test.name)}, step ${heal.stepIndex + 1}: ${change.join("; ")} (${how}confidence ${Math.round(heal.confidence * 100)}%, ${md(words(heal.classification))}${state}${signals ? `; ${md(signals)}` : ""})${warn}`;
   });
   if (heals.length > limit)
     rows.push(`- and ${plural(heals.length - limit, "more fix", "more fixes")}`);

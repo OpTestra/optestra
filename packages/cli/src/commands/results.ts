@@ -1,6 +1,6 @@
 import { relative, resolve } from "node:path";
-import { exitCodeFor, type ExitPolicy } from "@testament/contract";
-import { readRun } from "@testament/contract/node";
+import { exitCodeFor, type ExitPolicy, withHealReview } from "@testament/contract";
+import { readHealReview, readRun } from "@testament/contract/node";
 import {
   formatTerminal,
   type RunData,
@@ -59,7 +59,9 @@ export function runResultsCommand(
   options: ResultsCommandOptions,
   io: CommandIo & { color?: boolean },
 ): number {
-  const { run, tests, diagnostics } = readRun(resolve(io.cwd, runDir));
+  const { run, tests: read, diagnostics } = readRun(resolve(io.cwd, runDir));
+  const review = readHealReview(resolve(io.cwd, runDir));
+  const tests = read.map((test) => withHealReview(test, review));
   const errors = diagnostics.filter((d) => d.severity === "error");
   if (!run || errors.length > 0) {
     const problems = errors.map((d) => `  ${d.file}${d.line ? `:${d.line}` : ""}  ${d.message}`);

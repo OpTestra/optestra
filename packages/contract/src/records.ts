@@ -34,6 +34,8 @@ export const ModelCallSchema = z.object({
    * official CLI (MOD-6): costUsd is 0 to the run budget. Absent in 1.0 documents.
    */
   billing: z.enum(["api", "subscription"]).optional(),
+  /** 1.2: the model's short reasoning for this call (EVD-1), scrubbed. Absent before 1.2. */
+  note: z.string().max(500).optional(),
 });
 export type ModelCall = z.infer<typeof ModelCallSchema>;
 

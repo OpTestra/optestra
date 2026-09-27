@@ -236,7 +236,7 @@ contract ──► zod only (bottom of the graph)
   recorded command, validate the element against its fingerprint
   (`decideSameElement`, REP-5), act, check the recorded post-state (VER-5), and on
   a miss the DEC-3 ladder (no-AI `replay_fallback` / `refind` become pending heal
-  proposals; `call_fixer` is reported as "needs an AI heal" until HEAL). Steps
+  proposals; `call_fixer` runs the fixer model since HEAL-0). Steps
   without a recording are authored in place (normal mode), pending checks
   compiled in place; code-step tests run through their generated spec. Verdicts
   come from `decideVerdict` (code), causes from `classifyFailure`, groups from
@@ -246,6 +246,24 @@ contract ──► zod only (bottom of the graph)
   `run`. `pnpm bench:replay` scores every shop variant against the manifest and
   checks replay/spec equivalence (CI `fixtures`). See "How a run works" in
   `packages/core/README.md`.
+
+- HEAL-0 (done): AI heals and review, in `packages/core/src/heal/`. Where the
+  ladder says `call_fixer`, `replayAttempt` runs the `fixer` role on the missed
+  step: the author's agent loop (`runActionStep`) with the fixer prompt
+  (`fixer-prompt.json`, `fixer-v1`), the step's recording as context and its own
+  limits. It becomes a HealProposal (`level: fixer`) only if its actions show the
+  step's recorded effect (VER-5), pass the strict schema, and the later checks
+  still decide. Every heal also writes a **patch** into the run folder (the
+  step's commands before/after, plus the decision inputs for labels). Policies
+  (HEAL-5): `strict` never heals, `review` keeps proposals pending, `auto`
+  applies a passed attempt's heals at once (never a `behavior_change`). Review
+  (HEAL-4): `listHeals(runDir)` / `applyHeals(projectDir, runDir, ids)`
+  (`@testament/core/node`) and CLI `heal [runDir] [--accept …] [--reject …]
+  [--json]` apply patches to the recording (keys and checks untouched),
+  regenerate the spec, record decisions in `heals/review.json` and write
+  same_element / miss_action / heal_class labels (LRN-9). HEAL-7: tests that
+  healed ≥ 3 of their last 10 runs are flagged (`recentHeals`). Contract 1.2.
+  See "Healing" in `packages/core/README.md`.
 
 ## Results contract (`packages/contract`)
 
@@ -280,10 +298,14 @@ events.ndjson                                live events, one per line, seq 0,1,
 tests/<testId>/result.json                   TestResult, all attempts
 tests/<testId>/<attempt>/steps/<i>-before.png | <i>-after.png
 tests/<testId>/<attempt>/video.webm | trace.zip | console.log | network.har | logcat.txt
+tests/<testId>/<attempt>/heals/<healId>.json   what a heal changes in the recording (1.2)
+heals/review.json                            accept/reject decisions, written after the run (1.2)
 ```
 
 `run.json` and the result files are always `foldEvents(events.ndjson)`, written
 atomically when the run finishes. A run in progress has only `events.ndjson`.
+Only `heals/review.json` is written later; readers overlay it on the proposals
+with `withHealReview` (the report does), so a finished run's documents never change.
 
 ## Releases
 

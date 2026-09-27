@@ -1,6 +1,6 @@
 {
   "kind": "results-summary",
-  "version": "1.0",
+  "version": "1.1",
   "contractVersion": "1.0",
   "runId": "01M3EHY8A0Z0PMNVCJH2CPRFHD",
   "project": "demo-shop",
@@ -63,6 +63,7 @@
       },
       "softWarnings": [],
       "heals": [],
+      "rerecord": null,
       "screenshot": "tests/tests__account__sign-up/1/steps/2-after.png",
       "durationMs": 12785,
       "attempts": 1,

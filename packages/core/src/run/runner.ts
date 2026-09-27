@@ -16,12 +16,16 @@ import {
   type ArtifactRef,
   type Attempt,
   type BlockedReason,
+  CONTRACT_VERSION,
   type DecisionRecord,
   type Event,
   type EvidenceRef,
   type FailureCause,
   type HealPolicy,
+  type HealProposal,
   type ModelCall,
+  needsRerecord,
+  REPEATED_HEALS,
   type Run,
   type RunMode,
   runLayout,
@@ -50,8 +54,10 @@ import { readRecording, recordingPath, writeRecording } from "@testament/recordi
 import { hasSpecErrors, type ExpandedTest } from "@testament/spec";
 import { loadTest, loadTests } from "@testament/spec/node";
 import { PROMPT_VERSION } from "../author/agent.js";
+import { applyPatches, type HealPatch } from "../heal/patch.js";
+import { markAutoApplied } from "../heal/policy.js";
 import { chaptersVtt, consoleErrors } from "./evidence.js";
-import { recentAiUsage } from "./history.js";
+import { recentAiUsage, recentHeals } from "./history.js";
 import { replayAttempt } from "./replay.js";
 import { runSpecTest } from "./spec-run.js";
 import type { ReplayResult, ReplaySession } from "./types.js";
@@ -118,8 +124,8 @@ export interface RunTestsResult {
   groups: FailureGroup[];
   /** Tests that recorded or compiled something, with the files written. */
   recorded: { test: string; recording: string; specs: string[]; warnings: string[] }[];
-  /** No-AI heals and misses that needed AI, per test (for Bench). */
-  heals: Record<string, { withoutAi: number; needsAi: number }>;
+  /** Heals without AI, by the fixer, and misses left needing AI, per test (for Bench). */
+  heals: Record<string, { withoutAi: number; byFixer: number; needsAi: number }>;
 }
 
 interface TestPlan {
@@ -360,6 +366,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   const retries = Math.max(0, options.retries ?? settings.run?.retries ?? config.run.retries);
   const testsDir = resolve(projectDir, config.tests?.dir ?? "tests");
   const history = recentAiUsage(dataDir, { exclude: runId });
+  const healHistory = recentHeals(dataDir, { exclude: runId, limit: REPEATED_HEALS.runs - 1 });
   const results: TestResult[] = [];
   const contexts = new Map<
     string,
@@ -415,7 +422,11 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     const authoredChecks: CheckRecording[] = [];
     let authoredModel: string | null = null;
     let withoutAi = 0;
+    let byFixer = 0;
     let needsAi = 0;
+    // Heals the `auto` policy applied (final attempt only: a heal counts once it proved itself).
+    let autoPatches: HealPatch[] = [];
+    let policy: HealPolicy = (settings.run?.healPolicy ?? config.run.healPolicy) as HealPolicy;
 
     for (let attempt = 1; attempt <= retries + 1; attempt++) {
       const sink: DecisionRecord[] = [];
@@ -447,6 +458,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         break;
       }
       expandedForFlows = expanded;
+      policy = (expanded.heal ?? settings.run?.healPolicy ?? config.run.healPolicy) as HealPolicy;
       const hasCode = expanded.steps.some((s) => s.kind === "exact" && s.exact?.form === "code");
       const attemptEmit = (event: Parameters<Parameters<typeof replayAttempt>[0]["emit"]>[0]) => {
         switch (event.type) {
@@ -468,7 +480,9 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             emit({ type: "check.evaluated", testId: plan.id, attempt, check: event.check });
             break;
           case "heal.proposed":
-            emit({ type: "heal.proposed", testId: plan.id, attempt, heal: event.heal });
+            // Under `auto` a heal is emitted when its attempt ends, accepted only if the attempt passed.
+            if (policy !== "auto")
+              emit({ type: "heal.proposed", testId: plan.id, attempt, heal: event.heal });
             break;
           case "model.called":
             emit({ type: "model.called", testId: plan.id, attempt, call: event.call });
@@ -547,9 +561,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
               session: open,
               attempt,
               mode,
-              policy: (expanded.heal ??
-                settings.run?.healPolicy ??
-                config.run.healPolicy) as HealPolicy,
+              policy,
+              testPath: plan.path,
               decisions,
               models,
               budget,
@@ -623,17 +636,49 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
           );
       }
       lastReplay = result;
+      // What each heal changes in the recording, kept with the run (applied on accept).
+      for (const patch of result.patches)
+        artifacts.push(
+          writer.writeArtifact(
+            {
+              kind: "other",
+              path: runLayout.healPatch(plan.id, attempt, patch.healId),
+              contentType: "application/json",
+              scrubbed: true,
+              testId: plan.id,
+              attempt,
+            },
+            `${JSON.stringify(patch, null, 2)}\n`,
+          ),
+        );
+      if (policy === "auto") {
+        markAutoApplied(result.heals, result.status === "passed");
+        for (const heal of result.heals) {
+          emit({ type: "heal.proposed", testId: plan.id, attempt, heal });
+          if (heal.status === "pending" && heal.classification === "behavior_change")
+            emit({
+              type: "log",
+              level: "warn",
+              testId: plan.id,
+              message: `Not applied (heal policy auto): the app's behaviour may have changed at step ${heal.stepIndex + 1} of ${plan.path}. Check before accepting (${brand.cliName} heal).`,
+            });
+        }
+        autoPatches = result.patches.filter((p) =>
+          result.heals.some((h) => h.id === p.healId && h.status === "accepted"),
+        );
+      }
       observations[attempt] = { ...result.observations, ...observations[attempt] };
       authoredSteps.push(...result.authored.steps);
       authoredChecks.push(...result.authored.checks);
       authoredModel = result.authored.model ?? authoredModel;
       withoutAi += result.healedWithoutAi;
+      byFixer += result.healedByFixer;
       needsAi += result.needsAi;
       emit({ type: "attempt.finished", testId: plan.id, attempt, status: result.status });
       records.push({ ...result, decisions: sink, artifacts });
       if (result.status !== "failed") break;
     }
-    healsPerTest[plan.id] = { withoutAi, needsAi };
+    healsPerTest[plan.id] = { withoutAi, byFixer, needsAi };
 
     // ── the verdict (code, not a model) and the diagnosis ─────────────────────
     const verdict = decideVerdict(records);
@@ -695,6 +740,19 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         if (trace) failureEvidence.push({ kind: "artifact", path: trace.path });
       }
     }
+    // HEAL-7: a test that keeps healing should be re-recorded.
+    const pastHeals = healHistory.get(plan.id) ?? { runs: 0, healed: 0 };
+    const healsNow = {
+      runs: pastHeals.runs + 1,
+      healed: pastHeals.healed + (verdict.verdict === "healed" ? 1 : 0),
+    };
+    if (needsRerecord(healsNow))
+      emit({
+        type: "log",
+        level: "warn",
+        testId: plan.id,
+        message: `${plan.path} healed ${healsNow.healed} times in its last ${healsNow.runs} runs: re-record this test (${brand.cliName} run ${plan.path} --rerecord).`,
+      });
     emit({
       type: "test.finished",
       testId: plan.id,
@@ -705,13 +763,34 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       headline: verdict.headline,
       checkedSummary: verdict.checkedSummary,
       recentAi: recent,
+      recentHeals: healsNow,
     });
 
-    // ── keep what was recorded or compiled (REP-4), and the portable spec ──────
-    if ((authoredSteps.length > 0 || authoredChecks.length > 0) && expandedForFlows && lastReplay) {
+    // ── keep what was recorded or compiled (REP-4), heals `auto` applied, and the portable spec ──
+    // Only the final attempt's heals count, and only when it passed.
+    if (last?.status !== "passed") autoPatches = [];
+    let base = previous;
+    const applied: string[] = [];
+    if (autoPatches.length > 0 && previous) {
+      const patched = applyPatches(previous, autoPatches);
+      base = patched.recording;
+      applied.push(...patched.applied);
+      for (const conflict of patched.conflicts)
+        emit({
+          type: "log",
+          level: "warn",
+          testId: plan.id,
+          message: `Heal ${conflict.healId} was not applied: ${conflict.reason}.`,
+        });
+    }
+    if (
+      (authoredSteps.length > 0 || authoredChecks.length > 0 || applied.length > 0) &&
+      expandedForFlows &&
+      lastReplay
+    ) {
       const next = mergeRecording(
         expandedForFlows,
-        previous,
+        base,
         { steps: authoredSteps, checks: authoredChecks, model: authoredModel },
         {
           testPath: plan.path,
@@ -882,7 +961,7 @@ function provisionalResult(
     artifacts: r.artifacts,
   }));
   return {
-    contractVersion: "1.1",
+    contractVersion: CONTRACT_VERSION,
     runId,
     testId: plan.id,
     file: plan.path,

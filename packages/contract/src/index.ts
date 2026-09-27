@@ -21,8 +21,13 @@ export {
   HEAL_SIGNALS,
   type HealChange,
   HealChangeSchema,
+  type HealDecision,
+  HealDecisionSchema,
   type HealProposal,
   HealProposalSchema,
+  type HealReview,
+  HealReviewSchema,
+  withHealReview,
 } from "./heal.js";
 export { contractJsonSchemas } from "./json-schema.js";
 export * from "./layout.js";

@@ -52,3 +52,46 @@ export function recentAiUsage(
   }
   return usage;
 }
+
+interface HealRow {
+  testId: string;
+  verdict: string;
+}
+
+/**
+ * HEAL-7: how many of each test's last `limit` finished runs (not counting
+ * `exclude`) ended healed. The runner adds the current run on top.
+ */
+export function recentHeals(
+  dataDir: string,
+  options: { exclude?: string; limit?: number } = {},
+): Map<string, { runs: number; healed: number }> {
+  const dir = join(dataDir, RUNS_DIR);
+  const heals = new Map<string, { runs: number; healed: number }>();
+  if (!existsSync(dir)) return heals;
+  const runIds = readdirSync(dir)
+    .filter((name) => name !== options.exclude && /^[0-9A-HJKMNP-TV-Z]{26}$/.test(name))
+    .sort()
+    .reverse();
+  const limit = options.limit ?? 10;
+  for (const runId of runIds) {
+    let tests: HealRow[];
+    try {
+      const run = JSON.parse(readFileSync(join(dir, runId, RUN_FILE), "utf8")) as {
+        tests?: HealRow[];
+      };
+      tests = Array.isArray(run.tests) ? run.tests : [];
+    } catch {
+      continue; // unfinished or unreadable run
+    }
+    for (const row of tests) {
+      if (typeof row.testId !== "string") continue;
+      const entry = heals.get(row.testId) ?? { runs: 0, healed: 0 };
+      if (entry.runs >= limit) continue;
+      entry.runs++;
+      if (row.verdict === "healed") entry.healed++;
+      heals.set(row.testId, entry);
+    }
+  }
+  return heals;
+}

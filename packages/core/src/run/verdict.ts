@@ -110,13 +110,27 @@ export function decideVerdict(attempts: readonly AttemptRecord[]): VerdictDecisi
   return {
     verdict: last.heals.length > 0 ? "healed" : "passed",
     decidedBy: passing,
-    headline:
-      last.heals.length > 0
-        ? `Passed after ${last.heals.length} heal${last.heals.length === 1 ? "" : "s"} without AI (proposed for review).`
-        : null,
+    headline: last.heals.length > 0 ? healedHeadline(last.heals) : null,
     checkedSummary: summary,
     failedAttempt: null,
   };
+}
+
+/** "Passed after 2 heals (1 by AI), proposed for review." (HEAL-4: nothing is fixed silently). */
+function healedHeadline(heals: readonly HealProposal[]): string {
+  const n = heals.length;
+  const byAi = heals.filter((h) => h.level === "fixer").length;
+  const how = byAi === 0 ? " without AI" : byAi === n ? " by AI" : "";
+  const applied = heals.filter((h) => h.status === "accepted").length;
+  const notes = [
+    ...(how ? [] : [`${byAi} by AI`]),
+    applied === 0
+      ? "proposed for review"
+      : applied === n
+        ? "applied to the recording: heal policy auto"
+        : `${applied} applied by the auto policy, ${n - applied} for review`,
+  ];
+  return `Passed after ${n} heal${n === 1 ? "" : "s"}${how} (${notes.join("; ")}).`;
 }
 
 /**

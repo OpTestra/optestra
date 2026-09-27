@@ -234,6 +234,7 @@ export function foldEvents(events: readonly Event[]): FoldResult {
         startedAt: state.start.ts,
         durationMs: elapsed(state.start.ts, finish.ts),
         ai: { ...usage(attempts.flatMap((a) => a.modelCalls)), recent: finish.recentAi },
+        ...(finish.recentHeals ? { recentHeals: finish.recentHeals } : {}),
         attempts,
       },
       `test "${state.start.testId}"`,

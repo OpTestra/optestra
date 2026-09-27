@@ -11,6 +11,7 @@ import type { AttemptObservations, Decisions } from "@testament/decide";
 import type { BudgetMeter, Models } from "@testament/models";
 import type { CheckRecording, Recording, StepRecording } from "@testament/recording";
 import type { ExpandedTest } from "@testament/spec";
+import type { HealPatch } from "../heal/patch.js";
 import type { AttemptRecord } from "./verdict.js";
 
 /** The harness calls a replay uses. A LOOP-0 Session satisfies it. */
@@ -53,8 +54,10 @@ export interface ReplayOptions {
   /** For authoring new steps and compiling pending checks (normal / rerecord). */
   models?: Models | undefined;
   budget?: BudgetMeter | undefined;
-  /** A fixer model could redo a missed step (HEAL wires it in; LOOP-4 reports "needs an AI heal"). */
+  /** A fixer model can redo a missed step (HEAL-1 level 2), through `models`. */
   fixerAvailable: boolean;
+  /** Project-relative test path, stored in heal patches. */
+  testPath?: string;
   /** A planner model is usable (authoring new steps). */
   plannerAvailable: boolean;
   production: boolean;
@@ -87,10 +90,14 @@ export interface ReplayResult extends AttemptRecord {
   /** Steps and checks recorded or compiled in this attempt (never replayed ones). */
   authored: { steps: StepRecording[]; checks: CheckRecording[]; model: string | null };
   chapters: Chapter[];
-  /** Misses only an AI heal could fix (LOOP-4 doesn't call the fixer). */
+  /** Misses only an AI heal could fix that the fixer didn't (or couldn't) fix. */
   needsAi: number;
   /** Heals made without AI. */
   healedWithoutAi: number;
+  /** Steps the fixer model healed. */
+  healedByFixer: number;
+  /** What each heal changes in the recording, by heal id (applied on accept, or now under `auto`). */
+  patches: HealPatch[];
 }
 
 export type { AttemptRecord };

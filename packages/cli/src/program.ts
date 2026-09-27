@@ -12,6 +12,7 @@ import { type DecisionsCommandOptions, runDecisionsCommand } from "./commands/de
 import { registerDoctorCommand } from "./commands/doctor.js";
 import { registerExportCommand } from "./commands/export.js";
 import { type GenerateCommandOptions, runGenerateCommand } from "./commands/generate.js";
+import type { HealCommandOptions } from "./commands/heal.js";
 import { registerInitCommand } from "./commands/init.js";
 import { type LintCommandOptions, runLintCommand } from "./commands/lint.js";
 import { runLoginCommand } from "./commands/login.js";
@@ -261,6 +262,27 @@ export function createProgram(): Command {
         env: process.env,
         stdout: (text) => process.stdout.write(text),
         color: shouldUseColor(process.stdout),
+      });
+    });
+
+  program
+    .command("heal")
+    .description(
+      "review a run's heals (default: the latest run): the recording diff, why, confidence; accept or reject them",
+    )
+    .argument("[runDir]", "the run folder (contains run.json)")
+    .option("--list", "only list the heals (the default without --accept/--reject)")
+    .option("--accept <ids...>", "apply these heals to the recording (heal ids, or all)")
+    .option("--reject <ids...>", "reject these heals (the recording stays as it is)")
+    .option("--json", "print machine-readable JSON")
+    .option("-e, --env <name>", "environment for regenerating the portable spec")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (runDir: string | undefined, options: HealCommandOptions) => {
+      const { runHealCommand } = await import("./commands/heal.js");
+      process.exitCode = await runHealCommand(runDir, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
       });
     });
 

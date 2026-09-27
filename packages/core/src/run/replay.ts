@@ -8,17 +8,26 @@ import type {
   RequestMark,
 } from "@testament/browser";
 import { defaultRedactor } from "@testament/config/node";
-import type { CheckResult, HealProposal, ModelCall, StepResult } from "@testament/contract";
+import {
+  type CheckResult,
+  type HealProposal,
+  HealProposalSchema,
+  type ModelCall,
+  type StepResult,
+} from "@testament/contract";
 import {
   classifyHeal,
   decideMiss,
   decideSameElement,
+  healInput,
   type LiveCandidate,
+  type MissActionInput,
   missContext,
   type ObservedRequest,
   type RankResult,
   rankCandidates,
   type SameElementAnswer,
+  sameElementInputFor,
 } from "@testament/decide";
 import { toModelCall } from "@testament/models";
 import {
@@ -41,9 +50,11 @@ import { parseGuard } from "../author/guards.js";
 import { DEFAULT_LIMITS } from "../author/types.js";
 import { type StepVariables, stepVariables } from "../author/variables.js";
 import { evaluateCheck } from "../checks/evaluate.js";
+import { runFixer } from "../heal/fixer.js";
+import { type HealPatch, HEAL_PATCH_VERSION, relocatedCommand } from "../heal/patch.js";
 import { bindAction, retarget, targetOf } from "./bind.js";
 import { checkResult, evaluationText, unusableCheck } from "./checks.js";
-import { healFacts, healProposal } from "./heal.js";
+import { fixerProposal, healFacts, healProposal } from "./heal.js";
 import { lateMatch, type PostCheck, verifyOutcome } from "./post-state.js";
 import type { Chapter, ReplayOptions, ReplayResult } from "./types.js";
 import type { AttemptBlock, AttemptFailure } from "./verdict.js";
@@ -71,6 +82,7 @@ type CommandResult =
       post: PostCheck;
       outcome: ActionOutcome;
       heal?: HealProposal;
+      patch?: HealPatch;
     }
   | {
       kind: "failed";
@@ -78,6 +90,8 @@ type CommandResult =
       post: PostCheck | null;
       notFound: boolean;
       needsAi?: boolean;
+      /** miss_action said call_fixer: the step goes to the fixer model. */
+      fixer?: { reason: string; miss: MissActionInput };
       outcome?: ActionOutcome;
     }
   | { kind: "blocked"; reason: string; message: string; outcome?: ActionOutcome };
@@ -147,6 +161,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
   let stop: Stop | undefined;
   let needsAi = 0;
   let healedWithoutAi = 0;
+  let healedByFixer = 0;
+  const patches: HealPatch[] = [];
   let lastOutcome: ActionOutcome | undefined;
   let notFoundAtFailure = false;
   // Where the current action step began: network checks count from here.
@@ -486,7 +502,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
 
     // ── a miss before acting: the DEC-3 ladder ─────────────────────────────────
     const reason = missReason as Exclude<typeof missReason, null | "post_state_mismatch">;
-    const noAiHeals = mode !== "replay-only";
+    // HEAL-5: `strict` never heals (fail on a miss); replay-only never heals (REP-6).
+    const noAiHeals = mode !== "replay-only" && options.policy !== "strict";
     let fallback: { locator: Locator; answer: SameElementAnswer; facts: ElementFacts } | undefined;
     let matched = 0;
     if (fingerprint && noAiHeals) {
@@ -512,29 +529,27 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       );
     }
     const info = await pageInfo(outcome);
-    const miss = await decideMiss(
-      missContext({
-        missReason: reason,
-        refusal: null,
-        usedElement: null,
-        fallbacks: {
-          total: fingerprint?.fallbacks.length ?? 0,
-          matched,
-          best: fallback?.answer ?? null,
-        },
-        rank,
-        page: {
-          isError: info.isError,
-          appDown: info.appDown,
-          serverErrors: info.serverErrors,
-          networkFailures: info.networkFailures,
-        },
-        policy: mode === "replay-only" ? "strict" : options.policy,
-        budgetLeftUsd: budgetLeft(),
-        fixerAvailable: mode !== "replay-only" && options.fixerAvailable,
-      }),
-      { decisions },
-    );
+    const missInput = missContext({
+      missReason: reason,
+      refusal: null,
+      usedElement: null,
+      fallbacks: {
+        total: fingerprint?.fallbacks.length ?? 0,
+        matched,
+        best: fallback?.answer ?? null,
+      },
+      rank,
+      page: {
+        isError: info.isError,
+        appDown: info.appDown,
+        serverErrors: info.serverErrors,
+        networkFailures: info.networkFailures,
+      },
+      policy: mode === "replay-only" ? "strict" : options.policy,
+      budgetLeftUsd: budgetLeft(),
+      fixerAvailable: mode !== "replay-only" && options.fixerAvailable,
+    });
+    const miss = await decideMiss(missInput, { decisions });
     const what = target ? describeLocator(target) : "the element";
     const notFoundText =
       reason === "fingerprint_mismatch"
@@ -590,17 +605,41 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
         answer,
         policy: options.policy,
       });
-      const cls = await classifyHeal(proposal, {
-        decisions,
+      const classFacts = {
         before: {
           ...healFacts(fingerprint as Fingerprint),
           locator: describeLocator(target as Locator),
         },
         after: { ...healFacts(facts), locator: describeLocator(locator) },
         attempt,
-      });
+      };
+      const cls = await classifyHeal(proposal, { decisions, ...classFacts });
       proposal.classification = cls.classification;
-      return { kind: "ok", used: how, locator, post, outcome: healed, heal: proposal };
+      const patch: HealPatch = {
+        patchVersion: HEAL_PATCH_VERSION,
+        healId: proposal.id,
+        testId: test.id,
+        testPath: options.testPath ?? test.id,
+        attempt,
+        stepIndex: step.index,
+        stepKey: key,
+        textKey: step.textKey,
+        level: how,
+        from: commandIndex,
+        before: [command],
+        after: [relocatedCommand(command, locator, facts)],
+        labels: {
+          sameElement: sameElementInputFor(fingerprint as Fingerprint, {
+            facts,
+            foundBy: how,
+            matches: 1,
+          }),
+          missAction: missInput,
+          action: how === "fallback" ? "replay_fallback" : "refind",
+          healClass: healInput(proposal, classFacts),
+        },
+      };
+      return { kind: "ok", used: how, locator, post, outcome: healed, heal: proposal, patch };
     };
 
     switch (miss.action) {
@@ -649,6 +688,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
           post: null,
           notFound: true,
           needsAi: true,
+          fixer: { reason: notFoundText, miss: missInput },
         };
       default:
         break;
@@ -658,10 +698,216 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       error:
         mode === "replay-only"
           ? `${notFoundText} (replay-only: no heals).`
-          : `${notFoundText}; no heal without AI is safe here.`,
+          : options.policy === "strict"
+            ? `${notFoundText} (heal policy strict: no heals).`
+            : `${notFoundText}; no heal without AI is safe here.`,
       post: null,
       notFound: true,
       ...(miss.action === null ? { needsAi: true } : {}),
+    };
+  };
+
+  /**
+   * HEAL-1 level 2: the fixer model redoes the missed step from the missed
+   * command on. Its actions must show the step's recorded effect (VER-5), and
+   * the heal is a proposal like any other; later checks still decide.
+   */
+  const fixStep = async (
+    step: ExpandedStep,
+    key: string,
+    recorded: StepRecording,
+    from: number,
+    variables: StepVariables,
+    missed: { reason: string; miss: MissActionInput },
+  ): Promise<
+    | {
+        kind: "ok";
+        heal: HealProposal;
+        patch: HealPatch;
+        post: PostCheck;
+        settled: number;
+        calls: ModelCall[];
+        locator: Locator | null;
+      }
+    | { kind: "failed"; error: string; post: PostCheck | null; calls: ModelCall[] }
+    | { kind: "blocked"; reason: string; message: string; calls: ModelCall[] }
+  > => {
+    const models = options.models as NonNullable<typeof options.models>;
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () => controller.abort(new Error("timeout")),
+      Math.max(1, deadline - Date.now()),
+    );
+    const replaced = recorded.commands.slice(from);
+    const recordedEffect = mergedEffect(replaced);
+    const missedElement = replaced[0]?.fingerprint;
+    const fixed = await runFixer(
+      {
+        session,
+        models,
+        budget: options.budget,
+        guards: guardContext,
+        guardLines: test.guards.map((g) => g.display),
+        signal: controller.signal,
+        tags: { test: test.id },
+        // Done once the step's recorded effect shows (a toast may be gone after another model call).
+        doneWhen: (outcome) =>
+          verifyOutcome(
+            recordedEffect,
+            outcome,
+            variables.pageList,
+            missedElement ? { role: missedElement.role, name: missedElement.name } : undefined,
+          ).status === "verified",
+      },
+      step,
+      variables,
+      { recorded, command: from, reason: missed.reason },
+    ).finally(() => clearTimeout(timer));
+    const calls = fixed.modelCalls;
+    for (const call of calls) emitCall(call);
+    if (fixed.status !== "recorded") {
+      const reason = fixed.reason ?? "step_impossible";
+      const message = redact(fixed.message ?? reason);
+      if (BLOCKING_REASONS.has(reason) || reason === "timeout")
+        return {
+          kind: "blocked",
+          reason: reason === "timeout" ? "aborted" : reason,
+          message: `${missed.reason}, and the AI heal couldn't run: ${message}`,
+          calls,
+        };
+      return {
+        kind: "failed",
+        error: `${missed.reason}; the fixer model couldn't redo the step (${reason}): ${message}`,
+        post: null,
+        calls,
+      };
+    }
+    const before = recorded.commands.slice(from);
+    const after = fixed.commands;
+    // Guarantee 4: the step's recorded effect must show up after the fix.
+    const missedFp = before[0]?.fingerprint ?? null;
+    const firstNew = after.find((c) => c.fingerprint);
+    const expected = mergedEffect(before);
+    const seen = mergedEffect(after);
+    let post = verifyOutcome(
+      expected,
+      {
+        post: {
+          urlBefore: session.url,
+          urlAfter: seen.urlChange ?? session.url,
+          added: seen.appeared ?? [],
+          removed: seen.removed ?? [],
+          requests: (seen.requests ?? []).map((r) => ({
+            method: r.method,
+            url: r.route,
+            status: r.status ?? 200,
+            resourceType: "fetch",
+          })),
+          reordered: seen.reordered ?? false,
+          changed: true,
+        },
+      } as unknown as ActionOutcome,
+      variables.pageList,
+      missedFp
+        ? {
+            role: missedFp.role,
+            name: missedFp.name,
+            ...(firstNew?.fingerprint ? { renamedTo: firstNew.fingerprint.name } : {}),
+          }
+        : undefined,
+    );
+    if (post.status === "mismatch") {
+      const late = lateMatch(expected, session.url, await session.observe(), variables.pageList);
+      if (late) post = { ...post, status: "verified", observed: late };
+    }
+    if (post.status === "mismatch")
+      return {
+        kind: "failed",
+        error: `${missed.reason}; the fixer model redid the step, but its recorded effect didn't show: expected ${post.expected}; saw ${post.observed}.`,
+        post,
+        calls,
+      };
+    const answer =
+      missedFp && firstNew?.fingerprint
+        ? await sameAs(missedFp, factsOfFingerprint(firstNew.fingerprint), "refind")
+        : null;
+    const proposal = fixerProposal({
+      id: options.newId(),
+      stepIndex: step.index,
+      stepKey: key,
+      from,
+      before,
+      after,
+      answer,
+      policy: options.policy,
+    });
+    const newTarget = (firstNew?.action as { target?: Locator } | undefined)?.target;
+    const oldTarget = (before[0]?.action as { target?: Locator } | undefined)?.target;
+    const classFacts = {
+      ...(missedFp
+        ? {
+            before: {
+              ...healFacts(missedFp),
+              locator: oldTarget ? describeLocator(oldTarget) : "",
+            },
+          }
+        : {}),
+      ...(firstNew?.fingerprint
+        ? {
+            after: {
+              ...healFacts(firstNew.fingerprint),
+              locator: newTarget ? describeLocator(newTarget) : "",
+            },
+          }
+        : {}),
+      attempt,
+    };
+    const cls = await classifyHeal(proposal, { decisions, ...classFacts });
+    proposal.classification = cls.classification;
+    // Guarantee 1 (HEAL-3): a heal that isn't only a locator/action/wait change is refused.
+    if (!HealProposalSchema.safeParse(proposal).success)
+      return {
+        kind: "failed",
+        error: `${missed.reason}; the AI heal was refused: a heal may change only how a step is done (locator, action, wait), never what is expected.`,
+        post: null,
+        calls,
+      };
+    const patch: HealPatch = {
+      patchVersion: HEAL_PATCH_VERSION,
+      healId: proposal.id,
+      testId: test.id,
+      testPath: options.testPath ?? test.id,
+      attempt,
+      stepIndex: step.index,
+      stepKey: key,
+      textKey: step.textKey,
+      level: "fixer",
+      from,
+      before,
+      after,
+      labels: {
+        ...(missedFp && firstNew?.fingerprint
+          ? {
+              sameElement: sameElementInputFor(missedFp, {
+                facts: factsOfFingerprint(firstNew.fingerprint),
+                foundBy: "refind",
+                matches: 1,
+              }),
+            }
+          : {}),
+        missAction: missed.miss,
+        action: "call_fixer",
+        healClass: healInput(proposal, classFacts),
+      },
+    };
+    return {
+      kind: "ok",
+      heal: proposal,
+      patch,
+      post,
+      settled: after.reduce((sum, c) => sum + c.wait.settledMs, 0),
+      calls,
+      locator: newTarget ?? null,
     };
   };
 
@@ -1086,6 +1332,33 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       let failed: Extract<CommandResult, { kind: "failed" | "blocked" }> | undefined;
       for (const [commandIndex, command] of recorded.commands.entries()) {
         const r = await replayCommand(step, key, command, commandIndex, variables);
+        if (r.kind === "failed" && r.fixer && options.fixerAvailable && options.models) {
+          const fixed = await fixStep(step, key, recorded, commandIndex, variables, r.fixer);
+          base.modelCallIds.push(...fixed.calls.map((c) => c.id));
+          if (fixed.kind === "ok") {
+            posts.push(fixed.post);
+            settled += fixed.settled;
+            heals.push(fixed.heal);
+            patches.push(fixed.patch);
+            base.healIds.push(fixed.heal.id);
+            options.emit({ type: "heal.proposed", heal: fixed.heal });
+            healedByFixer++;
+            recovery = "fixer";
+            if (fixed.locator && !used)
+              used = { used: "fallback", value: describeLocator(fixed.locator) };
+            // The fixer redid the rest of the step: the remaining recorded commands are replaced.
+            break;
+          }
+          failed =
+            fixed.kind === "blocked"
+              ? { kind: "blocked", reason: fixed.reason, message: fixed.message }
+              : { kind: "failed", error: fixed.error, post: fixed.post, notFound: true };
+          if (fixed.kind === "failed") {
+            if (fixed.post) posts.push(fixed.post);
+            notFoundAtFailure = true;
+          }
+          break;
+        }
         if (r.kind !== "ok") {
           failed = r;
           if (r.kind === "failed" && r.post) posts.push(r.post);
@@ -1097,6 +1370,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
         settled += r.outcome.settledMs;
         if (r.heal) {
           heals.push(r.heal);
+          if (r.patch) patches.push(r.patch);
           base.healIds.push(r.heal.id);
           options.emit({ type: "heal.proposed", heal: r.heal });
           healedWithoutAi++;
@@ -1206,6 +1480,38 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     chapters,
     needsAi,
     healedWithoutAi,
+    healedByFixer,
+    patches,
+  };
+}
+
+/** Every recorded effect of a run of commands, as one (VER-5 for a redone step). */
+function mergedEffect(commands: readonly Command[]): Command["expectPost"] {
+  const merged: Command["expectPost"] = {};
+  for (const { expectPost } of commands) {
+    if (expectPost.urlChange) merged.urlChange = expectPost.urlChange;
+    if (expectPost.appeared?.length)
+      merged.appeared = [...(merged.appeared ?? []), ...expectPost.appeared];
+    if (expectPost.removed?.length)
+      merged.removed = [...(merged.removed ?? []), ...expectPost.removed];
+    if (expectPost.requests?.length)
+      merged.requests = [...(merged.requests ?? []), ...expectPost.requests];
+    if (expectPost.reordered) merged.reordered = true;
+  }
+  return merged;
+}
+
+/** A fingerprint as live element facts (same_element compares the fixer's element with the recorded one). */
+function factsOfFingerprint(fp: Fingerprint): ElementFacts {
+  return {
+    role: fp.role,
+    name: fp.name,
+    tag: fp.tag,
+    attributes: fp.attributes,
+    text: fp.name,
+    anchorText: fp.anchorText,
+    framePath: fp.framePath as ElementFacts["framePath"],
+    box: fp.box,
   };
 }
 

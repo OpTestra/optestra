@@ -1,11 +1,14 @@
 import type { HealPolicy, HealProposal } from "@testament/contract";
 import type { Evidence, SameElementAnswer } from "@testament/decide";
-import { describeLocator, type Locator } from "@testament/recording";
+import { type Command, describeLocator, type Locator } from "@testament/recording";
+import { describeCommand, patchDiff } from "../heal/patch.js";
 
 // A heal found without AI (HEAL-1 level 1: a stored fallback locator, or a
 // re-find over the page from the fingerprint). It changes how the step is
-// done (the locator), never what is expected (HEAL-3). In LOOP-4 every heal is
-// a pending proposal: the recording is not changed (HEAL adds review/accept).
+// done (the locator), never what is expected (HEAL-3). A fixer heal (HEAL-1
+// level 2) changes the step's actions from the missed one on. Under `review`
+// every heal is a pending proposal: the recording is not changed until a
+// person accepts it (the `heal` command).
 
 /** DEC-3 signal names → the contract's heal signals. */
 const SIGNAL_NAMES: Record<string, string> = {
@@ -73,6 +76,66 @@ export function healProposal(input: HealInput): HealProposal {
     classification: "unknown",
     status: "pending",
     policy: input.policy,
+    level: input.how,
+  };
+}
+
+export interface FixerHealInput {
+  id: string;
+  stepIndex: number;
+  stepKey: string;
+  /** The first command the fixer replaced. */
+  from: number;
+  before: readonly Command[];
+  after: readonly Command[];
+  /** same_element between the missed element and the one the fixer used, when both exist. */
+  answer: SameElementAnswer | null;
+  policy: HealPolicy;
+}
+
+const targetOf = (command: Command | undefined): Locator | undefined =>
+  (command?.action as { target?: Locator } | undefined)?.target;
+
+/** The heal proposal for a step the fixer redid: its actions, and its element when that moved. */
+export function fixerProposal(input: FixerHealInput): HealProposal {
+  const changes: HealProposal["changes"] = [];
+  const oldTarget = targetOf(input.before[0]);
+  const newTarget = targetOf(input.after.find((c) => targetOf(c)));
+  if (oldTarget && newTarget && JSON.stringify(oldTarget) !== JSON.stringify(newTarget))
+    changes.push({
+      target: "locator",
+      before: describeLocator(oldTarget),
+      after: describeLocator(newTarget),
+    });
+  // The same actions on another element are a locator change only; anything
+  // else (other actions, values, more or fewer of them) is an action change.
+  const untargeted = (commands: readonly Command[]) =>
+    JSON.stringify(commands.map((c) => ({ ...c.action, target: undefined })));
+  if (untargeted(input.before) !== untargeted(input.after) || changes.length === 0)
+    changes.push({
+      target: "action",
+      before: input.before.map(describeCommand).join("; ") || "(nothing)",
+      after: input.after.map(describeCommand).join("; ") || "(nothing)",
+    });
+  const score = input.answer ? (Math.max(-1, Math.min(1, input.answer.score)) + 1) / 2 : 0.5;
+  return {
+    id: input.id,
+    stepIndex: input.stepIndex,
+    stepKey: input.stepKey,
+    changes,
+    diff: patchDiff(
+      input.stepIndex,
+      input.from,
+      input.before,
+      input.after,
+      "redone by the fixer model",
+    ),
+    signals: input.answer ? healSignals(input.answer.evidence) : [],
+    confidence: Math.round(score * 1000) / 1000,
+    classification: "unknown",
+    status: "pending",
+    policy: input.policy,
+    level: "fixer",
   };
 }
 
