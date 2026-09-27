@@ -149,7 +149,8 @@
       "soft": true,
       "check": {
         "type": "soft_judgment",
-        "question": "Does the sign-up form look tidy?"
+        "question": "Does the sign-up form look tidy?",
+        "screenshot": "page"
       },
       "generatedBy": "ai",
       "recordedAt": "2026-09-26T12:00:00.000Z"

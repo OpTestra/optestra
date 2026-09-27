@@ -13,8 +13,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { brand } from "@testament/brand";
-import { mapReader, parseTest } from "@testament/spec";
-import { expandTest } from "@testament/spec";
+import { expandTest, mapReader, parseTest } from "@testament/spec";
 import { afterAll, describe, expect, it } from "vitest";
 import { composeProject, GOLDEN_DIR } from "./fixture-project.test-support.js";
 import { fileState, withHeader } from "./header.js";
@@ -522,12 +521,17 @@ describe("checks", () => {
       { "tests/t.test.md": file },
       [],
       [
-        { text: /^A$/, check: { type: "soft_judgment", question: "Tidy?" }, generatedBy: "model" },
+        {
+          text: /^B$/,
+          soft: true,
+          check: { type: "soft_judgment", question: "Tidy?", screenshot: "page" },
+          generatedBy: "ai",
+        },
         { text: /^C$/, check: { type: "hologram", depth: 3 } },
         { text: /^D$/, check: { type: "text", target: "not a locator" } },
       ],
     );
-    expect(spec).toContain(`${CHECKED_ELSEWHERE}("Expect: A", "a model judges it");`);
+    expect(spec).toContain(`${CHECKED_ELSEWHERE}("Soft: B", "a model judges it");`);
     expect(spec).toContain(`${CHECKED_ELSEWHERE}("Expect: C", 'a "hologram" check');`);
     expect(spec).toContain(`${CHECKED_ELSEWHERE}("Expect: D", 'a "invalid:text" check');`);
     expect(spec).toContain(`${CHECKED_ELSEWHERE}("Expect: E", "not compiled to code yet");`);

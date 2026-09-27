@@ -26,12 +26,18 @@ export interface CodegenCheck {
 
 export type CodegenRecording = Omit<Recording, "checks"> & { checks: CodegenCheck[] };
 
-const LenientCheckSchema = CheckRecordingSchema.extend({
+// Built from the fields, without the recording schema's refinements: this reader
+// accepts ops it doesn't know, and they only ever become annotations, never code.
+const LenientCheckSchema = z.object({
+  ...CheckRecordingSchema.shape,
   check: z.looseObject({ type: z.string() }),
   generatedBy: z.string(),
 });
 
-const LenientRecordingSchema = RecordingSchema.extend({ checks: z.array(LenientCheckSchema) });
+const LenientRecordingSchema = z.object({
+  ...RecordingSchema.shape,
+  checks: z.array(LenientCheckSchema),
+});
 
 export type ParsedCodegenRecording =
   | { ok: true; recording: CodegenRecording }

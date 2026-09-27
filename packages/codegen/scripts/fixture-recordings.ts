@@ -14,10 +14,10 @@ import {
   type Command,
   checkKey,
   type Locator,
-  type Recording,
   RECORDING_EPOCH,
   RECORDING_VERSION,
   type RecordedAction,
+  type Recording,
   routeOf,
   stepKey,
 } from "@testament/recording";
@@ -456,7 +456,11 @@ const plans: Record<string, Plan> = {
     {
       match: /^the sign-up form looks tidy$/,
       // A model-judged check (LOOP-2): the spec can't run it, only note it.
-      check: { type: "soft_judgment", question: "Does the sign-up form look tidy?" } as never,
+      check: {
+        type: "soft_judgment",
+        question: "Does the sign-up form look tidy?",
+        screenshot: "page",
+      } as never,
     },
     {
       match: /^"Email" contains/,
