@@ -222,6 +222,10 @@ export interface CreateProjectOptions {
   baseUrl?: string;
   /** Android: APK path or upload reference of the first environment. */
   app?: string;
+  /** Project-relative tests folder. Default `tests`. */
+  testsDir?: string;
+  /** Names of secrets or keys to list (without values) in `.env.example`. */
+  envNames?: string[];
 }
 
 export interface CreateProjectResult {
@@ -251,7 +255,11 @@ project:
   # web or android
   target: ${options.target}
 
-# Environment used when none is chosen.
+${
+  options.testsDir && options.testsDir !== "tests"
+    ? `# Where the .test.md files are.\ntests:\n  dir: ${yamlScalar(options.testsDir)}\n\n`
+    : ""
+}# Environment used when none is chosen.
 defaultEnvironment: local
 
 environments:
@@ -274,15 +282,18 @@ run:
 `;
 }
 
-const ENV_EXAMPLE = `# Secret values. Copy to .env (all environments) or .env.<environment>
+const envExample = (names: readonly string[] = []) =>
+  `# Secret values. Copy to .env (all environments) or .env.<environment>
 # (e.g. .env.staging) and fill in. Never commit the copies.
-# TEST_PASSWORD=
+${names.length ? names.map((name) => `${name}=`).join("\n") : "# TEST_PASSWORD="}
 `;
 
 /**
  * Creates a new project in `dir`: a commented project file, `.env.example`, and
- * `.gitignore` entries for `.env*` and the local data folder. Never overwrites
- * an existing file; missing `.gitignore` lines are appended.
+ * `.gitignore` entries for `.env*` and the local data folder. The data folder
+ * next to the tests (recordings and generated specs) stays committed, except its
+ * authoring reports. Never overwrites an existing file; missing `.gitignore`
+ * lines are appended, so running it again changes nothing.
  */
 export function createProject(dir: string, options: CreateProjectOptions): CreateProjectResult {
   const root = resolve(dir);
@@ -296,9 +307,17 @@ export function createProject(dir: string, options: CreateProjectOptions): Creat
     }
   };
   writeNew(brand.configFileName, configTemplate(options));
-  writeNew(".env.example", ENV_EXAMPLE);
+  writeNew(".env.example", envExample(options.envNames));
 
-  const entries = [".env", ".env.*", "!.env.example", `${brand.dataDirName}/`];
+  const testsData = `/${(options.testsDir ?? "tests").replace(/^\/+|\/+$/g, "")}/${brand.dataDirName}/`;
+  const entries = [
+    ".env",
+    ".env.*",
+    "!.env.example",
+    `${brand.dataDirName}/`,
+    `!${testsData}`,
+    `${testsData}authoring/`,
+  ];
   const gitignore = join(root, ".gitignore");
   if (!existsSync(gitignore)) {
     writeNew(
