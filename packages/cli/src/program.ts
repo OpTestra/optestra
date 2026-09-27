@@ -9,7 +9,10 @@ import { type ChecksCommandOptions, runChecksCommand } from "./commands/checks.j
 import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
 import { type DeciderSetupOptions, runDeciderSetup } from "./commands/decider.js";
 import { type DecisionsCommandOptions, runDecisionsCommand } from "./commands/decisions.js";
+import { registerDoctorCommand } from "./commands/doctor.js";
+import { registerExportCommand } from "./commands/export.js";
 import { type GenerateCommandOptions, runGenerateCommand } from "./commands/generate.js";
+import { registerInitCommand } from "./commands/init.js";
 import { type LintCommandOptions, runLintCommand } from "./commands/lint.js";
 import { runLoginCommand } from "./commands/login.js";
 import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
@@ -262,6 +265,15 @@ export function createProgram(): Command {
     env: process.env,
     stdout: (text) => process.stdout.write(text),
   }));
+
+  const io = () => ({
+    cwd: process.cwd(),
+    env: process.env,
+    stdout: (text: string) => process.stdout.write(text),
+  });
+  registerInitCommand(program, io);
+  registerDoctorCommand(program, io);
+  registerExportCommand(program, io);
 
   program.action(() => program.help());
   return program;

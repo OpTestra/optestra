@@ -128,6 +128,10 @@ importers:
       commander:
         specifier: ^15.0.0
         version: 15.0.0
+    devDependencies:
+      '@testament/fixture-shop':
+        specifier: workspace:*
+        version: link:../../bench/fixtures/shop
 
   packages/codegen:
     dependencies:
