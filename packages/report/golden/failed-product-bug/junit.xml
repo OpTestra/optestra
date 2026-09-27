@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="demo-shop · staging" tests="2" failures="1" errors="0" skipped="0" time="16.085">
+  <testsuite name="demo-shop · staging" tests="2" failures="1" errors="0" skipped="0" time="16.085" timestamp="2026-09-26T09:20:00" id="01M3EG7AG0M0AHEMTHAS09ZS7Y">
+    <properties><property name="runId" value="01M3EG7AG0M0AHEMTHAS09ZS7Y"/><property name="project" value="demo-shop"/><property name="environment" value="staging"/><property name="target" value="web"/><property name="trigger" value="ci"/><property name="mode" value="normal"/><property name="engineVersion" value="0.1.0"/><property name="contractVersion" value="1.0"/><property name="aiCalls" value="0"/><property name="costUsd" value="0"/><property name="git.branch" value="feature/discounts"/><property name="git.commit" value="9b8a7c6d5e4f30211203f4e5d6c7b8a9e0f1a2b3"/><property name="git.pr" value="42"/><property name="totals.passed" value="1"/><property name="totals.healed" value="0"/><property name="totals.flaky" value="0"/></properties>
+    <testcase name="Discount code takes 10% off" classname="tests/checkout/discount-code.md" file="tests/checkout/discount-code.md" time="12.725">
+      <properties><property name="verdict" value="failed"/><property name="testId" value="tests__checkout__discount-code"/><property name="matrix" value="chromium"/><property name="tag" value="checkout"/><property name="attempts" value="2"/><property name="aiCalls" value="0"/><property name="costUsd" value="0"/></properties>
+      <failure message="Expected order total &#39;$90.00&#39;, found &#39;$100.00&#39;" type="product_bug">Expected order total &#39;$90.00&#39;, found &#39;$100.00&#39;
+Cause: Product bug
+Check: The order total shows &#39;$90.00&#39;
+Written as: The order total is $90.00
+Expected: &#39;$90.00&#39;
+Actual: &#39;$100.00&#39;
+Step 3 (attempt 2): The order total is $90.00
+File: tests/checkout/discount-code.md
+Screenshot: tests/tests__checkout__discount-code/2/steps/2-after.png</failure>
+    </testcase>
+    <testcase name="Guest checkout" classname="tests/checkout/guest-checkout.md" file="tests/checkout/guest-checkout.md" time="3.250">
+      <properties><property name="verdict" value="passed"/><property name="testId" value="tests__checkout__guest-checkout"/><property name="matrix" value="chromium"/><property name="tag" value="checkout"/><property name="tag" value="smoke"/><property name="aiCalls" value="0"/><property name="costUsd" value="0"/></properties>
+    </testcase>
+  </testsuite>
+</testsuites>

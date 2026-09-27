@@ -19,6 +19,8 @@
     "packages/codegen/e2e",
     "packages/codegen/vitest.config.ts",
     "packages/codegen/scripts",
+    "packages/report/e2e",
+    "packages/report/vitest.config.ts",
     "bench/fixtures/*/playwright.config.ts"
   ]
 }

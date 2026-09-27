@@ -1,0 +1,77 @@
+{
+  "kind": "results-summary",
+  "version": "1.0",
+  "contractVersion": "1.0",
+  "runId": "01M3EHY8A0Z0PMNVCJH2CPRFHD",
+  "project": "demo-shop",
+  "environment": "local",
+  "target": "web",
+  "trigger": "cli",
+  "mode": "rerecord",
+  "startedAt": "2026-09-26T09:50:00.000Z",
+  "durationMs": 12865,
+  "git": null,
+  "blocked": null,
+  "exitCode": 2,
+  "totals": {
+    "tests": 1,
+    "passed": 0,
+    "healed": 0,
+    "failed": 0,
+    "flaky": 0,
+    "blocked": 1
+  },
+  "cost": {
+    "usd": 1.08,
+    "unpricedCalls": 0,
+    "aiCalls": 4,
+    "subscriptionCalls": 0
+  },
+  "failureGroups": [
+    {
+      "headline": "Blocked: the run budget of $1.00 was reached at step 3",
+      "cause": "blocked",
+      "tests": [
+        "tests__account__sign-up"
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "testId": "tests__account__sign-up",
+      "name": "Sign up for a new account",
+      "file": "tests/account/sign-up.md",
+      "tags": [
+        "account"
+      ],
+      "matrix": "chromium",
+      "verdict": "blocked",
+      "cause": "blocked",
+      "headline": "Blocked: the run budget of $1.00 was reached at step 3",
+      "blocked": {
+        "reason": "budget_exceeded",
+        "message": "The run budget of $1.00 was reached ($1.08 spent). Raise run.budget.maxPerRunUsd or run in replay mode."
+      },
+      "failingCheck": null,
+      "failingStep": {
+        "attempt": 1,
+        "index": 2,
+        "key": "action:submit-the-form",
+        "text": "Submit the form",
+        "status": "blocked",
+        "error": "Run budget of $1.00 reached ($1.08 spent)"
+      },
+      "softWarnings": [],
+      "heals": [],
+      "screenshot": "tests/tests__account__sign-up/1/steps/2-after.png",
+      "durationMs": 12785,
+      "attempts": 1,
+      "ai": {
+        "calls": 4,
+        "costUsd": 1.08,
+        "recent": null
+      },
+      "result": "tests/tests__account__sign-up/result.json"
+    }
+  ]
+}

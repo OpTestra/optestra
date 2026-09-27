@@ -1,0 +1,11 @@
+Run 01M3EG7AG0M0AHEMTHAS09ZS7Y  demo-shop · staging · web
+
+  FAILED     12.7s       0 AI     $0.00  Discount code takes 10% off
+                                         Expected order total '$90.00', found '$100.00'
+  PASSED      3.3s       0 AI     $0.00  Guest checkout
+
+  What went wrong
+  ● Expected order total '$90.00', found '$100.00'
+      product bug · 1 test: Discount code takes 10% off (tests/checkout/discount-code.md, step 3)
+
+  1 passed, 1 failed · 16.1s · 0 AI calls · $0.00

@@ -13,6 +13,7 @@ import { type GenerateCommandOptions, runGenerateCommand } from "./commands/gene
 import { type LintCommandOptions, runLintCommand } from "./commands/lint.js";
 import { runLoginCommand } from "./commands/login.js";
 import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
+import type { ReportCommandOptions } from "./commands/report.js";
 import { type ResultsCommandOptions, runResultsCommand } from "./commands/results.js";
 import {
   type ListCommandOptions,
@@ -121,11 +122,34 @@ export function createProgram(): Command {
       "summarise a finished run folder and exit with its CI code (0 passed, 1 failed, 2 blocked)",
     )
     .argument("<runDir>", "the run folder (contains run.json)")
-    .option("--json", "print machine-readable JSON")
+    .option("--json [file]", "print the machine-readable JSON summary, or write it to <file>")
+    .option("--junit <file>", "also write JUnit XML to <file>")
+    .option(
+      "--markdown <file>",
+      "also write the Markdown summary (PR comment, job summary) to <file>",
+    )
     .option("--healed-passes", "count healed tests as passed (default: they fail the exit code)")
     .option("--flaky-passes", "do not fail the exit code for flaky tests")
-    .action((runDir: string, options: ResultsCommandOptions) => {
+    .action(async (runDir: string, options: ResultsCommandOptions) => {
+      const { shouldUseColor } = await import("@testament/report/node");
       process.exitCode = runResultsCommand(runDir, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+        color: shouldUseColor(process.stdout),
+      });
+    });
+
+  program
+    .command("report")
+    .description("write the offline HTML report of a run (default: the project's latest run)")
+    .argument("[runDir]", "the run folder (contains run.json)")
+    .option("--out <dir>", "write index.html here instead of into the run folder")
+    .option("--open", "open the report in the default browser")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (runDir: string | undefined, options: ReportCommandOptions) => {
+      const { runReportCommand } = await import("./commands/report.js");
+      process.exitCode = runReportCommand(runDir, options, {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),

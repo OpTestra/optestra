@@ -1,0 +1,10 @@
+Run 01M3EHY8A0Z0PMNVCJH2CPRFHD  demo-shop · local · web
+
+  BLOCKED    12.8s       4 AI     $1.08  Sign up for a new account
+                                         Blocked: the run budget of $1.00 was reached at step 3
+
+  What went wrong
+  ● Blocked: the run budget of $1.00 was reached at step 3
+      blocked, budget exceeded · 1 test: Sign up for a new account (tests/account/sign-up.md, step 3)
+
+  1 blocked · 12.9s · 4 AI calls · $1.08

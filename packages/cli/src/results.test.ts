@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,7 +18,11 @@ describe("results command", () => {
   it("prints the failed test's headline and exits 1", () => {
     const result = run("failed-product-bug");
     expect(result.status).toBe(1);
-    expect(result.stdout).toMatch(/FAILED\s+12\.7s\s+\$0\.00\s+Discount code takes 10% off/);
+    expect(result.stdout).toMatch(/FAILED\s+12\.7s\s+0 AI\s+\$0\.00\s+Discount code takes 10% off/);
+    expect(result.stdout).toContain("What went wrong");
+    expect(result.stdout).toContain("exit code 1");
+    // Not a TTY: no colour.
+    expect(result.stdout).not.toContain("\u001b[");
     expect(result.stdout).toContain("Expected order total '$90.00', found '$100.00'");
     expect(result.stdout).toContain("1 passed, 1 failed");
   });
@@ -37,11 +41,34 @@ describe("results command", () => {
     expect(run("flaky", "--flaky-passes").status).toBe(0);
   });
 
-  it("prints JSON with --json", () => {
+  it("prints the JSON summary with --json", () => {
     const output = JSON.parse(run("flaky", "--json").stdout);
+    expect(output.kind).toBe("results-summary");
     expect(output.exitCode).toBe(1);
-    expect(output.summary.line).toBe("1 flaky");
-    expect(output.run.tests[0].headline).toContain("503");
+    expect(output.totals.flaky).toBe(1);
+    expect(output.tests[0].headline).toContain("503");
+  });
+
+  it("writes JUnit, JSON and Markdown files", () => {
+    const dir = mkdtempSync(join(tmpdir(), "cli-results-"));
+    dirs.push(dir);
+    const out = (file: string) => join(dir, file);
+    const result = run(
+      "failed-product-bug",
+      "--junit",
+      out("junit.xml"),
+      "--json",
+      out("out/summary.json"),
+      "--markdown",
+      out("summary.md"),
+    );
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("FAILED");
+    expect(readFileSync(out("junit.xml"), "utf8")).toContain(
+      '<failure message="Expected order total',
+    );
+    expect(JSON.parse(readFileSync(out("out/summary.json"), "utf8")).exitCode).toBe(1);
+    expect(readFileSync(out("summary.md"), "utf8")).toContain("| 1 | 0 | 1 | 0 | 0 |");
   });
 
   it("exits 2 with the problems when the run folder is unreadable", () => {

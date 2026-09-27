@@ -1,0 +1,8 @@
+Run 01M3EFN0J0FQBKEWDYW4JQ19PW  demo-shop · local · web
+
+  HEALED      6.3s       1 AI   $0.0184  Add a product to the cart
+                                         Step 2 was repaired: the 'Add to cart' button is now 'Add to bag'. Review the fix.
+
+  1 fix to review
+
+  1 healed · 6.4s · 1 AI call · $0.0184

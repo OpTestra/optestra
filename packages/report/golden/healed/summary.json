@@ -1,0 +1,96 @@
+{
+  "kind": "results-summary",
+  "version": "1.0",
+  "contractVersion": "1.0",
+  "runId": "01M3EFN0J0FQBKEWDYW4JQ19PW",
+  "project": "demo-shop",
+  "environment": "local",
+  "target": "web",
+  "trigger": "desktop",
+  "mode": "normal",
+  "startedAt": "2026-09-26T09:10:00.000Z",
+  "durationMs": 6403,
+  "git": null,
+  "blocked": null,
+  "exitCode": 1,
+  "totals": {
+    "tests": 1,
+    "passed": 0,
+    "healed": 1,
+    "failed": 0,
+    "flaky": 0,
+    "blocked": 0
+  },
+  "cost": {
+    "usd": 0.0184,
+    "unpricedCalls": 0,
+    "aiCalls": 1,
+    "subscriptionCalls": 0
+  },
+  "failureGroups": [],
+  "tests": [
+    {
+      "testId": "tests__cart__add-to-cart",
+      "name": "Add a product to the cart",
+      "file": "tests/cart/add-to-cart.md",
+      "tags": [
+        "cart"
+      ],
+      "matrix": "chromium",
+      "verdict": "healed",
+      "cause": null,
+      "headline": "Step 2 was repaired: the 'Add to cart' button is now 'Add to bag'. Review the fix.",
+      "blocked": null,
+      "failingCheck": null,
+      "failingStep": null,
+      "softWarnings": [],
+      "heals": [
+        {
+          "id": "h1",
+          "stepIndex": 1,
+          "stepKey": "action:click-add-to-cart",
+          "changes": [
+            {
+              "target": "locator",
+              "before": "getByRole('button', { name: 'Add to cart' })",
+              "after": "getByRole('button', { name: 'Add to bag' })"
+            }
+          ],
+          "confidence": 0.82,
+          "classification": "cosmetic",
+          "status": "pending",
+          "policy": "review",
+          "signals": [
+            {
+              "name": "role_match",
+              "score": 1,
+              "detail": "Both are buttons"
+            },
+            {
+              "name": "position",
+              "score": 0.9,
+              "detail": "Same place in the product card, 4px lower"
+            },
+            {
+              "name": "text_match",
+              "score": 0.55,
+              "detail": "'Add to cart' vs 'Add to bag'"
+            }
+          ]
+        }
+      ],
+      "screenshot": null,
+      "durationMs": 6323,
+      "attempts": 1,
+      "ai": {
+        "calls": 1,
+        "costUsd": 0.0184,
+        "recent": {
+          "runs": 10,
+          "calls": 1
+        }
+      },
+      "result": "tests/tests__cart__add-to-cart/result.json"
+    }
+  ]
+}

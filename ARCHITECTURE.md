@@ -18,6 +18,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/auth` | Login building blocks: auth profiles and the saved-session store (`ensureProfile` with an injected login flow), the `totp` secret type, test inboxes (Mailpit, Mailosaur, MailSlurp) with code/link extraction and `InboxValues` for `{{inbox.…}}`; registers the `auth` and `inbox` config sections. Node only (+ browser-safe `/extract`) | AUTH-0 |
 | `packages/recording` | The recording format: per test, the commands for each step (locators, fingerprints, templates, learned waits) and the typed checks with their summaries (`describeCheck`) and sanity results; keys (`routeOf`, `stepKey`, `RECORDING_EPOCH`). Browser-safe + `/node` reader/writer | LOOP-1, LOOP-2 |
 | `packages/codegen` | Generated Playwright specs: a recording → a plain `@playwright/test` spec next to the test, plus the shared fixtures module (allowlist route, secrets, values, network and inbox helpers) and Playwright config; hand-edit protection; `generateProject` in `/node`. The output imports nothing from the engine | LOOP-3 |
+| `packages/report` | What people read from a run folder: the offline HTML report, JUnit XML, the versioned JSON summary for agents (with JSON Schema), the Markdown summary for the PR comment and job summary, and the quiet terminal formatter. Pure functions of the contract documents (browser-safe) + `/node` (read a run folder, write files, latest run, colour, `openFile`). Look from one tokens file | EVD-0 |
 | `packages/core` | The engine: run, record, replay, heal, verdicts. Today the author (`authorTest`: agent loop, guards, VER-5 check, authoring report; `/node` `saveAuthoring`) and the check compiler (`src/checks/`: phrase rules, AI fallback, sanity test, soft judgments); re-exports the redacting `logger` | LOOP-1 onward |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
 | `packages/mcp` | MCP server for coding agents | agents phase |
@@ -37,6 +38,8 @@ cli ──► core ──► config ──► brand
  ├──► auth ──► config, spec, brand (never imports core or browser; /inbox/transport.ts: inboxes, AUTH-0)
  ├──► codegen ──► recording, spec, config, brand (node; no AI, no network;
  │                its output imports only @playwright/test)
+ ├──► report ──► contract, brand     (browser-safe renderers; never imports core, browser,
+ │                models or decide; reads documents, never artifact contents)
  core ──► browser, models, spec, recording, contract, config
  └──► contract                     (cli reads run folders through the contract)
 mcp, action ──► core, contract (later)
@@ -210,6 +213,20 @@ contract ──► zod only (bottom of the graph)
   `soft_judgment`, unknown) become annotations. The CI `fixtures` job runs the
   generated specs with plain Playwright against the shop. See
   `packages/codegen/README.md`.
+
+- EVD-0 (done): `packages/report`. One view model (`buildModel`) over the run's
+  documents feeds every output: `renderHtmlReport` (one self-contained page,
+  inline CSS/JS, a CSP that allows no network, artifacts linked relative to the
+  run folder, works with JS off, failure groups and headline + screenshot first),
+  `renderJunit`, `renderJsonSummary` (`results-summary` 1.0, schema at
+  `@testament/report/schema/results-summary.json`), `renderMarkdownSummary`
+  (capped under GitHub's comment limit, screenshots as `artifact:<path>`
+  placeholders that the Action fills with `fillArtifactLinks`) and
+  `formatTestLine` / `formatRunSummary` / `formatTerminal` (CLI-4; LOOP-4's `run`
+  prints with these). Colours, type and spacing live only in `src/tokens.ts`.
+  CLI `report [runDir] [--out] [--open]` and `results --junit/--json [file]/--markdown`.
+  The CI `fixtures` job runs the report in Chromium (axe, no network, JS off).
+  See `packages/report/README.md`.
 
 ## Results contract (`packages/contract`)
 

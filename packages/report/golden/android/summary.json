@@ -1,0 +1,63 @@
+{
+  "kind": "results-summary",
+  "version": "1.0",
+  "contractVersion": "1.0",
+  "runId": "01M3EJGJ80CW0YWY81PDJ70RB6",
+  "project": "demo-shop",
+  "environment": "staging",
+  "target": "android",
+  "trigger": "cloud",
+  "mode": "normal",
+  "startedAt": "2026-09-26T10:00:00.000Z",
+  "durationMs": 6205,
+  "git": null,
+  "blocked": null,
+  "exitCode": 0,
+  "totals": {
+    "tests": 1,
+    "passed": 1,
+    "healed": 0,
+    "failed": 0,
+    "flaky": 0,
+    "blocked": 0
+  },
+  "cost": {
+    "usd": 0,
+    "unpricedCalls": 0,
+    "aiCalls": 0,
+    "subscriptionCalls": 0
+  },
+  "failureGroups": [],
+  "tests": [
+    {
+      "testId": "tests__android__login",
+      "name": "Log in and see the home feed",
+      "file": "tests/android/login.md",
+      "tags": [
+        "android",
+        "smoke"
+      ],
+      "matrix": "Android 14 · Pixel 7",
+      "verdict": "passed",
+      "cause": null,
+      "headline": null,
+      "blocked": null,
+      "failingCheck": null,
+      "failingStep": null,
+      "softWarnings": [],
+      "heals": [],
+      "screenshot": null,
+      "durationMs": 6125,
+      "attempts": 1,
+      "ai": {
+        "calls": 0,
+        "costUsd": 0,
+        "recent": {
+          "runs": 12,
+          "calls": 0
+        }
+      },
+      "result": "tests/tests__android__login/result.json"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+Run 01M3EHBYC0C7ENE9ZXSBRYMCYS  demo-shop · staging · web
+
+  BLOCKED      5ms       0 AI     $0.00  Admin can refund an order
+                                         Blocked: secret ADMIN_PASSWORD is not set for staging
+  PASSED      1.6s       0 AI     $0.00  Search finds products
+
+  What went wrong
+  ● Blocked: secret ADMIN_PASSWORD is not set for staging
+      blocked, missing secret · 1 test: Admin can refund an order (tests/admin/refund-order.md)
+
+  1 passed, 1 blocked · 1.7s · 0 AI calls · $0.00
