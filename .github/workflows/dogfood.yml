@@ -9,7 +9,10 @@ name: dogfood
 # `correct` passes; a `broken-*` variant must give a failed check.
 
 on:
+  # Local-first: runs only when a PR gets the `dogfood` label (to test the Action
+  # itself on a real PR), never on every push.
   pull_request:
+    types: [labeled, synchronize]
 
 permissions:
   contents: read
@@ -35,6 +38,7 @@ env:
 
 jobs:
   single:
+    if: contains(github.event.pull_request.labels.*.name, 'dogfood')
     name: dogfood (1 job)
     runs-on: ubuntu-latest
     steps:
@@ -61,6 +65,7 @@ jobs:
           artifact-prefix: dogfood
 
   shard:
+    if: contains(github.event.pull_request.labels.*.name, 'dogfood')
     name: dogfood (shard ${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
     strategy:
@@ -92,7 +97,7 @@ jobs:
   merge:
     name: dogfood (merge 4 shards)
     needs: shard
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && contains(github.event.pull_request.labels.*.name, 'dogfood') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
