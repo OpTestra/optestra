@@ -1,7 +1,7 @@
 {
   "name": "@testament/action",
   "version": "0.1.0",
-  "description": "GitHub Action (later phase).",
+  "description": "The GitHub Action: runs the CLI in your runner, keeps one PR comment up to date, reports a status check (Blocked is neutral), uploads artifacts.",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -13,6 +13,7 @@
   "files": [
     "action.yml",
     "dist",
+    "docs",
     "!dist/**/*.test.*"
   ],
   "scripts": {

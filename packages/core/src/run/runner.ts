@@ -3,7 +3,12 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { brand } from "@testament/brand";
-import { type Config, hasErrors } from "@testament/config";
+import {
+  type Config,
+  hasErrors,
+  protectedHeaderSpecs,
+  protectionSecretNames,
+} from "@testament/config";
 import {
   defaultRedactor,
   dotenvSource,
@@ -29,10 +34,10 @@ import {
   type Trigger,
   ulid,
 } from "@testament/contract";
-import { createRunWriter, type EmitInput, runDir, type RunWriter } from "@testament/contract/node";
+import { createRunWriter, type EmitInput, type RunWriter, runDir } from "@testament/contract/node";
 import {
-  classifyFailure,
   type AttemptObservations,
+  classifyFailure,
   type Decisions,
   type FailureGroup,
   groupFailures,
@@ -47,12 +52,13 @@ import {
   type StepRecording,
 } from "@testament/recording";
 import { readRecording, recordingPath, writeRecording } from "@testament/recording/node";
-import { hasSpecErrors, type ExpandedTest } from "@testament/spec";
+import { type ExpandedTest, hasSpecErrors } from "@testament/spec";
 import { loadTest, loadTests } from "@testament/spec/node";
 import { PROMPT_VERSION } from "../author/agent.js";
 import { chaptersVtt, consoleErrors } from "./evidence.js";
 import { recentAiUsage } from "./history.js";
 import { replayAttempt } from "./replay.js";
+import { type Shard, selectShard } from "./shard.js";
 import { runSpecTest } from "./spec-run.js";
 import type { ReplayResult, ReplaySession } from "./types.js";
 import { type AttemptRecord, decideVerdict, fallbackCause } from "./verdict.js";
@@ -71,6 +77,8 @@ export interface RunTestsOptions {
   tags?: readonly string[];
   /** Only tests whose name contains this (case-insensitive). */
   grep?: string;
+  /** Only this machine's slice of the selection (CLI-3): see `selectShard`. */
+  shard?: Shard;
   environment?: string;
   env?: Readonly<Record<string, string | undefined>>;
   /** Default: the project's run.mode. */
@@ -275,7 +283,14 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     })),
     options,
   );
-  const plans: TestPlan[] = selected.map((t) => {
+  const sliced = options.shard
+    ? selectShard(
+        selected,
+        options.shard,
+        (t) => all.tests.find((l) => l.path === t.path)?.id ?? t.path,
+      )
+    : selected;
+  const plans: TestPlan[] = sliced.map((t) => {
     const loadedTest = all.tests.find((l) => l.path === t.path);
     const problems = loadedTest?.diagnostics.filter((d) => d.severity === "error") ?? [];
     return {
@@ -291,6 +306,12 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
 
   const sources = options.secretSources ?? [processEnvSource(env), dotenvSource(projectDir)];
   const secrets = resolveSecrets(config, sources, { environment: environment.name });
+  // Protected previews (SEC-8): without their secrets (a fork PR gets none, SAF-6)
+  // the preview can't be reached, so every test is blocked with the reason.
+  const protectedHeaders = protectedHeaderSpecs(settings.protection);
+  const protectionMissing = protectionSecretNames(settings.protection).filter(
+    (name) => !secrets.secrets[name],
+  );
   const budget =
     options.budgetUsd !== undefined
       ? new BudgetMeter("run", options.budgetUsd, "--budget")
@@ -388,6 +409,20 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         decidedBy: [{ kind: "blocked", reason: "config_error", message: plan.problem }],
         failureCause: "blocked",
         headline: `Blocked: the test file has problems: ${plan.problem}`,
+        recentAi: recent,
+      });
+      return;
+    }
+    if (protectionMissing.length > 0) {
+      const names = protectionMissing.join(", ");
+      const message = `The protected preview needs ${names}, which has no value here (pull requests from forks get no secrets).`;
+      emit({
+        type: "test.finished",
+        testId: plan.id,
+        verdict: "blocked",
+        decidedBy: [{ kind: "blocked", reason: "missing_secret", message }],
+        failureCause: "blocked",
+        headline: `Blocked: ${message}`,
         recentAi: recent,
       });
       return;
@@ -505,6 +540,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             baseUrl,
             allowedDomains: settings.allowedDomains,
             secrets: secrets.secrets,
+            ...(protectedHeaders.length > 0 ? { protectedHeaders } : {}),
             allowUpload: { dir: dirname(join(projectDir, plan.path)) },
             evidence: {
               trace: true,

@@ -6,4 +6,5 @@ export {
   type RunTestsResult,
   runTests,
 } from "./run/runner.js";
+export { parseShard, type Shard, selectShard } from "./run/shard.js";
 export { runSpecTest, type SpecTestOptions } from "./run/spec-run.js";

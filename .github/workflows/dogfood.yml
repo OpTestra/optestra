@@ -1,0 +1,117 @@
+name: dogfood
+
+# CI-0: the GitHub Action, built from this checkout (cli-path), runs the demo shop's
+# tests on every pull request: one sticky comment per check, a status check where
+# Blocked is neutral, and the report, videos, traces and screenshots as artifacts.
+# Two ways side by side: one job, and 4 shards merged by a final job (CI-6).
+#
+# SHOP_VARIANT picks the shop build under test (bench/fixtures/shop/src/variants.ts):
+# `correct` passes; a `broken-*` variant must give a failed check.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write # the sticky comment
+  checks: write # the status check
+
+concurrency:
+  group: dogfood-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  SHOP_VARIANT: correct
+  # The demo shop's seeded password: a public fixture value, not a real secret.
+  SHOP_PASSWORD: shop-demo-pass
+  # The two sign-up tests read a verification email; inboxes aren't wired into
+  # runs until AUTH-1, so they would only ever be Blocked here.
+  DOGFOOD_TESTS: >-
+    tests/avatar-upload.test.md tests/billing-zero-due.test.md
+    tests/create-project.test.md tests/declined-card.test.md
+    tests/delete-account-guard.test.md tests/login.test.md
+    tests/settings-profile.test.md tests/signup-validation.test.md
+    tests/sort-orders.test.md
+
+jobs:
+  single:
+    name: dogfood (1 job)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Start the shop
+        run: |
+          node bench/fixtures/shop/dist/cli.js --variant "$SHOP_VARIANT" --port 4100 &
+          for i in $(seq 1 50); do curl -sf http://127.0.0.1:4100/ > /dev/null && exit 0; sleep 0.2; done
+          echo "the shop did not start"; exit 1
+      - uses: ./packages/action
+        with:
+          cli-path: packages/cli
+          working-directory: bench/fixtures/shop
+          tests: ${{ env.DOGFOOD_TESTS }}
+          # brand:next check-name: "{productName} (dogfood)"
+          check-name: "Testament (dogfood)"
+          artifact-prefix: dogfood
+
+  shard:
+    name: dogfood (shard ${{ matrix.shard }}/4)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Start the shop
+        run: |
+          node bench/fixtures/shop/dist/cli.js --variant "$SHOP_VARIANT" --port 4100 &
+          for i in $(seq 1 50); do curl -sf http://127.0.0.1:4100/ > /dev/null && exit 0; sleep 0.2; done
+          echo "the shop did not start"; exit 1
+      - uses: ./packages/action
+        with:
+          cli-path: packages/cli
+          working-directory: bench/fixtures/shop
+          tests: ${{ env.DOGFOOD_TESTS }}
+          shard: ${{ matrix.shard }}/4
+          artifact-prefix: dogfood-sharded
+
+  merge:
+    name: dogfood (merge 4 shards)
+    needs: shard
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: dogfood-sharded-run-*
+          path: shards
+      - uses: ./packages/action
+        with:
+          cli-path: packages/cli
+          working-directory: bench/fixtures/shop
+          merge: ../../../shards
+          # brand:next check-name: "{productName} (dogfood, 4 shards)"
+          check-name: "Testament (dogfood, 4 shards)"
+          artifact-prefix: dogfood-sharded

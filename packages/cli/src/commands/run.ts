@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
 import { brand } from "@testament/brand";
-import type { Event, RunMode } from "@testament/contract";
 import { findProject, projectFile } from "@testament/config/node";
+import type { Event, RunMode } from "@testament/contract";
 import type { CommandIo } from "./config.js";
 
 // `run [tests…]` (LOOP-4, CLI-2/4/5): replays every selected test from its
@@ -13,7 +13,9 @@ import type { CommandIo } from "./config.js";
 export interface RunCommandOptions {
   tag?: string[];
   grep?: string;
+  shard?: string;
   env?: string;
+  baseUrl?: string;
   replayOnly?: boolean;
   rerecord?: boolean;
   retries?: string;
@@ -71,15 +73,23 @@ export async function runRunCommand(
       ? "rerecord"
       : undefined;
 
-  const { runTests } = await import("@testament/core/node");
+  const { parseShard, runTests } = await import("@testament/core/node");
+  const shard = options.shard === undefined ? undefined : parseShard(options.shard);
+  if (typeof shard === "string") {
+    io.stdout(`${shard}\n`);
+    return 2;
+  }
   const { exitCodeFor, formatDuration } = await import("@testament/contract");
   const { loadProject } = await import("@testament/config/node");
+  const { ENV_PREFIX } = await import("@testament/config");
+  // --base-url (a preview deploy, CI-1/ENV-2): the environment's baseUrl for this run.
+  const env = options.baseUrl ? { ...io.env, [`${ENV_PREFIX}BASE_URL`]: options.baseUrl } : io.env;
   const verbose = options.verbose ?? false;
   const names = new Map<string, string>();
   const onEvent = (event: Event) => {
     if (event.type === "run.started")
       io.stdout(
-        `Running ${event.project}${event.environment ? ` on ${event.environment}` : ""} (${event.mode})\n`,
+        `Running ${event.project}${event.environment ? ` on ${event.environment}` : ""} (${event.mode}${shard ? `, shard ${shard.index}/${shard.total}` : ""})\n`,
       );
     if (event.type === "test.started") names.set(event.testId, event.name);
     if (!verbose) return;
@@ -109,8 +119,9 @@ export async function runRunCommand(
       cwd: io.cwd,
       ...(options.tag?.length ? { tags: options.tag } : {}),
       ...(options.grep ? { grep: options.grep } : {}),
+      ...(shard ? { shard } : {}),
       ...(options.env ? { environment: options.env } : {}),
-      env: io.env,
+      env,
       ...(mode ? { mode } : {}),
       ...(typeof retries === "number" ? { retries } : {}),
       ...(typeof workers === "number" && workers > 0 ? { workers } : {}),
@@ -150,7 +161,7 @@ export async function runRunCommand(
       `\nRecorded: ${entry.recording}${entry.specs.length ? ` (spec: ${entry.specs.join(", ")})` : ""}${entry.warnings.map((w) => `\n  warning: ${w}`).join("")}`,
     );
   if (result.recorded.length) io.stdout("\n");
-  const loaded = loadProject(dir, { environment: options.env, env: io.env });
+  const loaded = loadProject(dir, { environment: options.env, env });
   const exitCode = exitCodeFor(run, {
     healedCountsAsPass: loaded.config.run.healPolicy === "auto",
   });

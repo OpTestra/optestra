@@ -15,6 +15,7 @@ import { type GenerateCommandOptions, runGenerateCommand } from "./commands/gene
 import { registerInitCommand } from "./commands/init.js";
 import { type LintCommandOptions, runLintCommand } from "./commands/lint.js";
 import { runLoginCommand } from "./commands/login.js";
+import type { MergeRunsCommandOptions } from "./commands/merge-runs.js";
 import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
 import type { ReportCommandOptions } from "./commands/report.js";
 import { type ResultsCommandOptions, runResultsCommand } from "./commands/results.js";
@@ -132,11 +133,32 @@ export function createProgram(): Command {
       "--markdown <file>",
       "also write the Markdown summary (PR comment, job summary) to <file>",
     )
+    .option("--report-url <url>", "link the Markdown summary to the full report at this URL")
     .option("--healed-passes", "count healed tests as passed (default: they fail the exit code)")
     .option("--flaky-passes", "do not fail the exit code for flaky tests")
     .action(async (runDir: string, options: ResultsCommandOptions) => {
       const { shouldUseColor } = await import("@testament/report/node");
       process.exitCode = runResultsCommand(runDir, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+        color: shouldUseColor(process.stdout),
+      });
+    });
+
+  program
+    .command("merge-runs")
+    .description(
+      "merge shard run folders (run --shard i/n) into one run folder, then summarise it like run",
+    )
+    .argument("<dirs...>", "run folders, or folders that contain them (searched two levels)")
+    .requiredOption("--out <dir>", "the merged run folder to create")
+    .option("--healed-passes", "count healed tests as passed (default: the project's heal policy)")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (dirs: string[], options: MergeRunsCommandOptions) => {
+      const { runMergeRunsCommand } = await import("./commands/merge-runs.js");
+      const { shouldUseColor } = await import("@testament/report/node");
+      process.exitCode = await runMergeRunsCommand(dirs, options, {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),
@@ -239,7 +261,9 @@ export function createProgram(): Command {
     .argument("[tests...]", "test files or folders (default: every test)")
     .option("-t, --tag <tag...>", "only tests with this tag (repeatable)")
     .option("--grep <text>", "only tests whose name contains this")
+    .option("--shard <i/n>", "run only slice i of n (split by test id; merge with merge-runs)")
     .option("-e, --env <name>", "environment to run against")
+    .option("--base-url <url>", "run against this URL (e.g. a preview deploy) instead of baseUrl")
     .option("--replay-only", "no AI at all: a missed or unrecorded step fails (strict CI)")
     .option("--rerecord", "ignore the recordings and record every step again with AI")
     .option("--retries <n>", "extra attempts after a failure (default: run.retries)")

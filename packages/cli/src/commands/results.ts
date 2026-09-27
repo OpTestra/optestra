@@ -1,5 +1,5 @@
 import { relative, resolve } from "node:path";
-import { exitCodeFor, type ExitPolicy } from "@testament/contract";
+import { type ExitPolicy, exitCodeFor } from "@testament/contract";
 import { readRun } from "@testament/contract/node";
 import {
   formatTerminal,
@@ -18,6 +18,8 @@ export interface ResultsCommandOptions {
   junit?: string;
   /** Write the Markdown summary here (CI-2, CI-5). */
   markdown?: string;
+  /** Link the Markdown summary's footer to the full report (e.g. `artifact:index.html`). */
+  reportUrl?: string;
   /** Healed tests count as passed for the exit code. */
   healedPasses?: boolean;
   /** Flaky tests don't fail the exit code. */
@@ -36,7 +38,10 @@ function writeExports(
       typeof options.json === "string" ? options.json : undefined,
       () => renderJsonSummary(data, policy),
     ],
-    [options.markdown, () => renderMarkdownSummary(data)],
+    [
+      options.markdown,
+      () => renderMarkdownSummary(data, options.reportUrl ? { reportUrl: options.reportUrl } : {}),
+    ],
   ];
   const written: string[] = [];
   for (const [file, render] of files) {

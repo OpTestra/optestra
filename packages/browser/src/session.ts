@@ -45,6 +45,7 @@ import {
   type RefTarget,
   reorderedElements,
 } from "./observe.js";
+import { basicAuthValue, HeaderScope, type ScopedHeader } from "./protected-headers.js";
 import { type RefusalProxy, startRefusalProxy } from "./refusal-proxy.js";
 import { ActivityTracker, DEFAULT_SETTLE, mutationScript } from "./settle.js";
 import type {
@@ -124,6 +125,8 @@ export class Session {
   readonly #evidence: Evidence;
   readonly #refusals: Refusal[] = [];
   readonly #refusedRequests: WeakSet<Request>;
+  /** Protected-preview headers (SEC-8), only for allowed hosts in each secret's domains. */
+  readonly #headers: HeaderScope;
   readonly #dialogs: DialogSummary[] = [];
   readonly #popups: string[] = [];
   readonly #secretAttribute = `data-s${randomBytes(4).toString("hex")}`;
@@ -148,8 +151,10 @@ export class Session {
     tracker: ActivityTracker;
     evidence: Evidence;
     refusedRequests: WeakSet<Request>;
+    headers: HeaderScope;
   }) {
     this.#refusedRequests = init.refusedRequests;
+    this.#headers = init.headers;
     this.#browser = init.browser;
     this.#ownsBrowser = init.ownsBrowser;
     this.#context = init.context;
@@ -187,6 +192,7 @@ export class Session {
     for (const secret of Object.values(options.secrets ?? {})) {
       own.register(revealSecret(secret), secret.label);
     }
+    const headers = new HeaderScope(protectedHeaders(options, own), allowlist);
     const outer = options.redact ?? ((text: string) => defaultRedactor.redact(text));
     const redact = (text: string) => outer(own.redact(text));
 
@@ -244,6 +250,7 @@ export class Session {
       tracker,
       evidence,
       refusedRequests,
+      headers,
     });
     pending = { at: (refusal) => created.#refuse(refusal) };
     await created.#install();
@@ -259,7 +266,8 @@ export class Session {
     // Layer 1: every request Playwright can see (all frames, popups, fetch/XHR, subresources).
     await context.route("**/*", async (route, request) => {
       if (this.#allowlist.allowsUrl(request.url())) {
-        await route.continue().catch(() => {});
+        const headers = this.#headers.apply(request.url(), request.headers());
+        await route.continue(headers ? { headers } : undefined).catch(() => {});
         return;
       }
       const type = this.#classify(request);
@@ -423,11 +431,12 @@ export class Session {
         message: this.#redact(`${url.host || url.protocol} is not in the allowed domains.`),
       };
     }
+    const headers = this.#headers.apply(url, request.headers ?? {}) ?? request.headers;
     try {
       const response = await this.#context.request.fetch(url.href, {
         method: request.method,
         ...(request.body !== undefined ? { data: request.body as never } : {}),
-        ...(request.headers ? { headers: request.headers } : {}),
+        ...(headers ? { headers } : {}),
         maxRedirects: 0,
         timeout: request.timeoutMs ?? NAVIGATION_TIMEOUT_MS,
       });
@@ -1167,4 +1176,34 @@ export class Session {
 /** Opens a fresh, isolated browser session. Throws BrowserSetupError only for setup problems. */
 export function openSession(options: SessionOptions): Promise<Session> {
   return Session.open(options);
+}
+
+/**
+ * The session's protected-preview headers with their values (SEC-8). Each value
+ * is registered with the session's redactor (basic auth in its encoded form too),
+ * so it never shows up in evidence. A header whose secret has no value is a
+ * setup error: the runner blocks such tests before opening a session.
+ */
+function protectedHeaders(options: SessionOptions, redactor: Redactor): ScopedHeader[] {
+  const secrets = options.secrets ?? {};
+  const need = (name: string) => {
+    const secret = secrets[name];
+    if (!secret)
+      throw new BrowserSetupError(
+        `The protected-preview header needs secret ${name}, which has no value.`,
+        `Provide ${name} (in CI: a repository secret mapped to an environment variable).`,
+      );
+    return secret;
+  };
+  return (options.protectedHeaders ?? []).map((spec): ScopedHeader => {
+    if ("basic" in spec) {
+      const password = need(spec.basic.password);
+      const value = basicAuthValue(revealSecret(need(spec.basic.username)), revealSecret(password));
+      redactor.register(value, password.label);
+      redactor.register(value.slice("Basic ".length), password.label);
+      return { name: "Authorization", value, domains: password.domains, keepExisting: true };
+    }
+    const secret = need(spec.secret);
+    return { name: spec.name, value: revealSecret(secret), domains: secret.domains };
+  });
 }

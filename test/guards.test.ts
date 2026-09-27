@@ -5,9 +5,9 @@ import { brand } from "@testament/brand";
 import { describe, expect, it } from "vitest";
 
 // Guarantees: the engine never reaches into the closed apps repo, ships no
-// telemetry, and makes network calls only through three transports: the AI models
-// transport, the decision-model (System One) transport and the test inbox
-// transport. (The browser harness drives a browser through Playwright; it makes
+// telemetry, and makes network calls only through four transports: the AI models
+// transport, the decision-model (System One) transport, the test inbox
+// transport and the GitHub Action's GitHub API transport. (The browser harness drives a browser through Playwright; it makes
 // no calls itself.)
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -62,11 +62,13 @@ describe("engine guards", () => {
   // The network exceptions, one file each, all pinning every request to the one
   // configured host: the AI models transport (FND-2), the System One transport
   // for the decision models Jev, Kev and Laya via Ollaya (DEC-1), and the test
-  // inbox transport for Mailpit, Mailosaur and MailSlurp (AUTH-0).
+  // inbox transport for Mailpit, Mailosaur and MailSlurp (AUTH-0), and the GitHub
+  // Action's transport to GITHUB_API_URL with the workflow's own token (CI-0).
   const NETWORK_EXCEPTIONS_ENGINE = [
     "packages/models/src/transport.ts",
     "packages/decide/src/node/systemone/transport.ts",
     "packages/auth/src/inbox/transport.ts",
+    "packages/action/src/transport.ts",
   ];
   const AI_SDK_PACKAGE = "packages/models/";
 
@@ -84,6 +86,16 @@ describe("engine guards", () => {
     const transport = readFileSync(join(root, "packages/auth/src/inbox/transport.ts"), "utf8");
     expect(transport).toContain("if (url.host !== host || url.protocol !== origin.protocol)");
     expect(transport).toContain('redirect: "error"');
+  });
+
+  it("pins the GitHub transport to the API host and never follows redirects", () => {
+    const transport = readFileSync(join(root, "packages/action/src/transport.ts"), "utf8");
+    expect(transport).toContain("if (url.host !== host || url.protocol !== origin.protocol)");
+    expect(transport).toContain('redirect: "error"');
+    // The Action's code imports only Node built-ins and its own files: it runs from the action folder.
+    for (const file of code.filter((f) => rel(f).startsWith("packages/action/src/")))
+      for (const [, spec] of readFileSync(file, "utf8").matchAll(/from "([^"]+)"/g))
+        if (!/\.test\./.test(file) && spec) expect(spec, rel(file)).toMatch(/^(node:|\.\/)/);
   });
 
   // Secret values are revealed only where they are typed or sent to their own host

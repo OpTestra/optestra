@@ -21,7 +21,13 @@ import {
   setAt,
 } from "./paths.js";
 import { type ConfigRegistry, defaultRegistry } from "./registry.js";
-import { CONFIG_VERSION, type Config, type EnvironmentSettings, SECRET_NAME } from "./schema.js";
+import {
+  CONFIG_VERSION,
+  type Config,
+  type EnvironmentSettings,
+  protectionSecretNames,
+  SECRET_NAME,
+} from "./schema.js";
 
 export interface ResolveOptions {
   /** Parsed project file content; undefined when there is no project file. */
@@ -412,6 +418,21 @@ export function resolveConfig(options: ResolveOptions = {}): ResolvedProject {
         ["environments", envName, "secrets", name],
       );
       if (envName === selected?.name) delete secrets[name];
+    }
+  }
+
+  // Protected-preview headers (SEC-8) name declared secrets.
+  for (const [envName, entry] of Object.entries(environments)) {
+    if (!isPlainObject(entry) || !isPlainObject(entry.protection)) continue;
+    for (const name of protectionSecretNames(entry.protection)) {
+      if (declaredSecrets.has(name)) continue;
+      report(
+        "SECRET_UNDECLARED",
+        "error",
+        `Environment "${envName}" sends secret ${name} as a protected-preview header, but ${name} is not declared under "secrets".`,
+        `Declare ${name} under "secrets" in ${fileName} with the preview's domains, e.g. "domains: [*.vercel.app]".`,
+        ["environments", envName, "protection"],
+      );
     }
   }
 
