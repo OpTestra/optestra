@@ -269,9 +269,20 @@ the trace, the console log and the network HAR.
 ### CLI
 
 ```bash
-testament run [tests…] [--tag t] [--grep name] [--env local] [--replay-only | --rerecord] \
-  [--retries n] [--workers n] [--headed] [--budget 0.50] [--no-video] [--verbose]
+testament run [tests…] [--tag t] [--grep name] [--env local] [--base-url url] [--shard i/n] \
+  [--replay-only | --rerecord] [--retries n] [--workers n] [--headed] [--budget 0.50] [--no-video] [--verbose]
+testament merge-runs <shard folders…> --out <dir>
 ```
+
+`--shard i/n` (CLI-3) runs only slice i of n: the selected test ids are sorted
+and dealt out in turn (`selectShard`), so every machine computes the same
+disjoint slices. `merge-runs` (`mergeRuns` in `@testament/contract/node`)
+interleaves the shards' events by time into one run folder and copies their
+artifacts; it reports exactly like an unsharded run. `--base-url` runs against
+a preview deploy. An environment's `protection` (SEC-8) adds secret headers
+(Vercel bypass, Cloudflare Access, basic auth, custom) only to allowed hosts in
+each secret's domains; when one of those secrets is missing (a fork PR), every
+test is blocked with `missing_secret`.
 
 One quiet line per test (verdict, duration, AI calls, cost; "via your
 subscription" for subscription calls), the headline and cause of each failure,

@@ -1,4 +1,12 @@
-import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,10 +30,14 @@ afterAll(() => {
 });
 
 /** A private copy of the shop project with its committed recordings. */
-function project(): string {
+function project(edit?: (config: string) => string): string {
   const dir = mkdtempSync(join(tmpdir(), "run-e2e-"));
   projects.push(dir);
   cpSync(join(SHOP, brand.configFileName), join(dir, brand.configFileName));
+  if (edit) {
+    const file = join(dir, brand.configFileName);
+    writeFileSync(file, edit(readFileSync(file, "utf8")));
+  }
   cpSync(join(SHOP, "tests"), join(dir, "tests"), {
     recursive: true,
     filter: (source) => !/\.ts$/.test(source),
@@ -36,9 +48,13 @@ function project(): string {
 async function run(
   variant: Variant,
   tests: string[],
-  options: Partial<RunTestsOptions> & { env?: Record<string, string | undefined> } = {},
+  options: Partial<RunTestsOptions> & {
+    env?: Record<string, string | undefined>;
+    edit?: (config: string) => string;
+  } = {},
 ) {
-  const dir = project();
+  const { edit, ...rest } = options;
+  const dir = project(edit);
   const shop = await startShop({ variant, port: 0 });
   const { models, calls } = scriptedModels(() => ({ text: "the replay must not ask a model" }));
   try {
@@ -56,7 +72,7 @@ async function run(
           target: attempt === 1 ? "/__test/reset?environment=1" : "/__test/reset",
         });
       },
-      ...options,
+      ...rest,
       env: {
         PATH: process.env.PATH,
         HOME: process.env.HOME,
@@ -206,5 +222,39 @@ describe("runTests on the shop (real browser)", () => {
       reason: "missing_secret",
     });
     expect(existsSync(secret.result.dir)).toBe(true);
+  });
+
+  it("runs only its shard, and blocks every test when a protected-preview secret is missing (CI-0)", async () => {
+    const both = ["login", "sort-orders"];
+    const one = await run("correct", both, { shard: { index: 1, total: 2 } });
+    const two = await run("correct", both, { shard: { index: 2, total: 2 } });
+    expect([...one.result.tests, ...two.result.tests].map((t) => t.file).sort()).toEqual([
+      "tests/login.test.md",
+      "tests/sort-orders.test.md",
+    ]);
+    expect(one.result.tests).toHaveLength(1);
+
+    const protectedShop = (config: string) =>
+      config
+        .replace(
+          "allowedDomains: [127.0.0.1]",
+          "allowedDomains: [127.0.0.1]\n    protection:\n      vercelBypass: PREVIEW_BYPASS",
+        )
+        .replace("secrets:\n", "secrets:\n  PREVIEW_BYPASS:\n    domains: [127.0.0.1]\n");
+    const fork = await run("correct", both, { edit: protectedShop });
+    for (const test of fork.result.tests) {
+      expect(test.verdict).toBe("blocked");
+      expect(test.decidedBy[0]).toMatchObject({ kind: "blocked", reason: "missing_secret" });
+      expect(test.headline).toContain("PREVIEW_BYPASS");
+    }
+    const withSecret = await run("correct", ["login"], {
+      edit: protectedShop,
+      env: { PREVIEW_BYPASS: "bypass-token-123" },
+    });
+    expect(withSecret.byFile("login").verdict).toBe("passed");
+    const texts = readdirSync(withSecret.result.dir, { recursive: true, withFileTypes: true })
+      .filter((e) => e.isFile() && /\.(json|ndjson|log|har)$/.test(e.name))
+      .map((e) => readFileSync(join(e.parentPath, e.name), "utf8"));
+    for (const text of texts) expect(text).not.toContain("bypass-token-123");
   });
 });

@@ -22,7 +22,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/core` | The engine: run, record, replay, heal, verdicts. The author (`authorTest`: agent loop, guards, VER-5 check, authoring report; `/node` `saveAuthoring`), the check compiler (`src/checks/`: phrase rules, AI fallback, sanity test, soft judgments) and the runner (`src/run/`: `replayAttempt`, `decideVerdict`; `/node` `runTests` → a contract run folder); re-exports the redacting `logger` | LOOP-1 onward |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users; `init`, `doctor` (also `runDoctor()` from the package entry, for the apps' Setup check) and `export` | engine phases, CLI-0 |
 | `packages/mcp` | MCP server for coding agents | agents phase |
-| `packages/action` | GitHub Action (`action.yml`) | GitHub/CI phase |
+| `packages/action` | The GitHub Action: a composite `action.yml` (installs the CLI, caches Chromium, runs, uploads artifacts) and a Node step with no dependencies (sticky PR comment, check run where Blocked is neutral, job summary, AGT-4 notice), talking to GitHub through its one transport. Docs for sharding, previews, forks and other CI systems | CI-0 |
 | `bench/fixtures/shop` | Acme Shop (`@testament/fixture-shop`, private): the demo project and first Bench fixture, with variants, plain-English tests, gold `manifest.yaml` and a Playwright reference suite. See `bench/README.md` | FND-4 |
 
 ## Dependency direction
@@ -48,13 +48,15 @@ contract ──► zod only (bottom of the graph)
 
 - The engine is self-contained. It never imports or references the apps repo;
   the arrow only points apps → engine (`test/guards.test.ts` enforces this).
-- No telemetry. **Three network exceptions in engine code**, one file each:
+- No telemetry. **Four network exceptions in engine code**, one file each:
   `packages/models/src/transport.ts` (AI models: sends only to configured provider
   hosts, only when a caller asks for a completion or key check),
   `packages/decide/src/node/systemone/transport.ts` (decision models Jev, Kev and
   Laya: sends only to the configured backend's host; the state is redacted first) and
   `packages/auth/src/inbox/transport.ts` (test inboxes Mailpit, Mailosaur and
-  MailSlurp: sends only to the configured inbox host, never follows redirects).
+  MailSlurp: sends only to the configured inbox host, never follows redirects) and
+  `packages/action/src/transport.ts` (the GitHub Action: only `GITHUB_API_URL`, with
+  the workflow's own `GITHUB_TOKEN`, never follows redirects).
   Secret values are revealed (`@testament/config/reveal`) only in the browser
   driver and these transports' key handling (guard-tested).
   Only `packages/models` may depend on the AI SDK. `test/guards.test.ts` enforces all of this.

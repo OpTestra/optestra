@@ -1,3 +1,4 @@
+import type { ProtectedHeaderSpec } from "@testament/config";
 import type { SecretValue } from "@testament/config/node";
 
 /** Browser engines a session can run on (TGT-3). */
@@ -383,6 +384,11 @@ export interface SessionOptions {
   allowedDomains: readonly string[];
   /** Loaded secrets by name; each carries the domains it may be typed into. */
   secrets?: Readonly<Record<string, SecretValue>>;
+  /**
+   * Protected previews (SEC-8): headers whose values are secrets from `secrets`,
+   * added only to requests for allowed hosts in that secret's domains.
+   */
+  protectedHeaders?: readonly ProtectedHeaderSpec[];
   /** Enables `upload`, only for files inside this folder (the test's folder). */
   allowUpload?: { dir: string };
   storageState?: StorageState;

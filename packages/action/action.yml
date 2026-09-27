@@ -1,7 +1,306 @@
-# Stub. Inputs, outputs and the bundled entry point arrive in the GitHub/CI phase.
+# The official GitHub Action (CI-0). Runs in YOUR runner with YOUR keys: nothing is
+# sent to us. Permissions it uses: contents: read, pull-requests: write (the comment),
+# checks: write (the status check). See README.md.
 # brand:next name: "{productName}"
 name: "Testament"
-description: "Run plain-English end-to-end tests (placeholder)."
+description: "Run plain-English end-to-end tests on every pull request: one sticky comment, a status check, artifacts."
+branding:
+  icon: check-circle
+  color: green
+
+inputs:
+  version:
+    description: "CLI version to install from npm (e.g. 0.4.2). Default: latest. Ignored when cli-path is set."
+    default: ""
+  cli-path:
+    description: "Use a local CLI build instead of npm: the CLI package folder or its bin/cli.js."
+    default: ""
+  working-directory:
+    description: "The project folder (the one with the project file)."
+    default: "."
+  tests:
+    description: "Test files or folders to run, space-separated. Default: every test."
+    default: ""
+  tag:
+    description: "Only tests with one of these tags (comma- or space-separated)."
+    default: ""
+  env:
+    description: "Environment to run against (default: the project's defaultEnvironment)."
+    default: ""
+  base-url:
+    description: "Run against this URL. Default: the deployment URL on deployment_status events, else the environment's baseUrl."
+    default: ""
+  shard:
+    description: "Run only this slice, e.g. 1/4. The shard's results are uploaded for a final `merge` job; no comment or check."
+    default: ""
+  merge:
+    description: "Instead of running tests: merge the shard run folders in this folder (from actions/download-artifact), then comment and check."
+    default: ""
+  retries:
+    description: "Extra attempts after a failure (default: the project's run.retries)."
+    default: ""
+  budget:
+    description: "AI budget for the run in dollars (default: the project's run.budget.maxPerRunUsd)."
+    default: ""
+  mode:
+    description: "replay-only (default: strict CI, no AI, deterministic), normal (AI heals with your key, shown as fixes to review) or rerecord."
+    default: "replay-only"
+  comment:
+    description: "on: keep one PR comment up to date. off: job summary only."
+    default: "on"
+  check:
+    description: "on: report a status check (Blocked is neutral). off: no check."
+    default: "on"
+  check-name:
+    description: "Name of the status check (and of its comment, so several suites can each have one)."
+    # brand:next default: "{productName}"
+    default: "Testament"
+  upload-artifacts:
+    description: "on: upload the HTML report with videos, traces and screenshots, and link them. off: nothing is uploaded."
+    default: "on"
+  artifact-prefix:
+    description: "Prefix of the uploaded artifacts' names. Set a different one per job when one workflow runs the Action in several jobs."
+    default: ""
+  github-token:
+    description: "Token for the comment and the check. The workflow's own GITHUB_TOKEN is enough."
+    default: ${{ github.token }}
+  node-version:
+    description: "Node.js version for the CLI."
+    default: "24"
+
+outputs:
+  run-dir:
+    description: "The results folder of this run (or the merged run)."
+    value: ${{ steps.locate.outputs.run-dir || steps.merge.outputs.run-dir }}
+  exit-code:
+    description: "The CLI's exit code: 0 passed, 1 failed, 2 blocked or configuration error."
+    value: ${{ steps.run.outputs.exit-code || steps.merge.outputs.exit-code }}
+  conclusion:
+    description: "success, failure or neutral (Blocked)."
+    value: ${{ steps.post.outputs.conclusion }}
+  junit:
+    description: "Path of the JUnit XML file."
+    value: ${{ steps.results.outputs.junit }}
+  tests:
+    description: "Number of tests."
+    value: ${{ steps.post.outputs.tests }}
+  passed:
+    description: "Passed tests."
+    value: ${{ steps.post.outputs.passed }}
+  healed:
+    description: "Healed tests (fixes to review)."
+    value: ${{ steps.post.outputs.healed }}
+  failed:
+    description: "Failed tests."
+    value: ${{ steps.post.outputs.failed }}
+  flaky:
+    description: "Flaky tests."
+    value: ${{ steps.post.outputs.flaky }}
+  blocked:
+    description: "Blocked tests (couldn't run: missing secret, app unreachable, …)."
+    value: ${{ steps.post.outputs.blocked }}
+
 runs:
-  using: node24
-  main: dist/index.js
+  using: composite
+  steps:
+    - uses: actions/setup-node@v6
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - id: cli
+      name: Install the CLI
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        CLI_PATH: ${{ inputs.cli-path }}
+        SHARD: ${{ inputs.shard }}
+        ARTIFACT_PREFIX: ${{ inputs.artifact-prefix }}
+        # brand:next PACKAGE: "{npmScope}/cli"
+        PACKAGE: "@testament/cli"
+        # brand:next CLI_NAME: "{cliName}"
+        CLI_NAME: "testament"
+      run: |
+        set -euo pipefail
+        if [ -n "$CLI_PATH" ]; then
+          bin="$CLI_PATH"
+          [ -d "$bin" ] && bin="$bin/bin/cli.js"
+          bin="$(cd "$(dirname "$bin")" && pwd)/$(basename "$bin")"
+          version="local-$(P="$(dirname "$bin")/../package.json" node -p 'require(process.env.P).version')"
+        else
+          prefix="$RUNNER_TEMP/$CLI_NAME-cli"
+          npm install --no-audit --no-fund --loglevel error --prefix "$prefix" "$PACKAGE@${VERSION:-latest}"
+          bin="$prefix/node_modules/$PACKAGE/bin/cli.js"
+          version="$(P="$prefix/node_modules/$PACKAGE/package.json" node -p 'require(process.env.P).version')"
+        fi
+        node "$bin" --version
+        {
+          echo "bin=$bin"
+          echo "version=$version"
+          echo "out=$RUNNER_TEMP/$CLI_NAME-action-${GITHUB_JOB}-${RANDOM}"
+          echo "prefix=${ARTIFACT_PREFIX:-$CLI_NAME}"
+          echo "shard-key=${SHARD/\//-of-}"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Cache browsers
+      if: inputs.merge == ''
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.os == 'Windows' && '~\AppData\Local\ms-playwright' || runner.os == 'macOS' && '~/Library/Caches/ms-playwright' || '~/.cache/ms-playwright' }}
+        key: browsers-${{ runner.os }}-${{ runner.arch }}-${{ steps.cli.outputs.version }}-${{ inputs.cli-path != '' && hashFiles('pnpm-lock.yaml') || 'npm' }}
+
+    - name: Install Chromium
+      if: inputs.merge == ''
+      shell: bash
+      env:
+        BIN: ${{ steps.cli.outputs.bin }}
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then node "$BIN" install-browsers --with-deps; else node "$BIN" install-browsers; fi
+
+    - id: run
+      name: Run the tests
+      if: inputs.merge == ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        BIN: ${{ steps.cli.outputs.bin }}
+        TESTS: ${{ inputs.tests }}
+        TAGS: ${{ inputs.tag }}
+        ENVIRONMENT: ${{ inputs.env }}
+        # ENV-2: a successful deployment_status carries the preview's URL.
+        BASE_URL: ${{ inputs.base-url || (github.event_name == 'deployment_status' && github.event.deployment_status.environment_url) || '' }}
+        SHARD: ${{ inputs.shard }}
+        RETRIES: ${{ inputs.retries }}
+        BUDGET: ${{ inputs.budget }}
+        MODE: ${{ inputs.mode }}
+      run: |
+        set -u
+        args=(run)
+        for test in $TESTS; do args+=("$test"); done
+        for tag in ${TAGS//,/ }; do args+=(--tag "$tag"); done
+        if [ -n "$ENVIRONMENT" ]; then args+=(--env "$ENVIRONMENT"); fi
+        if [ -n "$BASE_URL" ]; then args+=(--base-url "$BASE_URL"); fi
+        if [ -n "$SHARD" ]; then args+=(--shard "$SHARD"); fi
+        if [ -n "$RETRIES" ]; then args+=(--retries "$RETRIES"); fi
+        if [ -n "$BUDGET" ]; then args+=(--budget "$BUDGET"); fi
+        case "$MODE" in
+          replay-only) args+=(--replay-only) ;;
+          rerecord) args+=(--rerecord) ;;
+          normal) ;;
+          *) echo "::error::mode must be replay-only, normal or rerecord, not \"$MODE\""; exit 2 ;;
+        esac
+        echo "started-ms=$(node -p 'Date.now()')" >> "$GITHUB_OUTPUT"
+        # Exit 1 (failed) or 2 (blocked) is a result, not a broken step: the post step decides.
+        set +e
+        node "$BIN" "${args[@]}"
+        echo "exit-code=$?" >> "$GITHUB_OUTPUT"
+
+    - id: locate
+      if: inputs.merge == ''
+      shell: bash
+      env:
+        WORKING_DIR: ${{ inputs.working-directory }}
+        RUN_STARTED_MS: ${{ steps.run.outputs.started-ms }}
+        # brand:next DATA_DIR: "{dataDirName}"
+        DATA_DIR: ".testament"
+      run: node "$GITHUB_ACTION_PATH/dist/cli.js" locate
+
+    - id: merge
+      name: Merge the shards
+      if: inputs.merge != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        BIN: ${{ steps.cli.outputs.bin }}
+        MERGE: ${{ inputs.merge }}
+        OUT: ${{ steps.cli.outputs.out }}
+      run: |
+        set +e
+        node "$BIN" merge-runs "$MERGE" --out "$OUT/merged"
+        code=$?
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        if [ -f "$OUT/merged/run.json" ]; then echo "run-dir=$OUT/merged" >> "$GITHUB_OUTPUT"; fi
+
+    - id: results
+      name: Summarise the results
+      shell: bash
+      env:
+        BIN: ${{ steps.cli.outputs.bin }}
+        OUT: ${{ steps.cli.outputs.out }}
+        RUN_DIR: ${{ steps.locate.outputs.run-dir || steps.merge.outputs.run-dir }}
+      run: |
+        mkdir -p "$OUT"
+        if [ -z "$RUN_DIR" ]; then exit 0; fi
+        node "$BIN" results "$RUN_DIR" --json "$OUT/summary.json" --markdown "$OUT/summary.md" \
+          --junit "$OUT/junit.xml" --report-url artifact:index.html > /dev/null || true
+        node "$BIN" report "$RUN_DIR" > /dev/null || true
+        echo "junit=$OUT/junit.xml" >> "$GITHUB_OUTPUT"
+
+    - id: stage
+      if: inputs.upload-artifacts == 'on' && inputs.shard == ''
+      shell: bash
+      env:
+        OUT_DIR: ${{ steps.cli.outputs.out }}
+        RUN_DIR: ${{ steps.locate.outputs.run-dir || steps.merge.outputs.run-dir }}
+        ARTIFACT_PREFIX: ${{ steps.cli.outputs.prefix }}
+      run: node "$GITHUB_ACTION_PATH/dist/cli.js" stage
+
+    # A shard uploads its whole run folder for the final merge job.
+    - name: Upload the shard's results
+      if: inputs.shard != '' && (steps.locate.outputs.run-dir != '')
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.cli.outputs.prefix }}-run-${{ steps.cli.outputs.shard-key }}
+        path: ${{ steps.locate.outputs.run-dir }}
+        include-hidden-files: true
+        if-no-files-found: error
+
+    # CI-4: the report folder (index.html + videos, traces, screenshots), and the first
+    # failure screenshots as single files so the comment can link each one directly.
+    - id: report
+      if: inputs.upload-artifacts == 'on' && inputs.shard == '' && (steps.locate.outputs.run-dir || steps.merge.outputs.run-dir) != ''
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.cli.outputs.prefix }}-report
+        path: ${{ steps.locate.outputs.run-dir || steps.merge.outputs.run-dir }}
+        include-hidden-files: true
+    - id: shot1
+      if: steps.stage.outputs.shot1 != ''
+      uses: actions/upload-artifact@v7
+      with: { path: "${{ steps.stage.outputs.shot1 }}", archive: false }
+    - id: shot2
+      if: steps.stage.outputs.shot2 != ''
+      uses: actions/upload-artifact@v7
+      with: { path: "${{ steps.stage.outputs.shot2 }}", archive: false }
+    - id: shot3
+      if: steps.stage.outputs.shot3 != ''
+      uses: actions/upload-artifact@v7
+      with: { path: "${{ steps.stage.outputs.shot3 }}", archive: false }
+    - id: shot4
+      if: steps.stage.outputs.shot4 != ''
+      uses: actions/upload-artifact@v7
+      with: { path: "${{ steps.stage.outputs.shot4 }}", archive: false }
+    - id: shot5
+      if: steps.stage.outputs.shot5 != ''
+      uses: actions/upload-artifact@v7
+      with: { path: "${{ steps.stage.outputs.shot5 }}", archive: false }
+
+    - id: post
+      name: Post the results
+      shell: bash
+      env:
+        OUT_DIR: ${{ steps.cli.outputs.out }}
+        EXIT_CODE: ${{ steps.run.outputs.exit-code || steps.merge.outputs.exit-code }}
+        # brand:next CLI_NAME: "{cliName}"
+        CLI_NAME: "testament"
+        CHECK_NAME: ${{ inputs.check-name }}
+        COMMENT: ${{ inputs.shard == '' && inputs.comment || 'off' }}
+        CHECK: ${{ inputs.shard == '' && inputs.check || 'off' }}
+        NOTE: ${{ inputs.shard != '' && format('shard {0} (the merge job posts the comment and check)', inputs.shard) || inputs.merge != '' && 'merged from the shard runs' || '' }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        REPORT_URL: ${{ steps.report.outputs.artifact-url }}
+        SHOT1_URL: ${{ steps.shot1.outputs.artifact-url }}
+        SHOT2_URL: ${{ steps.shot2.outputs.artifact-url }}
+        SHOT3_URL: ${{ steps.shot3.outputs.artifact-url }}
+        SHOT4_URL: ${{ steps.shot4.outputs.artifact-url }}
+        SHOT5_URL: ${{ steps.shot5.outputs.artifact-url }}
+      run: node "$GITHUB_ACTION_PATH/dist/cli.js" post

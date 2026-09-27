@@ -72,6 +72,52 @@ export const runSchema = z
   })
   .describe("How tests run.");
 
+const secretRef = z
+  .string()
+  .regex(SECRET_NAME, "expected the NAME of a declared secret, like PREVIEW_TOKEN");
+
+/** HTTP header names a test may add; never ones the browser owns. */
+const RESERVED_HEADERS = /^(host|cookie|content-length|transfer-encoding|connection|upgrade)$/i;
+export const headerNameSchema = z
+  .string()
+  .regex(/^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/, "expected an HTTP header name like X-Preview-Token")
+  .refine((name) => !RESERVED_HEADERS.test(name), "this header is set by the browser itself");
+
+/**
+ * Protected previews (SEC-8): extra request headers whose values are secrets.
+ * Each header goes only to hosts that are both allowed (allowedDomains) and in
+ * its secret's `domains`; never anywhere else.
+ */
+export const protectionSchema = z
+  .strictObject({
+    vercelBypass: secretRef
+      .optional()
+      .describe(
+        "Vercel Deployment Protection: the secret holding the Protection Bypass for Automation token (sent as x-vercel-protection-bypass).",
+      ),
+    cloudflareAccess: z
+      .strictObject({
+        clientId: secretRef.describe("Secret with the service token's Client ID."),
+        clientSecret: secretRef.describe("Secret with the service token's Client Secret."),
+      })
+      .optional()
+      .describe("Cloudflare Access service token (CF-Access-Client-Id / CF-Access-Client-Secret)."),
+    basicAuth: z
+      .strictObject({
+        username: secretRef.describe("Secret with the user name."),
+        password: secretRef.describe("Secret with the password."),
+      })
+      .optional()
+      .describe("HTTP basic auth (Authorization: Basic …), unless a request sets its own."),
+    headers: z
+      .record(headerNameSchema, secretRef)
+      .optional()
+      .describe("Any other headers: header name → the secret holding its value."),
+  })
+  .describe(
+    "Protected preview environments: headers sent only to allowed hosts in each secret's domains.",
+  );
+
 /** Fields every environment has. Section overrides (run, secrets, ...) are added per registry. */
 export const environmentBaseShape = {
   baseUrl: httpUrlSchema.optional().describe("Web: the site's base URL."),
@@ -84,6 +130,7 @@ export const environmentBaseShape = {
     .boolean()
     .describe("Production mode: destructive actions are blocked unless a test declares them."),
   vars: z.record(z.string(), z.string()).describe("Plain values tests can use, by name."),
+  protection: protectionSchema.optional(),
 };
 
 export const defaultEnvironmentSchema = z
@@ -94,6 +141,7 @@ export const defaultEnvironmentSchema = z
 export type ProjectSettings = z.infer<typeof projectSchema>;
 export type SecretDeclaration = z.infer<typeof secretDeclarationSchema>;
 export type RunSettings = z.infer<typeof runSchema>;
+export type ProtectionSettings = z.infer<typeof protectionSchema>;
 
 export interface EnvironmentSettings {
   baseUrl?: string;
@@ -102,6 +150,8 @@ export interface EnvironmentSettings {
   allowedDomains: string[];
   production: boolean;
   vars: Record<string, string>;
+  /** Protected previews (SEC-8): secret headers for the allowed hosts. */
+  protection?: ProtectionSettings;
   /** Overrides of the top-level `run` section for this environment. */
   run?: Partial<RunSettings>;
   /** Overrides of declared secrets (e.g. other domains) for this environment. */
@@ -135,3 +185,38 @@ export type RunOptions = DeepPartial<ConfigSections>;
 
 /** A change to the project file. `null` removes a key. */
 export type ConfigPatch = DeepPartial<ConfigSections>;
+
+/** A protected-preview header (SEC-8) with its value still a secret reference. */
+export type ProtectedHeaderSpec =
+  | { name: string; secret: string }
+  | { name: "Authorization"; basic: { username: string; password: string } };
+
+/** The headers an environment's `protection` asks for, values as secret names. */
+export function protectedHeaderSpecs(
+  protection: ProtectionSettings | undefined,
+): ProtectedHeaderSpec[] {
+  if (!protection) return [];
+  const specs: ProtectedHeaderSpec[] = [];
+  if (protection.vercelBypass)
+    specs.push({ name: "x-vercel-protection-bypass", secret: protection.vercelBypass });
+  if (protection.cloudflareAccess)
+    specs.push(
+      { name: "CF-Access-Client-Id", secret: protection.cloudflareAccess.clientId },
+      { name: "CF-Access-Client-Secret", secret: protection.cloudflareAccess.clientSecret },
+    );
+  if (protection.basicAuth) specs.push({ name: "Authorization", basic: protection.basicAuth });
+  for (const [name, secret] of Object.entries(protection.headers ?? {}))
+    specs.push({ name, secret });
+  return specs;
+}
+
+/** Every secret name a (possibly not yet validated) `protection` block refers to. */
+export function protectionSecretNames(protection: unknown): string[] {
+  const names: string[] = [];
+  const visit = (value: unknown) => {
+    if (typeof value === "string") names.push(value);
+    else if (value && typeof value === "object") for (const v of Object.values(value)) visit(v);
+  };
+  visit(protection);
+  return [...new Set(names.filter((name) => SECRET_NAME.test(name)))];
+}
