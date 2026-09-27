@@ -11,7 +11,7 @@ export const COMMENT_LIMIT = 65_536;
 
 /** The hidden first line that finds this check's comment again on every push. */
 export function commentMarker(cliName: string, checkName: string): string {
-  const key = checkName.replace(/[^A-Za-z0-9._-]+/g, "-");
+  const key = checkName.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
   return `<!-- ${cliName}:pr-comment:${key} -->`;
 }
 
