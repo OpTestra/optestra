@@ -21,9 +21,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SHOP_VARIANT: broken-total
+  SHOP_VARIANT: correct
   # The demo shop's seeded password: a public fixture value, not a real secret.
-  SHOP_PASSWORD: shop-demo-pass
+  SHOP_PASSWORD: ""
   # The two sign-up tests read a verification email; inboxes aren't wired into
   # runs until AUTH-1, so they would only ever be Blocked here.
   DOGFOOD_TESTS: >-
