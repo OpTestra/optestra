@@ -327,7 +327,7 @@ action set: the agent has no tool for it; the check compiler (LOOP-2) and the
 replayer (LOOP-4) call it.
 
 ```ts
-const stepStart = await session.pageCopy();   // as each action step begins
+const stepStart = session.requestMark();       // as each action step begins (or a pageCopy())
 // … the step's actions …
 const result = await session.check(
   { type: "text", target: { kind: "role", role: "heading", level: 1 }, match: "equals", value: "Welcome to {{data.plan}}" },
@@ -352,8 +352,10 @@ const result = await session.check(
 - **text** reads a form field's value (input, textarea, select: like Playwright's
   `toHaveValue`), and every other element's innerText.
 - **network** checks count only requests sent since the current action step
-  began: pass `since`, the `pageCopy()` taken as the step began (the copy
-  records where the request log stood). Requests seen while waiting count
+  began: pass `since`, either `session.requestMark()` taken as the step began
+  (cheap: a position in the request log; what replay should use) or the
+  `pageCopy()` taken then (the author does this, since it needs the copy for
+  the sanity test anyway). Requests seen while waiting count
   too. Without `since`, only those seen while waiting count.
 - `code`, `soft_judgment` and `pending` are `unsupported` here: code runs from
   the generated spec, soft judgments need a model (the engine does them).

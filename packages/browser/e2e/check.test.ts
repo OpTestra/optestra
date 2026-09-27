@@ -236,6 +236,11 @@ describe("session.check (LOOP-2 evaluator)", () => {
     expect(
       await check({ type: "network", method: "POST", url: "/api/*" }, { since: stepStart }),
     ).toMatchObject({ status: "passed" });
+    // A request mark (what replay uses) works the same, without copying the DOM.
+    const mark = session.requestMark();
+    expect(await check(op, { since: mark, timeoutMs: 200 })).toMatchObject({ status: "failed" });
+    await session.act({ type: "click", target: save });
+    expect(await check(op, { since: mark })).toMatchObject({ status: "passed" });
     // Without a step start, only what is seen while waiting counts.
     expect(await check(op, { timeoutMs: 200 })).toMatchObject({ status: "failed" });
   });

@@ -25,11 +25,12 @@ export interface CheckOptions {
   /** Default "page". */
   on?: CheckTarget;
   /**
-   * `network` checks: the copy taken as the current action step began. Only
-   * requests sent since then count (plus those seen while waiting). Without it,
-   * only requests seen while waiting count.
+   * `network` checks: where the current action step began, as a `requestMark()`
+   * (cheap; what replay uses) or the `pageCopy()` taken then. Only requests sent
+   * since then count (plus those seen while waiting). Without it, only requests
+   * seen while waiting count.
    */
-  since?: PageCopy;
+  since?: RequestMark | PageCopy;
 }
 
 /**
@@ -55,7 +56,23 @@ export interface CheckEvaluation {
   message?: string;
 }
 
-// ── Page copies (for the sanity test) ────────────────────────────────────────
+// ── Step marks and page copies ───────────────────────────────────────────────
+
+const marks = new WeakMap<RequestMark, number>();
+
+/** A position in the session's request log: where a step began, for network checks. Opaque. */
+export class RequestMark {
+  readonly takenAt: string;
+  private constructor() {
+    this.takenAt = new Date().toISOString();
+  }
+  /** @internal */
+  static create(position: number): RequestMark {
+    const mark = new RequestMark();
+    marks.set(mark, position);
+    return mark;
+  }
+}
 
 const copies = new WeakMap<PageCopy, { html: string; requestMark: number }>();
 
@@ -627,7 +644,12 @@ export async function evaluateCheck(
   if (on === "page") {
     if (ctx.unusable())
       return result("error", { expected, message: "The page is closed or crashed." });
-    const since = options.since ? copies.get(options.since)?.requestMark : undefined;
+    const since =
+      options.since instanceof RequestMark
+        ? marks.get(options.since)
+        : options.since
+          ? copies.get(options.since)?.requestMark
+          : undefined;
     const mark = since ?? ctx.mark();
     env = { page: ctx.page, url: "", requests: () => ctx.requestsSince(mark) };
   } else {

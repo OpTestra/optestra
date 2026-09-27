@@ -235,8 +235,9 @@ sanity-tested.
 
 `evaluateCheck(session, op, { values, timeoutMs, since, models })` runs a
 deterministic op through `session.check` (see `@testament/browser`) and a
-`soft_judgment` through the model. `since` is the `pageCopy()` taken as the
-current action step began: network checks count only requests from there on.
+`soft_judgment` through the model. `since` marks where the current action
+step began: network checks count only requests from there on. Replay should
+pass `session.requestMark()` (cheap); a `pageCopy()` works too.
 The author already takes that copy before every action step (it is also the
 sanity test's before-state) and passes it for every check after the step. `verifyCheck(op, ctx)` is evaluate + sanity.
 

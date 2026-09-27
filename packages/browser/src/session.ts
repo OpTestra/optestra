@@ -25,6 +25,7 @@ import {
   copyPage,
   evaluateCheck,
   type PageCopy,
+  RequestMark,
 } from "./check.js";
 import { deviceOptions } from "./devices.js";
 import { Evidence } from "./evidence.js";
@@ -645,6 +646,11 @@ export class Session {
       requestsSince: (mark) => this.#tracker.requestsSince(mark),
       unusable: () => this.#unusable(),
     });
+  }
+
+  /** Marks where a step begins, for `check(op, { since: mark })` on network checks. Cheap. */
+  requestMark(): RequestMark {
+    return RequestMark.create(this.#tracker.mark());
   }
 
   /**

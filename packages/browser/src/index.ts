@@ -10,6 +10,7 @@ export {
   type CheckStatus,
   type CheckTarget,
   PageCopy,
+  RequestMark,
 } from "./check.js";
 export {
   DEFAULT_DEVICE,

@@ -1,4 +1,10 @@
-import type { CheckEvaluation, LocatorSpec, PageCopy, Session } from "@testament/browser";
+import type {
+  CheckEvaluation,
+  LocatorSpec,
+  PageCopy,
+  RequestMark,
+  Session,
+} from "@testament/browser";
 import type { BudgetMeter, ModelCallRecord, Models } from "@testament/models";
 import type { CheckOp } from "@testament/recording";
 import { z } from "zod";
@@ -16,7 +22,7 @@ export interface EvaluateOptions {
   values?: Readonly<Record<string, string>>;
   timeoutMs?: number;
   /** The copy taken as the current action step began: network checks count requests since then. */
-  since?: PageCopy | undefined;
+  since?: RequestMark | PageCopy | undefined;
   /** Needed only for soft judgments. */
   models?: Models | undefined;
   budget?: BudgetMeter | undefined;

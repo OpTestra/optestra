@@ -145,7 +145,7 @@ contract ──► zod only (bottom of the graph)
   and `failedAtAuthoring`. New ops: `value` (field values), `soft_judgment`
   (soft only, warn-only, evaluated through a model by `evaluateCheck`); `text`
   gains `matches`, role locators a heading `level`. The harness evaluates every
-  deterministic op with `session.check(op, { timeoutMs, values, on, since })`
+  deterministic op with `session.check(op, { timeoutMs, values, on, since })` (`since` = `session.requestMark()` or a page copy)
   (auto-waiting, expected vs actual, secrets refused): what LOOP-4 calls for
   verdicts. CLI: `author` shows each check; `checks <test>` lists them. See
   "How Expect lines become checks" in `packages/core/README.md`.
