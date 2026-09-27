@@ -96,7 +96,7 @@ export async function runRunCommand(
     }
     if (event.type === "heal.proposed")
       io.stdout(
-        `        healed without AI: ${event.heal.changes.map((c) => `${c.before} → ${c.after}`).join("; ")} (${event.heal.classification}, pending review)\n`,
+        `        healed ${event.heal.level === "fixer" ? "by AI" : "without AI"}: ${event.heal.changes.map((c) => `${c.before} → ${c.after}`).join("; ")} (${event.heal.classification}, ${event.heal.status === "accepted" ? "applied: heal policy auto" : "pending review"})\n`,
       );
     if (event.type === "log" && event.level !== "debug") io.stdout(`  ${event.message}\n`);
   };
@@ -145,6 +145,14 @@ export async function runRunCommand(
     )
       io.stdout(`${" ".repeat(49)}AI via your subscription\n`);
   }
+  const pendingHeals = result.tests.reduce(
+    (n, t) => n + (t.attempts.at(-1)?.heals.filter((h) => h.status === "pending").length ?? 0),
+    0,
+  );
+  if (pendingHeals > 0)
+    io.stdout(
+      `\n${pendingHeals} heal${pendingHeals === 1 ? "" : "s"} to review: ${brand.cliName} heal ${posix(relative(io.cwd, result.dir))}\n`,
+    );
   for (const entry of result.recorded)
     io.stdout(
       `\nRecorded: ${entry.recording}${entry.specs.length ? ` (spec: ${entry.specs.join(", ")})` : ""}${entry.warnings.map((w) => `\n  warning: ${w}`).join("")}`,

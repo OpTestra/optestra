@@ -2,8 +2,8 @@ import { existsSync, mkdirSync, readdirSync, renameSync, writeFileSync } from "n
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { brand } from "@testament/brand";
-import { isUlid, RUN_FILE, RUNS_DIR } from "@testament/contract";
-import { type ReadDiagnostic, readRun } from "@testament/contract/node";
+import { isUlid, RUN_FILE, RUNS_DIR, withHealReview } from "@testament/contract";
+import { type ReadDiagnostic, readHealReview, readRun } from "@testament/contract/node";
 import { type HtmlReportOptions, renderHtmlReport } from "../html/render.js";
 import type { RunData } from "../model.js";
 
@@ -19,8 +19,11 @@ export type LoadRunResult =
  * diagnostics and shown in the report.
  */
 export function loadRunData(runDir: string): LoadRunResult {
-  const { run, tests, diagnostics } = readRun(runDir);
+  const { run, tests: read, diagnostics } = readRun(runDir);
   if (!run) return { ok: false, diagnostics };
+  // Heal decisions made after the run (HEAL-4) are shown on the proposals.
+  const review = readHealReview(runDir);
+  const tests = read.map((test) => withHealReview(test, review));
   return { ok: true, data: { run, tests, diagnostics }, diagnostics };
 }
 

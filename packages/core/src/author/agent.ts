@@ -27,6 +27,32 @@ import { describeVariables, harnessValue, type StepVariables } from "./variables
 
 export const PROMPT_VERSION: string = prompt.version;
 
+/** The prompt an agent loop runs with: the planner's by default, the fixer's for heals. */
+export interface AgentPrompt {
+  version: string;
+  system: string;
+  /** Placeholders: {number} {text} {variables} {guards} {history} {page}, and {heal} (the fixer's context). */
+  step: string;
+  nudge: string;
+}
+
+const PLANNER_PROMPT: AgentPrompt = prompt;
+
+/** The model's short reasoning for a call (EVD-1): its text, else what its control tool said. */
+function noteOf(
+  reply: { text: string; toolCalls: readonly { name: string; input: unknown }[] },
+  variables: StepVariables,
+): string | undefined {
+  const control = reply.toolCalls.find(
+    (c) => c.name === "step_done" || c.name === "step_impossible",
+  );
+  const input = (control?.input ?? {}) as { visible_effect?: unknown; reason?: unknown };
+  const said = typeof input.visible_effect === "string" ? input.visible_effect : input.reason;
+  const text = reply.text.trim() || (typeof said === "string" ? said.trim() : "");
+  if (!text) return undefined;
+  return pageTemplate(text, variables.pageList).replace(/\s+/g, " ").slice(0, 300);
+}
+
 /** Actions that may legitimately leave the page unchanged. */
 // upload: attaching a file often shows nothing until the form is sent (the next step).
 const NO_EFFECT_OK = new Set(["hover", "scroll", "waitFor", "press", "upload"]);
@@ -57,6 +83,18 @@ export interface AgentContext {
   guardLines: string[];
   signal: AbortSignal;
   tags: Record<string, string>;
+  /** The model role (default planner; heals use the fixer, HEAL-1 level 2). */
+  role?: "planner" | "fixer";
+  /** Default: the planner prompt. */
+  prompt?: AgentPrompt;
+  /** Fills the prompt's {heal} placeholder (the fixer's view of the recorded step). */
+  context?: string;
+  /**
+   * Ends the step as recorded as soon as an action's outcome shows what the
+   * step must do (the fixer: the step's recorded effect), instead of waiting
+   * for the model's step_done: the page is checked while it still shows it.
+   */
+  doneWhen?: (outcome: ActionOutcome) => boolean;
 }
 
 export interface ActionStepResult {
@@ -128,13 +166,16 @@ function frameIsBlank(observation: Observation): boolean {
 }
 
 function renderStepPrompt(
+  template: AgentPrompt,
+  context: string,
   step: ExpandedStep,
   variables: StepVariables,
   guardLines: string[],
   history: string[],
   page: string,
 ): string {
-  return prompt.step
+  return template.step
+    .replace("{heal}", context)
     .replace("{number}", String(step.number ?? step.index + 1))
     .replace("{text}", step.display)
     .replace("{variables}", describeVariables(variables))
@@ -165,6 +206,8 @@ export async function runActionStep(
   let nudged = false;
   let actedSinceObserve = 0;
   let lastRefusalWasGuard = false;
+  const template = ctx.prompt ?? PLANNER_PROMPT;
+  const role = ctx.role ?? "planner";
 
   const end = (status: ActionStepResult["status"], reason?: StopReason, message?: string) => {
     result.status = status;
@@ -173,6 +216,11 @@ export async function runActionStep(
     return result;
   };
   const note = (line: string) => history.push(`${history.length + 1}. ${line}`);
+  /** The harness saw what the step must do (`doneWhen`): recorded, no model call needed to say so. */
+  const finish = () => {
+    result.commands = executed.map((e) => e.command);
+    return end("recorded");
+  };
 
   for (;;) {
     if (ctx.signal.aborted) return end("stopped", "timeout", "The test's time limit was reached.");
@@ -192,6 +240,8 @@ export async function runActionStep(
       {
         type: "text",
         text: renderStepPrompt(
+          template,
+          ctx.context ?? "",
           step,
           variables,
           ctx.guardLines,
@@ -206,8 +256,8 @@ export async function runActionStep(
         content.push({ type: "image", data: shot.bytes, mediaType: shot.contentType });
     }
 
-    const reply = await ctx.models.complete("planner", {
-      system: prompt.system,
+    const reply = await ctx.models.complete(role, {
+      system: template.system,
       messages: [{ role: "user", content }],
       tools: PLANNER_TOOLS,
       maxOutputTokens: 500,
@@ -219,7 +269,8 @@ export async function runActionStep(
     });
     calls++;
     result.records.push(reply.record);
-    result.modelCalls.push(toModelCall(reply.record));
+    const said = reply.ok ? noteOf(reply, variables) : undefined;
+    result.modelCalls.push({ ...toModelCall(reply.record), ...(said ? { note: said } : {}) });
     if (!reply.ok) {
       if (ctx.signal.aborted)
         return end("stopped", "timeout", "The test's time limit was reached.");
@@ -279,7 +330,7 @@ export async function runActionStep(
         }
         if (verdict === "nothing_done" && !nudged) {
           nudged = true;
-          note(prompt.nudge);
+          note(template.nudge);
           break;
         }
         return end(
@@ -383,9 +434,11 @@ export async function runActionStep(
           );
         }
         executed.push({ outcome, recorded: planned.recorded, command, effect });
+        if (effect && ctx.doneWhen?.(outcome)) return finish();
         break;
       }
       executed.push({ outcome, recorded: planned.recorded, command, effect });
+      if (effect && ctx.doneWhen?.(outcome)) return finish();
       // The page moved on: the rest of this reply's refs may be stale.
       if (outcome.post.urlAfter !== outcome.post.urlBefore) break;
     }

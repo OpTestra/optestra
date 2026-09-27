@@ -1,5 +1,16 @@
 export { type SavedAuthoring, type SaveOptions, saveAuthoring } from "./author/save.js";
-export { RECENT_RUNS, type RecentAi, recentAiUsage } from "./run/history.js";
+export {
+  type ApplyHealsOptions,
+  type ApplyHealsResult,
+  applyHeals,
+  BEHAVIOUR_WARNING,
+  type HealItem,
+  type HealLevel,
+  type HealListing,
+  listHeals,
+  type RerecordFlag,
+} from "./heal/review.js";
+export { RECENT_RUNS, type RecentAi, recentAiUsage, recentHeals } from "./run/history.js";
 export {
   mergeRecording,
   type RunTestsOptions,

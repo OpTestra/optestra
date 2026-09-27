@@ -9,6 +9,8 @@ import { portableSegment } from "./common.js";
  *   tests/<testId>/result.json
  *   tests/<testId>/<attempt>/steps/<index>-before.png | <index>-after.png
  *   tests/<testId>/<attempt>/video.webm | trace.zip | console.log | network.har | logcat.txt
+ *   tests/<testId>/<attempt>/heals/<healId>.json   (1.2: what a heal changes in the recording)
+ *   heals/review.json                              (1.2: accept/reject decisions, after the run)
  */
 export const RUNS_DIR = "runs";
 export const RUN_FILE = "run.json";
@@ -34,4 +36,7 @@ export const runLayout = {
     `tests/${dirOf(testId)}/${attempt}/${ATTEMPT_FILES[file]}`,
   screenshot: (testId: string, attempt: number, index: number, when: "before" | "after") =>
     `tests/${dirOf(testId)}/${attempt}/steps/${index}-${when}.png`,
+  healPatch: (testId: string, attempt: number, healId: string) =>
+    `tests/${dirOf(testId)}/${attempt}/heals/${portableSegment(healId)}.json`,
+  healReview: "heals/review.json",
 } as const;

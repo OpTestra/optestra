@@ -26,6 +26,7 @@ import {
   DeciderSchema,
   EvidenceRefSchema,
   MatrixEntrySchema,
+  RecentHealsSchema,
 } from "./test-result.js";
 
 /**
@@ -161,6 +162,8 @@ export const TestFinishedEventSchema = z.object({
   headline: z.string().nullable().default(null),
   checkedSummary: z.array(z.string()).default([]),
   recentAi: AiUsageSchema.shape.recent.default(null),
+  /** 1.2 (HEAL-7). */
+  recentHeals: RecentHealsSchema.optional(),
 });
 
 export const RunFinishedEventSchema = z.object({

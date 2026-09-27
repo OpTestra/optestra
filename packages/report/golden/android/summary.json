@@ -1,6 +1,6 @@
 {
   "kind": "results-summary",
-  "version": "1.0",
+  "version": "1.1",
   "contractVersion": "1.0",
   "runId": "01M3EJGJ80CW0YWY81PDJ70RB6",
   "project": "demo-shop",
@@ -46,6 +46,7 @@
       "failingStep": null,
       "softWarnings": [],
       "heals": [],
+      "rerecord": null,
       "screenshot": null,
       "durationMs": 6125,
       "attempts": 1,

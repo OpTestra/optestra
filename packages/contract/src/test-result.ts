@@ -86,6 +86,16 @@ export const AiUsageSchema = z.object({
 });
 export type AiUsage = z.infer<typeof AiUsageSchema>;
 
+export const RecentHealsSchema = z.object({ runs: CountSchema, healed: CountSchema });
+export type RecentHeals = z.infer<typeof RecentHealsSchema>;
+
+/** HEAL-7: a test that healed this often in its last runs should be re-recorded. */
+export const REPEATED_HEALS = { runs: 10, healed: 3 } as const;
+
+export function needsRerecord(recent: RecentHeals | null | undefined): boolean {
+  return (recent?.healed ?? 0) >= REPEATED_HEALS.healed;
+}
+
 export const TestResultSchema = z
   .object({
     contractVersion: ContractVersionSchema,
@@ -107,6 +117,11 @@ export const TestResultSchema = z
     startedAt: TimestampSchema,
     durationMs: MillisecondsSchema,
     ai: AiUsageSchema,
+    /**
+     * 1.2 (HEAL-7): how often this test healed in its last `runs` runs, this one
+     * included. `healed` ≥ 3 of the last 10 means "re-record this test".
+     */
+    recentHeals: RecentHealsSchema.optional(),
     attempts: z.array(AttemptSchema),
   })
   .superRefine((test, ctx) => {

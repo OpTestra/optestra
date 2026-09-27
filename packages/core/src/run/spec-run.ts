@@ -58,6 +58,8 @@ const blockedResult = (attempt: number, reason: string, message: string): Replay
   chapters: [],
   needsAi: 0,
   healedWithoutAi: 0,
+  healedByFixer: 0,
+  patches: [],
 });
 
 function run(
@@ -239,5 +241,7 @@ function mapResult(options: SpecTestOptions, result: ReportResult, ms: number): 
     chapters: [],
     needsAi: 0,
     healedWithoutAi: 0,
+    healedByFixer: 0,
+    patches: [],
   };
 }

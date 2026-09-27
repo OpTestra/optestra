@@ -21,6 +21,15 @@ Readers accept every `1.x`, drop unknown fields and skip unknown event types
 (`parseEvent` returns `kind: "unknown"`). The one strict object is a heal change,
 so no document can express a change to an expectation (HEAL-3).
 
+**1.2** (HEAL-0): ModelCall `note` (the model's short reasoning, scrubbed);
+HealProposal `level` (`fallback | refind | fixer`), `appliedBy` (`auto | human`),
+`reviewedAt`; TestResult `recentHeals` (`{ runs, healed }`, HEAL-7, with
+`needsRerecord` and `REPEATED_HEALS`); the run folder's
+`tests/<id>/<attempt>/heals/<healId>.json` patches and `heals/review.json`
+(`HealReviewSchema`, `readHealReview` / `writeHealReview` in `./node`,
+`withHealReview` to overlay the decisions on a TestResult). All optional: 1.0
+and 1.1 documents parse as before.
+
 `fixtures/v1/` is frozen once released: `pnpm gen:fixtures` skips folders that
 exist. `_future-minor/` is a 1.9 run with extra fields and an unknown event, to
 prove 1.0 readers still read it.

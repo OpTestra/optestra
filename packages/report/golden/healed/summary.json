@@ -1,6 +1,6 @@
 {
   "kind": "results-summary",
-  "version": "1.0",
+  "version": "1.1",
   "contractVersion": "1.0",
   "runId": "01M3EFN0J0FQBKEWDYW4JQ19PW",
   "project": "demo-shop",
@@ -76,9 +76,15 @@
               "score": 0.55,
               "detail": "'Add to cart' vs 'Add to bag'"
             }
-          ]
+          ],
+          "level": null,
+          "appliedBy": null,
+          "reviewedAt": null,
+          "behaviourChange": false,
+          "diff": "@@ step 2: Click 'Add to cart' @@\n- await page.getByRole('button', { name: 'Add to cart' }).click();\n+ await page.getByRole('button', { name: 'Add to bag' }).click();\n"
         }
       ],
+      "rerecord": null,
       "screenshot": null,
       "durationMs": 6323,
       "attempts": 1,

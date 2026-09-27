@@ -6,12 +6,13 @@ the **check compiler** (LOOP-2), which turns every `Expect:` and `Soft:` line
 into a typed, deterministic check; and the **runner** (LOOP-4): `runTests`,
 which replays every test from its recording with no AI, evaluates every check
 fresh, and writes an honest verdict with evidence into a contract run folder.
-AI-backed healing (the fixer model, heal review) comes in HEAL.
+**Healing** (HEAL-0) adds the fixer model for the steps no-AI heals can't fix,
+the fix policies, and review and accept.
 
 | Import | Use |
 |---|---|
-| `@testament/core` | `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `PROMPT_VERSION`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `chaptersVtt` |
-| `@testament/core/node` | `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `mergeRecording`, `recentAiUsage`, `runSpecTest` |
+| `@testament/core` | `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `PROMPT_VERSION`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `fixerProposal`, `chaptersVtt`; heals: `runFixer`, `fixerContext`, `FIXER_LIMITS`, `FIXER_PROMPT_VERSION`, `applyPatches`, `HealPatchSchema`, `describeCommand`, `markAutoApplied` |
+| `@testament/core/node` | `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `mergeRecording`, `recentAiUsage`, `recentHeals`, `runSpecTest`; heals: `listHeals`, `applyHeals` |
 
 ## How a run works (LOOP-4)
 
@@ -64,11 +65,12 @@ recorded command:
 | `replay_fallback` | a stored fallback locator finds the same element | acts on it; a pending **heal proposal** |
 | `refind` | `rankCandidates` over the page's elements has one clear winner | acts on it (its top unique locator); a pending **heal proposal** |
 | `no_heal` | policy `strict` | the step fails (test drift) |
-| `call_fixer` | a fixer model is available and budget is left | **not done in LOOP-4**: the step fails with "needs an AI heal" (HEAL wires the fixer in) |
+| `call_fixer` | a fixer model is available and budget is left | the **fixer** redoes the step (see "Healing"); a pending **heal proposal** |
 
-Heals change only the locator (HEAL-3), carry DEC-3's signals and confidence,
-are classified by `heal_class`, and stay **pending**: the recording is not
-changed. `--replay-only` never heals (REP-6: fail on any miss).
+Heals change only how a step is done (HEAL-3), carry DEC-3's signals and
+confidence, are classified by `heal_class`, and under the default `review`
+policy stay **pending**: the recording is not changed. `--replay-only` and the
+`strict` policy never heal (REP-6: fail on any miss).
 
 **An action step without a recording** (new or edited, REP-4): in normal mode
 the LOOP-1 agent authors just that step in place and the run continues; the
@@ -99,7 +101,7 @@ Decided by code from the checks and steps (`decideVerdict`), never by a model:
 | Verdict | decidedBy | When |
 |---|---|---|
 | `passed` | every hard check of the final attempt (else every step that ran) | all hard checks passed, no heal |
-| `healed` | the same | passed, with a no-AI heal proposal in the final attempt |
+| `healed` | the same | passed, with a heal proposal (no-AI or fixer) in the final attempt |
 | `failed` | the failing check, or the failing step | the final attempt failed (after retries) |
 | `flaky` | the failed attempt's decider + the final attempt's passing ones | failed, then passed on a retry (DIA-2) |
 | `blocked` | the blocked reason | couldn't run: missing secret, disallowed domain, AI unavailable, budget, app unreachable, inbox, config |
@@ -118,6 +120,105 @@ expected vs actual, or the step's reason. `checkedSummary` lists what was
 checked, from the checks (EVD-3). `ai.recent` is the test's AI calls over its
 last 20 runs (LRN-5). Decisions land in their attempt as `DecisionRecord`s,
 model calls (only for authoring and compiling) as `ModelCall`s with billing.
+
+## Healing (HEAL-0)
+
+### The ladder, with the fixer
+
+A miss goes up the rungs above: a stored fallback locator, then a re-find from
+the fingerprint (both without AI), then the **fixer** (HEAL-1 level 2). The fixer
+is the author's agent loop in a "single step, heal" mode:
+- the `fixer` model role (`models.roles.fixer`), billed like the author (API
+  budget, or "via your subscription");
+- the same closed tool set, guards, `Never:` lines and untrusted-page rules;
+  it never sees a check and never replans the test;
+- the prompt `src/heal/fixer-prompt.json` (`fixer-v1`, data): the step, the
+  step's recorded actions (done now / MISSED now / not done yet, with what the
+  element was), why it missed, and the page;
+- its own limits (`FIXER_LIMITS`): 4 actions, 6 model calls, 2 failures in a row.
+
+It redoes the step from the missed command on (the earlier commands already
+ran). Its result counts only when:
+1. `step_done` is accepted (VER-5: the harness saw a change);
+2. the step's **recorded effect** shows up in what its actions did (or on the
+   page a moment later), compared like any replayed command;
+3. the proposal passes the strict HealProposal schema (only
+   locator/action/wait changes: guarantee 1);
+4. every later check passes. A heal can never make a failed check pass.
+
+Otherwise the step fails with the fixer's reason ("the fixer model couldn't redo
+the step (step_impossible): …"). A budget or AI outage mid-heal blocks the test
+(`budget_exceeded`, `ai_unavailable`). A fixer heal changes `locator` when the
+same actions landed on another element, and `action` when the actions differ.
+Every model call carries a short `note` (the model's reasoning, scrubbed; EVD-1).
+
+### Patches
+
+Every heal (no-AI or fixer) writes `tests/<id>/<attempt>/heals/<healId>.json` to
+the run folder: which step (`stepKey`, never changed), the commands it replaces
+(`before`) and what replaces them (`after`), and the inputs its decisions saw
+(same_element, miss_action, heal_class) for labels. A no-AI heal's command gets
+the new locator as its primary, the old one moves to the fallbacks, and the
+fingerprint takes the element's facts now, so the next replay validates it.
+
+### Policies (HEAL-5)
+
+Per test (`heal:` in the frontmatter), else `run.healPolicy` (default `review`).
+
+| Policy | On a miss | Verdict | Recording |
+|---|---|---|---|
+| `strict` | no fallback, no re-find, no fixer: the step fails | failed | unchanged |
+| `review` | heals (no-AI, then fixer) | healed | unchanged; proposals pending until accepted |
+| `auto` | heals | healed (headline says "applied") | a passed attempt's heals are applied at once, as accepted proposals (`appliedBy: auto`); a `behavior_change` never is (HEAL-6): it stays pending with a warning |
+
+The CLI's exit code counts healed as a failure unless the policy is `auto`
+(CLI-5).
+
+### Review and accept (HEAL-4, HEAL-6)
+
+```bash
+testament heal [runDir] [--list] [--json]          # default: the latest run
+testament heal [runDir] --accept <id…|all> [--reject <id…>] [--json]
+```
+
+The list shows each heal with the recording's before/after (one line per
+command), how it was healed, its class, its confidence and the signals ("why"),
+and "the app's behaviour may have changed — check before accepting" for a
+`behavior_change`. Only heals of an attempt that passed can be accepted (they
+proved themselves). `--accept all` takes every acceptable heal (a behaviour
+change with a warning).
+
+Accepting:
+- applies the patches to the recording: only the healed steps' commands change;
+  keys, other steps and every check stay exactly as they were (refused
+  otherwise), and a step that changed since the run is a conflict, never a
+  double apply;
+- regenerates the portable spec (a hand-edited spec is skipped with a warning);
+- records the decision in the run folder (`heals/review.json`; the run's own
+  documents never change, readers overlay it with `withHealReview`);
+- writes labels (LRN-9): `same_element` (same: true, approved), `miss_action`
+  (the rung used, confirmed), `heal_class` (approved). Rejecting writes
+  `same_element` same: false and `heal_class` behavior_change (rejected) and
+  leaves the recording alone.
+
+Nothing is committed to git. After an accept the next run replays the step
+from the recording with zero AI (LRN-3: paid once).
+
+For agents and the apps: `heal --json`, and
+
+```ts
+import { applyHeals, listHeals } from "@testament/core/node";
+const listing = listHeals(runDir);        // { runId, heals: HealItem[], rerecord: [...] }
+const result = await applyHeals(projectDir, runDir, ["01K…"] /* or "all" */, { reject: [] });
+// { accepted, rejected, skipped (with reasons), recordings, specs, warnings, labels }
+```
+
+### Repeated heals (HEAL-7)
+
+Each TestResult carries `recentHeals` (`{ runs, healed }` over its last 10 runs,
+this one included). At 3 or more the run logs "re-record this test" with the
+command (`testament run <file> --rerecord`), and `heal --list`, the report JSON
+(`rerecord`) and the HTML report show it.
 
 ### Evidence (EVD-1)
 

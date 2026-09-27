@@ -81,8 +81,8 @@ export function formatRunSummary(data: RunData, options: TerminalOptions = {}): 
     }
     lines.push("");
   }
-  if (model.heals.length > 0)
-    lines.push(`  ${plural(model.heals.length, "fix", "fixes")} to review`, "");
+  const toReview = model.heals.filter(({ heal }) => heal.status === "pending").length;
+  if (toReview > 0) lines.push(`  ${plural(toReview, "fix", "fixes")} to review`, "");
   if (model.softWarnings.length > 0)
     lines.push(`  ${plural(model.softWarnings.length, "soft-check warning")} (not failures)`, "");
   const ai = plural(summary.aiCalls, "AI call");

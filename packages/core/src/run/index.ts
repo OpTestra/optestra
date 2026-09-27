@@ -1,7 +1,7 @@
 export { bindAction } from "./bind.js";
 export { checkCode, checkKindOf, checkResult, unusableCheck } from "./checks.js";
 export { chaptersVtt, consoleErrors } from "./evidence.js";
-export { healProposal, healSignals } from "./heal.js";
+export { fixerProposal, healProposal, healSignals } from "./heal.js";
 export {
   checkable,
   describeExpectPost,

@@ -1,8 +1,10 @@
+import { brand } from "@testament/brand";
 import {
   type ExitPolicy,
   exitCodeFor,
   type FailureCause,
   type HealChange,
+  needsRerecord,
   type Verdict,
 } from "@testament/contract";
 import { buildModel, type RunData, type TestView } from "./model.js";
@@ -11,7 +13,7 @@ import { buildModel, type RunData, type TestView } from "./model.js";
 // AGT-3): per test, what happened, why, and where to look. Versioned like the
 // contract: additive changes bump the minor, readers ignore unknown fields.
 
-export const SUMMARY_VERSION = "1.0";
+export const SUMMARY_VERSION = "1.1";
 export const SUMMARY_KIND = "results-summary";
 
 export interface SummaryCheck {
@@ -46,6 +48,15 @@ export interface SummaryHeal {
   status: string;
   policy: string;
   signals: { name: string; score: number; detail: string }[];
+  /** 1.1: fallback | refind (no AI) | fixer (AI); null when unknown. */
+  level: string | null;
+  /** 1.1: auto | human once applied to the recording. */
+  appliedBy: string | null;
+  reviewedAt: string | null;
+  /** 1.1 (HEAL-6): "the app's behaviour may have changed — check before accepting". */
+  behaviourChange: boolean;
+  /** 1.1: the recording diff, as text. */
+  diff: string;
 }
 
 export interface SummaryTest {
@@ -63,6 +74,8 @@ export interface SummaryTest {
   failingStep: SummaryStep | null;
   softWarnings: SummaryCheck[];
   heals: SummaryHeal[];
+  /** 1.1 (HEAL-7): the test healed this often lately; re-record it with `command`. */
+  rerecord: { healed: number; runs: number; command: string } | null;
   /** Relative to the run folder. */
   screenshot: string | null;
   durationMs: number;
@@ -110,8 +123,9 @@ function checkOf(ref: TestView["failingCheck"]): SummaryCheck | null {
   };
 }
 
-function testOf(test: TestView): SummaryTest {
+function testOf(test: TestView, cliName: string): SummaryTest {
   const step = test.failingStep;
+  const recent = test.result?.recentHeals;
   return {
     testId: test.ref.testId,
     name: test.name,
@@ -144,7 +158,20 @@ function testOf(test: TestView): SummaryTest {
       status: heal.status,
       policy: heal.policy,
       signals: heal.signals.map((s) => ({ name: s.name, score: s.score, detail: s.detail })),
+      level: heal.level ?? null,
+      appliedBy: heal.appliedBy ?? null,
+      reviewedAt: heal.reviewedAt ?? null,
+      behaviourChange: heal.classification === "behavior_change",
+      diff: heal.diff,
     })),
+    rerecord:
+      recent && needsRerecord(recent)
+        ? {
+            healed: recent.healed,
+            runs: recent.runs,
+            command: `${cliName} run ${test.file} --rerecord`,
+          }
+        : null,
     screenshot: test.screenshot,
     durationMs: test.ref.durationMs,
     attempts: test.ref.attempts,
@@ -160,6 +187,7 @@ function testOf(test: TestView): SummaryTest {
 export function buildResultsSummary(
   data: RunData,
   policy: ExitPolicy = { healedCountsAsPass: false },
+  cliName: string = brand.cliName,
 ): ResultsSummary {
   const model = buildModel(data);
   const { run } = model;
@@ -190,13 +218,13 @@ export function buildResultsSummary(
       cause: g.cause,
       tests: g.tests.map((t) => t.ref.testId),
     })),
-    tests: model.tests.map(testOf),
+    tests: model.tests.map((test) => testOf(test, cliName)),
   };
 }
 
 /** The summary as pretty-printed JSON with a trailing newline. */
-export function renderJsonSummary(data: RunData, policy?: ExitPolicy): string {
-  return `${JSON.stringify(buildResultsSummary(data, policy), null, 2)}\n`;
+export function renderJsonSummary(data: RunData, policy?: ExitPolicy, cliName?: string): string {
+  return `${JSON.stringify(buildResultsSummary(data, policy, cliName), null, 2)}\n`;
 }
 
 const str = { type: "string" } as const;
@@ -329,7 +357,15 @@ export function resultsSummaryJsonSchema(): Record<string, unknown> {
                 type: "array",
                 items: obj({ name: str, score: unit, detail: str }),
               },
+              level: { enum: ["fallback", "refind", "fixer", null] },
+              appliedBy: { enum: ["auto", "human", null] },
+              reviewedAt: nullableStr,
+              behaviourChange: { type: "boolean" },
+              diff: str,
             }),
+          },
+          rerecord: {
+            oneOf: [{ type: "null" }, obj({ healed: count, runs: count, command: str })],
           },
           screenshot: { ...nullableStr, description: "Relative to the run folder." },
           durationMs: ms,

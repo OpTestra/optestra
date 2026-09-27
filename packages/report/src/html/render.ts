@@ -9,6 +9,7 @@ import {
   type HealProposal,
   type ModelCall,
   type StepResult,
+  needsRerecord,
 } from "@testament/contract";
 import { encodePath, escapeHtml as h } from "../escape.js";
 import {
@@ -199,7 +200,7 @@ function healsSection(ctx: Ctx): string {
           .map((c) => `${h(c.target)} <code>${h(c.before)}</code> → <code>${h(c.after)}</code>`)
           .join(
             "; ",
-          )} ${meta([`confidence ${Math.round(heal.confidence * 100)}%`, h(words(heal.classification)), h(heal.status)])}</li>`,
+          )} ${meta([heal.level ? h(HEAL_LEVEL_LABEL[heal.level]) : null, `confidence ${Math.round(heal.confidence * 100)}%`, h(words(heal.classification)), h(heal.status === "accepted" && heal.appliedBy ? `applied (${heal.appliedBy})` : heal.status), heal.classification === "behavior_change" ? "<strong>behaviour may have changed</strong>" : null])}</li>`,
     )
     .join("");
   return `<section id="heals" aria-labelledby="heals-h"><h2 id="heals-h">Fixes to review</h2><ul>${items}</ul></section>`;
@@ -262,6 +263,12 @@ function stepRow(ctx: Ctx, step: StepResult): string {
   return `<tr><td>${step.index + 1}</td><td>${h(step.text)}${step.error ? `<div><strong>${h(step.error)}</strong></div>` : ""}${locator}${post}</td><td>${h(step.kind)}</td><td>${badge(step.status, step.status)}</td><td>${h(RECOVERY_LABEL[step.recovery])}</td><td>${h(formatDuration(step.durationMs))}</td><td><div class="shots">${shots}</div></td></tr>`;
 }
 
+const HEAL_LEVEL_LABEL: Record<NonNullable<HealProposal["level"]>, string> = {
+  fallback: "fallback locator, no AI",
+  refind: "re-found without AI",
+  fixer: "fixed by AI",
+};
+
 function healBlock(heal: HealProposal): string {
   const signals = heal.signals
     .map((s) => `<li><code>${h(s.name)}</code> ${Math.round(s.score * 100)}%: ${h(s.detail)}</li>`)
@@ -272,8 +279,18 @@ function healBlock(heal: HealProposal): string {
         `<dt>${h(c.target)}</dt><dd><code>${h(c.before)}</code> → <code>${h(c.after)}</code></dd>`,
     )
     .join("");
-  return `<div class="card"><p><strong>Proposed fix for step ${heal.stepIndex + 1}</strong> ${badge(heal.status === "pending" ? "warn" : heal.status === "accepted" ? "passed" : "blocked", heal.status)} ${meta([`confidence ${Math.round(heal.confidence * 100)}%`, h(words(heal.classification)), `policy ${h(heal.policy)}`])}</p>
-<dl class="expected-actual">${changes}</dl>
+  const title =
+    heal.status === "accepted"
+      ? `Applied fix for step ${heal.stepIndex + 1}${heal.appliedBy === "auto" ? " (heal policy auto)" : heal.appliedBy === "human" ? " (accepted)" : ""}`
+      : heal.status === "rejected"
+        ? `Rejected fix for step ${heal.stepIndex + 1}`
+        : `Proposed fix for step ${heal.stepIndex + 1}`;
+  const warning =
+    heal.classification === "behavior_change"
+      ? `<p><strong>The app's behaviour may have changed — check before accepting.</strong></p>`
+      : "";
+  return `<div class="card"><p><strong>${h(title)}</strong> ${badge(heal.status === "pending" ? "warn" : heal.status === "accepted" ? "passed" : "blocked", heal.status)} ${meta([heal.level ? h(HEAL_LEVEL_LABEL[heal.level]) : null, `confidence ${Math.round(heal.confidence * 100)}%`, h(words(heal.classification)), `policy ${h(heal.policy)}`])}</p>
+${warning}<dl class="expected-actual">${changes}</dl>
 ${signals ? `<p>Why it is the same element:</p><ul>${signals}</ul>` : ""}
 <details><summary>Recording diff</summary><pre>${h(heal.diff)}</pre></details></div>`;
 }
@@ -287,7 +304,7 @@ function modelCallRows(calls: readonly ModelCall[]): string {
           : c.costUsd === null
             ? "unpriced"
             : formatUsd(c.costUsd);
-      return `<tr><td>${h(c.role)}</td><td>${h([c.provider, c.model].filter(Boolean).join(" / ") || "none")}</td><td>${c.tokens.input.toLocaleString("en-US")} in / ${c.tokens.output.toLocaleString("en-US")} out${c.tokens.cached > 0 ? ` (${c.tokens.cached.toLocaleString("en-US")} cached)` : ""}</td><td>${h(cost)}</td><td>${h(formatDuration(c.latencyMs))}</td><td>${h(words(c.outcome))}${c.attempts > 1 ? ` after ${c.attempts} tries` : ""}</td></tr>`;
+      return `<tr><td>${h(c.role)}</td><td>${h([c.provider, c.model].filter(Boolean).join(" / ") || "none")}</td><td>${c.tokens.input.toLocaleString("en-US")} in / ${c.tokens.output.toLocaleString("en-US")} out${c.tokens.cached > 0 ? ` (${c.tokens.cached.toLocaleString("en-US")} cached)` : ""}</td><td>${h(cost)}</td><td>${h(formatDuration(c.latencyMs))}</td><td>${h(words(c.outcome))}${c.attempts > 1 ? ` after ${c.attempts} tries` : ""}${c.note ? `<div class="meta">“${h(c.note)}”</div>` : ""}</td></tr>`;
     })
     .join("");
 }
@@ -405,6 +422,10 @@ function testBody(ctx: Ctx, test: TestView): string {
   out.push(
     `<dl class="facts"><dt>File</dt><dd><code>${h(test.file)}</code></dd><dt>Runs on</dt><dd>${h(test.matrix ?? "")}</dd>${test.tags.length > 0 ? `<dt>Tags</dt><dd>${test.tags.map((t) => `<code>${h(t)}</code>`).join(" ")}</dd>` : ""}<dt>AI</dt><dd>${aiParts.join("; ")}</dd></dl>`,
   );
+  if (result.recentHeals && needsRerecord(result.recentHeals))
+    out.push(
+      `<p><strong>Re-record this test:</strong> it healed ${h(plural(result.recentHeals.healed, "time"))} in its last ${h(plural(result.recentHeals.runs, "run"))}. <kbd>${h(`${ctx.cliName} run ${test.file} --rerecord`)}</kbd></p>`,
+    );
   for (const attempt of result.attempts) out.push(attemptBlock(ctx, test, attempt));
   return out.join("\n");
 }
