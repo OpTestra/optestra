@@ -224,6 +224,15 @@ export type OpenFailureReason =
   | "emulator_failed"
   | "driver_failed";
 
+/** A system dialog about another package (e.g. "System UI isn't responding") that the session dismissed. */
+export interface DismissedDialog {
+  title: string;
+  kind: "not_responding" | "crashed";
+  /** The button pressed: Wait (an ANR), Close (a crash, or an ANR that kept coming back). */
+  action: "wait" | "close";
+  at: string;
+}
+
 export interface SessionTimings {
   /** Emulator boot, when the session booted its own. */
   bootMs?: number;
@@ -231,8 +240,15 @@ export interface SessionTimings {
   resetMs: number;
   installMs: number;
   driverMs: number;
+  /** Waiting for the system to be idle (launcher up, no system dialog) before launching the app. */
+  readyMs: number;
   launchMs: number;
   totalMs: number;
+  /**
+   * System dialogs about other packages dismissed so far (at start and during the
+   * session). Dialogs about the app under test are never dismissed.
+   */
+  systemDialogs: DismissedDialog[];
 }
 
 export type OpenSessionResult =

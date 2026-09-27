@@ -35,6 +35,7 @@ import {
 import { candidatesFor, resolveLocator } from "./locators.js";
 import { Logcat } from "./logcat.js";
 import { AndroidSetupError } from "./sdk.js";
+import { findSystemDialogs } from "./system-dialogs.js";
 import { PACKAGE_NAME, type Running, runAdb, startAdb } from "./tools.js";
 import type {
   AndroidAction,
@@ -50,6 +51,7 @@ import type {
   AppState,
   CandidatesResult,
   DialogSummary,
+  DismissedDialog,
   OpenFailureReason,
   OpenSessionResult,
   OutcomeStatus,
@@ -130,6 +132,78 @@ interface LoggedRequest {
   at: string;
 }
 
+/**
+ * Dismisses Android's ANR and crash dialogs about *other* packages (System UI,
+ * the launcher) that sit on top of the app on slow or shared machines, and
+ * records each one. A dialog about the app under test is left alone: it is a
+ * finding, reported through the action outcome.
+ */
+class SystemDialogGuard {
+  readonly #driver: DriverClient;
+  readonly #appPackage: string;
+  readonly #appLabel: string | null;
+  /** How the session reads a dump (with its secret fields); set once the session exists. */
+  screenOf: (dump: Dump) => Screen;
+  readonly #record: DismissedDialog[];
+  readonly #redact: (text: string) => string;
+  readonly #seen = new Map<string, number>();
+
+  constructor(init: {
+    driver: DriverClient;
+    appPackage: string;
+    appLabel: string | null;
+    record: DismissedDialog[];
+    redact: (text: string) => string;
+  }) {
+    this.#driver = init.driver;
+    this.#appPackage = init.appPackage;
+    this.#appLabel = init.appLabel;
+    this.screenOf = (dump) => new Screen(dump, { appPackage: init.appPackage });
+    this.#record = init.record;
+    this.#redact = init.redact;
+  }
+
+  /** The screen, with foreign system dialogs gone, or null when the driver can't read it. */
+  async clear(rounds = 5): Promise<Screen | null> {
+    let settleUntil = 0;
+    for (let round = 0; ; round++) {
+      const dump = await this.#driver.dump().catch(() => null);
+      if (!dump) return null;
+      const screen = this.screenOf(dump);
+      const foreign = findSystemDialogs(
+        screen,
+        this.#appLabel,
+        (title) => this.#seen.get(title) ?? 0,
+      ).filter((dialog) => dialog.owner === "other" && dialog.dismiss);
+      if (foreign.length === 0 || round >= rounds) {
+        // After a dismissal, the window underneath needs a moment to show its content again.
+        if (screen.busy() && Date.now() < settleUntil) {
+          await sleep(250);
+          continue;
+        }
+        return screen;
+      }
+      settleUntil = Date.now() + 5_000;
+      for (const dialog of foreign) {
+        const [l, t, r, b] = dialog.dismiss?.node.bounds ?? [0, 0, 0, 0];
+        await this.#driver
+          .call("tap", { x: Math.round((l + r) / 2), y: Math.round((t + b) / 2) })
+          .catch(() => {});
+        this.#seen.set(dialog.title, (this.#seen.get(dialog.title) ?? 0) + 1);
+        this.#record.push({
+          title: this.#redact(dialog.title),
+          kind: dialog.kind,
+          action: dialog.dismiss?.node.rid === "android:id/aerr_wait" ? "wait" : "close",
+          at: new Date().toISOString(),
+        });
+      }
+      // Give the dialog a moment to come back (a process that is still stuck gets
+      // another dialog quickly; the next round then presses Close).
+      await this.#driver.call("idle", { quietMs: 1_000, timeoutMs: 5_000 }, 10_000).catch(() => {});
+    }
+  }
+}
+
 interface Init {
   emulator: LaunchedEmulator;
   ownsEmulator: boolean;
@@ -150,6 +224,7 @@ interface Init {
   refusals: AndroidRefusal[];
   counters: FirewallCounters;
   timings: SessionTimings;
+  systemDialogs: SystemDialogGuard;
 }
 
 /**
@@ -176,6 +251,7 @@ export class AndroidSession {
   readonly #requests: LoggedRequest[];
   readonly #refusals: AndroidRefusal[];
   readonly #timings: SessionTimings;
+  readonly #systemDialogs: SystemDialogGuard;
   readonly #secretFields = new Map<string, string>();
   #refs = new Map<string, RefKey>();
   #latest: Screen | null = null;
@@ -204,6 +280,9 @@ export class AndroidSession {
     this.#requests = init.requests;
     this.#refusals = init.refusals;
     this.#timings = init.timings;
+    this.#systemDialogs = init.systemDialogs;
+    this.#systemDialogs.screenOf = (dump) =>
+      new Screen(dump, { appPackage: this.#appPackage, secretFields: this.#secretFields });
     this.#counters = init.counters;
   }
 
@@ -244,7 +323,7 @@ export class AndroidSession {
 
   /** How long starting the session took. */
   timings(): SessionTimings {
-    return { ...this.#timings };
+    return { ...this.#timings, systemDialogs: [...this.#timings.systemDialogs] };
   }
 
   /** `android-app://<package>/<activity>` of the last screen seen (scrubbed). */
@@ -279,6 +358,14 @@ export class AndroidSession {
     }
   }
 
+  /** A fresh screen with foreign system dialogs dismissed first (the one the guard checked). */
+  async #clearScreen(): Promise<Screen | null> {
+    if (this.#problem()) return null;
+    const screen = await this.#systemDialogs.clear();
+    if (screen) this.#latest = screen;
+    return screen;
+  }
+
   #blank(): Screen {
     const dump: Dump = { windows: [], nodes: [], truncated: false, activity: null, rotation: 0 };
     return new Screen(dump, { appPackage: this.#appPackage });
@@ -304,7 +391,7 @@ export class AndroidSession {
 
   /** The screen as data (untrusted). Refs are valid until the next observe. */
   async observe(): Promise<AndroidObservation> {
-    const screen = (await this.#screen()) ?? this.#blank();
+    const screen = (await this.#clearScreen()) ?? this.#blank();
     await this.#firewallRefusals();
     const refused = this.#refusals.slice(this.#refusalCursor);
     this.#refusalCursor = this.#refusals.length;
@@ -350,7 +437,7 @@ export class AndroidSession {
   async act(action: AndroidAction): Promise<AndroidActionOutcome> {
     const started = Date.now();
     const timeout = this.#options.actionTimeoutMs ?? ACTION_TIMEOUT_MS;
-    const before = await this.#screen();
+    const before = await this.#clearScreen();
     const requestMark = this.#requests.length;
     const refusalMark = this.#refusals.length;
     const logMark = this.#logcat.position;
@@ -1045,6 +1132,25 @@ function har(
 
 // ── Opening a session ────────────────────────────────────────────────────────
 
+/**
+ * Waits (up to a minute) until the system is idle on the home screen: the UI
+ * quiet for a second, content on screen, no system dialog left. Returns anyway
+ * when time is up; the app launch then shows what's wrong.
+ */
+async function waitForIdleSystem(driver: DriverClient, guard: SystemDialogGuard): Promise<void> {
+  await driver.call("global", { action: "home" }).catch(() => {});
+  const deadline = Date.now() + 60_000;
+  while (Date.now() < deadline) {
+    const screen = await guard.clear();
+    const idle = (await driver
+      .call("idle", { quietMs: 1_000, timeoutMs: 5_000 }, 10_000)
+      .catch(() => ({ idle: false }))) as { idle?: boolean };
+    if (screen && idle.idle && !screen.busy() && findSystemDialogs(screen, null).length === 0)
+      return;
+    await sleep(500);
+  }
+}
+
 const failure = (reason: OpenFailureReason, message: string): OpenSessionResult => ({
   ok: false,
   reason,
@@ -1118,6 +1224,9 @@ export async function openAndroidSession(
   if (reset) return abort("emulator_failed", `Restoring the clean snapshot failed: ${reset}`);
   if (!(await ensureRoot(sdk, serial)))
     return abort("emulator_failed", "adb is not running as root after the reset.");
+  // Animations off and the other calm settings, again: a snapshot made on another
+  // machine (or an older driver) may not have them.
+  await runAdb(sdk, serial, { name: "prepare-device" }, 30_000);
   const resetMs = Date.now() - resetStarted;
 
   // 2. The session's scrubbing: every secret is known before anything is read from the device.
@@ -1187,9 +1296,11 @@ export async function openAndroidSession(
   const instrument = startAdb(sdk, serial, { name: "instrument", token, socket });
   cleanups.push(() => instrument.kill());
   let connected: { client: DriverClient; hello: Hello } | null = null;
-  for (let attempt = 0; attempt < 40 && !connected; attempt++) {
+  // Slow machines take a while to start the instrumentation: up to a minute.
+  const driverDeadline = Date.now() + 60_000;
+  while (!connected && Date.now() < driverDeadline) {
     await sleep(250);
-    connected = await DriverClient.connect(forwardPort, token, 3_000).catch(() => null);
+    connected = await DriverClient.connect(forwardPort, token, 5_000).catch(() => null);
   }
   if (!connected) return abort("driver_failed", "The on-device driver did not start.");
   const driver = connected.client;
@@ -1209,9 +1320,29 @@ export async function openAndroidSession(
     if (!/OK/.test(started.stdout)) video = null;
   }
 
-  // 7. Launch the app.
+  // 7. A calm, idle system first: the launcher up, and any system dialog about
+  // another package (System UI or the launcher not responding, on a slow
+  // machine) dismissed and recorded.
+  const readyStarted = Date.now();
+  const label = (await driver.call("label", { package: appPackage }).catch(() => ({}))) as {
+    label?: string;
+  };
+  const systemDialogs: DismissedDialog[] = [];
+  const guard = new SystemDialogGuard({
+    driver,
+    appPackage,
+    appLabel: label.label ?? null,
+    record: systemDialogs,
+    redact,
+  });
+  await waitForIdleSystem(driver, guard);
+  const readyMs = Date.now() - readyStarted;
+
+  // 8. Launch the app.
   const launchStarted = Date.now();
-  const launched = (await driver.call("launch", { package: appPackage }).catch(() => ({}))) as {
+  const launched = (await driver
+    .call("launch", { package: appPackage }, 60_000)
+    .catch(() => ({}))) as {
     started?: boolean;
   };
   if (!launched.started) return abort("app_launch_failed", `${appPackage} has no launcher screen.`);
@@ -1219,8 +1350,10 @@ export async function openAndroidSession(
     resetMs,
     installMs,
     driverMs,
+    readyMs,
     launchMs: 0,
     totalMs: 0,
+    systemDialogs,
     ...(bootMs !== undefined ? { bootMs } : {}),
   };
   const session = new AndroidSession({
@@ -1243,8 +1376,10 @@ export async function openAndroidSession(
     refusals,
     counters,
     timings,
+    systemDialogs: guard,
   });
-  await session.settle({ timeoutMs: 15_000 });
+  await session.settle({ timeoutMs: 30_000 });
+  await guard.clear();
   const state = (await driver.call("app_state", { package: appPackage }).catch(() => ({}))) as {
     running?: boolean;
   };

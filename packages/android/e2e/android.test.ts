@@ -1,4 +1,6 @@
+import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
+import { setTimeout as sleep } from "node:timers/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createSecretValue, type SecretValue } from "@testament/config/node";
@@ -553,6 +555,72 @@ describe("actions", () => {
       expect(button.status).toBe("ok");
       expect(button.bytes.length).toBeLessThan(full.bytes.length);
     } finally {
+      await session.close();
+    }
+  });
+});
+
+describe("system dialogs on slow machines", () => {
+  // The test (not the harness) freezes a process with raw adb, so Android shows its
+  // "isn't responding" dialog, as it does for System UI on a slow CI emulator.
+  const adb = (...args: string[]) =>
+    spawnSync(emulator.sdk.adb, ["-s", emulator.serial, ...args], {
+      encoding: "utf8",
+    }).stdout.trim();
+  async function waitForAnrDialog() {
+    for (let i = 0; i < 20; i++) {
+      if (
+        /Application Not Responding|isn.t responding/.test(
+          adb("shell", "dumpsys", "window", "windows"),
+        )
+      )
+        return;
+      await sleep(1_000);
+    }
+    throw new Error("no ANR dialog appeared");
+  }
+
+  it("dismisses another package's ANR dialog before the test sees the screen, and reports it", async () => {
+    const session = await open();
+    const pid = adb("shell", "pidof", "com.android.systemui");
+    try {
+      adb("shell", "kill", "-STOP", pid);
+      adb("shell", "input", "swipe", "540", "5", "540", "900");
+      await sleep(1_000);
+      adb("shell", "input", "tap", "540", "40");
+      await waitForAnrDialog();
+      adb("shell", "kill", "-CONT", pid);
+      const observation = await session.observe();
+      expect(observation.elements.map((e) => e.name)).toContain("Sign in to Acme Shop");
+      expect(observation.elements.some((e) => e.role === "alertdialog")).toBe(false);
+      expect(session.timings().systemDialogs).toEqual([
+        expect.objectContaining({
+          title: "System UI isn't responding",
+          kind: "not_responding",
+          action: "wait",
+        }),
+      ]);
+    } finally {
+      adb("shell", "kill", "-CONT", pid);
+      await session.close();
+    }
+  });
+
+  it("never dismisses a dialog about the app under test", async () => {
+    const session = await open();
+    const pid = adb("shell", "pidof", "com.acme.shop");
+    try {
+      adb("shell", "kill", "-STOP", pid);
+      adb("shell", "input", "tap", "540", "1200");
+      await waitForAnrDialog();
+      const observation = await session.observe();
+      expect(observation.elements[0]).toMatchObject({
+        role: "alertdialog",
+        name: "Acme Shop isn't responding",
+      });
+      expect(session.timings().systemDialogs).toEqual([]);
+    } finally {
+      adb("shell", "kill", "-CONT", pid);
       await session.close();
     }
   });

@@ -109,7 +109,7 @@ describe("the app's build", () => {
     for (const variant of VARIANTS.filter((v) => v !== "correct")) {
       expect(code, variant).toContain(`"${gradleFlavor(variant)}"`);
     }
-    expect(apkPath("broken-silent-tap")).toMatch(
+    expect(apkPath("broken-silent-tap").replaceAll("\\", "/")).toMatch(
       /brokenSilentTap\/debug\/acme-shop-android-brokenSilentTap-debug\.apk$/,
     );
   });

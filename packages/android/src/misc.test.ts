@@ -260,6 +260,40 @@ describe("data: versions and device profiles (TGT-4, TGT-6)", () => {
     expect([...categories].sort()).toEqual(["phone", "tablet"]);
   });
 
+  it("finds a Windows SDK (adb.exe, emulator.exe, sdkmanager.bat) and a Unix one, on any OS", () => {
+    const layout = (files: string[]) => {
+      const root = mkdtempSync(join(tmpdir(), "sdk-"));
+      for (const file of files) {
+        mkdirSync(join(root, file, ".."), { recursive: true });
+        writeFileSync(join(root, file), "");
+      }
+      return root;
+    };
+    const windows = layout([
+      "platform-tools/adb.exe",
+      "emulator/emulator.exe",
+      "cmdline-tools/latest/bin/sdkmanager.bat",
+    ]);
+    const found = findSdk({ ANDROID_HOME: windows }, "win32");
+    expect(found?.root).toBe(windows);
+    expect(found?.adb).toBe(join(windows, "platform-tools", "adb.exe"));
+    expect(found?.emulator).toBe(join(windows, "emulator", "emulator.exe"));
+    expect(found?.sdkmanager).toBe(
+      join(windows, "cmdline-tools", "latest", "bin", "sdkmanager.bat"),
+    );
+    // The same folder is no SDK on Linux (no adb, no emulator program there).
+    expect(findSdk({ ANDROID_HOME: windows }, "linux")?.root).not.toBe(windows);
+    const unix = layout([
+      "platform-tools/adb",
+      "emulator/emulator",
+      "cmdline-tools/13.0/bin/sdkmanager",
+    ]);
+    expect(findSdk({ ANDROID_HOME: unix }, "linux")?.sdkmanager).toBe(
+      join(unix, "cmdline-tools", "13.0", "bin", "sdkmanager"),
+    );
+    expect(findSdk({ ANDROID_SDK_ROOT: unix }, "darwin")?.root).toBe(unix);
+  });
+
   it("writes an AVD config from a profile and an image", () => {
     const image = systemImages("/nowhere", "16", "arm64-v8a")[0];
     const config = avdConfig(
@@ -274,10 +308,12 @@ describe("data: versions and device profiles (TGT-4, TGT-6)", () => {
 
   it("plans the setup from what's installed, never downloading", () => {
     const root = mkdtempSync(join(tmpdir(), "sdk-"));
+    // The layout of this machine's platform: adb.exe / emulator.exe on Windows.
+    const ext = process.platform === "win32" ? ".exe" : "";
     for (const dir of ["platform-tools", "emulator"]) {
       mkdirSync(join(root, dir));
       writeFileSync(join(root, dir, "source.properties"), "Pkg.Revision=37.0.1\n");
-      writeFileSync(join(root, dir, dir === "emulator" ? "emulator" : "adb"), "");
+      writeFileSync(join(root, dir, `${dir === "emulator" ? "emulator" : "adb"}${ext}`), "");
     }
     const env = { ANDROID_HOME: root, HOME: root };
     expect(findSdk(env)?.root).toBe(root);

@@ -193,7 +193,16 @@ async function waitForBoot(
       { name: "getprop", key: "sys.boot_completed" },
       10_000,
     );
-    if (result.stdout.trim() === "1") return null;
+    if (result.stdout.trim() === "1") {
+      // Fully up: the boot animation has stopped too (slow machines report boot_completed first).
+      const animation = await runAdb(
+        sdk,
+        serial,
+        { name: "getprop", key: "init.svc.bootanim" },
+        10_000,
+      );
+      if (animation.stdout.trim() === "stopped" || animation.stdout.trim() === "") return null;
+    }
     await sleep(500);
   }
   return "The emulator did not finish booting in time.";

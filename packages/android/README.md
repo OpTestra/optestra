@@ -126,6 +126,19 @@ emulator).
    `post.app`. Only setup problems throw `AndroidSetupError` (with a `fix`): no
    SDK, no system image, no driver APK, an invalid allowlist entry.
 
+7. **Other packages' system dialogs don't reach the test.** On slow or shared
+   machines (CI runners), Android's "System UI isn't responding" and
+   "... keeps stopping" dialogs appear for system processes. Before the first
+   screen, and before every `observe()` and `act()`, the session finds these
+   dialogs by the framework's `aerr_*` buttons. When the dialog is about another
+   package, it presses Wait (an ANR) or Close (a crash, or an ANR that keeps
+   coming back), and records it in `timings().systemDialogs`. A dialog is the
+   app's when its title names the app's label (read from the package manager).
+   Those are never dismissed: the app not responding or crashing is a finding.
+   If the label can't be read, nothing is dismissed. A session also starts only
+   on a fully booted, idle system: the boot animation stopped, the launcher up
+   and quiet for a second, animations off.
+
 **Known limits** (for the security docs, SAF-5):
 - **Certificate pinning.** TLS is tunnelled, never decrypted, so pinned apps
   work. The same reason means the network log has one `CONNECT` entry per HTTPS
@@ -301,7 +314,7 @@ ship it as `driver.apk`.
 |---|---|
 | Cold boot while preparing the clean snapshot (first run per AVD) | about 19–46 s |
 | Emulator ready from the snapshot (`launchEmulator`) | 1.2–4.6 s |
-| Session start on a fresh emulator (install, firewall, driver, launch) | about 1.1–1.4 s |
+| Session start on a fresh emulator (install, firewall, driver, idle system, launch) | about 5–6.5 s |
 | Session start on a used emulator (reboot from the snapshot included) | about 6–7 s |
 | Observe (dump + map) | 15–50 ms |
 

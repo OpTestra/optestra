@@ -179,6 +179,7 @@ class Server(
       "open_uri" -> openUri(r)
       "launch" -> launch(r)
       "app_state" -> appState(r)
+      "label" -> label(r)
       else -> throw BadRequest("unknown command")
     }
 
@@ -575,6 +576,14 @@ class Server(
   private fun started(output: String): JSONObject {
     val failed = output.contains("Error") || output.contains("does not exist") || output.contains("unable to resolve")
     return if (failed) JSONObject().put("started", false).put("reason", "no_activity") else JSONObject().put("started", true)
+  }
+
+  /** The app's label as the system shows it (e.g. in "<label> isn't responding"). */
+  private fun label(r: JSONObject): JSONObject {
+    val pkg = packageArg(r)
+    val pm = instrumentation.context.packageManager
+    val info = pm.getApplicationInfo(pkg, 0)
+    return JSONObject().put("label", pm.getApplicationLabel(info).toString())
   }
 
   private fun appState(r: JSONObject): JSONObject {

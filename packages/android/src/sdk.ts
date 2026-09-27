@@ -97,46 +97,69 @@ export interface Sdk {
   sdkmanager: string | null;
 }
 
-const exe = (name: string) => (process.platform === "win32" ? `${name}.exe` : name);
-const bat = (name: string) => (process.platform === "win32" ? `${name}.bat` : name);
+type Platform = NodeJS.Platform;
 
-/** Places the SDK usually lives, first match wins. */
-export function sdkCandidates(env: NodeJS.ProcessEnv = process.env): string[] {
-  const home = homedir();
-  const list = [
-    env.ANDROID_HOME,
-    env.ANDROID_SDK_ROOT,
-    process.platform === "darwin" ? join(home, "Library", "Android", "sdk") : undefined,
-    process.platform === "linux" ? join(home, "Android", "Sdk") : undefined,
-    process.platform === "win32" && env.LOCALAPPDATA
-      ? join(env.LOCALAPPDATA, "Android", "Sdk")
-      : undefined,
-    "/opt/homebrew/share/android-commandlinetools",
-    "/usr/local/lib/android/sdk",
-  ];
-  return [...new Set(list.filter((path): path is string => Boolean(path)))];
-}
+/** Program file names to look for: Windows ships `.exe` (adb, emulator) and `.bat` (sdkmanager). */
+const programNames = (name: string, platform: Platform, windowsExt: ".exe" | ".bat") =>
+  platform === "win32" ? [`${name}${windowsExt}`, name] : [name];
 
-function findSdkManager(root: string): string | null {
-  const direct = join(root, "cmdline-tools", "latest", "bin", bat("sdkmanager"));
-  if (existsSync(direct)) return direct;
-  const tools = join(root, "cmdline-tools");
-  if (!existsSync(tools)) return null;
-  for (const entry of readdirSync(tools).sort().reverse()) {
-    const path = join(tools, entry, "bin", bat("sdkmanager"));
+function program(
+  dir: string,
+  name: string,
+  platform: Platform,
+  windowsExt: ".exe" | ".bat",
+): string | null {
+  for (const file of programNames(name, platform, windowsExt)) {
+    const path = join(dir, file);
     if (existsSync(path)) return path;
   }
   return null;
 }
 
-/** The SDK with adb and the emulator, or null. */
-export function findSdk(env: NodeJS.ProcessEnv = process.env): Sdk | null {
-  for (const root of sdkCandidates(env)) {
-    const adb = join(root, "platform-tools", exe("adb"));
-    const emulator = join(root, "emulator", exe("emulator"));
-    if (existsSync(adb) && existsSync(emulator)) {
-      return { root, adb, emulator, sdkmanager: findSdkManager(root) };
-    }
+/** Places the SDK usually lives, first match wins. */
+export function sdkCandidates(
+  env: NodeJS.ProcessEnv = process.env,
+  platform: Platform = process.platform,
+): string[] {
+  const home = homedir();
+  const list = [
+    env.ANDROID_HOME,
+    env.ANDROID_SDK_ROOT,
+    platform === "darwin" ? join(home, "Library", "Android", "sdk") : undefined,
+    platform === "linux" ? join(home, "Android", "Sdk") : undefined,
+    platform === "win32" && env.LOCALAPPDATA ? join(env.LOCALAPPDATA, "Android", "Sdk") : undefined,
+    platform === "darwin" ? "/opt/homebrew/share/android-commandlinetools" : undefined,
+    platform === "linux" ? "/usr/local/lib/android/sdk" : undefined,
+  ];
+  return [...new Set(list.filter((path): path is string => Boolean(path)))];
+}
+
+function findSdkManager(root: string, platform: Platform): string | null {
+  const direct = program(
+    join(root, "cmdline-tools", "latest", "bin"),
+    "sdkmanager",
+    platform,
+    ".bat",
+  );
+  if (direct) return direct;
+  const tools = join(root, "cmdline-tools");
+  if (!existsSync(tools)) return null;
+  for (const entry of readdirSync(tools).sort().reverse()) {
+    const path = program(join(tools, entry, "bin"), "sdkmanager", platform, ".bat");
+    if (path) return path;
+  }
+  return null;
+}
+
+/** The SDK with adb and the emulator, or null. `platform` is for tests of other systems' layouts. */
+export function findSdk(
+  env: NodeJS.ProcessEnv = process.env,
+  platform: Platform = process.platform,
+): Sdk | null {
+  for (const root of sdkCandidates(env, platform)) {
+    const adb = program(join(root, "platform-tools"), "adb", platform, ".exe");
+    const emulator = program(join(root, "emulator"), "emulator", platform, ".exe");
+    if (adb && emulator) return { root, adb, emulator, sdkmanager: findSdkManager(root, platform) };
   }
   return null;
 }

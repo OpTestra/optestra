@@ -30,7 +30,12 @@ export const ADB_COMMANDS = [
 
 export type AdbCommandName = (typeof ADB_COMMANDS)[number];
 
-const PROPS = ["sys.boot_completed", "ro.build.version.release", "ro.build.version.sdk"] as const;
+const PROPS = [
+  "sys.boot_completed",
+  "init.svc.bootanim",
+  "ro.build.version.release",
+  "ro.build.version.sdk",
+] as const;
 
 export type EmuCommand =
   | { name: "snapshot-save"; snapshot: string }

@@ -135,6 +135,13 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null
           IFS=' ' read -r -a packages <<< "$ANDROID_PACKAGES"
           "$SDKMANAGER" "${packages[@]}" > /dev/null
+      - name: Check hardware acceleration
+        # The x86_64 emulator needs KVM; print what the runner really has.
+        run: |
+          ls -l /dev/kvm
+          "$ANDROID_HOME/emulator/emulator" -accel-check
+          nproc
+          free -m
       - run: pnpm install --frozen-lockfile
       - name: Build the driver and the fixture APKs
         run: |
