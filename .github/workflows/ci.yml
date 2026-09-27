@@ -83,3 +83,56 @@ jobs:
           path: |
             bench/fixtures/*/playwright-report
             bench/fixtures/*/test-results
+
+  # The Android harness on a real emulator (MOB-0), against the Acme Shop Android
+  # fixture. Linux runners have KVM; the SDK packages are cached, the APKs are
+  # built here (never committed).
+  android:
+    name: android emulator (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANDROID_PACKAGES: platform-tools emulator platforms;android-36 build-tools;36.0.0 system-images;android-36;google_apis;x86_64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.7.1"
+      - name: Cache Android SDK packages
+        id: sdk
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.ANDROID_HOME }}/emulator
+            ${{ env.ANDROID_HOME }}/platform-tools
+            ${{ env.ANDROID_HOME }}/platforms/android-36
+            ${{ env.ANDROID_HOME }}/build-tools/36.0.0
+            ${{ env.ANDROID_HOME }}/system-images/android-36/google_apis/x86_64
+          key: android-sdk-${{ runner.os }}-36-google_apis-x86_64-v1
+      - name: Install Android SDK packages
+        if: steps.sdk.outputs.cache-hit != 'true'
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          IFS=' ' read -r -a packages <<< "$ANDROID_PACKAGES"
+          "$SDKMANAGER" "${packages[@]}" > /dev/null
+      - run: pnpm install --frozen-lockfile
+      - name: Build the driver and the fixture APKs
+        run: |
+          pnpm --filter @testament/android build:driver
+          pnpm --filter @testament/fixture-android build:apks
+      - run: pnpm --filter @testament/android test:android

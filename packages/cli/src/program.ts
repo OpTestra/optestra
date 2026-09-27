@@ -6,6 +6,7 @@ import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import { brand } from "@testament/brand";
 import { Command } from "commander";
+import { registerAndroidCommands } from "./commands/android.js";
 import { registerAuthCommands } from "./commands/auth.js";
 import type { AuthorCommandOptions } from "./commands/author.js";
 import { registerBrowserCommands } from "./commands/browser.js";
@@ -412,6 +413,12 @@ export function createProgram(): Command {
       process.exitCode = await runDoctorCommand(options, io());
     });
   registerExportCommand(program, io);
+  registerAndroidCommands(program, () => ({
+    cwd: process.cwd(),
+    env: process.env,
+    stdout: (text) => process.stdout.write(text),
+    ...(process.stdin.isTTY ? { confirm: askYesNo } : {}),
+  }));
 
   program.action(() => program.help());
   return program;

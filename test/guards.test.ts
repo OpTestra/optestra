@@ -7,8 +7,10 @@ import { describe, expect, it } from "vitest";
 // Guarantees: the engine never reaches into the closed apps repo, ships no
 // telemetry, and makes network calls only through four transports: the AI models
 // transport, the decision-model (System One) transport, the test inbox
-// transport and the GitHub Action's GitHub API transport. (The browser harness drives a browser through Playwright; it makes
-// no calls itself.)
+// transport and the GitHub Action's GitHub API transport. (The browser harness
+// drives a browser through Playwright; it makes no calls itself. The Android
+// harness's network guard and driver link are pinned below: the guard connects
+// only to hosts the session allows, the driver link only to 127.0.0.1.)
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const self = fileURLToPath(import.meta.url);
@@ -69,6 +71,11 @@ describe("engine guards", () => {
     "packages/decide/src/node/systemone/transport.ts",
     "packages/auth/src/inbox/transport.ts",
     "packages/action/src/transport.ts",
+    // The Android emulator's network guard (MOB-0, SAF-1): it forwards only what the
+    // session's allowlist allows (checked below).
+    "packages/android/src/guard.ts",
+    // The link to the on-device driver, through adb's forward on 127.0.0.1 only.
+    "packages/android/src/driver.ts",
   ];
   const AI_SDK_PACKAGE = "packages/models/";
 
@@ -103,6 +110,7 @@ describe("engine guards", () => {
   it("reveals secrets only in the allowed files", () => {
     const reveal = new RegExp(`["']${brand.npmScope}/config/reveal["']`);
     expect(offenders(source, reveal).sort()).toEqual([
+      "packages/android/src/session.ts",
       "packages/auth/src/inbox/transport.ts",
       "packages/browser/src/session.ts",
       "packages/decide/src/node/systemone/admin.ts",
@@ -152,8 +160,10 @@ describe("engine guards", () => {
   });
 
   // Starting other programs: only these files may (MOD-6 delegated CLIs; the
-  // browser installer; the brand tool). The delegated runner never uses a shell.
+  // browser installer; the brand tool; the Android harness's adb/emulator wrapper,
+  // whose closed command list its own tests pin). The delegated runner never uses a shell.
   const SPAWN_ALLOWED = [
+    "packages/android/src/tools.ts",
     "packages/brand/src/run.ts",
     "packages/browser/src/launch.ts",
     // Tests with code steps run through their generated spec: Node + Playwright Test's CLI (LOOP-4).
@@ -186,6 +196,25 @@ describe("engine guards", () => {
     expect([...spec.matchAll(/spawn\(/g)]).toHaveLength(1);
     expect(spec).toContain("spawn(process.execPath, args,");
     expect(spec).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
+  });
+
+  it("lets the Android guard connect only after the allowlist, and the driver link only to loopback", () => {
+    const guard = readFileSync(join(root, "packages/android/src/guard.ts"), "utf8");
+    expect(guard).toContain('export const GUARD_HOST = "127.0.0.1";');
+    expect([...guard.matchAll(/\.listen\(/g)]).toHaveLength(1);
+    expect(guard).toMatch(/server\.listen\(0, GUARD_HOST,/);
+    // The two ways out: a proxied HTTP request and a tunnel, each after its check.
+    expect([...guard.matchAll(/httpRequest\(/g)]).toHaveLength(1);
+    expect([...guard.matchAll(/tcpConnect\(/g)]).toHaveLength(1);
+    const request = guard.slice(guard.indexOf("#onRequest(req"), guard.indexOf("httpRequest("));
+    expect(request).toContain("!policy.allowlist.allowsUrl(url)");
+    const tunnel = guard.slice(guard.indexOf("async #openTunnel("), guard.indexOf("tcpConnect("));
+    expect(tunnel).toContain("policy.allowlist.allowsHost(");
+    expect(tunnel).toContain("if (!allowed || this.#policy !== policy || client.destroyed)");
+    const driver = readFileSync(join(root, "packages/android/src/driver.ts"), "utf8");
+    expect(driver).toContain('export const DRIVER_HOST = "127.0.0.1";');
+    expect([...driver.matchAll(/connect\(\{/g)]).toHaveLength(1);
+    expect(driver).toContain("connect({ host: DRIVER_HOST, port })");
   });
 
   it("keeps fixtures out of engine packages (tests may use them)", () => {

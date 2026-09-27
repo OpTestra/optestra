@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No INTERNET permission: the driver talks to the host only through a local
+     abstract socket that adb forwards (see Driver.kt). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- To find the app under test's launcher screen (package visibility, Android 11+). -->
+  <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+  <application android:label="UI driver" android:hasCode="true" />
+  <instrumentation
+    android:name=".Driver"
+    android:targetPackage="dev.uiharness.driver"
+    android:label="UI driver" />
+</manifest>

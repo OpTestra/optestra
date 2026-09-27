@@ -1,0 +1,38 @@
+{
+  "name": "@testament/android",
+  "version": "0.1.0",
+  "description": "The Android harness: a safe, isolated emulator session with a closed set of actions, observation and evidence.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "driver.apk"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "build:driver": "gradle -p driver assembleDebug --console=plain -q",
+    "test:android": "tsc -b ../cli ../../bench/fixtures/shop ../../bench/fixtures/android && vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@testament/brand": "workspace:^",
+    "@testament/browser": "workspace:^",
+    "@testament/config": "workspace:^",
+    "@testament/contract": "workspace:^",
+    "@testament/recording": "workspace:^"
+  },
+  "devDependencies": {
+    "@testament/fixture-android": "workspace:*",
+    "@testament/fixture-shop": "workspace:*",
+    "yaml": "^2.9.1"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

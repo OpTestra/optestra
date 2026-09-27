@@ -1,0 +1,46 @@
+{
+  "$comment": "Android device profiles (TGT-4, TGT-6). Data, not code: add a profile here without an engine change. width/height are the portrait screen in pixels, density in dpi. Each profile becomes an emulator (AVD) hardware config.",
+  "default": "pixel-8",
+  "profiles": {
+    "small-phone": {
+      "label": "Small phone (720 × 1280, 320 dpi)",
+      "category": "phone",
+      "width": 720,
+      "height": 1280,
+      "density": 320,
+      "ramMb": 2048
+    },
+    "pixel-8": {
+      "label": "Pixel 8 (1080 × 2400, 420 dpi)",
+      "category": "phone",
+      "width": 1080,
+      "height": 2400,
+      "density": 420,
+      "ramMb": 2048
+    },
+    "pixel-9-pro-xl": {
+      "label": "Pixel 9 Pro XL (1344 × 2992, 480 dpi)",
+      "category": "phone",
+      "width": 1344,
+      "height": 2992,
+      "density": 480,
+      "ramMb": 3072
+    },
+    "small-tablet": {
+      "label": "Small tablet (1200 × 1920, 240 dpi)",
+      "category": "tablet",
+      "width": 1200,
+      "height": 1920,
+      "density": 240,
+      "ramMb": 3072
+    },
+    "pixel-tablet": {
+      "label": "Pixel Tablet (1600 × 2560, 320 dpi)",
+      "category": "tablet",
+      "width": 1600,
+      "height": 2560,
+      "density": 320,
+      "ramMb": 4096
+    }
+  }
+}

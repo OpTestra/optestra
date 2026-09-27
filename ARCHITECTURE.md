@@ -15,6 +15,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/spec` | The test file format: `.test.md` parser, typed model, variables and generators, flow expansion, step keys (`textKey`), canonical printer, diagnostics with ranges; lint rules, `checkTest` and the editor language service; registers the `tests` and `lint` config sections. Browser-safe main entry + `/node` (project loading) | SPEC-0, SPEC-1 |
 | `packages/decide` | The decision layer: typed decision tasks (choice / score / noul), rules first → decision model → escalate below threshold, hard time limits, racing (during-run) and batching (after-run), decision cache, metrics, labelled examples; registers the `decisions` config section. Browser-safe main entry + `/node` (disk cache, label store) | DEC-0 |
 | `packages/browser` | The browser harness: fresh isolated Playwright sessions behind the allowlist guard, a closed set of typed actions with post-state and settle, accessibility observations with refs and locator candidates, secret typing, screenshots and scrubbed evidence; the read-only check evaluator (`check`, `pageCopy`). Node only; no AI. The agent (LOOP-1) and the replayer (LOOP-4) both drive pages through it | LOOP-0, LOOP-2 |
+| `packages/android` | The Android harness: a clean emulator per session (reboot from a clean snapshot, fresh APK install) behind a network guard (the emulator's proxy + a device firewall), an on-device driver (instrumentation APK, `driver/`) reading the accessibility tree, the same Observation / outcome / candidates / check shapes as the browser harness plus Android actions, secret typing into the declared app only, scrubbed logcat, network log and screen recording. `android setup` / `doctor`. Node only; no AI | MOB-0 |
 | `packages/auth` | Login building blocks: auth profiles and the saved-session store (`ensureProfile` with an injected login flow), the `totp` secret type, test inboxes (Mailpit, Mailosaur, MailSlurp) with code/link extraction and `InboxValues` for `{{inbox.…}}`; registers the `auth` and `inbox` config sections. Node only (+ browser-safe `/extract`) | AUTH-0 |
 | `packages/recording` | The recording format: per test, the commands for each step (locators, fingerprints, templates, learned waits) and the typed checks with their summaries (`describeCheck`) and sanity results; keys (`routeOf`, `stepKey`, `RECORDING_EPOCH`). Browser-safe + `/node` reader/writer | LOOP-1, LOOP-2 |
 | `packages/codegen` | Generated Playwright specs: a recording → a plain `@playwright/test` spec next to the test, plus the shared fixtures module (allowlist route, secrets, values, network and inbox helpers) and Playwright config; hand-edit protection; `generateProject` in `/node`. The output imports nothing from the engine | LOOP-3 |
@@ -34,6 +35,7 @@ cli ──► core ──► config ──► brand
  ├──► spec ──► config, contract    (spec never imports core or models; no AI, no network)
  ├──► decide ──► config, contract  (main entry: no network; /node: System One backends, DEC-1)
  ├──► browser ──► config, contract, recording (+ playwright; never imports core, models or spec)
+ ├──► android ──► browser (types, Allowlist), config, contract, recording (never imports core, models or spec)
  ├──► recording ──► spec, brand    (browser-safe; no AI, no network)
  ├──► auth ──► config, spec, brand (never imports core or browser; /inbox/transport.ts: inboxes, AUTH-0)
  ├──► codegen ──► recording, spec, config, brand (node; no AI, no network;
@@ -48,7 +50,7 @@ contract ──► zod only (bottom of the graph)
 
 - The engine is self-contained. It never imports or references the apps repo;
   the arrow only points apps → engine (`test/guards.test.ts` enforces this).
-- No telemetry. **Four network exceptions in engine code**, one file each:
+- No telemetry. **Network exceptions in engine code**, one file each:
   `packages/models/src/transport.ts` (AI models: sends only to configured provider
   hosts, only when a caller asks for a completion or key check),
   `packages/decide/src/node/systemone/transport.ts` (decision models Jev, Kev and
@@ -57,8 +59,16 @@ contract ──► zod only (bottom of the graph)
   MailSlurp: sends only to the configured inbox host, never follows redirects) and
   `packages/action/src/transport.ts` (the GitHub Action: only `GITHUB_API_URL`, with
   the workflow's own `GITHUB_TOKEN`, never follows redirects).
+  Two more, in the Android harness: `packages/android/src/guard.ts` (the
+  emulator's proxy: it connects only to hosts the session allows, after checking
+  the name against the address) and `packages/android/src/driver.ts` (the link
+  to the on-device driver, 127.0.0.1 only).
   Secret values are revealed (`@testament/config/reveal`) only in the browser
-  driver and these transports' key handling (guard-tested).
+  and Android drivers and these transports' key handling (guard-tested).
+  Programs are started only from named files: the brand tool, the browser
+  installer, the delegated CLI runner and `packages/android/src/tools.ts` (adb
+  with a closed command list, the emulator, sdkmanager for `android setup
+  --install`); never through a shell.
   Only `packages/models` may depend on the AI SDK. `test/guards.test.ts` enforces all of this.
 - The browser harness drives a browser through Playwright; the page's traffic is
   the browser's, filtered by the allowlist guard. It makes no calls of its own. Its
@@ -278,6 +288,19 @@ contract ──► zod only (bottom of the graph)
   same_element / miss_action / heal_class labels (LRN-9). HEAL-7: tests that
   healed ≥ 3 of their last 10 runs are flagged (`recentHeals`). Contract 1.2.
   See "Healing" in `packages/core/README.md`.
+
+- MOB-0 (done): `packages/android` + `bench/fixtures/android`.
+  `launchEmulator({ androidVersion, device })` once per worker (AVDs written from
+  `versions.json` / `devices.json`, a clean snapshot prepared once per AVD and
+  driver build), `openAndroidSession({ apk, emulator, allowedDomains, secrets,
+  evidence })` once per test → `{ ok, session }` or a typed failure
+  (`app_install_failed`, …). The session mirrors the browser's: `observe()` →
+  `renderForModel()`, `act()` → outcome with Android post-state (`toasts`, `app`,
+  `changed`), `candidates(ref)`, `check(op)`, `requestMark()`, `screenCopy()`,
+  `screenshot()`, `close()` → evidence (video.webm, logcat.txt, network.har). CLI
+  `android setup | doctor | snapshot`. Emulator tests: `pnpm --filter
+  @testament/android test:android` (CI job `android`). MOB-1 builds authoring,
+  replay and verdicts on it. See `packages/android/README.md`.
 
 ## Results contract (`packages/contract`)
 

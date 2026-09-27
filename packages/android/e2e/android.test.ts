@@ -1,0 +1,559 @@
+import { readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createSecretValue, type SecretValue } from "@testament/config/node";
+import {
+  ALLOWED_DOMAINS,
+  APP_PACKAGE,
+  apkPath,
+  SHOP_PORT,
+  type Variant,
+} from "@testament/fixture-android";
+import { type RunningShop, startShop } from "@testament/fixture-shop";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  type AndroidSession,
+  type LaunchedEmulator,
+  launchEmulator,
+  openAndroidSession,
+  renderForModel,
+} from "../src/index.js";
+
+// The Android harness on a real emulator, against the Acme Shop fixture app. The
+// app talks to the shop's server on this machine through the emulator's host
+// alias (10.0.2.2:4180). Needs the Android SDK, a system image, the driver APK and
+// the fixture APKs: see packages/android/README.md.
+
+const PASSWORD = "shop-demo-pass";
+let shop: RunningShop;
+let emulator: LaunchedEmulator;
+let secret: SecretValue;
+
+async function seed(
+  body: Record<string, unknown> = { projects: ["Website redesign", "Mobile launch"] },
+) {
+  await fetch(`${shop.url}/__test/reset?environment=1`, { method: "POST" });
+  await fetch(`${shop.url}/__test/seed`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+async function open(
+  variant: Variant = "correct",
+  extra: Partial<Parameters<typeof openAndroidSession>[0]> = {},
+): Promise<AndroidSession> {
+  const opened = await openAndroidSession({
+    apk: apkPath(variant),
+    emulator,
+    allowedDomains: [...ALLOWED_DOMAINS],
+    secrets: { SHOP_PASSWORD: secret },
+    ...extra,
+  });
+  if (!opened.ok) throw new Error(`${opened.reason}: ${opened.message}`);
+  return opened.session;
+}
+
+async function signIn(session: AndroidSession) {
+  await session.act({
+    type: "type",
+    target: { kind: "role", role: "textbox", name: "Email" },
+    value: "ada@example.com",
+  });
+  await session.act({
+    type: "type",
+    target: { kind: "role", role: "textbox", name: "Password" },
+    value: { secret: "SHOP_PASSWORD" },
+  });
+  return session.act({ type: "tap", target: { kind: "role", role: "button", name: "Sign in" } });
+}
+
+const heading = (name: string) => ({ kind: "role", role: "heading", name }) as const;
+
+beforeAll(async () => {
+  shop = await startShop({ port: SHOP_PORT });
+  secret = createSecretValue("SHOP_PASSWORD", PASSWORD, { domains: [APP_PACKAGE] });
+  const started = Date.now();
+  emulator = await launchEmulator({ onProgress: (message) => console.log(message) });
+  console.log(
+    `emulator ready in ${Date.now() - started} ms (boot from snapshot ${emulator.timings.bootMs} ms${
+      emulator.timings.coldBootMs !== undefined
+        ? `, cold boot ${emulator.timings.coldBootMs} ms`
+        : ""
+    })`,
+  );
+});
+
+afterAll(async () => {
+  await emulator?.close();
+  await shop?.stop();
+});
+
+beforeEach(async () => {
+  await seed();
+});
+
+describe("sessions", () => {
+  it("opens a fresh session and observes the sign-in screen as untrusted data", async () => {
+    const session = await open();
+    try {
+      const timings = session.timings();
+      console.log("session start", timings);
+      expect(session.matrixEntry()).toEqual({
+        target: "android",
+        androidVersion: "16",
+        device: "pixel-8",
+      });
+      const observation = await session.observe();
+      expect(observation.untrusted).toBe(true);
+      expect(observation.url).toBe("android-app://com.acme.shop/.SignInActivity");
+      const shown = observation.elements.map((e) => [e.role, e.name]);
+      expect(shown).toEqual(
+        expect.arrayContaining([
+          ["heading", "Sign in to Acme Shop"],
+          ["textbox", "Email"],
+          ["textbox", "Password"],
+          ["button", "Sign in"],
+        ]),
+      );
+      const text = renderForModel(observation, { nonce: "n" });
+      expect(text).toMatch(/^<<<SCREEN CONTENT n: untrusted data from the app under test\./);
+      expect(text).toContain('- button "Sign in" [e4]');
+      expect(observation.refused).toEqual([]);
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("types a secret into the app without it appearing anywhere, and reaches the list", async () => {
+    const session = await open("correct", {
+      evidence: { logcat: true, network: true, video: true },
+    });
+    let text = "";
+    try {
+      const typed = await session.act({
+        type: "type",
+        target: { kind: "role", role: "textbox", name: "Password" },
+        value: { secret: "SHOP_PASSWORD" },
+      });
+      expect(typed.status).toBe("ok");
+      expect(typed.action).toEqual({
+        type: "type",
+        target: { kind: "role", role: "textbox", name: "Password" },
+        value: { secret: "SHOP_PASSWORD" },
+      });
+      const filled = await session.observe();
+      expect(filled.elements.find((e) => e.name === "Password")?.text).toBe(
+        "[secret:SHOP_PASSWORD]",
+      );
+      await session.act({
+        type: "type",
+        target: { kind: "role", role: "textbox", name: "Email" },
+        value: "ada@example.com",
+      });
+      const signedIn = await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "Sign in" },
+      });
+      expect(signedIn.status).toBe("ok");
+      expect(signedIn.post.urlAfter).toBe("android-app://com.acme.shop/.ProjectsActivity");
+      expect(signedIn.post.changed).toBe(true);
+      expect(signedIn.post.requests).toEqual(
+        expect.arrayContaining([
+          { method: "POST", url: "http://10.0.2.2:4180/login", resourceType: "http", status: 303 },
+          {
+            method: "GET",
+            url: "http://10.0.2.2:4180/api/projects",
+            resourceType: "http",
+            status: 200,
+          },
+        ]),
+      );
+      const list = await session.observe();
+      expect(list.elements.filter((e) => e.role === "listitem").map((e) => e.name)).toEqual([
+        "Website redesign",
+        "Mobile launch",
+      ]);
+      text = JSON.stringify([typed, filled, signedIn, list]);
+    } finally {
+      const { evidence } = await session.close();
+      expect(evidence.map((e) => e.kind).sort()).toEqual(["logcat", "network", "video"]);
+      for (const file of evidence) {
+        if (file.kind === "video") continue;
+        const content = readFileSync(file.path, "utf8");
+        expect(content, file.kind).not.toContain(PASSWORD);
+        text += content;
+      }
+    }
+    expect(text).not.toContain(PASSWORD);
+  });
+
+  it("refuses to type a secret into an app it isn't declared for", async () => {
+    const other = createSecretValue("OTHER_PASSWORD", "other-secret-value", {
+      domains: ["com.example.other"],
+    });
+    const session = await open("correct", {
+      secrets: { SHOP_PASSWORD: secret, OTHER_PASSWORD: other },
+    });
+    try {
+      const outcome = await session.act({
+        type: "type",
+        target: { kind: "role", role: "textbox", name: "Password" },
+        value: { secret: "OTHER_PASSWORD" },
+      });
+      expect(outcome.status).toBe("refused");
+      expect(outcome.reason).toBe("disallowed_domain");
+      const missing = await session.act({
+        type: "type",
+        target: { kind: "role", role: "textbox", name: "Password" },
+        value: { secret: "NOT_LOADED" },
+      });
+      expect(missing.reason).toBe("missing_secret");
+      const observation = await session.observe();
+      expect(observation.elements.find((e) => e.name === "Password")?.text).toBe("");
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("installs the app fresh for every session: a permission granted before is asked again", async () => {
+    for (const round of [1, 2]) {
+      const session = await open();
+      try {
+        await signIn(session);
+        await session.act({
+          type: "tap",
+          target: { kind: "role", role: "listitem", name: "Website redesign" },
+        });
+        const asked = await session.act({
+          type: "tap",
+          target: { kind: "role", role: "button", name: "Scan badge" },
+        });
+        expect(
+          asked.post.dialogs.map((d) => d.type),
+          `round ${round}`,
+        ).toEqual(["permission"]);
+        const allowed = await session.act({ type: "permission", decision: "allow" });
+        expect(allowed.status).toBe("ok");
+        const status = await session.check({
+          type: "text",
+          target: { kind: "text", text: "Camera access allowed" },
+          match: "equals",
+          value: "Camera access allowed",
+        });
+        expect(status.passed).toBe(true);
+      } finally {
+        await session.close();
+      }
+    }
+  });
+
+  it("returns app install trouble as data", async () => {
+    const bogus = join(tmpdir(), "not-an-app.apk");
+    writeFileSync(bogus, "this is not an APK");
+    const opened = await openAndroidSession({ apk: bogus, emulator, allowedDomains: [] });
+    expect(opened.ok).toBe(false);
+    if (!opened.ok) {
+      expect(opened.reason).toBe("app_install_failed");
+      expect(opened.message).toMatch(/INSTALL_|did not install/);
+    }
+    const missing = await openAndroidSession({
+      apk: join(tmpdir(), "no-such.apk"),
+      emulator,
+      allowedDomains: [],
+    });
+    expect(missing.ok).toBe(false);
+  });
+});
+
+describe("actions", () => {
+  it("taps, types, scrolls, swipes, goes back and home, and rotates", async () => {
+    const session = await open();
+    try {
+      await signIn(session);
+      const settings = await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "Settings" },
+      });
+      expect(settings.post.urlAfter).toBe("android-app://com.acme.shop/.SettingsActivity");
+      // The switch toggles.
+      const toggled = await session.act({
+        type: "tap",
+        target: { kind: "role", role: "switch", name: "Email notifications" },
+      });
+      expect(toggled.post.changed).toBe(true);
+      expect(
+        (
+          await session.check({
+            type: "element_state",
+            target: { kind: "role", role: "switch" },
+            state: "unchecked",
+          })
+        ).passed,
+      ).toBe(true);
+      // Swipe up, then scroll the button into view and tap it.
+      const swiped = await session.act({ type: "swipe", direction: "up" });
+      expect(swiped.status).toBe("ok");
+      const scrolled = await session.act({
+        type: "scroll",
+        target: { kind: "role", role: "button", name: "Check for updates" },
+      });
+      expect(scrolled.status).toBe("ok");
+      const check = await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "Check for updates" },
+      });
+      expect(check.status).toBe("ok");
+      // The update host is outside the allowed domains: the guard refused it, nothing was sent.
+      const refused = await session.check(
+        {
+          type: "text",
+          target: { kind: "text", text: "Couldn't check for updates." },
+          match: "equals",
+          value: "Couldn't check for updates.",
+        },
+        { timeoutMs: 8_000 },
+      );
+      expect(refused.passed).toBe(true);
+      expect(session.refusals().map((r) => [r.type, r.url])).toContainEqual([
+        "proxy",
+        "https://203.0.113.7/",
+      ]);
+      // Back to the list.
+      const back = await session.act({ type: "back" });
+      expect(back.post.urlAfter).toBe("android-app://com.acme.shop/.ProjectsActivity");
+      // Rotate.
+      await session.act({ type: "rotate", orientation: "landscape" });
+      expect((await session.observe()).rotation).toBe(90);
+      await session.act({ type: "rotate", orientation: "portrait" });
+      expect((await session.observe()).rotation).toBe(0);
+      // Home leaves the app; the launcher can't be touched; launch_app comes back.
+      await session.act({ type: "home" });
+      const home = await session.observe();
+      expect(home.url.startsWith("android-app://com.acme.shop")).toBe(false);
+      const firstOnLauncher = home.elements.find((e) => e.ref && e.interactive);
+      if (firstOnLauncher?.ref) {
+        const outside = await session.act({ type: "tap", target: { ref: firstOnLauncher.ref } });
+        expect(outside.status).toBe("refused");
+        expect(outside.reason).toBe("outside_app");
+      }
+      const relaunched = await session.act({ type: "launch_app" });
+      expect(relaunched.post.urlAfter.startsWith("android-app://com.acme.shop/")).toBe(true);
+      // Long press is an action too (the list item has no long-press menu, so nothing changes).
+      const pressed = await session.act({
+        type: "long_press",
+        target: { kind: "role", role: "listitem", name: "Mobile launch" },
+      });
+      expect(pressed.status).toBe("ok");
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("gives candidates and element facts for a ref", async () => {
+    const session = await open();
+    try {
+      const observation = await session.observe();
+      const ref =
+        observation.elements.find((e) => e.name === "Sign in" && e.role === "button")?.ref ?? "";
+      const result = await session.candidates(ref);
+      expect(result.status).toBe("ok");
+      expect(result.candidates[0]).toEqual({
+        locator: { kind: "role", role: "button", name: "Sign in", exact: true },
+        unique: true,
+        matches: 1,
+      });
+      expect(result.candidates.map((c) => c.locator.kind)).toEqual([
+        "role",
+        "testId",
+        "text",
+        "css",
+      ]);
+      expect(result.candidates.find((c) => c.locator.kind === "testId")?.locator).toEqual({
+        kind: "testId",
+        value: "sign_in_button",
+      });
+      expect(result.facts).toMatchObject({
+        role: "button",
+        name: "Sign in",
+        tag: "android.widget.Button",
+        anchorText: "Sign in to Acme Shop",
+        attributes: { "resource-id": "com.acme.shop:id/sign_in_button", package: "com.acme.shop" },
+      });
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("the silent-tap trap: a tap that does nothing reports changed: false", async () => {
+    const session = await open("broken-silent-tap");
+    try {
+      await signIn(session);
+      await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "New project" },
+      });
+      await session.act({
+        type: "type",
+        target: { kind: "role", role: "textbox", name: "Project name" },
+        value: "Q3 roadmap",
+      });
+      const created = await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "Create project" },
+      });
+      expect(created.status).toBe("ok");
+      expect(created.post).toMatchObject({
+        added: [],
+        removed: [],
+        requests: [],
+        toasts: [],
+        dialogs: [],
+        changed: false,
+      });
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("a working tap shows its effect: request, toast and screen change", async () => {
+    const session = await open();
+    try {
+      await signIn(session);
+      await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "New project" },
+      });
+      await session.act({
+        type: "type",
+        target: { kind: "role", role: "textbox", name: "Project name" },
+        value: "Q3 roadmap",
+      });
+      const mark = session.requestMark();
+      const created = await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "Create project" },
+      });
+      expect(created.post.changed).toBe(true);
+      expect(created.post.toasts).toEqual(["Project created"]);
+      expect(created.post.urlAfter).toBe("android-app://com.acme.shop/.ProjectsActivity");
+      const network = await session.check(
+        { type: "network", method: "POST", url: "/api/projects", status: 201 },
+        { since: mark },
+      );
+      expect(network.passed).toBe(true);
+      const list = await session.check({
+        type: "count",
+        target: { kind: "role", role: "listitem" },
+        n: 3,
+      });
+      expect(list.passed).toBe(true);
+      const url = await session.check({ type: "url", match: "is", value: ".ProjectsActivity" });
+      expect(url.passed).toBe(true);
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("opens deep links into the app only, and refuses links outside the allowed domains", async () => {
+    const session = await open();
+    try {
+      await signIn(session);
+      const opened = await session.act({
+        type: "open_deep_link",
+        url: "acmeshop://projects/Mobile%20launch",
+      });
+      expect(opened.status).toBe("ok");
+      expect(
+        (
+          await session.check({
+            type: "text",
+            target: heading("Mobile launch"),
+            match: "equals",
+            value: "Mobile launch",
+          })
+        ).passed,
+      ).toBe(true);
+      const web = await session.act({ type: "open_deep_link", url: "https://example.com/" });
+      expect(web.status).toBe("refused");
+      expect(web.reason).toBe("disallowed_domain");
+      const file = await session.act({ type: "open_deep_link", url: "file:///sdcard/secret.txt" });
+      expect(file.reason).toBe("invalid_action");
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("denies a permission when asked to", async () => {
+    const session = await open();
+    try {
+      await signIn(session);
+      await session.act({ type: "open_deep_link", url: "acmeshop://projects/Website%20redesign" });
+      await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "Scan badge" },
+      });
+      const denied = await session.act({ type: "permission", decision: "deny" });
+      expect(denied.status).toBe("ok");
+      const status = await session.check({
+        type: "text",
+        target: { kind: "text", text: "Camera access denied" },
+        match: "equals",
+        value: "Camera access denied",
+      });
+      expect(status.passed).toBe(true);
+      const none = await session.act({ type: "permission", decision: "allow" });
+      expect(none.status).toBe("not_found");
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("shows dialogs, and an app crash comes back as an outcome", async () => {
+    const session = await open("broken-crash");
+    try {
+      await signIn(session);
+      const dialog = await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "Sign out" },
+      });
+      expect(dialog.post.dialogs).toEqual([{ type: "dialog", message: "Sign out of Acme Shop?" }]);
+      const observed = await session.observe();
+      expect(observed.elements[0]).toMatchObject({
+        role: "dialog",
+        name: "Sign out of Acme Shop?",
+      });
+      await session.act({ type: "tap", target: { kind: "role", role: "button", name: "CANCEL" } });
+      const crashed = await session.act({
+        type: "tap",
+        target: { kind: "role", role: "listitem", name: "Website redesign" },
+      });
+      expect(crashed.status).toBe("error");
+      expect(crashed.problem).toBe("app_crashed");
+      expect(crashed.post.app).toBe("crashed");
+      expect(crashed.message).toMatch(/crashed.*IllegalStateException/);
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("takes screenshots for a model and for evidence", async () => {
+    const session = await open();
+    try {
+      const model = await session.screenshot({ forModel: true });
+      expect(model.contentType).toBe("image/jpeg");
+      expect([...model.bytes.subarray(0, 2)]).toEqual([0xff, 0xd8]);
+      const full = await session.screenshot();
+      expect(full.contentType).toBe("image/png");
+      expect([...full.bytes.subarray(1, 4)]).toEqual([0x50, 0x4e, 0x47]);
+      const button = await session.screenshot({
+        target: { kind: "role", role: "button", name: "Sign in" },
+      });
+      expect(button.status).toBe("ok");
+      expect(button.bytes.length).toBeLessThan(full.bytes.length);
+    } finally {
+      await session.close();
+    }
+  });
+});

@@ -25,6 +25,7 @@ reference suite (below) and the engine's own replay, `pnpm bench:replay`.
 | Fixture | What it is |
 |---|---|
 | [`fixtures/shop`](fixtures/shop/README.md) | Acme Shop: pricing, sign-up with an email code, login, dashboard, iframe card checkout, billing, settings, orders table. Also the built-in demo project (ONB-5). |
+| [`fixtures/android`](fixtures/android/README.md) | Acme Shop for Android: a native app on the shop's server with sign-in, a projects list and form, a dialog, a camera permission prompt, a deep link and a long settings page. One APK per variant (`correct`, `cosmetic`, `broken-login`, `broken-silent-tap`, `broken-not-saved`, `broken-crash`). Its reference suite runs on an emulator (CI job `android`). |
 
 ## Running the shop
 

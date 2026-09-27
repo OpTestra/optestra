@@ -1,0 +1,130 @@
+# Gold answers for Acme Shop for Android: for every test × variant, the verdict a
+# correct engine must reach and, when it isn't `passed`, the step where the
+# failure is observed, its cause (DIA-1 classes) and why. Same format as the
+# shop's manifest (bench/README.md).
+#
+# One difference from the shop's current manifest: a failed `Use:` flow makes the
+# test `failed` (cause from the flow), not `blocked`: blocked would turn a broken
+# sign-in into a neutral result in CI. The shop's manifest moves to the same rule
+# in LOOP-4.
+
+version: 1
+fixture: android
+tests_dir: tests
+
+harness:
+  retries: 1
+  before_first_attempt: POST /__test/reset?environment=1, then the test's `setup:` requests
+  before_retry: POST /__test/reset, then the test's `setup:` requests
+  secrets:
+    SHOP_PASSWORD: shop-demo-pass
+  # The APK under test is the variant's build; the shop's server runs `correct` on port 4180.
+  app: app/build/outputs/apk/<flavor>/debug/acme-shop-android-<flavor>-debug.apk
+  shop: { variant: correct, port: 4180 }
+
+variants:
+  correct: {}
+  cosmetic:
+    also_accept:
+      passed: [healed]
+  broken-login: {}
+  broken-silent-tap: {}
+  broken-not-saved: {}
+  broken-crash: {}
+
+tests:
+  sign-in:
+    correct: passed
+    cosmetic: passed
+    broken-login:
+      verdict: failed
+      step: 4
+      cause: product_bug
+      reason: Signing in with the right password shows "Something went wrong" and stays on the sign-in screen.
+    broken-silent-tap: passed
+    broken-not-saved: passed
+    broken-crash: passed
+
+  wrong-password:
+    correct: passed
+    cosmetic: passed
+    broken-login: passed # a wrong password is still refused correctly
+    broken-silent-tap: passed
+    broken-not-saved: passed
+    broken-crash: passed
+
+  create-project:
+    correct: passed
+    cosmetic: passed
+    broken-login:
+      verdict: failed
+      step: 1
+      cause: product_bug
+      reason: The sign-in flow fails (the right password is refused), so the test can't reach its own steps.
+    broken-silent-tap:
+      verdict: failed
+      step: 4
+      cause: product_bug
+      reason: False-pass trap. "Create project" can be tapped but nothing happens (no request, no toast, same screen).
+    broken-not-saved:
+      verdict: failed
+      step: 8
+      cause: product_bug
+      reason: False-pass trap. The toast says "Project created" and the list shows it, but after a refresh it is gone.
+    broken-crash: passed
+
+  sign-out:
+    correct: passed
+    cosmetic: passed
+    broken-login:
+      verdict: failed
+      step: 1
+      cause: product_bug
+      reason: The sign-in flow fails (the right password is refused), so the test can't reach its own steps.
+    broken-silent-tap: passed
+    broken-not-saved: passed
+    broken-crash: passed
+
+  scan-badge:
+    correct: passed
+    cosmetic: passed
+    broken-login:
+      verdict: failed
+      step: 1
+      cause: product_bug
+      reason: The sign-in flow fails (the right password is refused), so the test can't reach its own steps.
+    broken-silent-tap: passed
+    broken-not-saved: passed
+    broken-crash:
+      verdict: failed
+      step: 2
+      cause: product_bug
+      reason: Opening a project crashes the app.
+
+  deep-link:
+    correct: passed
+    cosmetic: passed
+    broken-login:
+      verdict: failed
+      step: 1
+      cause: product_bug
+      reason: The sign-in flow fails (the right password is refused), so the test can't reach its own steps.
+    broken-silent-tap: passed
+    broken-not-saved: passed
+    broken-crash:
+      verdict: failed
+      step: 2
+      cause: product_bug
+      reason: The link opens the project screen, which crashes the app.
+
+  check-updates:
+    correct: passed
+    cosmetic: passed
+    broken-login:
+      verdict: failed
+      step: 1
+      cause: product_bug
+      reason: The sign-in flow fails (the right password is refused), so the test can't reach its own steps.
+    broken-silent-tap: passed
+    broken-not-saved: passed
+    broken-crash: passed

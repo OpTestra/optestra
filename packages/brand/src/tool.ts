@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Brand, isBrandKey, resolveBrand } from "./resolve.js";
@@ -16,7 +16,20 @@ import { type Brand, isBrandKey, resolveBrand } from "./resolve.js";
 
 export const BRAND_JSON_PATH = fileURLToPath(new URL("../../brand.json", import.meta.url));
 
-const SKIP_DIRS = new Set([".git", "node_modules", "dist", "coverage", "out", "release"]);
+const SKIP_DIRS = new Set([
+  ".git",
+  "node_modules",
+  "dist",
+  "coverage",
+  "out",
+  "release",
+  ".gradle",
+  ".kotlin",
+]);
+
+/** Gradle's output folder, next to its build script (Android driver and fixture app). */
+const isGradleOutput = (dir: string, name: string) =>
+  name === "build" && existsSync(join(dir, "build.gradle.kts"));
 const LOCKFILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.lock"]);
 const MARKER = /^\s*(?:#|\/\/)\s*brand:next (.+)$/;
 
@@ -50,7 +63,7 @@ export function listFiles(root: string, extraSkipDirs: readonly string[] = []): 
       // In a git worktree `.git` is a file holding the main repo's path, not a folder.
       if (entry.name === ".git") continue;
       if (entry.isDirectory()) {
-        if (!skip.has(entry.name)) walk(path);
+        if (!skip.has(entry.name) && !isGradleOutput(dir, entry.name)) walk(path);
       } else if (entry.isFile() && !skip.has(entry.name) && !entry.name.endsWith(".tsbuildinfo")) {
         // Skipped names apply to files too: a git worktree's `.git` is a file with an absolute path.
         files.push(path);

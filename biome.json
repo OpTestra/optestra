@@ -15,7 +15,8 @@
       "!packages/decide/fixtures",
       "!**/*.steps.json",
       "!packages/core/fixtures",
-      "!packages/report/golden"
+      "!packages/report/golden",
+      "!packages/android/src/fixtures"
     ]
   },
   "formatter": {

@@ -1,0 +1,36 @@
+{
+  "$comment": "Android versions (TGT-4, TGT-6): at least the last 5 major versions. Data, not code: add one here without an engine change. `images` are system image tags in order of preference. The harness needs root adb for its network firewall, so Google Play images are not supported. `downloadMb` is the approximate size of one system image download (for `android setup`).",
+  "default": "16",
+  "versions": {
+    "13": {
+      "api": 33,
+      "platform": "android-33",
+      "images": ["google_apis", "aosp_atd"],
+      "downloadMb": 1400
+    },
+    "14": {
+      "api": 34,
+      "platform": "android-34",
+      "images": ["google_apis", "aosp_atd"],
+      "downloadMb": 1500
+    },
+    "15": {
+      "api": 35,
+      "platform": "android-35",
+      "images": ["google_apis", "aosp_atd"],
+      "downloadMb": 1500
+    },
+    "16": {
+      "api": 36,
+      "platform": "android-36",
+      "images": ["google_apis", "aosp_atd"],
+      "downloadMb": 1600
+    },
+    "17": { "api": 37, "platform": "android-37.0", "images": ["google_apis"], "downloadMb": 1900 }
+  },
+  "tools": {
+    "platform-tools": { "downloadMb": 15, "installedMb": 40 },
+    "emulator": { "downloadMb": 350, "installedMb": 1100 }
+  },
+  "systemImageInstalledFactor": 2.5
+}
