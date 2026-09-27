@@ -12,7 +12,7 @@
     "model": "claude-code/sonnet",
     "promptVersion": "planner-v2"
   },
-  "updatedAt": "2026-09-26T17:53:15.654Z",
+  "updatedAt": "2026-09-27T09:16:38.655Z",
   "steps": [
     {
       "key": "ba8ec515221832df",
@@ -699,10 +699,28 @@
       "text": "the page heading is \"Dashboard\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Dashboard"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:31:12.643Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Dashboard'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:16:37.208Z"
     },
     {
       "key": "90ea40f79039053c",
@@ -710,10 +728,27 @@
       "text": "a message says \"Avatar updated\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "status"
+        },
+        "match": "contains",
+        "value": "Avatar updated"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:31:12.643Z"
+      "generatedBy": "rules",
+      "summary": "Checked that a status message contains 'Avatar updated'",
+      "rule": "message",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:16:38.567Z"
     },
     {
       "key": "b171d7caa26efa55",
@@ -721,10 +756,28 @@
       "text": "the image \"Your avatar\" is visible",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "element_state",
+        "target": {
+          "kind": "role",
+          "role": "img",
+          "name": "Your avatar",
+          "exact": true
+        },
+        "state": "visible"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:31:12.643Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the image 'Your avatar' is visible",
+      "rule": "element",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:16:38.586Z"
     }
   ]
 }

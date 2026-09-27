@@ -149,6 +149,7 @@ interface PostState {
   popups: string[];
   refused: Refusal[];        // { url, type, frame, at }
   changed: boolean;          // false = nothing observable happened
+  reordered: boolean;        // the same elements in another order (a table sort); not part of `changed`
 }
 ```
 
@@ -238,6 +239,15 @@ needs:
 - frame path and bounding box.
 
 The shop's no-role "Show refunded orders" `<div>` ranks `text`, then `css`.
+
+**Replay (LOOP-4).** `inspect(locator)` says what a stored locator finds right
+now (`ok` with the element's facts, `not_found`, `multiple`), so the replayer
+can validate it against the recorded fingerprint before acting. `factsOf(ref)`
+returns the facts of an observed element without ranking its locators (cheap
+enough to re-find an element over the whole page). Sortable headers carry their
+`aria-sort` as a state (`[sort=ascending]`, on the header or the button inside
+it), so a sort shows as a change, and `post.reordered` says when an action only
+reordered the page.
 
 ## Screenshots and evidence
 

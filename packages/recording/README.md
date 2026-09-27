@@ -42,7 +42,7 @@ only real changes.
       "commands": [{
         "action":      { "type": "click", "target": { "kind": "role", "role": "button", "name": "Create project", "exact": true } },
         "fingerprint": { "primary", "fallbacks": [], "role", "name", "tag", "attributes", "anchorText", "framePath", "box" },
-        "expectPost":  { "urlChange"?, "appeared"?: [{ "role", "name", "text"? }], "removed"?, "requests"?: [{ "method", "route", "status"? }] },
+        "expectPost":  { "urlChange"?, "appeared"?: [{ "role", "name", "text"? }], "removed"?, "requests"?: [{ "method", "route", "status"? }], "reordered"?: true },
         "wait":        { "settledMs", "waitedFor": { "network", "dom", "busy" }, "until"? }
       }],
       "reasoning": "the New project dialog opened",   // the model's short note, scrubbed
@@ -74,9 +74,12 @@ only real changes.
   - The facts come from the harness's `candidates(ref)`.
   - It is null for commands without an element, and for exact commands.
 - **expectPost**: what replay should see after the command (VER-5). Every string
-  in it is a template.
-- **wait**: how long the page took to settle (LRN-4). `until` is for learned
-  wait conditions (LOOP-4).
+  in it is a template. `reordered: true` records an action that only reordered
+  the page (a table sort). At replay, some of it must show up (see
+  `@testament/core`, "How a run works").
+- **wait**: how long the page took to settle (LRN-4). Replay waits this long
+  (at least 400 ms, at most 3 s) before a second look when the effect hasn't
+  shown yet. `until` is for learned wait conditions (not written yet).
 
 ### Values are templates (REP-7)
 

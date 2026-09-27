@@ -1,0 +1,1217 @@
+import { setTimeout as sleep } from "node:timers/promises";
+import type {
+  ActionOutcome,
+  CheckEvaluation,
+  ElementFacts,
+  Observation,
+  PageCopy,
+  RequestMark,
+} from "@testament/browser";
+import { defaultRedactor } from "@testament/config/node";
+import type { CheckResult, HealProposal, ModelCall, StepResult } from "@testament/contract";
+import {
+  classifyHeal,
+  decideMiss,
+  decideSameElement,
+  type LiveCandidate,
+  missContext,
+  type ObservedRequest,
+  type RankResult,
+  rankCandidates,
+  type SameElementAnswer,
+} from "@testament/decide";
+import { toModelCall } from "@testament/models";
+import {
+  type CheckOp,
+  type CheckRecording,
+  type Command,
+  checkKey,
+  describeCheck,
+  describeLocator,
+  type Fingerprint,
+  type Locator,
+  routeOf,
+  type StepRecording,
+  stepKey,
+} from "@testament/recording";
+import type { BoundText, ExactOp, ExpandedStep } from "@testament/spec";
+import { runActionStep } from "../author/agent.js";
+import { authorCheck, exactCheck, runExactOp, runHook } from "../author/author.js";
+import { parseGuard } from "../author/guards.js";
+import { DEFAULT_LIMITS } from "../author/types.js";
+import { type StepVariables, stepVariables } from "../author/variables.js";
+import { evaluateCheck } from "../checks/evaluate.js";
+import { bindAction, retarget, targetOf } from "./bind.js";
+import { checkResult, evaluationText, unusableCheck } from "./checks.js";
+import { healFacts, healProposal } from "./heal.js";
+import { lateMatch, type PostCheck, verifyOutcome } from "./post-state.js";
+import type { Chapter, ReplayOptions, ReplayResult } from "./types.js";
+import type { AttemptBlock, AttemptFailure } from "./verdict.js";
+
+// Replaying one attempt of a test (REP-3…REP-5): no AI on an unchanged app.
+// Each recorded command is bound to this run's values, its element validated
+// against the fingerprint before acting (a mismatch is a miss, never a silent
+// success), acted on, and its recorded effect checked (VER-5). A miss goes up
+// the DEC-3 healing ladder; the no-AI rungs (a stored fallback, a clear
+// re-find) are done here and become pending heal proposals. Every check is
+// evaluated fresh (LRN-2). Steps with no recording are authored in place
+// (normal mode), and pending checks compiled in place.
+
+const LATE_EFFECT_MS = 400;
+const MAX_LEARNED_WAIT_MS = 3_000;
+const MAX_REFIND_CANDIDATES = 40;
+
+type Stop = { kind: "failed"; failure: AttemptFailure } | { kind: "blocked"; block: AttemptBlock };
+
+type CommandResult =
+  | {
+      kind: "ok";
+      used: "primary" | "fallback" | "refind" | "none";
+      locator: Locator | null;
+      post: PostCheck;
+      outcome: ActionOutcome;
+      heal?: HealProposal;
+    }
+  | {
+      kind: "failed";
+      error: string;
+      post: PostCheck | null;
+      notFound: boolean;
+      needsAi?: boolean;
+      outcome?: ActionOutcome;
+    }
+  | { kind: "blocked"; reason: string; message: string; outcome?: ActionOutcome };
+
+const BLOCKING_REASONS = new Set([
+  "disallowed_domain",
+  "missing_secret",
+  "ai_unavailable",
+  "budget_exceeded",
+  "captcha",
+]);
+
+function toObserved(outcome: ActionOutcome | undefined): ObservedRequest[] {
+  return (outcome?.post.requests ?? []).map((r) => ({
+    method: r.method,
+    url: r.url,
+    status: r.status,
+    resourceType: r.resourceType,
+  }));
+}
+
+/** The line a person reads first (DIA-3), with the flow it came through. */
+function where(step: ExpandedStep): string {
+  const origin = step.origin[0];
+  const own = `step ${step.number ?? step.index + 1}`;
+  if (step.flowPath.length > 0 && origin) {
+    const inner = step.origin.at(-1);
+    return `Step ${origin.number ?? "?"} (Use: ${step.flowPath[0]}), ${inner?.number ? `its step ${inner.number}` : own}`;
+  }
+  return `Step ${origin?.number ?? step.number ?? step.index + 1}`;
+}
+
+const quoteText = (text: string | null) => (text === null ? "nothing" : JSON.stringify(text));
+
+const EMAIL_READ =
+  /\b(code|link)\b[^.]*\b(from|in)\s+the\s+([a-z-]+\s+)?(e-?mail|inbox|message)\b|\{\{\s*inbox\./i;
+
+/**
+ * The step reads a test inbox: an `{{inbox.…}}` value, or plain words like "the
+ * code from the verification email". Inboxes aren't wired into runs until
+ * AUTH-1, so such a step can't run yet (blocked, not a failure, no AI spent).
+ */
+export function readsInbox(step: ExpandedStep): string | null {
+  const ref = step.bound.find((s) => s.kind === "unresolved" && s.ref.startsWith("inbox."));
+  if (ref && ref.kind === "unresolved") return `{{${ref.ref}}}`;
+  return EMAIL_READ.test(step.text) ? "an email's code or link" : null;
+}
+
+export async function replayAttempt(options: ReplayOptions): Promise<ReplayResult> {
+  const { test, session, attempt, mode } = options;
+  const now = options.now ?? (() => new Date());
+  const redact = options.redact ?? ((text: string) => defaultRedactor.redact(text));
+  const decisions = options.decisions;
+  const recording = mode === "rerecord" ? undefined : options.recording;
+  const started = Date.now();
+  const deadline = started + options.timeoutMs;
+  const checkTimeoutMs = options.checkTimeoutMs ?? 5_000;
+
+  const steps: StepResult[] = [];
+  const checks: CheckResult[] = [];
+  const heals: HealProposal[] = [];
+  const modelCalls: ModelCall[] = [];
+  const chapters: Chapter[] = [];
+  const authoredSteps: StepRecording[] = [];
+  const authoredChecks: CheckRecording[] = [];
+  let authoredModel: string | null = null;
+  let stop: Stop | undefined;
+  let needsAi = 0;
+  let healedWithoutAi = 0;
+  let lastOutcome: ActionOutcome | undefined;
+  let notFoundAtFailure = false;
+  // Where the current action step began: network checks count from here.
+  let stepMark: RequestMark | undefined;
+  // The page before the latest action step: the sanity before-state for checks compiled now.
+  let before: PageCopy | undefined;
+  let lastShot: { bytes: Uint8Array; path: string | null } | undefined;
+  // The page where the attempt stopped (for the failure classifier).
+  let observationsAt: Awaited<ReturnType<typeof pageInfo>> | undefined;
+
+  const recordedSteps = new Map((recording?.steps ?? []).map((s) => [s.key, s]));
+  const recordedByText = new Map((recording?.steps ?? []).map((s) => [s.textKey, s]));
+  const recordedChecks = new Map((recording?.checks ?? []).map((c) => [c.textKey, c]));
+  const needsCopies =
+    mode !== "replay-only" &&
+    test.steps.some((step) => {
+      if (step.kind !== "expect" && step.kind !== "soft") return false;
+      const check = recordedChecks.get(step.textKey);
+      return mode === "rerecord" || !check || check.check.type === "pending";
+    });
+  const guardContext = {
+    guards: test.guards.map((g) => parseGuard(g.display)),
+    production: options.production,
+    allowDestructive: test.allowDestructive,
+  };
+
+  const emitCall = (call: ModelCall) => {
+    modelCalls.push(call);
+    options.emit({ type: "model.called", call });
+  };
+
+  const shoot = async (index: number, when: "before" | "after"): Promise<string | null> => {
+    if (options.screenshots === false || !options.saveScreenshot) return null;
+    // Nothing happened since the last screenshot: the page is the same, reuse it.
+    if (when === "before" && lastShot) return options.saveScreenshot(index, when, lastShot.bytes);
+    const shot = await session.screenshot();
+    if (shot.status !== "ok") return null;
+    const path = options.saveScreenshot(index, when, shot.bytes);
+    lastShot = { bytes: shot.bytes, path };
+    return path;
+  };
+
+  const pageInfo = async (outcome?: ActionOutcome) => {
+    const requests = toObserved(outcome);
+    let observation: Observation | undefined;
+    try {
+      observation = await session.observe();
+    } catch {
+      observation = undefined;
+    }
+    const heading =
+      observation?.elements.find((e) => e.role === "heading" && e.states.level === 1)?.name ??
+      observation?.elements.find((e) => e.role === "heading")?.name ??
+      "";
+    const text = (observation?.elements ?? [])
+      .map((e) => e.text ?? e.name)
+      .filter(Boolean)
+      .join(" ")
+      .slice(0, 2000);
+    const documentStatus = [...requests]
+      .reverse()
+      .find((r) => r.resourceType === "document" && typeof r.status === "number")?.status;
+    const page = {
+      status: typeof documentStatus === "number" ? documentStatus : null,
+      title: observation?.title ?? "",
+      heading,
+      text,
+    };
+    const decided = await decisions.decide("page_is_error", {
+      status: page.status && page.status >= 100 && page.status <= 599 ? page.status : null,
+      title: page.title.slice(0, 500),
+      heading: page.heading.slice(0, 500),
+      text: page.text.slice(0, 4000),
+    });
+    const isError =
+      decided.status === "decided"
+        ? Boolean((decided.answers as { is_error: boolean }).is_error)
+        : null;
+    return {
+      page,
+      isError,
+      requests,
+      appDown: requests.some((r) => r.resourceType === "document" && r.status === "failed"),
+      serverErrors: requests.filter((r) => typeof r.status === "number" && r.status >= 500).length,
+      networkFailures: requests.filter((r) => r.status === "failed").length,
+      observation,
+    };
+  };
+
+  const block = (reason: string, message: string, stepIndex: number | null): Stop => ({
+    kind: "blocked",
+    block: { reason, message: redact(message), stepIndex },
+  });
+
+  const push = (step: StepResult) => {
+    steps.push(step);
+    options.emit({ type: "step.finished", step });
+  };
+
+  const skipped = (step: ExpandedStep, key: string, kind: StepResult["kind"]): StepResult => ({
+    index: step.index,
+    key,
+    text: step.text,
+    kind,
+    status: "skipped",
+    recovery: "none",
+    locator: null,
+    postState: null,
+    startedAt: now().toISOString(),
+    durationMs: 0,
+    settledMs: null,
+    screenshots: { before: null, after: null },
+    error: null,
+    checkIds: [],
+    modelCallIds: [],
+    decisionIds: [],
+    healIds: [],
+  });
+
+  // ── setup hooks and the start page ──────────────────────────────────────────
+  for (const hook of test.setup) {
+    const report = await runHook(session, hook, "setup");
+    if (report.status === "ok") continue;
+    const message = `Setup ${report.description} ${report.status}${report.message ? `: ${report.message}` : ""}`;
+    stop =
+      report.status === "unsupported"
+        ? block("config_error", message, null)
+        : report.status === "refused"
+          ? block("disallowed_domain", message, null)
+          : report.status === "error"
+            ? block("app_down", message, null)
+            : block("setup_failed", message, null);
+    break;
+  }
+  if (!stop && test.start) {
+    const url = test.start.display;
+    const outcome = await session.act({ type: "goto", url });
+    lastOutcome = outcome;
+    if (outcome.status === "refused")
+      stop = block(outcome.reason ?? "disallowed_domain", outcome.message ?? url, null);
+    else if (outcome.status !== "ok")
+      stop = block("app_down", `Could not open ${url}: ${outcome.message ?? outcome.status}`, null);
+  }
+
+  // ── one recorded command ────────────────────────────────────────────────────
+  const act = async (action: Parameters<typeof session.act>[0]) => {
+    const outcome = await session.act(action);
+    lastOutcome = outcome;
+    return outcome;
+  };
+
+  /** VER-5 with a second look: the recorded effect now, or after the learned wait. */
+  const verify = async (
+    command: Command,
+    outcome: ActionOutcome,
+    variables: StepVariables,
+    renamedTo?: string,
+  ) => {
+    const fp = command.fingerprint;
+    const self = fp
+      ? { role: fp.role, name: fp.name, ...(renamedTo !== undefined ? { renamedTo } : {}) }
+      : undefined;
+    const post = verifyOutcome(command.expectPost, outcome, variables.pageList, self);
+    if (post.status !== "mismatch") return post;
+    // LRN-4: wait as long as the page took when recorded (at least a moment), then look again.
+    const wait = Math.min(
+      MAX_LEARNED_WAIT_MS,
+      Math.max(LATE_EFFECT_MS, command.wait.settledMs - outcome.settledMs),
+    );
+    await sleep(wait);
+    const observation = await session.observe();
+    const late = lateMatch(command.expectPost, session.url, observation, variables.pageList);
+    if (late) return { ...post, status: "verified" as const, observed: late };
+    for (const request of command.expectPost.requests ?? []) {
+      const seen = await session.check(
+        { type: "network", method: request.method, url: request.route },
+        { timeoutMs: 0, ...(stepMark ? { since: stepMark } : {}) },
+      );
+      if (seen.passed)
+        return {
+          ...post,
+          status: "verified" as const,
+          observed: `requests: ${request.method} ${request.route} a moment later`,
+        };
+    }
+    return post;
+  };
+
+  const sameAs = (
+    fingerprint: Fingerprint,
+    facts: ElementFacts,
+    foundBy: LiveCandidate["foundBy"],
+  ) => decideSameElement(fingerprint, { facts, foundBy, matches: 1 }, { decisions });
+
+  /** Live elements to re-find the recorded one among (same role, or anything interactive). */
+  const liveCandidates = async (fingerprint: Fingerprint) => {
+    const observation = await session.observe();
+    const refs = observation.elements.filter(
+      (e) =>
+        e.ref && (e.role === fingerprint.role || (e.interactive && fingerprint.role === "generic")),
+    );
+    const found: { ref: string; candidate: LiveCandidate }[] = [];
+    for (const element of refs.slice(0, MAX_REFIND_CANDIDATES)) {
+      const facts = await session.factsOf(element.ref as string);
+      if (facts)
+        found.push({
+          ref: element.ref as string,
+          candidate: { facts, foundBy: "refind", matches: 1 },
+        });
+    }
+    return found;
+  };
+
+  const replayCommand = async (
+    step: ExpandedStep,
+    key: string,
+    command: Command,
+    commandIndex: number,
+    variables: StepVariables,
+  ): Promise<CommandResult> => {
+    const bound = bindAction(command.action, variables);
+    if (!bound.ok) {
+      if (bound.reason === "unresolved") {
+        const inbox = /\{\{inbox\./.test(bound.message);
+        return {
+          kind: "blocked",
+          reason: inbox ? "inbox_unavailable" : "config_error",
+          message: inbox
+            ? `${bound.message} Test inboxes aren't wired into runs yet.`
+            : `${bound.message} Set it for this environment.`,
+        };
+      }
+      return { kind: "failed", error: bound.message, post: null, notFound: false };
+    }
+    const target = targetOf(command.action);
+    const fingerprint = command.fingerprint;
+    let missReason:
+      | "not_found"
+      | "multiple_matches"
+      | "fingerprint_mismatch"
+      | "post_state_mismatch"
+      | null = null;
+    let primarySame: SameElementAnswer | undefined;
+
+    if (target) {
+      const inspected = await session.inspect(target as never);
+      if (inspected.status === "ok" && inspected.facts && fingerprint) {
+        primarySame = await sameAs(fingerprint, inspected.facts, "primary");
+        if (primarySame.same !== true) missReason = "fingerprint_mismatch";
+      } else if (inspected.status === "multiple") missReason = "multiple_matches";
+      else if (inspected.status !== "ok") missReason = "not_found";
+    }
+
+    let outcome: ActionOutcome | undefined;
+    if (!missReason) {
+      outcome = await act(bound.action);
+      if (outcome.status === "refused") {
+        const reason = outcome.reason ?? "invalid_action";
+        if (BLOCKING_REASONS.has(reason))
+          return { kind: "blocked", reason, message: outcome.message ?? reason, outcome };
+        return {
+          kind: "failed",
+          error: outcome.message ?? reason,
+          post: null,
+          notFound: false,
+          outcome,
+        };
+      }
+      if (outcome.status !== "ok") {
+        if (target) missReason = "not_found";
+        else {
+          const info = await pageInfo(outcome);
+          if (info.appDown || /net::err_|ECONNREFUSED/i.test(outcome.message ?? ""))
+            return {
+              kind: "blocked",
+              reason: "app_down",
+              message: outcome.message ?? "The app didn't answer.",
+              outcome,
+            };
+          return {
+            kind: "failed",
+            error: outcome.message ?? outcome.status,
+            post: null,
+            notFound: false,
+            outcome,
+          };
+        }
+      } else {
+        const post = await verify(command, outcome, variables);
+        if (post.status !== "mismatch")
+          return {
+            kind: "ok",
+            used: target ? "primary" : "none",
+            locator: target ?? null,
+            post,
+            outcome,
+          };
+        missReason = "post_state_mismatch";
+        // The element was validated before acting: the right one did nothing.
+        const info = await pageInfo(outcome);
+        const context = missContext({
+          missReason,
+          refusal: null,
+          usedElement: target ? "same" : "unknown",
+          fallbacks: { total: fingerprint?.fallbacks.length ?? 0, matched: 0 },
+          rank: null,
+          page: {
+            isError: info.isError,
+            appDown: info.appDown,
+            serverErrors: info.serverErrors,
+            networkFailures: info.networkFailures,
+          },
+          policy: options.policy,
+          budgetLeftUsd: budgetLeft(),
+          fixerAvailable: mode !== "replay-only" && options.fixerAvailable,
+        });
+        const miss = await decideMiss(context, { decisions });
+        if (miss.action === "block" && blocks(miss.blockedReason, info.appDown))
+          return {
+            kind: "blocked",
+            reason: miss.blockedReason ?? "app_down",
+            message: "The app didn't answer.",
+            outcome,
+          };
+        const unhealthy = info.isError || info.serverErrors > 0;
+        return {
+          kind: "failed",
+          error: unhealthy
+            ? `The page is an error page after the action (${info.page.heading || info.page.title || "error"}); expected: ${post.expected}.`
+            : `The right element was used, but nothing happened: expected ${post.expected}; saw ${post.observed}.`,
+          post,
+          notFound: false,
+          outcome,
+        };
+      }
+    }
+
+    // ── a miss before acting: the DEC-3 ladder ─────────────────────────────────
+    const reason = missReason as Exclude<typeof missReason, null | "post_state_mismatch">;
+    const noAiHeals = mode !== "replay-only";
+    let fallback: { locator: Locator; answer: SameElementAnswer; facts: ElementFacts } | undefined;
+    let matched = 0;
+    if (fingerprint && noAiHeals) {
+      for (const locator of fingerprint.fallbacks) {
+        const inspected = await session.inspect(locator as never);
+        if (inspected.status !== "ok" || !inspected.facts) continue;
+        matched++;
+        const answer = await sameAs(fingerprint, inspected.facts, "fallback");
+        if (answer.same === true) {
+          fallback = { locator, answer, facts: inspected.facts };
+          break;
+        }
+      }
+    }
+    let rank: RankResult | null = null;
+    let refs: { ref: string; candidate: LiveCandidate }[] = [];
+    if (fingerprint && noAiHeals && !fallback) {
+      refs = await liveCandidates(fingerprint);
+      rank = await rankCandidates(
+        fingerprint,
+        refs.map((r) => r.candidate),
+        { decisions },
+      );
+    }
+    const info = await pageInfo(outcome);
+    const miss = await decideMiss(
+      missContext({
+        missReason: reason,
+        refusal: null,
+        usedElement: null,
+        fallbacks: {
+          total: fingerprint?.fallbacks.length ?? 0,
+          matched,
+          best: fallback?.answer ?? null,
+        },
+        rank,
+        page: {
+          isError: info.isError,
+          appDown: info.appDown,
+          serverErrors: info.serverErrors,
+          networkFailures: info.networkFailures,
+        },
+        policy: mode === "replay-only" ? "strict" : options.policy,
+        budgetLeftUsd: budgetLeft(),
+        fixerAvailable: mode !== "replay-only" && options.fixerAvailable,
+      }),
+      { decisions },
+    );
+    const what = target ? describeLocator(target) : "the element";
+    const notFoundText =
+      reason === "fingerprint_mismatch"
+        ? `${what} now finds a different element than the recorded one (fingerprint mismatch)`
+        : reason === "multiple_matches"
+          ? `${what} matches several elements`
+          : `Element not found: ${what}`;
+
+    const healWith = async (
+      locator: Locator,
+      answer: SameElementAnswer,
+      facts: ElementFacts,
+      how: "fallback" | "refind",
+    ): Promise<CommandResult> => {
+      const healed = await act(retarget(bound.action, locator));
+      if (healed.status === "refused") {
+        const r = healed.reason ?? "invalid_action";
+        return BLOCKING_REASONS.has(r)
+          ? { kind: "blocked", reason: r, message: healed.message ?? r, outcome: healed }
+          : {
+              kind: "failed",
+              error: healed.message ?? r,
+              post: null,
+              notFound: false,
+              outcome: healed,
+            };
+      }
+      if (healed.status !== "ok")
+        return {
+          kind: "failed",
+          error: `${notFoundText}; the healed locator failed too: ${healed.message ?? healed.status}`,
+          post: null,
+          notFound: true,
+          outcome: healed,
+        };
+      const post = await verify(command, healed, variables, facts.name);
+      if (post.status === "mismatch")
+        return {
+          kind: "failed",
+          error: `Healed to ${describeLocator(locator)}, but nothing happened: expected ${post.expected}; saw ${post.observed}.`,
+          post,
+          notFound: false,
+          outcome: healed,
+        };
+      const proposal = healProposal({
+        id: options.newId(),
+        stepIndex: step.index,
+        stepKey: key,
+        command: commandIndex,
+        before: target as Locator,
+        after: locator,
+        how,
+        answer,
+        policy: options.policy,
+      });
+      const cls = await classifyHeal(proposal, {
+        decisions,
+        before: {
+          ...healFacts(fingerprint as Fingerprint),
+          locator: describeLocator(target as Locator),
+        },
+        after: { ...healFacts(facts), locator: describeLocator(locator) },
+        attempt,
+      });
+      proposal.classification = cls.classification;
+      return { kind: "ok", used: how, locator, post, outcome: healed, heal: proposal };
+    };
+
+    switch (miss.action) {
+      case "replay_fallback":
+        if (fallback)
+          return healWith(fallback.locator, fallback.answer, fallback.facts, "fallback");
+        break;
+      case "refind": {
+        const best = rank?.best;
+        const entry = best ? refs[best.index] : undefined;
+        if (best && entry) {
+          const found = await session.candidates(entry.ref);
+          const unique = found.candidates.find((c) => c.unique);
+          if (unique)
+            return healWith(
+              unique.locator as Locator,
+              best,
+              best.candidate.facts as ElementFacts,
+              "refind",
+            );
+        }
+        break;
+      }
+      case "block":
+        if (blocks(miss.blockedReason, info.appDown))
+          return {
+            kind: "blocked",
+            reason: miss.blockedReason ?? "app_down",
+            message:
+              miss.blockedReason === "ai_unavailable"
+                ? `${notFoundText}, and no AI model is available to heal it.`
+                : miss.blockedReason === "budget_exceeded"
+                  ? `${notFoundText}, and the run's AI budget is used up.`
+                  : `${notFoundText}: the app didn't answer.`,
+          };
+        return {
+          kind: "failed",
+          error: `${notFoundText}; the page is an error page (${info.page.heading || info.page.title || "error"}).`,
+          post: null,
+          notFound: true,
+        };
+      case "call_fixer":
+        return {
+          kind: "failed",
+          error: `${notFoundText}: needs an AI heal (no heal without AI was possible).`,
+          post: null,
+          notFound: true,
+          needsAi: true,
+        };
+      default:
+        break;
+    }
+    return {
+      kind: "failed",
+      error:
+        mode === "replay-only"
+          ? `${notFoundText} (replay-only: no heals).`
+          : `${notFoundText}; no heal without AI is safe here.`,
+      post: null,
+      notFound: true,
+      ...(miss.action === null ? { needsAi: true } : {}),
+    };
+  };
+
+  function budgetLeft(): number | null {
+    const budget = options.budget;
+    if (!budget || budget.capUsd === null) return null;
+    return Math.max(0, budget.capUsd - budget.spentUsd);
+  }
+
+  // ── the steps ───────────────────────────────────────────────────────────────
+  for (const step of test.steps) {
+    const exactOp =
+      step.kind === "exact" && step.exact?.form === "op"
+        ? exactCheck(step.exact.op as ExactOp<BoundText>)
+        : undefined;
+    const isCheck = step.kind === "expect" || step.kind === "soft" || exactOp !== undefined;
+    const kind: StepResult["kind"] =
+      step.kind === "soft"
+        ? "soft"
+        : step.kind === "expect"
+          ? "expect"
+          : step.kind === "exact"
+            ? "exact"
+            : "action";
+    const route = routeOf(session.url);
+    const key = isCheck ? checkKey(step.textKey) : stepKey(step.textKey, route);
+    if (stop) {
+      push(skipped(step, key, kind));
+      continue;
+    }
+    if (Date.now() > deadline) {
+      const failure: AttemptFailure = {
+        decider: { kind: "step", attempt, stepIndex: step.index },
+        headline: `${where(step)} "${step.text}": the test's time limit (${Math.round(options.timeoutMs / 1000)}s) was reached.`,
+      };
+      push({
+        ...skipped(step, key, kind),
+        status: "failed",
+        error: "The test's time limit was reached (timed out).",
+      });
+      stop = { kind: "failed", failure };
+      continue;
+    }
+    const startedAt = now().toISOString();
+    const t0 = Date.now();
+    options.emit({ type: "step.started", index: step.index, key, text: step.text, kind });
+    const decisionIds: string[] = [];
+
+    // ── Expect / Soft / exact expect: a check (VER-1…VER-3) ─────────────────
+    if (isCheck) {
+      // A check may wait for the page (a late toast): the next "before" needs a fresh screenshot.
+      lastShot = undefined;
+      const soft = step.kind === "soft";
+      const variables = stepVariables(test, step);
+      let stored = exactOp ? undefined : recordedChecks.get(step.textKey);
+      if (stored && stored.text !== step.text) stored = undefined;
+      let op: CheckOp;
+      let summary: string;
+      let evaluation: (CheckEvaluation & { warnOnly?: true }) | undefined;
+      let problem: string | null = null;
+      const mayCompile = mode !== "replay-only";
+      if (exactOp) {
+        op = exactOp;
+        summary = describeCheck(op);
+      } else if (stored && stored.check.type !== "pending") {
+        op = stored.check;
+        summary = stored.summary ?? describeCheck(op);
+        problem = unusableCheck(stored);
+      } else if (mayCompile) {
+        // Compile the line in place (LOOP-2): rules first, AI only for what rules can't map.
+        const compiled = await authorCheck(step, undefined, {
+          session,
+          models: options.plannerAvailable ? options.models : undefined,
+          budget: options.budget,
+          tags: { test: test.id, step: String(step.number ?? step.index + 1) },
+          values: variables.values,
+          before,
+          timeoutMs: checkTimeoutMs,
+        });
+        for (const call of compiled.modelCalls) emitCall(call);
+        if (compiled.model) authoredModel = compiled.model;
+        op = compiled.check.op;
+        summary = compiled.check.summary;
+        const record: CheckRecording = {
+          key: checkKey(step.textKey),
+          textKey: step.textKey,
+          text: step.text,
+          soft,
+          check: op,
+          generatedBy: compiled.check.generatedBy,
+          summary,
+          ...(compiled.check.rule ? { rule: compiled.check.rule } : {}),
+          ...(compiled.check.sanity ? { sanity: compiled.check.sanity } : {}),
+          ...(compiled.check.passed === false
+            ? {
+                failedAtAuthoring: {
+                  expected: compiled.check.expected,
+                  actual: compiled.check.actual === null ? null : redact(compiled.check.actual),
+                },
+              }
+            : {}),
+          ...(compiled.check.problem ? { problem: redact(compiled.check.problem) } : {}),
+          recordedAt: now().toISOString(),
+        };
+        authoredChecks.push(record);
+        problem = unusableCheck(record);
+        if (
+          !problem &&
+          (compiled.check.status === "passed" || compiled.check.status === "failed")
+        ) {
+          // The compile's own evaluation ran on this page, in this run: it is this run's result.
+          evaluation = {
+            status: compiled.check.status,
+            passed: compiled.check.passed === true,
+            expected: compiled.check.expected,
+            actual: compiled.check.actual,
+            ms: 0,
+            attempts: 1,
+            seen: "",
+          };
+        }
+      } else {
+        op = { type: "pending" };
+        summary = describeCheck(op);
+        problem = `"${step.text}" has no check yet: replay-only runs never compile one, so it can't prove anything. Run once without --replay-only.`;
+      }
+
+      if (!problem && !evaluation) {
+        evaluation = await evaluateCheck(session, op, {
+          values: variables.values,
+          timeoutMs: checkTimeoutMs,
+          since: stepMark,
+          models: options.plannerAvailable && mode !== "replay-only" ? options.models : undefined,
+          budget: options.budget,
+          tags: { test: test.id, purpose: "soft-judgment" },
+        });
+        const record = (evaluation as { record?: Parameters<typeof toModelCall>[0] }).record;
+        if (record) emitCall(toModelCall(record));
+      }
+      const passed = !problem && evaluation?.status === "passed" && evaluation.passed;
+      const text = evaluation ? evaluationText(evaluation) : { expected: summary, actual: problem };
+      const id = options.newId();
+      const result = checkResult({
+        id,
+        stepIndex: step.index,
+        expectation: step.text,
+        op,
+        soft,
+        passed: Boolean(passed),
+        expected: text.expected,
+        actual: problem ?? (text.actual === null ? null : redact(text.actual)),
+        summary,
+      });
+      checks.push(result);
+      options.emit({ type: "check.evaluated", check: result });
+      const status: StepResult["status"] = passed ? "passed" : soft ? "warned" : "failed";
+      push({
+        index: step.index,
+        key,
+        text: step.text,
+        kind,
+        status,
+        recovery: "none",
+        locator: null,
+        postState: null,
+        startedAt,
+        durationMs: Date.now() - t0,
+        settledMs: null,
+        screenshots: { before: null, after: null },
+        error: passed
+          ? null
+          : (problem ??
+            `expected ${quoteText(result.expected)}, found ${quoteText(result.actual)}`),
+        checkIds: [id],
+        modelCallIds: [],
+        decisionIds,
+        healIds: [],
+      });
+      chapters.push({
+        index: step.index,
+        title: step.text,
+        startMs: t0 - started,
+        endMs: Date.now() - started,
+      });
+      if (!passed && !soft) {
+        stop = {
+          kind: "failed",
+          failure: {
+            decider: { kind: "check", attempt, checkId: id },
+            headline: problem
+              ? `${where(step)} "${step.text}": ${problem}`
+              : `${where(step)} "${step.text}": expected ${quoteText(result.expected)}, found ${quoteText(result.actual)}.`,
+          },
+        };
+        const info = await pageInfo(lastOutcome);
+        observationsAt = info;
+      }
+      if (!passed && soft)
+        options.emit({
+          type: "log",
+          level: "warn",
+          message: `Soft check failed (warning only): ${step.text}`,
+        });
+      continue;
+    }
+
+    // ── an action step ──────────────────────────────────────────────────────
+    stepMark = session.requestMark();
+    if (needsCopies) before = await session.pageCopy();
+    const beforeShot = await shoot(step.index, "before");
+    const variables = stepVariables(test, step);
+    const inbox = readsInbox(step);
+    const recorded = recording ? recordedSteps.get(key) : undefined;
+    const base = {
+      index: step.index,
+      key,
+      text: step.text,
+      kind,
+      startedAt,
+      screenshots: { before: beforeShot, after: null as string | null },
+      decisionIds,
+      healIds: [] as string[],
+      modelCallIds: [] as string[],
+      checkIds: [] as string[],
+    };
+    let result: StepResult;
+
+    if (step.kind === "exact" && step.exact?.form === "code") {
+      result = {
+        ...base,
+        status: "failed",
+        recovery: "none",
+        locator: null,
+        postState: null,
+        durationMs: Date.now() - t0,
+        settledMs: null,
+        error: "A code step runs from the generated Playwright spec, not through the harness.",
+      };
+      stop = {
+        kind: "failed",
+        failure: {
+          decider: { kind: "step", attempt, stepIndex: step.index },
+          headline: `${where(step)}: ${result.error}`,
+        },
+      };
+    } else if (!recorded && inbox) {
+      result = {
+        ...base,
+        status: "blocked",
+        recovery: "none",
+        locator: null,
+        postState: null,
+        durationMs: Date.now() - t0,
+        settledMs: null,
+        error: `This step reads ${inbox} from a test inbox; inboxes aren't wired into runs yet.`,
+      };
+      stop = block(
+        "inbox_unavailable",
+        `${where(step)} "${step.text}" reads ${inbox} from a test inbox, and inboxes aren't wired into runs yet.`,
+        step.index,
+      );
+    } else if (!recorded) {
+      // REP-4: a new or edited step (or --rerecord). Author just this step.
+      const moved = recordedByText.get(step.textKey);
+      const why =
+        moved && moved.route !== route ? ` (recorded on ${moved.route}, now on ${route})` : "";
+      if (mode === "replay-only") {
+        result = {
+          ...base,
+          status: "failed",
+          recovery: "none",
+          locator: null,
+          postState: null,
+          durationMs: Date.now() - t0,
+          settledMs: null,
+          error: `This step has no recording${why}: replay-only runs never record. Run once without --replay-only.`,
+        };
+        stop = {
+          kind: "failed",
+          failure: {
+            decider: { kind: "step", attempt, stepIndex: step.index },
+            headline: `${where(step)} "${step.text}": not recorded yet${why} (replay-only).`,
+          },
+        };
+      } else if (!options.plannerAvailable || !options.models) {
+        result = {
+          ...base,
+          status: "blocked",
+          recovery: "none",
+          locator: null,
+          postState: null,
+          durationMs: Date.now() - t0,
+          settledMs: null,
+          error: `This step has no recording${why} and no AI model is available to record it.`,
+        };
+        stop = block(
+          "ai_unavailable",
+          `${where(step)} "${step.text}" has no recording${why}, and no AI model is available to record it.`,
+          step.index,
+        );
+      } else if (options.budget?.exhausted) {
+        result = {
+          ...base,
+          status: "blocked",
+          recovery: "none",
+          locator: null,
+          postState: null,
+          durationMs: Date.now() - t0,
+          settledMs: null,
+          error: "The run's AI budget is used up.",
+        };
+        stop = block(
+          "budget_exceeded",
+          `${where(step)} "${step.text}" needs AI to record, but the run's AI budget (${options.budget.setting ?? "run budget"}) is used up.`,
+          step.index,
+        );
+      } else {
+        const controller = new AbortController();
+        const timer = setTimeout(
+          () => controller.abort(new Error("timeout")),
+          Math.max(1, deadline - Date.now()),
+        );
+        const authored =
+          step.kind === "exact" && step.exact?.form === "op"
+            ? await runExactOp(session, step, step.exact.op as ExactOp<BoundText>, variables)
+            : await runActionStep(
+                {
+                  session,
+                  models: options.models,
+                  budget: options.budget,
+                  guards: guardContext,
+                  limits: DEFAULT_LIMITS,
+                  guardLines: test.guards.map((g) => g.display),
+                  signal: controller.signal,
+                  tags: { test: test.id },
+                },
+                step,
+                variables,
+              ).finally(() => clearTimeout(timer));
+        clearTimeout(timer);
+        for (const call of authored.modelCalls) emitCall(call);
+        base.modelCallIds = authored.modelCalls.map((c) => c.id);
+        if (authored.model) authoredModel = authored.model;
+        const settled = authored.commands.reduce((sum, c) => sum + c.wait.settledMs, 0);
+        if (authored.status === "recorded") {
+          const entry: StepRecording = {
+            key,
+            textKey: step.textKey,
+            route,
+            text: step.text,
+            kind: step.kind === "exact" ? "exact" : "action",
+            commands: authored.commands,
+            source: step.kind === "exact" ? "exact" : "ai",
+            recordedAt: now().toISOString(),
+            ...(authored.reasoning ? { reasoning: redact(authored.reasoning) } : {}),
+          };
+          authoredSteps.push(entry);
+          result = {
+            ...base,
+            status: "passed",
+            recovery: "none",
+            locator: null,
+            postState: {
+              status: "verified",
+              expected: null,
+              observed: "recorded this run (the harness saw the change)",
+            },
+            durationMs: Date.now() - t0,
+            settledMs: settled,
+            error: null,
+          };
+        } else {
+          const reason = authored.reason ?? "step_impossible";
+          const message = redact(authored.message ?? reason);
+          if (BLOCKING_REASONS.has(reason) || reason === "timeout") {
+            const blockedReason = reason === "timeout" ? "aborted" : reason;
+            result = {
+              ...base,
+              status: "blocked",
+              recovery: "none",
+              locator: null,
+              postState: null,
+              durationMs: Date.now() - t0,
+              settledMs: settled,
+              error: message,
+            };
+            stop = block(blockedReason, `${where(step)} "${step.text}": ${message}`, step.index);
+          } else {
+            result = {
+              ...base,
+              status: "failed",
+              recovery: "none",
+              locator: null,
+              postState:
+                reason === "no_visible_effect"
+                  ? {
+                      status: "mismatch",
+                      expected: "a visible change",
+                      observed: "nothing changed on the page",
+                    }
+                  : null,
+              durationMs: Date.now() - t0,
+              settledMs: settled,
+              error: `${reason}: ${message}`,
+            };
+            stop = {
+              kind: "failed",
+              failure: {
+                decider: { kind: "step", attempt, stepIndex: step.index },
+                headline: `${where(step)} "${step.text}": ${message}`,
+              },
+            };
+          }
+        }
+      }
+    } else {
+      // REP-3: replay the recorded commands, no AI.
+      let used: StepResult["locator"] = null;
+      let recovery: StepResult["recovery"] = "replay";
+      const posts: PostCheck[] = [];
+      let settled = 0;
+      let failed: Extract<CommandResult, { kind: "failed" | "blocked" }> | undefined;
+      for (const [commandIndex, command] of recorded.commands.entries()) {
+        const r = await replayCommand(step, key, command, commandIndex, variables);
+        if (r.kind !== "ok") {
+          failed = r;
+          if (r.kind === "failed" && r.post) posts.push(r.post);
+          if (r.kind === "failed" && r.needsAi) needsAi++;
+          if (r.kind === "failed") notFoundAtFailure = r.notFound;
+          break;
+        }
+        posts.push(r.post);
+        settled += r.outcome.settledMs;
+        if (r.heal) {
+          heals.push(r.heal);
+          base.healIds.push(r.heal.id);
+          options.emit({ type: "heal.proposed", heal: r.heal });
+          healedWithoutAi++;
+          recovery = "refind";
+        }
+        if (r.locator && !used)
+          used = {
+            used: r.used === "primary" ? "primary" : "fallback",
+            value: describeLocator(r.locator),
+          };
+      }
+      const postState: PostCheck | null =
+        posts.find((p) => p.status === "mismatch") ??
+        posts.find((p) => p.status === "verified") ??
+        posts[0] ??
+        null;
+      if (!failed) {
+        result = {
+          ...base,
+          status: "passed",
+          recovery,
+          locator: used,
+          postState,
+          durationMs: Date.now() - t0,
+          settledMs: settled,
+          error: null,
+        };
+      } else if (failed.kind === "blocked") {
+        result = {
+          ...base,
+          status: "blocked",
+          recovery: "none",
+          locator: used,
+          postState,
+          durationMs: Date.now() - t0,
+          settledMs: settled,
+          error: redact(failed.message),
+        };
+        stop = block(failed.reason, `${where(step)} "${step.text}": ${failed.message}`, step.index);
+      } else {
+        result = {
+          ...base,
+          status: "failed",
+          recovery: "none",
+          locator: used,
+          postState,
+          durationMs: Date.now() - t0,
+          settledMs: settled,
+          error: redact(failed.error),
+        };
+        stop = {
+          kind: "failed",
+          failure: {
+            decider: { kind: "step", attempt, stepIndex: step.index },
+            headline: `${where(step)} "${step.text}": ${redact(failed.error)}`,
+          },
+        };
+      }
+    }
+
+    result.screenshots.after = await shoot(step.index, "after");
+    push(result);
+    chapters.push({
+      index: step.index,
+      title: step.text,
+      startMs: t0 - started,
+      endMs: Date.now() - started,
+    });
+    if (stop) observationsAt = await pageInfo(lastOutcome);
+  }
+
+  // Teardown hooks run whatever happened (their failures are only logged).
+  for (const hook of test.teardown) {
+    const report = await runHook(session, hook, "teardown");
+    if (report.status !== "ok")
+      options.emit({
+        type: "log",
+        level: "warn",
+        message: `Teardown ${report.description} ${report.status}`,
+      });
+  }
+
+  if (!stop && steps.every((s) => s.status === "skipped")) {
+    // Nothing ran at all (an empty test): nothing can prove a pass.
+    stop = block("config_error", "The test has no steps to run.", null);
+  }
+
+  const status = !stop ? "passed" : stop.kind === "blocked" ? "blocked" : "failed";
+  const observations = {
+    requests: (observationsAt?.requests ?? toObserved(lastOutcome)).slice(0, 30),
+    page: observationsAt ? observationsAt.page : null,
+    pageIsError: observationsAt?.isError ?? null,
+    route: routeOf(session.url),
+    notFound: notFoundAtFailure,
+  };
+  return {
+    attempt,
+    status,
+    steps,
+    checks,
+    heals,
+    failure: stop?.kind === "failed" ? stop.failure : null,
+    blocked: stop?.kind === "blocked" ? stop.block : null,
+    modelCalls,
+    observations,
+    authored: { steps: authoredSteps, checks: authoredChecks, model: authoredModel },
+    chapters,
+    needsAi,
+    healedWithoutAi,
+  };
+}
+
+/** A `block` answer really blocks only for "couldn't run" reasons; an error page is a failure. */
+function blocks(reason: string | null, appDown: boolean): boolean {
+  if (!reason) return false;
+  if (BLOCKING_REASONS.has(reason)) return true;
+  return reason === "app_down" && appDown;
+}

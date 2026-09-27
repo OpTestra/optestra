@@ -137,6 +137,7 @@ export function post(overrides: Partial<PostState> = {}): PostState {
     popups: [],
     refused: [],
     changed: false,
+    reordered: false,
     ...overrides,
   };
 }

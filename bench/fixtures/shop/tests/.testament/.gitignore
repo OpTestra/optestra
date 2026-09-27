@@ -1,0 +1,3 @@
+# Generated Playwright specs and support files (the CLI's `generate`, also written
+# after every recording): regenerated on demand, not part of the fixture.
+*.ts

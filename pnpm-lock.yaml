@@ -187,12 +187,18 @@ importers:
       '@testament/browser':
         specifier: workspace:^
         version: link:../browser
+      '@testament/codegen':
+        specifier: workspace:^
+        version: link:../codegen
       '@testament/config':
         specifier: workspace:^
         version: link:../config
       '@testament/contract':
         specifier: workspace:^
         version: link:../contract
+      '@testament/decide':
+        specifier: workspace:^
+        version: link:../decide
       '@testament/models':
         specifier: workspace:^
         version: link:../models

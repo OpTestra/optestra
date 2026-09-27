@@ -87,7 +87,7 @@ describe("gold manifest", () => {
     }
   });
 
-  it("points every failure at a real step; blocked ones at a Use: step", () => {
+  it("points every failure at a real step; a failing Use: flow is failed, never blocked", () => {
     for (const test of testNames) {
       const file = readTestFile(test);
       for (const variant of VARIANTS) {
@@ -95,8 +95,26 @@ describe("gold manifest", () => {
         if (answer.verdict === "passed") continue;
         const text = file.steps.get(answer.step ?? 0);
         expect(text, `${test} × ${variant} step ${answer.step}`).toBeDefined();
-        expect(text?.startsWith("Use:"), `${test} × ${variant}`).toBe(answer.verdict === "blocked");
+        // Blocked means "couldn't run" (missing secret, app down…); a broken flow is a failure.
+        if (text?.startsWith("Use:"))
+          expect(answer.verdict, `${test} × ${variant}`).not.toBe("blocked");
+        if (answer.verdict === "blocked")
+          expect(answer.cause, `${test} × ${variant}`).toBe("blocked");
       }
+    }
+  });
+
+  it("fails every test whose login flow breaks on broken-login-redirect, as one product bug", () => {
+    const users = testNames.filter((t) =>
+      [...readTestFile(t).steps.values()].some((s) => s === "Use: flows/login.test.md"),
+    );
+    expect(users.length).toBeGreaterThan(1);
+    for (const test of users) {
+      expect(expectation(manifest, test, "broken-login-redirect"), test).toMatchObject({
+        verdict: "failed",
+        step: 1,
+        cause: "product_bug",
+      });
     }
   });
 
@@ -166,7 +184,7 @@ describe("reference verdicts", () => {
     expect(outcomeOf([fail("3. Expect: x"), fail("3. Expect: x")]).verdict).toBe("failed");
     expect(
       outcomeOf([fail("1. Use: flows/login.test.md"), fail("1. Use: flows/login.test.md")]),
-    ).toMatchObject({ verdict: "blocked", step: 1 });
+    ).toMatchObject({ verdict: "failed", step: 1 });
     expect(outcomeOf([]).verdict).toBe("failed");
   });
 

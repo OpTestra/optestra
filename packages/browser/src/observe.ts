@@ -113,6 +113,8 @@ export interface BuildContext {
   redact: (text: string) => string;
   /** URL of the frame inside an iframe element and the iframe's title, by its aria ref. */
   frameInfo: (ariaRef: string) => { url: string; title: string };
+  /** `aria-sort` of sortable column headers, by their name (the snapshot doesn't carry it). */
+  sortStates?: ReadonlyMap<string, string>;
 }
 
 export interface BuiltObservation {
@@ -199,6 +201,12 @@ export function buildObservation(
         interactive,
         frame,
       };
+      // A sortable header, or the button inside it (Playwright's snapshot often keeps only the button).
+      if (role === "columnheader" || role === "rowheader" || role === "button") {
+        const sort = frame === 0 ? ctx.sortStates?.get(name) : undefined;
+        if (sort === "ascending" || sort === "descending") element.states.sort = sort;
+        else if (sort === "other") element.states.sort = "other";
+      }
       if (text !== undefined) element.text = ctx.redact(text);
       if (node.url !== undefined) element.url = ctx.redact(node.url);
       if (node.placeholder !== undefined) element.placeholder = ctx.redact(node.placeholder);
@@ -238,6 +246,20 @@ const signature = (s: ElementSummary, states?: ElementStates): string => {
   const { active: _focus, ...rest } = states ?? {};
   return JSON.stringify([s.role, s.name, s.text ?? "", rest]);
 };
+
+/** True when `after` has the same elements as `before` but in another order (a sort). */
+export function reorderedElements(
+  before: readonly ObservedElement[],
+  after: readonly ObservedElement[],
+): boolean {
+  if (before.length !== after.length || before.length === 0) return false;
+  const keys = (list: readonly ObservedElement[]) =>
+    list.map((e) => JSON.stringify([e.role, e.name, e.text ?? ""]));
+  const a = keys(before);
+  const b = keys(after);
+  if (a.every((key, i) => key === b[i])) return false;
+  return JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+}
 
 /** Elements in `after` but not `before` (added) and the reverse (removed), as multisets. */
 export function diffElements(

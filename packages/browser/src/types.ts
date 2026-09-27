@@ -153,6 +153,11 @@ export interface PostState {
   refused: Refusal[];
   /** False when nothing observable happened: same URL, no element, request, dialog or popup. */
   changed: boolean;
+  /**
+   * The same elements as before, in a different order (a table sort). Not part of
+   * `changed`, which compares the page as a set of elements.
+   */
+  reordered: boolean;
 }
 
 export interface SettleResult {
@@ -187,6 +192,8 @@ export interface ElementStates {
   invalid?: boolean;
   active?: boolean;
   level?: number;
+  /** A sortable column's `aria-sort` (LOOP-4): ascending, descending or other; absent when none. */
+  sort?: "ascending" | "descending" | "other";
 }
 
 export interface ObservedElement {
@@ -249,6 +256,16 @@ export interface ElementFacts {
   anchorText: string;
   framePath: LocatorSpec[];
   box: { x: number; y: number; width: number; height: number } | null;
+}
+
+/** What a locator finds right now (LOOP-4 replay validates it against a fingerprint). */
+export interface InspectResult {
+  /** ok: exactly one element; not_found: none; multiple: more than one; error: bad locator or page gone. */
+  status: "ok" | "not_found" | "multiple" | "error";
+  matches: number;
+  /** Facts about the one element (status ok). */
+  facts: ElementFacts | null;
+  message?: string;
 }
 
 export interface CandidatesResult {

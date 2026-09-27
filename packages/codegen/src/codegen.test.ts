@@ -516,6 +516,114 @@ describe("checks", () => {
     expect(spec).toContain('await expect(page.locator("#total")).toContainText("$9");');
   });
 
+  it("never waits for a select's options or for the element it just acted on", async () => {
+    const fp = (role: string, name: string) => ({
+      primary: { kind: "role", role, name, exact: true },
+      fallbacks: [],
+      role,
+      name,
+      tag: "select",
+      attributes: {},
+      anchorText: "",
+      framePath: [],
+      box: null,
+    });
+    const wait = { settledMs: 10, waitedFor: { network: 0, dom: 10, busy: 0 } };
+    const spec = await specFor(
+      { "tests/t.test.md": "---\nname: t\n---\n1. Select UTC\n2. Fill it\n3. Click Go" },
+      [
+        {
+          text: /^Select/,
+          commands: [
+            {
+              action: {
+                type: "select",
+                target: { kind: "role", role: "combobox", name: "Zone", exact: true },
+                option: "UTC",
+              },
+              fingerprint: fp("combobox", "Zone"),
+              expectPost: { appeared: [{ role: "option", name: "UTC" }] },
+              wait,
+            },
+          ],
+        },
+        {
+          text: /^Fill/,
+          commands: [
+            {
+              action: {
+                type: "fill",
+                target: { kind: "role", role: "textbox", name: "Card", exact: true },
+                value: "4242",
+              },
+              fingerprint: fp("textbox", "Card"),
+              expectPost: { appeared: [{ role: "textbox", name: "Card", text: "4242" }] },
+              wait,
+            },
+          ],
+        },
+        {
+          text: /^Click/,
+          commands: [
+            {
+              action: {
+                type: "click",
+                target: { kind: "role", role: "button", name: "Go", exact: true },
+              },
+              fingerprint: fp("button", "Go"),
+              expectPost: {},
+              wait,
+            },
+          ],
+        },
+      ],
+    );
+    expect(spec).not.toContain('getByRole("option"');
+    expect(spec).not.toMatch(/getByRole\("textbox", \{ name: "Card", exact: true \}\)\.first\(\)/);
+  });
+
+  it("runs a `matches` text check as a regex search, like the harness", async () => {
+    const spec = await specFor(
+      { "tests/t.test.md": "---\nname: t\n---\n1. Expect: A" },
+      [],
+      [
+        {
+          text: /^A$/,
+          check: {
+            type: "text",
+            target: { kind: "css", selector: "tbody tr:visible", nth: 0 },
+            match: "matches",
+            value: "A-1002[\\s\\S]*\\$8\\.90",
+          },
+        },
+      ],
+    );
+    expect(spec).toContain(
+      'await expect(page.locator("tbody tr:visible").first()).toHaveText(/A-1002[\\s\\S]*\\$8\\.90/);',
+    );
+  });
+
+  it("keeps a heading level, like the harness (the page heading is the h1)", async () => {
+    const spec = await specFor(
+      { "tests/t.test.md": "---\nname: t\n---\n1. Expect: A" },
+      [],
+      [
+        {
+          text: /^A$/,
+          check: {
+            type: "text",
+            target: { kind: "role", role: "heading", level: 1 },
+            match: "equals",
+            value: "Dashboard",
+          },
+        },
+      ],
+    );
+    expect(spec).toContain(
+      'await expect(page.getByRole("heading", { level: 1 })).toHaveText("Dashboard");',
+    );
+  });
+
   it("turns unknown, future and pending ops into notes, never assertions", async () => {
     const spec = await specFor(
       { "tests/t.test.md": file },

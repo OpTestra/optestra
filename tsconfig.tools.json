@@ -14,6 +14,7 @@
     "packages/browser/vitest.config.ts",
     "packages/core/e2e",
     "packages/core/vitest.config.ts",
+    "packages/core/bench",
     "packages/auth/e2e",
     "packages/auth/vitest.config.ts",
     "packages/codegen/e2e",

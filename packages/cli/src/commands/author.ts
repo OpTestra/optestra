@@ -208,6 +208,24 @@ export async function runAuthorCommand(
     evidence: closed.evidence,
   });
   const report = saved.report;
+  // Keep the portable Playwright spec in sync with the recording (never over a hand edit).
+  const specNotes: string[] = [];
+  try {
+    const { generateAfterRecording } = await import("@testament/codegen/node");
+    const generated = await generateAfterRecording(dir, path, {
+      environment: environment.name,
+      env: io.env,
+    });
+    for (const f of generated.files) {
+      if (f.status === "edited")
+        specNotes.push(`${f.path} was changed by hand: not regenerated (use generate --force).`);
+      else if (f.status !== "unchanged" && f.test) specNotes.push(`Spec:      ${f.path}`);
+    }
+  } catch (error) {
+    specNotes.push(
+      `The spec could not be regenerated: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
   for (const step of report.steps.filter((s) => s.status === "skipped")) {
     io.stdout(`  ${`${step.number ?? ""}. ${step.text}`.slice(0, 60).padEnd(60)}  skipped\n`);
   }
@@ -222,7 +240,8 @@ export async function runAuthorCommand(
     `\n${report.outcome === "recorded" ? "Recorded every action step." : `Stopped: ${report.stopReason}${report.message ? ` (${report.message})` : ""}`}\n` +
       `AI: ${t.aiCalls} calls, ${t.tokens.input} input + ${t.tokens.output} output tokens, ${t.billing === "subscription" ? "via your subscription (no API cost)" : money(t.costUsd)}${t.billing === "mixed" ? " (partly via your subscription)" : ""}${t.unknownCostCalls ? ` (+${t.unknownCostCalls} calls of unknown cost)` : ""}\n` +
       `Recording: ${posix(relative(io.cwd, saved.recordingPath))}\n` +
-      `Report:    ${posix(relative(io.cwd, saved.reportPath))}\n`,
+      `Report:    ${posix(relative(io.cwd, saved.reportPath))}\n` +
+      specNotes.map((note) => `${note}\n`).join(""),
   );
   return report.outcome === "recorded" ? 0 : report.outcome === "failed" ? 1 : 2;
 }

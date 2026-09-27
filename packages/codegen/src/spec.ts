@@ -111,6 +111,8 @@ const NO_WAIT_ROLES = new Set([
   "none",
   "presentation",
   "paragraph",
+  // A select's options are never visible while it is closed.
+  "option",
 ]);
 
 // ── the flow tree ────────────────────────────────────────────────────────────
@@ -411,8 +413,14 @@ class SpecWriter {
         ];
       }
     }
+    // The element just acted on (a field showing its new value) is no page change to wait for,
+    // and it may sit in a frame the page-level wait can't see.
+    const self = cmd.fingerprint;
     const element = post.appeared?.find(
-      (item) => item.name.trim() !== "" && !NO_WAIT_ROLES.has(item.role),
+      (item) =>
+        item.name.trim() !== "" &&
+        !NO_WAIT_ROLES.has(item.role) &&
+        !(self && item.role === self.role && item.name === self.name),
     );
     if (element) {
       const name = this.value(recordingParts(element.name), scope, locals);
@@ -462,6 +470,13 @@ class SpecWriter {
         }
         const locator = target(known.target, known.scope);
         const literal = value.expr.t === "str" ? value.expr.value : undefined;
+        if (known.match === "matches") {
+          // A regex search, like the harness (`matches`): RegExp.test on the text or value.
+          const pattern =
+            (literal !== undefined ? regexLiteral(literal) : undefined) ??
+            newExpr(id("RegExp"), [value.expr]);
+          return assert(locator, holdsValue(known.target) ? "toHaveValue" : "toHaveText", pattern);
+        }
         if (holdsValue(known.target)) {
           if (known.match === "equals") return assert(locator, "toHaveValue", value.expr);
           const pattern =

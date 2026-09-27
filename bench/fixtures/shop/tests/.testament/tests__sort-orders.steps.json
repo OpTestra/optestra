@@ -12,7 +12,7 @@
     "model": "claude-code/sonnet",
     "promptVersion": "planner-v2"
   },
-  "updatedAt": "2026-09-26T17:50:57.727Z",
+  "updatedAt": "2026-09-27T09:21:23.715Z",
   "steps": [
     {
       "key": "ba8ec515221832df",
@@ -580,7 +580,28 @@
               "height": 24
             }
           },
-          "expectPost": {},
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "button",
+                "name": "Date"
+              },
+              {
+                "role": "button",
+                "name": "Total"
+              }
+            ],
+            "removed": [
+              {
+                "role": "button",
+                "name": "Date"
+              },
+              {
+                "role": "button",
+                "name": "Total"
+              }
+            ]
+          },
           "wait": {
             "settledMs": 0,
             "waitedFor": {
@@ -591,9 +612,9 @@
           }
         }
       ],
-      "reasoning": "Total column header clicked; orders re-sorted by total amount",
+      "reasoning": "Clicked the Total column header to sort orders by total",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:50:40.072Z"
+      "recordedAt": "2026-09-27T09:21:14.867Z"
     },
     {
       "key": "a6bd6b5e2fc8d1bc",
@@ -645,60 +666,20 @@
               "height": 24
             }
           },
-          "expectPost": {},
-          "wait": {
-            "settledMs": 0,
-            "waitedFor": {
-              "network": 0,
-              "dom": 0,
-              "busy": 0
-            }
-          }
-        },
-        {
-          "action": {
-            "type": "click",
-            "target": {
-              "kind": "role",
-              "role": "button",
-              "name": "Total",
-              "exact": true
-            }
-          },
-          "fingerprint": {
-            "primary": {
-              "kind": "role",
-              "role": "button",
-              "name": "Total",
-              "exact": true
-            },
-            "fallbacks": [
+          "expectPost": {
+            "appeared": [
               {
-                "kind": "text",
-                "text": "Total",
-                "exact": true
-              },
-              {
-                "kind": "css",
-                "selector": "html > body > main > table > thead > tr > th:nth-of-type(4) > button"
+                "role": "button",
+                "name": "Total"
               }
             ],
-            "role": "button",
-            "name": "Total",
-            "tag": "button",
-            "attributes": {
-              "type": "button"
-            },
-            "anchorText": "Your orders",
-            "framePath": [],
-            "box": {
-              "x": 1222.578125,
-              "y": 252.4375,
-              "width": 37.171875,
-              "height": 24
-            }
+            "removed": [
+              {
+                "role": "button",
+                "name": "Total"
+              }
+            ]
           },
-          "expectPost": {},
           "wait": {
             "settledMs": 0,
             "waitedFor": {
@@ -709,9 +690,9 @@
           }
         }
       ],
-      "reasoning": "Total column clicked again; row order toggled back/forth accordingly",
+      "reasoning": "Total header now active with sort=descending",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:50:51.310Z"
+      "recordedAt": "2026-09-27T09:21:23.063Z"
     },
     {
       "key": "979f10af090bfc0b",
@@ -810,10 +791,28 @@
       "text": "the page heading is \"Dashboard\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Dashboard"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:29:48.135Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Dashboard'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:47.072Z"
     },
     {
       "key": "b07725247cbdbd7a",
@@ -821,10 +820,32 @@
       "text": "the orders table shows 5 orders",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "count",
+        "target": {
+          "kind": "css",
+          "selector": "tbody tr:visible"
+        },
+        "n": 5,
+        "scope": {
+          "kind": "role",
+          "role": "table",
+          "name": "Your orders",
+          "exact": true
+        }
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:29:48.135Z"
+      "generatedBy": "rules",
+      "summary": "Checked that there are exactly 5 visible data rows in the table 'Your orders'",
+      "rule": "container-count",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:47.592Z"
     },
     {
       "key": "d7f183bcea91a748",
@@ -832,10 +853,34 @@
       "text": "the first order in the table is A-1002 ($8.90)",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "tbody tr:visible",
+          "nth": 0
+        },
+        "match": "matches",
+        "value": "A-1002[\\s\\S]*\\$8\\.90",
+        "scope": {
+          "kind": "role",
+          "role": "table",
+          "name": "Your orders",
+          "exact": true
+        }
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:29:48.135Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the text of the first data row in the table 'Your orders' matches the pattern /A-1002[\\s\\S]*\\$8\\.90/",
+      "rule": "row",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:17:48.087Z"
     },
     {
       "key": "6fbbbcbbab71b0b6",
@@ -843,10 +888,38 @@
       "text": "the first order in the table is A-1004 ($150.00)",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "tbody tr:visible",
+          "nth": 0
+        },
+        "match": "matches",
+        "value": "A-1004[\\s\\S]*\\$150\\.00",
+        "scope": {
+          "kind": "role",
+          "role": "table",
+          "name": "Your orders",
+          "exact": true
+        }
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:29:48.135Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the text of the first data row in the table 'Your orders' matches the pattern /A-1004[\\s\\S]*\\$150\\.00/",
+      "rule": "row",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "failedAtAuthoring": {
+        "expected": "/A-1004[\\s\\S]*\\$150\\.00/",
+        "actual": "A-1002 December 9, 2025 Paid $8.90"
+      },
+      "recordedAt": "2026-09-27T09:17:53.614Z"
     },
     {
       "key": "c3a66a6f16585935",
@@ -854,10 +927,32 @@
       "text": "the orders table shows 6 orders",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "count",
+        "target": {
+          "kind": "css",
+          "selector": "tbody tr:visible"
+        },
+        "n": 6,
+        "scope": {
+          "kind": "role",
+          "role": "table",
+          "name": "Your orders",
+          "exact": true
+        }
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:29:48.135Z"
+      "generatedBy": "rules",
+      "summary": "Checked that there are exactly 6 visible data rows in the table 'Your orders'",
+      "rule": "container-count",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T09:21:23.638Z"
     }
   ]
 }

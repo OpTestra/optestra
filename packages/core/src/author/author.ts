@@ -71,7 +71,8 @@ function specLocator(locator: SpecLocator): Locator {
 const templateOf = (value: unknown): string =>
   segmentsTemplate((value as { segments: Parameters<typeof segmentsTemplate>[0] }).segments);
 
-function exactCheck(op: ExactOp<BoundValue>): CheckOp | undefined {
+/** The check op of an `Exact:` expect op, or undefined for exact actions. */
+export function exactCheck(op: ExactOp<BoundValue>): CheckOp | undefined {
   switch (op.op) {
     case "expectUrl":
       return { type: "url", match: op.match, value: templateOf(op.value) };
@@ -467,14 +468,14 @@ function assemble(
   };
 }
 
-interface CheckOutcome {
+export interface CheckOutcome {
   check: CheckReport & { op: CheckRecording["check"] };
   modelCalls: ModelCall[];
   model?: string;
 }
 
 /** Compiles (or, for exact ops, takes) the step's check, evaluates it once and sanity-tests it. */
-async function authorCheck(
+export async function authorCheck(
   step: ExpandedStep,
   exact: CheckOp | undefined,
   ctx: Parameters<typeof compileCheck>[1],
@@ -532,7 +533,8 @@ async function authorCheck(
   };
 }
 
-async function runHook(
+/** Runs one setup/teardown hook through the harness (request hooks only for now). */
+export async function runHook(
   session: AuthorOptions["session"],
   hook: ExpandedTest["setup"][number],
   phase: "setup" | "teardown",
@@ -560,7 +562,7 @@ async function runHook(
 }
 
 /** Exact ops run straight through the harness, no model (AUT-3). */
-async function runExactOp(
+export async function runExactOp(
   session: AuthorOptions["session"],
   step: ExpandedStep,
   op: ExactOp<BoundValue>,

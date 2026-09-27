@@ -16,8 +16,9 @@ A **fixture** is a small, realistic app plus:
 - a **reference suite** (hand-written Playwright) proving each variant behaves
   exactly as the manifest says.
 
-The `testament bench` scorer that runs the engine against fixtures comes later
-(BEN). Today the reference suite is the only thing scored against the manifest.
+The full `testament bench` scorer (models, cost, heal rates over many fixtures)
+comes with BEN. Two things are scored against the manifest today: the
+reference suite (below) and the engine's own replay, `pnpm bench:replay`.
 
 ## Fixtures
 
@@ -45,7 +46,7 @@ one). The seeded user is `ada@example.com` / `shop-demo-pass`
 | `cosmetic` | Renamed classes, ids and test ids, reordered DOM, moved buttons, restyled layout, reworded labels. Behaviour identical. Full list in the [shop README](fixtures/shop/README.md#cosmetic-change-list). |
 | `broken-signup` | A valid sign-up returns a 500 "Something went wrong" page (validation still works). |
 | `broken-total` | Billing shows "$29.00 due today" during a trial. |
-| `broken-login-redirect` | Login lands on an error page, no session. Tests that `Use:` the login flow are **blocked**. |
+| `broken-login-redirect` | Login lands on an error page, no session. Tests that `Use:` the login flow **fail** at the `Use:` step (one product bug, one failure group), never blocked. |
 | `broken-silent-click` | False-pass trap: "Create project" looks clickable but does nothing. |
 | `broken-not-saved` | False-pass trap: the toast says "Project created", the list shows it, a reload shows it's gone. |
 | `env-flaky` | The projects API returns 503 on every 2nd request, once per environment reset: the create fails, the retry passes (**flaky**, cause `environment`). |
@@ -74,6 +75,34 @@ written to `playwright-report/verdicts.json`. CI runs this as the separate
 its consistency with the `.test.md` files, and the server's behaviour per
 variant over plain HTTP.
 
+## Replay scoring (`pnpm bench:replay`, LOOP-4)
+
+```bash
+pnpm bench:replay                                   # every variant + equivalence
+node packages/core/bench/replay.ts --variant cosmetic --json out.json
+```
+
+Runs the engine's `run` on every shop variant from the **committed recordings**
+(a private copy of the project, so nothing in the fixture changes), with the
+manifest's harness (reset before each attempt, one retry), and scores each test
+by **verdict and cause**:
+
+- every variant runs `--replay-only` (no AI at all) except `cosmetic`, which runs
+  in normal mode with no AI model: heals without AI are expected there, and
+  `healed` counts as `passed` (`also_accept`). A miss that only an AI heal could
+  fix counts as **needs AI** (reported, not wrong);
+- tests that read an email (`checkout-trial`, `signup-email-code`) are
+  **deferred** (blocked `inbox_unavailable`) until AUTH-1 wires inboxes into runs;
+- `correct` must use zero AI calls;
+- `--equivalence`: for `correct`, `broken-total` and `broken-silent-click`, the
+  replay verdict (first attempt) and the generated spec's plain-Playwright verdict
+  must agree per test.
+
+Any wrong verdict or cause, any disagreement, or AI on `correct` exits 1. The
+failing step is reported but not scored: replay may see a failure one step
+earlier than the manifest (VER-5 catches the silent click on the click itself).
+CI runs it in the `fixtures` job.
+
 ## Manifest format
 
 ```yaml
@@ -100,8 +129,10 @@ tests:
 
 - `flaky` = failed on the first attempt and passed on the retry; `step` is where
   the first attempt failed.
-- `blocked` = a `Use:` flow failed, so the test never reached its own steps;
-  `step` is the `Use:` step, and `cause` is the flow's cause.
+- `blocked` = the test couldn't run at all (missing secret, disallowed domain,
+  app down, …); `cause` is `blocked`. A failing `Use:` flow (a broken login) is
+  **not** blocked: the test is `failed` at the `Use:` step with the flow's cause,
+  so a broken login fails CI instead of turning it neutral.
 - Every test × variant must be answered (checked in `pnpm check`).
 
 ## Adding a fixture

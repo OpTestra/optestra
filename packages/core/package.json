@@ -17,8 +17,10 @@
   "dependencies": {
     "@testament/brand": "workspace:^",
     "@testament/browser": "workspace:^",
+    "@testament/codegen": "workspace:^",
     "@testament/config": "workspace:^",
     "@testament/contract": "workspace:^",
+    "@testament/decide": "workspace:^",
     "@testament/models": "workspace:^",
     "@testament/recording": "workspace:^",
     "@testament/spec": "workspace:^",
@@ -30,7 +32,8 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "test:browser": "tsc -b ../../bench/fixtures/shop . && vitest run --config vitest.config.ts"
+    "test:browser": "tsc -b ../../bench/fixtures/shop . && vitest run --config vitest.config.ts",
+    "bench:replay": "tsc -b ../../bench/fixtures/shop ../codegen . && node bench/replay.ts --equivalence"
   },
   "engines": {
     "node": ">=24"
