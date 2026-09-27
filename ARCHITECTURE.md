@@ -17,6 +17,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/browser` | The browser harness: fresh isolated Playwright sessions behind the allowlist guard, a closed set of typed actions with post-state and settle, accessibility observations with refs and locator candidates, secret typing, screenshots and scrubbed evidence. Node only; no AI. The agent (LOOP-1) and the replayer (LOOP-4) both drive pages through it | LOOP-0 |
 | `packages/auth` | Login building blocks: auth profiles and the saved-session store (`ensureProfile` with an injected login flow), the `totp` secret type, test inboxes (Mailpit, Mailosaur, MailSlurp) with code/link extraction and `InboxValues` for `{{inbox.…}}`; registers the `auth` and `inbox` config sections. Node only (+ browser-safe `/extract`) | AUTH-0 |
 | `packages/recording` | The recording format: per test, the commands for each step (locators, fingerprints, templates, learned waits) and the typed checks; keys (`routeOf`, `stepKey`, `RECORDING_EPOCH`). Browser-safe + `/node` reader/writer | LOOP-1 |
+| `packages/codegen` | Generated Playwright specs: a recording → a plain `@playwright/test` spec next to the test, plus the shared fixtures module (allowlist route, secrets, values, network and inbox helpers) and Playwright config; hand-edit protection; `generateProject` in `/node`. The output imports nothing from the engine | LOOP-3 |
 | `packages/core` | The engine: run, record, replay, heal, verdicts. Today the author (`authorTest`: agent loop, guards, VER-5 check, authoring report; `/node` `saveAuthoring`); re-exports the redacting `logger` | LOOP-1 onward |
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users | engine phases |
 | `packages/mcp` | MCP server for coding agents | agents phase |
@@ -34,6 +35,8 @@ cli ──► core ──► config ──► brand
  ├──► browser ──► config, contract (+ playwright; never imports core, models or spec)
  ├──► recording ──► spec, brand    (browser-safe; no AI, no network)
  ├──► auth ──► config, spec, brand (never imports core or browser; /inbox/transport.ts: inboxes, AUTH-0)
+ ├──► codegen ──► recording, spec, config, brand (node; no AI, no network;
+ │                its output imports only @playwright/test)
  core ──► browser, models, spec, recording, contract, config
  └──► contract                     (cli reads run folders through the contract)
 mcp, action ──► core, contract (later)
@@ -173,6 +176,23 @@ contract ──► zod only (bottom of the graph)
   random pick), `decideMiss` and `missContext`. They take the recording's
   Fingerprint and the browser's ElementFacts structurally, without importing
   either package. Eval sets are built from the shop's correct vs cosmetic builds.
+
+- LOOP-3 (done): `packages/codegen`. `generateSpec(recording, { expanded, specs })`
+  turns a recording into `<tests>/.testament/<testId>.spec.ts`: one `test.step`
+  per English step (the line as a comment), flows as named step groups,
+  role/label locators, web-first assertions, learned waits, data/params objects,
+  generated values at run time, secrets by name through a domain-checked helper.
+  `generateSupportFiles` writes `testament.fixtures.ts` (the allowlist as a
+  Playwright route, secrets, values, network and inbox helpers) and
+  `playwright.config.ts` from templates in `packages/codegen/runtime/`, plus a
+  reporter and global teardown that scrub secrets out of every kept Playwright
+  trace (deleting any they can't scrub). Every
+  file carries a content hash; regeneration never overwrites a hand edit without
+  `--force`. CLI `generate [tests…] [--force] [--check]`; LOOP-4 and `author`
+  call `generateAfterRecording`. Ops the spec can't run (`pending`,
+  `soft_judgment`, unknown) become annotations. The CI `fixtures` job runs the
+  generated specs with plain Playwright against the shop. See
+  `packages/codegen/README.md`.
 
 ## Results contract (`packages/contract`)
 

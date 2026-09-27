@@ -1,0 +1,176 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__allowed-hosts",
+  "testPath": "tests/allowed-hosts.test.md",
+  "target": "web",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "chromium",
+    "device": "laptop",
+    "environment": "local",
+    "model": "fixture/hand-written",
+    "promptVersion": "planner-v1"
+  },
+  "updatedAt": "2026-09-26T12:00:00.000Z",
+  "steps": [
+    {
+      "key": "fe555404899b20b4",
+      "textKey": "957263e77b904ef2",
+      "route": "/pricing",
+      "text": "Click \"Sign up\" in the menu",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "link",
+              "name": "Sign up",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "link",
+              "name": "Sign up",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Sign up",
+                "exact": true
+              }
+            ],
+            "role": "link",
+            "name": "Sign up",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {
+            "urlChange": "/signup",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Create your account"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "a31b5670ce195ea1",
+      "textKey": "60ce3e97e48791ac",
+      "route": "/signup",
+      "text": "Fill \"Email\" with {{data.email}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "label",
+              "text": "Email",
+              "exact": true
+            },
+            "value": "{{data.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "label",
+              "text": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#signup-email"
+              }
+            ],
+            "role": "",
+            "name": "Email",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "838331a2306b8fbb",
+      "textKey": "0570dd962dcef912",
+      "text": "the sign-up page was requested from the server",
+      "soft": false,
+      "check": {
+        "type": "network",
+        "method": "GET",
+        "url": "/signup",
+        "status": 200
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "71eca4fae745ac1b",
+      "textKey": "1e16972b56dbc435",
+      "text": "the sign-up form looks tidy",
+      "soft": true,
+      "check": {
+        "type": "soft_judgment",
+        "question": "Does the sign-up form look tidy?"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "77654dd60924b78a",
+      "textKey": "3a5d9b03b14b9ba4",
+      "text": "\"Email\" contains {{data.email}}",
+      "soft": true,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "label",
+          "text": "Email",
+          "exact": true
+        },
+        "match": "contains",
+        "value": "{{data.email}}"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    }
+  ]
+}

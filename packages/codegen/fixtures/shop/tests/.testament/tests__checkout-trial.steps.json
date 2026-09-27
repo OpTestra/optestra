@@ -1,0 +1,696 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__checkout-trial",
+  "testPath": "tests/checkout-trial.test.md",
+  "target": "web",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "chromium",
+    "device": "laptop",
+    "environment": "local",
+    "model": "fixture/hand-written",
+    "promptVersion": "planner-v1"
+  },
+  "updatedAt": "2026-09-26T12:00:00.000Z",
+  "steps": [
+    {
+      "key": "2e804e233a67bf9c",
+      "textKey": "da483e4feb328a49",
+      "route": "/pricing",
+      "text": "Click \"Start free trial\" on the Pro plan",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Start free trial",
+              "exact": true,
+              "nth": 1
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Start free trial",
+              "exact": true,
+              "nth": 1
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "[data-testid=\"plan-pro\"] button"
+              }
+            ],
+            "role": "button",
+            "name": "Start free trial",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {
+            "urlChange": "/signup",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Create your account"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "1cae53be5bedaf47",
+      "textKey": "43ea269a2fb77b83",
+      "route": "/signup",
+      "text": "Sign up with {{data.email}} and password {{secret.SHOP_PASSWORD}}",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "label",
+              "text": "Email",
+              "exact": true
+            },
+            "value": "{{data.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "label",
+              "text": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#signup-email"
+              }
+            ],
+            "role": "",
+            "name": "Email",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "label",
+              "text": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "label",
+              "text": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#signup-password"
+              }
+            ],
+            "role": "",
+            "name": "Password",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign up",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign up",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Sign up",
+                "exact": true
+              }
+            ],
+            "role": "button",
+            "name": "Sign up",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {
+            "urlChange": "/verify",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Check your email"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "edb44045d4f358a7",
+      "textKey": "3a4b61dbe8152629",
+      "route": "/verify",
+      "text": "Enter the code from the verification email and click \"Verify\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "label",
+              "text": "Verification code",
+              "exact": true
+            },
+            "value": "{{inbox.code}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "label",
+              "text": "Verification code",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "css",
+                "selector": "#verify-code"
+              }
+            ],
+            "role": "",
+            "name": "Verification code",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Verify",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Verify",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Verify",
+                "exact": true
+              }
+            ],
+            "role": "button",
+            "name": "Verify",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {
+            "urlChange": "/checkout",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Start your Pro trial"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "4ee09cdb9ab67df4",
+      "textKey": "34b5075a397fe329",
+      "route": "/checkout",
+      "text": "Fill the card form with test card 4242 4242 4242 4242, expiry 12/34, CVC 123",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Card number",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "value": "4242 4242 4242 4242"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Card number",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "fallbacks": [],
+            "role": "textbox",
+            "name": "Card number",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [
+              {
+                "kind": "title",
+                "text": "Secure card payment",
+                "exact": true
+              }
+            ],
+            "box": null
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Expiry date",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "value": "12/34"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Expiry date",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "fallbacks": [],
+            "role": "textbox",
+            "name": "Expiry date",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [
+              {
+                "kind": "title",
+                "text": "Secure card payment",
+                "exact": true
+              }
+            ],
+            "box": null
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "CVC",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "value": "123"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "CVC",
+              "exact": true,
+              "frame": [
+                {
+                  "kind": "title",
+                  "text": "Secure card payment",
+                  "exact": true
+                }
+              ]
+            },
+            "fallbacks": [],
+            "role": "textbox",
+            "name": "CVC",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [
+              {
+                "kind": "title",
+                "text": "Secure card payment",
+                "exact": true
+              }
+            ],
+            "box": null
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "0754c0bdd7555992",
+      "textKey": "a6df31940326d9d3",
+      "route": "/checkout",
+      "text": "Click \"Start trial\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Start trial",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Start trial",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Start trial",
+                "exact": true
+              }
+            ],
+            "role": "button",
+            "name": "Start trial",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {
+            "urlChange": "/dashboard",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Welcome to Pro"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "70bd6612d79b3476",
+      "textKey": "22cbbde96460059d",
+      "route": "/dashboard",
+      "text": "Go to the billing page",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "link",
+              "name": "Billing",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "link",
+              "name": "Billing",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "text",
+                "text": "Billing",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "nav a[href=\"/billing\"]"
+              }
+            ],
+            "role": "link",
+            "name": "Billing",
+            "tag": "",
+            "attributes": {},
+            "anchorText": "",
+            "framePath": [],
+            "box": null
+          },
+          "expectPost": {
+            "urlChange": "/billing",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Billing"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 320,
+            "waitedFor": {
+              "network": 120,
+              "dom": 300,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "source": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "03b5cec53b96a091",
+      "textKey": "f2f8b9aa634ed9b7",
+      "text": "the page heading is \"Check your email\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "h1"
+        },
+        "match": "equals",
+        "value": "Check your email"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "ef8f9dafb38b2835",
+      "textKey": "57a5d9c5ddca274a",
+      "text": "the page heading is \"Welcome to Pro\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "h1"
+        },
+        "match": "equals",
+        "value": "Welcome to Pro"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "6e90a80a89e956ad",
+      "textKey": "a6d140b00086d6fc",
+      "text": "the URL contains /dashboard",
+      "soft": false,
+      "check": {
+        "type": "url",
+        "match": "contains",
+        "value": "/dashboard"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    },
+    {
+      "key": "ccce4275d1ce98a5",
+      "textKey": "8726b12d9000a355",
+      "text": "the page shows \"$0.00 due today\"",
+      "soft": false,
+      "check": {
+        "type": "element_state",
+        "target": {
+          "kind": "text",
+          "text": "$0.00 due today",
+          "exact": true
+        },
+        "state": "visible"
+      },
+      "generatedBy": "ai",
+      "recordedAt": "2026-09-26T12:00:00.000Z"
+    }
+  ]
+}

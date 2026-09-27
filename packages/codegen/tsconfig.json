@@ -6,15 +6,8 @@
   },
   "include": ["src"],
   "references": [
-    { "path": "../auth" },
     { "path": "../brand" },
-    { "path": "../browser" },
-    { "path": "../codegen" },
     { "path": "../config" },
-    { "path": "../contract" },
-    { "path": "../core" },
-    { "path": "../decide" },
-    { "path": "../models" },
     { "path": "../recording" },
     { "path": "../spec" }
   ]

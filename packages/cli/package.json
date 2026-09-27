@@ -20,6 +20,7 @@
     "@testament/auth": "workspace:^",
     "@testament/brand": "workspace:^",
     "@testament/browser": "workspace:^",
+    "@testament/codegen": "workspace:^",
     "@testament/config": "workspace:^",
     "@testament/contract": "workspace:^",
     "@testament/core": "workspace:^",

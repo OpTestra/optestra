@@ -16,6 +16,9 @@
     "packages/core/vitest.config.ts",
     "packages/auth/e2e",
     "packages/auth/vitest.config.ts",
+    "packages/codegen/e2e",
+    "packages/codegen/vitest.config.ts",
+    "packages/codegen/scripts",
     "bench/fixtures/*/playwright.config.ts"
   ]
 }
