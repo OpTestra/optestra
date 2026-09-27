@@ -9,6 +9,7 @@
 # Checked 2026-09-26 against the providers' official pricing pages.
 
 # Anthropic: platform.claude.com/docs/en/about-claude/pricing (cacheWrite = 5-minute cache)
+claude-sonnet-4-6: { input: 3, cachedInput: 0.3, cacheWrite: 3.75, output: 15 }
 claude-sonnet-5: { input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 10 }
 claude-haiku-4-5: { input: 1, cachedInput: 0.1, cacheWrite: 1.25, output: 5 }
 claude-haiku-4-5-20251001: { input: 1, cachedInput: 0.1, cacheWrite: 1.25, output: 5 }

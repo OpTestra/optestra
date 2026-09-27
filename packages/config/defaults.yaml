@@ -64,19 +64,20 @@ models:
       kind: codex
   # Ordered pool per role: the first healthy entry answers (MOD-8).
   roles:
-    # Writes and re-records tests: Sonnet-class models.
+    # Writes and re-records tests. Anthropic default is pinned to Sonnet 4.6 (no newer or
+    # larger Claude model by default); the fixer uses Haiku 4.5.
     planner:
-      - { provider: anthropic, model: claude-sonnet-5 }
+      - { provider: anthropic, model: claude-sonnet-4-6 }
       - { provider: openai, model: gpt-6-sol }
       - { provider: google, model: gemini-3.8-flash }
-      - { provider: claude-code, model: sonnet }
+      - { provider: claude-code, model: claude-sonnet-4-6 }
       - { provider: codex, model: default }
     # Cheap, fast single-step heals.
     fixer:
       - { provider: anthropic, model: claude-haiku-4-5 }
       - { provider: openai, model: gpt-6-luna }
       - { provider: google, model: gemini-3.5-flash-lite }
-      - { provider: claude-code, model: haiku }
+      - { provider: claude-code, model: claude-haiku-4-5 }
       - { provider: codex, model: default }
   # Per-model price overrides (USD per million tokens); the base table ships with the models package.
   prices: {}

@@ -68,7 +68,7 @@ const KEY_NAMES: Partial<Record<AiChoice, string>> = {
   "openai-compatible": "OPENAI_COMPATIBLE_API_KEY",
 };
 
-const DEFAULT_OPENROUTER_MODEL = "anthropic/claude-sonnet-5";
+const DEFAULT_OPENROUTER_MODEL = "anthropic/claude-sonnet-4.6";
 
 export interface InitCommandOptions {
   yes?: boolean;
@@ -185,8 +185,8 @@ function modelsPatch(choice: AiChoice, baseUrl?: string, model?: string): Config
       return {
         models: {
           roles: {
-            planner: [{ provider: "claude-code", model: "sonnet" }],
-            fixer: [{ provider: "claude-code", model: "haiku" }],
+            planner: [{ provider: "claude-code", model: "claude-sonnet-4-6" }],
+            fixer: [{ provider: "claude-code", model: "claude-haiku-4-5" }],
           },
         },
       } as ConfigPatch;

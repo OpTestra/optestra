@@ -50,7 +50,7 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
       planner: [
         {
           provider: "anthropic",
-          model: "claude-sonnet-5",
+          model: "claude-sonnet-4-6",
         },
         {
           provider: "openai",
@@ -62,7 +62,7 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
         },
         {
           provider: "claude-code",
-          model: "sonnet",
+          model: "claude-sonnet-4-6",
         },
         {
           provider: "codex",
@@ -84,7 +84,7 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
         },
         {
           provider: "claude-code",
-          model: "haiku",
+          model: "claude-haiku-4-5",
         },
         {
           provider: "codex",

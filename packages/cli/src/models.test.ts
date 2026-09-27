@@ -27,7 +27,7 @@ describe("models command", { timeout: 30_000 }, () => {
     const result = run({ ANTHROPIC_API_KEY: "sk-ant-cli-test-9f8e7d" });
     expect(result.status).toBe(0);
     expect(result.stdout).toMatch(
-      /1\s+anthropic\s+claude-sonnet-5\s+ANTHROPIC_API_KEY set\s+-\s+ready/,
+      /1\s+anthropic\s+claude-sonnet-4-6\s+ANTHROPIC_API_KEY set\s+-\s+ready/,
     );
     expect(result.stdout).toMatch(
       /1\s+anthropic\s+claude-haiku-4-5\s+ANTHROPIC_API_KEY set\s+-\s+ready/,
