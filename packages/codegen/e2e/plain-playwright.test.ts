@@ -1,7 +1,9 @@
 import { spawn } from "node:child_process";
 import {
   cpSync,
+  existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   realpathSync,
   rmSync,
@@ -11,6 +13,7 @@ import {
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
+import { inflateRawSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { brand } from "@testament/brand";
 import { ENV_PREFIX } from "@testament/config";
@@ -136,7 +139,13 @@ function runNode(
 /** Runs `playwright test -c <tests>/<data dir>` in the project with plain Playwright. */
 async function runSpecs(
   variant: Variant,
-  options: { env?: Record<string, string>; dir?: string; grep?: string } = {},
+  options: {
+    env?: Record<string, string>;
+    dir?: string;
+    grep?: string;
+    /** Keep the config's reporters (list + the trace scrubber) instead of `--reporter=json`. */
+    configReporters?: boolean;
+  } = {},
 ): Promise<Record<string, Outcome>> {
   const shop = await startShop({ variant, port: 0 });
   shopUrl = shop.url;
@@ -155,7 +164,7 @@ async function runSpecs(
         "--project=chromium",
         "--workers=1",
         "--retries=0",
-        "--reporter=json",
+        ...(options.configReporters ? [] : ["--reporter=json"]),
         ...(options.grep ? ["--grep", options.grep] : []),
       ],
       {
@@ -174,6 +183,7 @@ async function runSpecs(
         },
       },
     );
+    if (options.configReporters) return {};
     let json: { suites: ReportSuite[] };
     try {
       json = JSON.parse(readFileSync(report, "utf8"));
@@ -220,6 +230,53 @@ const summary = (outcomes: Record<string, Outcome>) =>
       o.step ? { status: o.status, step: o.step } : { status: o.status },
     ]),
   );
+
+/** Entries of a zip, read independently of the generated reporter's own reader. */
+function unzip(file: string): Map<string, Buffer> {
+  const zip = readFileSync(file);
+  let end = zip.length - 22;
+  while (end >= 0 && zip.readUInt32LE(end) !== 0x06054b50) end--;
+  const entries = new Map<string, Buffer>();
+  let offset = zip.readUInt32LE(end + 16);
+  for (let n = zip.readUInt16LE(end + 10); n > 0; n--) {
+    const method = zip.readUInt16LE(offset + 10);
+    const size = zip.readUInt32LE(offset + 20);
+    const nameLength = zip.readUInt16LE(offset + 28);
+    const local = zip.readUInt32LE(offset + 42);
+    const name = zip.toString("utf8", offset + 46, offset + 46 + nameLength);
+    const start = local + 30 + zip.readUInt16LE(local + 26) + zip.readUInt16LE(local + 28);
+    const raw = zip.subarray(start, start + size);
+    entries.set(name, method === 8 ? inflateRawSync(raw) : raw);
+    offset += 46 + nameLength + zip.readUInt16LE(offset + 30) + zip.readUInt16LE(offset + 32);
+  }
+  return entries;
+}
+
+function keptTraces(dir: string): string[] {
+  // Playwright's default output folder, under the folder it runs in.
+  const results = join(dir, "test-results");
+  if (!existsSync(results)) return [];
+  return readdirSync(results, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".zip"))
+    .map((entry) => join(entry.parentPath, entry.name));
+}
+
+/** Every way the secret could still be in a trace: as typed, escaped, URL-encoded or in base64. */
+function findSecret(entries: Map<string, Buffer>, secret: string): string[] {
+  const forms = [secret, encodeURIComponent(secret), JSON.stringify(secret).slice(1, -1)];
+  const found: string[] = [];
+  for (const [name, data] of entries) {
+    const text = data.toString("latin1");
+    for (const form of forms) if (text.includes(form)) found.push(`${name}: ${form}`);
+    for (const [run] of text.matchAll(/[A-Za-z0-9+/_-]{12,}={0,2}/g)) {
+      const decoded = Buffer.from(run, /[-_]/.test(run) ? "base64url" : "base64").toString(
+        "latin1",
+      );
+      if (forms.some((form) => decoded.includes(form))) found.push(`${name}: base64 ${run}`);
+    }
+  }
+  return found;
+}
 
 describe("generated specs with plain Playwright", () => {
   it("correct: every spec passes", async () => {
@@ -281,4 +338,37 @@ describe("generated specs with plain Playwright", () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  for (const via of ["the reporter", "the global teardown (another reporter in use)"]) {
+    it(`a failed test's kept trace has the typed secret scrubbed out, via ${via}`, async () => {
+      const dir = `${project}-trace-${via.startsWith("the reporter") ? "reporter" : "backstop"}`;
+      cpSync(project, dir, { recursive: true, verbatimSymlinks: true });
+      try {
+        // Fails at step 3, after the login flow typed the password and posted the form.
+        await runSpecs("broken-silent-click", {
+          dir,
+          grep: "new project",
+          configReporters: via.startsWith("the reporter"),
+        });
+        const traces = keptTraces(dir);
+        expect(traces.length).toBeGreaterThan(0);
+        for (const trace of traces) {
+          const entries = unzip(trace);
+          expect([...entries.keys()]).toContain("test.trace");
+          expect(findSecret(entries, PASSWORD)).toEqual([]);
+          const text = [...entries.values()].map((data) => data.toString("latin1")).join("");
+          // Scrubbed, not deleted: the placeholders are there.
+          expect(text).toContain("[secret:SHOP_PASSWORD]");
+          // The field was masked in the page (seen in the DOM snapshots).
+          const snapshots = [...entries]
+            .filter(([name]) => /-trace\.trace$/.test(name))
+            .map(([, data]) => data.toString("utf8"))
+            .join("");
+          expect(snapshots).toContain(`data-${brand.cliName}-secret`);
+        }
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+  }
 });

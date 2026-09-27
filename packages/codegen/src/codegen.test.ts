@@ -60,6 +60,8 @@ describe("generated specs (goldens)", async () => {
     expect(Object.keys(files)).toEqual([
       "playwright.config.ts",
       `${brand.cliName}.fixtures.ts`,
+      `${brand.cliName}.reporter.ts`,
+      `${brand.cliName}.teardown.ts`,
       "tests__allowed-hosts.spec.ts",
       "tests__avatar-upload.spec.ts",
       "tests__billing-zero-due.spec.ts",
@@ -89,7 +91,9 @@ describe("generated specs (goldens)", async () => {
       const sources = [...content.matchAll(/from "([^"]+)"/g)].map((m) => m[1]);
       for (const source of sources) {
         expect(source, name).toMatch(
-          new RegExp(`^(@playwright/test|\\./${brand.cliName}\\.fixtures|node:[a-z]+)$`),
+          new RegExp(
+            `^(@playwright/test(/reporter)?|\\./${brand.cliName}\\.(fixtures|reporter)|node:[a-z]+)$`,
+          ),
         );
       }
     }
@@ -229,6 +233,8 @@ describe("regeneration", () => {
     expect(one.files.map((f) => f.path.split("/").pop())).toEqual([
       "tests__create-project.spec.ts",
       `${brand.cliName}.fixtures.ts`,
+      `${brand.cliName}.reporter.ts`,
+      `${brand.cliName}.teardown.ts`,
       "playwright.config.ts",
     ]);
   });
@@ -535,5 +541,95 @@ describe("printing", () => {
     expect(quote('say "hi"')).toBe("'say \"hi\"'");
     expect(quote('it\'s "x"')).toBe("'it\\'s \"x\"'");
     expect(quote("a\nb")).toBe('"a\\nb"');
+  });
+});
+
+// ── trace scrubbing (the generated reporter) ────────────────────────────────
+
+interface ScrubModule {
+  readZip(zip: Buffer): { entries: Array<{ name: string; data: Buffer }>; comment: string };
+  writeZip(entries: Array<{ name: string; data: Buffer; time: number; date: number }>): Buffer;
+  scrubTrace(
+    file: string,
+    secrets: Array<{ name: string; value: string }>,
+    warn: (message: string) => void,
+  ): "clean" | "scrubbed" | "deleted";
+}
+
+describe("trace scrubbing", async () => {
+  const { files } = await generated();
+  const dir = mkdtempSync(join(tmpdir(), "codegen-scrub-"));
+  temps.push(dir);
+  const reporterFile = join(dir, "reporter.ts");
+  writeFileSync(reporterFile, files[`${brand.cliName}.reporter.ts`] ?? "");
+  const scrub = (await import(reporterFile)) as ScrubModule;
+  const secret = { name: "SHOP_PASSWORD", value: 'p@ss "word"/+&=1' };
+  const entry = (name: string, text: string | Buffer) => ({
+    name,
+    data: Buffer.isBuffer(text) ? text : Buffer.from(text),
+    time: 0,
+    date: 33,
+  });
+
+  it("replaces every form of a secret in call params, network bodies and snapshots", () => {
+    const file = join(dir, "trace.zip");
+    const form = `email=ada%40example.com&password=${new URLSearchParams({ v: secret.value }).toString().slice(2)}`;
+    writeFileSync(
+      file,
+      scrub.writeZip([
+        entry("test.trace", JSON.stringify({ title: "Fill", params: { value: secret.value } })),
+        entry(
+          "0-trace.network",
+          JSON.stringify({
+            postData: { text: form },
+            url: `/x?p=${encodeURIComponent(secret.value)}`,
+          }),
+        ),
+        entry("0-trace.trace", JSON.stringify(["INPUT", { __playwright_value_: secret.value }])),
+        entry(
+          "resources/body.dat",
+          Buffer.from(`{"b64":"${Buffer.from(`user:${secret.value}`).toString("base64")}"}`),
+        ),
+        entry(
+          "resources/shot.jpeg",
+          Buffer.concat([Buffer.from([0xff, 0xd8, 0]), Buffer.from(secret.value)]),
+        ),
+      ]),
+    );
+    const warnings: string[] = [];
+    expect(scrub.scrubTrace(file, [secret], (m) => warnings.push(m))).toBe("scrubbed");
+    expect(warnings).toEqual([]);
+    const { entries } = scrub.readZip(readFileSync(file));
+    const all = entries.map((e) => e.data.toString("latin1")).join("\n");
+    for (const needle of [
+      secret.value,
+      JSON.stringify(secret.value).slice(1, -1),
+      encodeURIComponent(secret.value),
+      "p%40ss",
+    ]) {
+      expect(all).not.toContain(needle);
+    }
+    const body = JSON.parse(
+      entries.find((e) => e.name === "resources/body.dat")?.data.toString() ?? "{}",
+    );
+    expect(Buffer.from(body.b64, "base64").toString()).toBe("user:[secret:SHOP_PASSWORD]");
+    expect(all).toContain("[secret:SHOP_PASSWORD]");
+    // Scrubbing again is a no-op.
+    expect(scrub.scrubTrace(file, [secret], (m) => warnings.push(m))).toBe("clean");
+  });
+
+  it("deletes a trace it can't rewrite, with a warning, never keeping it", () => {
+    const file = join(dir, "broken.zip");
+    writeFileSync(file, `not a zip ${secret.value}`);
+    const warnings: string[] = [];
+    expect(scrub.scrubTrace(file, [secret], (m) => warnings.push(m))).toBe("deleted");
+    expect(() => readFileSync(file)).toThrow();
+    expect(warnings[0]).toContain(`Deleted trace ${file}`);
+  });
+
+  it("deletes traces when a secret is too short to find reliably", () => {
+    const file = join(dir, "short.zip");
+    writeFileSync(file, scrub.writeZip([entry("test.trace", "abc")]));
+    expect(scrub.scrubTrace(file, [{ name: "PIN", value: "12" }], () => {})).toBe("deleted");
   });
 });

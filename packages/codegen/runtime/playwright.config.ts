@@ -8,6 +8,10 @@ export default defineConfig({
   testMatch: "*.spec.ts",
   timeout: __TIMEOUT__,
   retries: __RETRIES__,
+  // The second reporter scrubs secrets out of every trace that is kept; the
+  // global teardown does it again after the run, whatever the reporters.
+  reporter: [[process.env.CI ? "dot" : "list"], ["./__SLUG__.reporter.ts"]],
+  globalTeardown: "./__SLUG__.teardown.ts",
   use: {
     baseURL: process.env.__ENV_PREFIX__BASE_URL ?? __BASE_URL__,
     actionTimeout: 5_000,

@@ -32,7 +32,9 @@ meant to be committed:
 |---|---|
 | `<testId>.spec.ts` | One per recorded test. |
 | `testament.fixtures.ts` | The helpers the specs use (below), with the environment's base URL, allowed domains, secret domains and vars baked in as defaults. |
-| `playwright.config.ts` | `testDir: "."`, base URL, Chromium, Firefox and WebKit projects, trace and video on failure, the harness's action (5 s) and navigation (30 s) timeouts, service workers blocked, downloads off. |
+| `testament.reporter.ts` | Scrubs secrets out of every kept trace after each test (below). |
+| `testament.teardown.ts` | Global teardown: scrubs every trace again after the run, in case `--reporter` replaced the scrubbing reporter. |
+| `playwright.config.ts` | `testDir: "."`, base URL, Chromium, Firefox and WebKit projects, trace and video on failure, the scrubbing reporter and teardown, the harness's action (5 s) and navigation (30 s) timeouts, service workers blocked, downloads off. |
 
 Every file starts with a header: where it came from, the recording it was built
 from (with a key), "safe to edit", and a content hash.
@@ -178,16 +180,38 @@ package doesn't know (from a newer LOOP-2) is noted, not an error.
 |---|---|---|
 | Actions, checks, learned waits | yes | yes |
 | Allowed domains | route layer (requests, sockets, main frame) | route + refusing proxy + main-frame check (catches redirects) |
-| Secrets | from env vars, domain-checked | from the keychain/vault, domain-checked, kept out of traces and evidence |
+| Secrets | from env vars, domain-checked, masked, scrubbed from kept traces | from the keychain/vault, domain-checked, kept out of traces and evidence |
 | Healing (fallbacks, fingerprints, AI) | no: a changed page fails | yes |
 | Model-judged checks (`soft_judgment`), `Never:` guards, pending checks | noted only | evaluated |
 | Auth profiles, `run`/`sql` hooks | skip, with the reason | yes (AUTH, ADV) |
 | Verdicts, failure causes, flaky detection | Playwright's pass/fail | yes |
 
-**Traces.** Playwright's own trace records what a test types, request bodies
-and field values in its DOM snapshots. The generated config keeps traces only
-for failed tests, but a failed test that typed a secret has it in its trace:
-keep `test-results/` private, or set `trace: "off"`.
+## Secrets in traces and video
+
+Playwright's own trace records what a test types (call parameters), the page's
+request bodies and field values in its DOM snapshots. So the generated
+`testament.reporter.ts` rewrites every kept trace after each test: each
+declared secret's value, read from the environment, is replaced with
+`[secret:NAME]` in every entry, as typed, JSON-escaped, URL-encoded (`%XX` and
+form `+`) and base64, including base64 runs that decode to text containing it
+(e.g. a Basic auth header). The rewritten zip is read back and checked; the
+file is marked so it is only scrubbed once.
+
+Fail-safe: a trace that can't be rewritten (not a zip, ZIP64, encrypted,
+corrupt), or that still contains a secret afterwards, is **deleted** with a
+warning. So is every trace when a secret is shorter than 4 characters (too
+short to find reliably). An unscrubbed trace is never kept.
+
+`--reporter` on the command line replaces the config's reporters, so
+`testament.teardown.ts` (a `globalTeardown`, which flags can't replace) scrubs
+every trace in the output folders again after the run. A reporter that copies
+traces before the run ends (e.g. `blob`) could copy one before that pass.
+
+`secrets.fill` also masks the field for as long as it exists, as the harness
+does (`-webkit-text-security: disc`, plus a `data-testament-secret`
+attribute), so video and screenshots don't show the value. Password fields are
+masked by the browser anyway. Firefox ignores `-webkit-text-security` on
+older versions.
 
 ## Editing policy
 
@@ -214,7 +238,10 @@ Biome run; output with unusual shapes may still differ from a formatter.
   runs the generated specs with plain Playwright from a project whose
   `node_modules` holds only `@playwright/test`, against the shop's `correct`,
   `broken-total` and `broken-silent-click` variants, plus two negative controls
-  (allowing the second host, and a secret outside its domains).
+  (allowing the second host, and a secret outside its domains), and a test that
+  types the planted secret, fails on purpose and proves the kept trace holds no
+  form of it (once through the reporter, once with `--reporter=json` so only
+  the teardown scrubs).
 
 The recordings in `fixtures/shop/tests/.testament/*.steps.json` are
 hand-written stand-ins for real LOOP-1 recordings

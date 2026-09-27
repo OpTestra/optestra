@@ -33,6 +33,8 @@ export interface SupportEnvironment {
 
 export const CONFIG_FILE = "playwright.config.ts";
 export const FIXTURES_FILE = `${FIXTURES_MODULE}.ts`;
+export const REPORTER_FILE = `${brand.cliName}.reporter.ts`;
+export const TEARDOWN_FILE = `${brand.cliName}.teardown.ts`;
 
 const template = (name: string) =>
   readFileSync(new URL(`../runtime/${name}`, import.meta.url), "utf8");
@@ -83,6 +85,35 @@ export function generateFixtures(environment: SupportEnvironment): GeneratedFile
   };
 }
 
+/** The reporter that scrubs secrets out of kept traces, with the secret names filled in. */
+export function generateReporter(environment: SupportEnvironment): GeneratedFile {
+  const text = template("reporter.ts");
+  const start = text.indexOf("// @secrets-start");
+  const end = text.indexOf("// @secrets-end");
+  if (start < 0 || end < 0) throw new Error("runtime/reporter.ts lost its secrets markers");
+  const names = Object.keys(environment.secrets).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  const block = printModule([
+    { t: "const", name: "SECRET_NAMES", init: arr(names.map(str)) },
+  ]).trimEnd();
+  const body = `${text.slice(0, start)}// The secrets the tests may type (names only; values come from the environment).\n${block}${text.slice(end + "// @secrets-end".length)}`;
+  return {
+    name: REPORTER_FILE,
+    content: withHeader(brandTokens(body), {
+      from: `the environment "${environment.name ?? "default"}"`,
+    }),
+  };
+}
+
+/** The global teardown that scrubs every trace again after the run. */
+export function generateTeardown(environment: SupportEnvironment): GeneratedFile {
+  return {
+    name: TEARDOWN_FILE,
+    content: withHeader(brandTokens(template("teardown.ts")), {
+      from: `the environment "${environment.name ?? "default"}"`,
+    }),
+  };
+}
+
 /** `playwright.config.ts`: runs the specs in this folder in Chromium, Firefox and WebKit. */
 export function generateConfig(environment: SupportEnvironment): GeneratedFile {
   const text = template(CONFIG_FILE)
@@ -98,7 +129,12 @@ export function generateConfig(environment: SupportEnvironment): GeneratedFile {
   };
 }
 
-/** Both shared files. */
+/** The shared files. */
 export function generateSupportFiles(environment: SupportEnvironment): GeneratedFile[] {
-  return [generateFixtures(environment), generateConfig(environment)];
+  return [
+    generateFixtures(environment),
+    generateReporter(environment),
+    generateTeardown(environment),
+    generateConfig(environment),
+  ];
 }

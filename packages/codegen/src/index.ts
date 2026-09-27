@@ -29,6 +29,10 @@ export {
   FIXTURES_FILE,
   generateConfig,
   generateFixtures,
+  generateReporter,
+  REPORTER_FILE,
+  TEARDOWN_FILE,
+  generateTeardown,
   generateSupportFiles,
   type SupportEnvironment,
 } from "./support.js";

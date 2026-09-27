@@ -136,8 +136,9 @@ export class Values {
 // ── Secrets ─────────────────────────────────────────────────────────────────
 // Read from environment variables of the same name when typed, and typed only
 // on pages whose host is allowed and on the secret's own domains. Playwright's
-// own trace records what is typed (and the page's requests), so treat traces
-// of tests that type secrets as private.
+// own trace records what is typed and the page's requests: the reporter next to
+// this file scrubs every kept trace, and the global teardown does it again after
+// the run in case another reporter replaced it.
 
 export class Secrets {
   async fill(locator: Locator, name: string): Promise<void> {
@@ -152,6 +153,14 @@ export class Secrets {
         `Secret ${name} may not be typed into ${new URL(frameUrl).host || frameUrl}; it is allowed on: ${domains.join(", ") || "no domains"}.`,
       );
     }
+    // Masked for as long as the field exists, as the harness does, so the video
+    // and screenshots never show the value. Traces are scrubbed by the reporter.
+    await locator.evaluate((element) => {
+      element.setAttribute("data-__SLUG__-secret", "");
+      if (element.getAttribute("type") !== "password") {
+        element.style.setProperty("-webkit-text-security", "disc");
+      }
+    });
     await locator.fill(value);
   }
 }

@@ -154,7 +154,9 @@ contract ──► zod only (bottom of the graph)
   generated values at run time, secrets by name through a domain-checked helper.
   `generateSupportFiles` writes `testament.fixtures.ts` (the allowlist as a
   Playwright route, secrets, values, network and inbox helpers) and
-  `playwright.config.ts` from templates in `packages/codegen/runtime/`. Every
+  `playwright.config.ts` from templates in `packages/codegen/runtime/`, plus a
+  reporter and global teardown that scrub secrets out of every kept Playwright
+  trace (deleting any they can't scrub). Every
   file carries a content hash; regeneration never overwrites a hand edit without
   `--force`. CLI `generate [tests…] [--force] [--check]`; LOOP-4 and `author`
   call `generateAfterRecording`. Ops the spec can't run (`pending`,
