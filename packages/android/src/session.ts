@@ -28,6 +28,7 @@ import {
   buildObservation,
   diffElements,
   type RefKey,
+  reorderedElements,
   Screen,
   type ScreenNode,
 } from "./hierarchy.js";
@@ -431,11 +432,16 @@ export class AndroidSession {
     const refusedNow = this.#refusals.slice(refusalMark);
     const urlBefore = this.#redact(before?.url ?? "");
     const urlAfter = this.#redact(after?.url ?? urlBefore);
+    const reordered =
+      added.length === 0 &&
+      removed.length === 0 &&
+      reorderedElements(beforeElements, afterElements);
     const post: AndroidPostState = {
       urlBefore,
       urlAfter,
       added,
       removed,
+      reordered,
       requests,
       dialogs,
       popups: opened
@@ -448,6 +454,7 @@ export class AndroidSession {
         urlBefore !== urlAfter ||
         added.length > 0 ||
         removed.length > 0 ||
+        reordered ||
         requests.length > 0 ||
         dialogs.length > 0 ||
         toasts.length > 0 ||

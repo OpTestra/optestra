@@ -489,6 +489,23 @@ function summaryOf(element: ObservedElement): ElementSummary {
   return summary;
 }
 
+/**
+ * True when the same elements are all still there but in a different order (a
+ * re-sorted list), mirroring the browser harness's rule for `reordered`.
+ */
+export function reorderedElements(
+  before: readonly ObservedElement[],
+  after: readonly ObservedElement[],
+): boolean {
+  if (before.length !== after.length || before.length === 0) return false;
+  const keys = (list: readonly ObservedElement[]) =>
+    list.map((e) => JSON.stringify([e.role, e.name, e.text ?? ""]));
+  const a = keys(before);
+  const b = keys(after);
+  if (a.every((key, i) => key === b[i])) return false;
+  return JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+}
+
 /** Elements in `after` but not `before` (added) and the reverse (removed), as multisets. */
 export function diffElements(
   before: readonly ObservedElement[],
