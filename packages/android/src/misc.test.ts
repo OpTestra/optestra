@@ -9,7 +9,14 @@ import { Logcat } from "./logcat.js";
 import { ANDROID_VERSIONS, DEVICE_PROFILES, findSdk, systemImages } from "./sdk.js";
 import { AndroidSession } from "./session.js";
 import { androidSetupPlan } from "./setup.js";
-import { ADB_COMMANDS, adbArgs, emulatorArgs, InvalidToolCommand, SAFE_TOKEN } from "./tools.js";
+import {
+  ADB_COMMANDS,
+  adbArgs,
+  emulatorArgs,
+  InvalidToolCommand,
+  isTransient,
+  SAFE_TOKEN,
+} from "./tools.js";
 import { ANDROID_ACTION_TYPES } from "./types.js";
 
 describe("public API (SAF-2: the closed action set)", () => {
@@ -141,6 +148,33 @@ describe("the adb wrapper (guarantee 5)", () => {
     ];
     for (const command of bad)
       expect(() => adbArgs(command), JSON.stringify(command)).toThrow(InvalidToolCommand);
+  });
+
+  it("tells a dropped adb link (retried) from a failing command (reported)", () => {
+    const result = (code: number, stderr: string) => ({
+      code,
+      stdout: "",
+      stderr,
+      timedOut: false,
+    });
+    const install = { name: "install", apk: "/tmp/a.apk" } as const;
+    expect(isTransient(result(1, "adb: device offline"), install)).toBe(true);
+    expect(isTransient(result(1, "error: device 'emulator-5580' not found"), install)).toBe(true);
+    expect(isTransient(result(1, "Failure [INSTALL_FAILED_INVALID_APK]"), install)).toBe(false);
+    expect(isTransient(result(0, "device offline"), install)).toBe(false);
+    expect(isTransient(result(1, "device offline"), { name: "wait-for-device" })).toBe(false);
+    // An install that failed without Android's reason, or hung, was the link's fault.
+    expect(isTransient(result(1, "adb: failed to install /tmp/a.apk: "), install)).toBe(true);
+    expect(isTransient({ ...result(1, ""), code: null, timedOut: true }, install)).toBe(true);
+    expect(
+      isTransient(
+        result(1, "adb: failed to install /tmp/a.apk: Failure [INSTALL_FAILED_OLDER_SDK]"),
+        install,
+      ),
+    ).toBe(false);
+    expect(isTransient({ code: 0, stdout: "Success", stderr: "", timedOut: false }, install)).toBe(
+      false,
+    );
   });
 
   it("starts the emulator only behind the local network guard", () => {

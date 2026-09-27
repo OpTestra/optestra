@@ -69,6 +69,8 @@ const MODEL_MAX_WIDTH = 1280;
 const MAX_ELEMENTS = 400;
 const DEFAULT_SETTLE = { timeoutMs: 10_000, quietMs: 300 };
 const AFTER_NETWORK_QUIET_MS = 800;
+/** How long to wait before looking again at an action that seemed to change nothing. */
+const SECOND_LOOK_MS = 1_000;
 const PERMISSION_PACKAGES = /permissioncontroller$/;
 /** Permission prompt buttons across Android versions, by decision, preferred first. */
 const PERMISSION_BUTTONS: Record<"allow" | "allow_once" | "deny", readonly string[]> = {
@@ -323,7 +325,11 @@ export class AndroidSession {
 
   /** How long starting the session took. */
   timings(): SessionTimings {
-    return { ...this.#timings, systemDialogs: [...this.#timings.systemDialogs] };
+    return {
+      ...this.#timings,
+      systemDialogs: [...this.#timings.systemDialogs],
+      notes: [...this.#timings.notes],
+    };
   }
 
   /** `android-app://<package>/<activity>` of the last screen seen (scrubbed). */
@@ -355,6 +361,16 @@ export class AndroidSession {
       return this.#latest;
     } catch {
       return null;
+    }
+  }
+
+  /** A fresh screen that is not between windows (waits up to `timeoutMs`). */
+  async #readyScreen(timeoutMs = 5_000): Promise<Screen | null> {
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+      const screen = await this.#screen();
+      if (!screen?.transitioning() || Date.now() > deadline) return screen;
+      await sleep(150);
     }
   }
 
@@ -479,75 +495,93 @@ export class AndroidSession {
             inflight: 0,
           };
 
-    // What happened (VER-5).
-    let appEvents = this.#logcat.eventsSince(logMark, this.#appPackage);
-    let app: AppState = "running";
-    if (!this.#problem()) {
-      const state = (await this.#driver
-        .call("app_state", { package: this.#appPackage })
-        .catch(() => null)) as { running?: boolean } | null;
-      if (state && state.running === false && appEvents.length === 0) {
-        await sleep(500); // the crash may still be on its way through logcat
-        appEvents = this.#logcat.eventsSince(logMark, this.#appPackage);
-      }
-      app = state?.running === false ? "not_running" : "running";
-    }
-    if (appEvents.some((e) => e.kind === "crashed")) app = "crashed";
-    else if (appEvents.some((e) => e.kind === "not_responding")) app = "not_responding";
-    const after = await this.#screen();
-    const notices =
-      (
-        (await this.#driver.call("events").catch(() => ({ toasts: [] }))) as {
-          toasts?: { text: string; toast?: boolean; cls?: string; package?: string }[];
+    // What happened (VER-5). Toasts are drained from the driver, so they add up over looks.
+    const toasts: { text: string }[] = [];
+    const look = async () => {
+      let appEvents = this.#logcat.eventsSince(logMark, this.#appPackage);
+      let app: AppState = "running";
+      if (!this.#problem()) {
+        const state = (await this.#driver
+          .call("app_state", { package: this.#appPackage })
+          .catch(() => null)) as { running?: boolean } | null;
+        if (state && state.running === false && appEvents.length === 0) {
+          await sleep(500); // the crash may still be on its way through logcat
+          appEvents = this.#logcat.eventsSince(logMark, this.#appPackage);
         }
-      ).toasts ?? [];
-    const toasts = notices.filter((n) => n.toast !== false);
-    await this.#firewallRefusals().catch(() => []);
-    const afterElements = after
-      ? buildObservation(after, { maxElements: MAX_ELEMENTS, redact: this.#redact, refused: [] })
-          .observation.elements
-      : [];
-    const { added, removed } = diffElements(beforeElements, afterElements);
-    const opened = after
-      ? dialogWindows(after).filter((w) => !beforeWindows.some((b) => b.key === w.key))
-      : [];
-    const dialogs: DialogSummary[] = opened.map((w) => ({
-      type: w.type,
-      message: this.#redact(w.title),
-    }));
-    const requests = this.#requests.slice(requestMark).map((r) => r.summary);
-    const refusedNow = this.#refusals.slice(refusalMark);
-    const urlBefore = this.#redact(before?.url ?? "");
-    const urlAfter = this.#redact(after?.url ?? urlBefore);
-    const reordered =
-      added.length === 0 &&
-      removed.length === 0 &&
-      reorderedElements(beforeElements, afterElements);
-    const post: AndroidPostState = {
-      urlBefore,
-      urlAfter,
-      added,
-      removed,
-      reordered,
-      requests,
-      dialogs,
-      popups: opened
-        .filter((w) => w.package !== this.#appPackage)
-        .map((w) => this.#redact(`android-app://${w.package}`)),
-      refused: refusedNow,
-      toasts: toasts.map((t) => this.#redact(t.text)),
-      app,
-      changed:
-        urlBefore !== urlAfter ||
-        added.length > 0 ||
-        removed.length > 0 ||
-        reordered ||
-        requests.length > 0 ||
-        dialogs.length > 0 ||
-        toasts.length > 0 ||
-        app === "crashed" ||
-        app === "not_responding",
+        app = state?.running === false ? "not_running" : "running";
+      }
+      if (appEvents.some((e) => e.kind === "crashed")) app = "crashed";
+      else if (appEvents.some((e) => e.kind === "not_responding")) app = "not_responding";
+      // Never read the post-state off a screen that is between windows (one gone,
+      // the next not reported yet: settle can end just before a new window shows).
+      const after = await this.#readyScreen();
+      const notices =
+        (
+          (await this.#driver.call("events").catch(() => ({ toasts: [] }))) as {
+            toasts?: { text: string; toast?: boolean }[];
+          }
+        ).toasts ?? [];
+      toasts.push(...notices.filter((n) => n.toast !== false));
+      await this.#firewallRefusals().catch(() => []);
+      const afterElements = after
+        ? buildObservation(after, { maxElements: MAX_ELEMENTS, redact: this.#redact, refused: [] })
+            .observation.elements
+        : [];
+      const { added, removed } = diffElements(beforeElements, afterElements);
+      const opened = after
+        ? dialogWindows(after).filter((w) => !beforeWindows.some((b) => b.key === w.key))
+        : [];
+      const dialogs: DialogSummary[] = opened.map((w) => ({
+        type: w.type,
+        message: this.#redact(w.title),
+      }));
+      const requests = this.#requests.slice(requestMark).map((r) => r.summary);
+      const refusedNow = this.#refusals.slice(refusalMark);
+      const urlBefore = this.#redact(before?.url ?? "");
+      const urlAfter = this.#redact(after?.url ?? urlBefore);
+      const reordered =
+        added.length === 0 &&
+        removed.length === 0 &&
+        reorderedElements(beforeElements, afterElements);
+      const post: AndroidPostState = {
+        urlBefore,
+        urlAfter,
+        added,
+        removed,
+        reordered,
+        requests,
+        dialogs,
+        popups: opened
+          .filter((w) => w.package !== this.#appPackage)
+          .map((w) => this.#redact(`android-app://${w.package}`)),
+        refused: refusedNow,
+        toasts: toasts.map((t) => this.#redact(t.text)),
+        app,
+        changed:
+          urlBefore !== urlAfter ||
+          added.length > 0 ||
+          removed.length > 0 ||
+          reordered ||
+          requests.length > 0 ||
+          dialogs.length > 0 ||
+          toasts.length > 0 ||
+          app === "crashed" ||
+          app === "not_responding",
+      };
+      return { post, app, appEvents };
     };
+    let { post, app, appEvents } = await look();
+    // A second look when nothing changed: apps sometimes react a second or more
+    // after a tap with nothing in between (no event, no request, no log line), so
+    // settle can't see it coming. A tap that really does nothing (the VER-5 trap)
+    // still reports changed: false, one look later.
+    if (result.status === "ok" && !post.changed && action.type !== "waitFor" && !this.#problem()) {
+      await sleep(SECOND_LOOK_MS);
+      const again = await this.settle();
+      settle.settledMs += SECOND_LOOK_MS + again.settledMs;
+      settle.timedOut = again.timedOut;
+      ({ post, app, appEvents } = await look());
+    }
     if (result.status === "ok" && (app === "crashed" || app === "not_responding")) {
       const detail = appEvents[appEvents.length - 1]?.detail;
       result = {
@@ -1249,7 +1283,8 @@ export async function openAndroidSession(
   // 4. A fresh install of the app under test.
   const installStarted = Date.now();
   const beforePackages = await listPackages(emulator);
-  const install = await runAdb(sdk, serial, { name: "install", apk }, 180_000);
+  // A link that drops mid-transfer hangs adb: a minute per try, retried (see runAdb).
+  const install = await runAdb(sdk, serial, { name: "install", apk }, 60_000);
   if (!/\bSuccess\b/.test(install.stdout)) {
     const reason =
       /INSTALL_[A-Z_]+/.exec(`${install.stdout}${install.stderr}`)?.[0] ??
@@ -1286,38 +1321,91 @@ export async function openAndroidSession(
 
   // 5. The driver.
   const driverStarted = Date.now();
+  let driverRestarts = 0;
   const socket = `uih-${randomBytes(6).toString("hex")}`;
   const token = randomBytes(24).toString("hex");
-  const forward = await runAdb(sdk, serial, { name: "forward", socket }, 10_000);
-  const forwardPort = Number(forward.stdout.trim());
-  if (!Number.isInteger(forwardPort) || forwardPort <= 0)
-    return abort("driver_failed", "adb could not forward to the driver.");
-  cleanups.push(() => runAdb(sdk, serial, { name: "forward-remove", port: forwardPort }, 5_000));
-  const instrument = startAdb(sdk, serial, { name: "instrument", token, socket });
-  cleanups.push(() => instrument.kill());
+  // The instrumentation's own output says why it didn't start (kept for the message).
+  let instrumentOutput = "";
+  let instrument: Running | null = null;
+  let forwardPort = 0;
+  cleanups.push(() => instrument?.kill());
+  cleanups.push(() =>
+    forwardPort ? runAdb(sdk, serial, { name: "forward-remove", port: forwardPort }, 5_000) : null,
+  );
   let connected: { client: DriverClient; hello: Hello } | null = null;
-  // Slow machines take a while to start the instrumentation: up to a minute.
-  const driverDeadline = Date.now() + 60_000;
-  while (!connected && Date.now() < driverDeadline) {
-    await sleep(250);
-    connected = await DriverClient.connect(forwardPort, token, 5_000).catch(() => null);
+  let attempts = 0;
+  // Each attempt starts from the device being there: adb's link to a busy emulator
+  // can drop for a moment ("device offline"), and a dropped link loses its forwards.
+  while (!connected && attempts < 3) {
+    attempts++;
+    await runAdb(sdk, serial, { name: "wait-for-device" }, 30_000).catch(() => null);
+    if (forwardPort) {
+      await runAdb(sdk, serial, { name: "forward-remove", port: forwardPort }, 5_000).catch(
+        () => null,
+      );
+    }
+    const forward = await runAdb(sdk, serial, { name: "forward", socket }, 10_000).catch(
+      () => null,
+    );
+    forwardPort = Number(forward?.stdout.trim());
+    if (!Number.isInteger(forwardPort) || forwardPort <= 0) {
+      forwardPort = 0;
+      instrumentOutput += `\nadb could not forward to the driver: ${forward?.stderr.trim() ?? ""}`;
+      continue;
+    }
+    instrument?.kill();
+    const running = startAdb(sdk, serial, { name: "instrument", token, socket });
+    instrument = running;
+    let exited = false;
+    void running.exited.then(() => {
+      exited = true;
+    });
+    const keep = (chunk: Buffer) => {
+      instrumentOutput = (instrumentOutput + chunk.toString("utf8")).slice(-2_000);
+    };
+    running.child.stdout?.on("data", keep);
+    running.child.stderr?.on("data", keep);
+    // Slow machines take a while to start the instrumentation.
+    const deadline = Date.now() + 45_000;
+    while (!connected && Date.now() < deadline) {
+      await sleep(250);
+      connected = await DriverClient.connect(forwardPort, token, 5_000).catch(() => null);
+      if (!connected && exited) break;
+    }
   }
-  if (!connected) return abort("driver_failed", "The on-device driver did not start.");
+  if (!connected || !instrument) {
+    const said = redact(instrumentOutput.replaceAll(token, "[token]")).trim();
+    return abort(
+      "driver_failed",
+      `The on-device driver did not start (${attempts} attempt(s))${said ? `: ${said.slice(-500)}` : "."}`,
+    );
+  }
+  driverRestarts = attempts - 1;
   const driver = connected.client;
   cleanups.push(() => driver.quit());
   const driverMs = Date.now() - driverStarted;
 
   // 6. Evidence: the screen recording runs on the host.
   let video: string | null = null;
+  const notes: string[] = [];
   if (options.evidence?.video) {
     video = join(evidenceDir, "video.webm");
+    // The emulator console splits on spaces, so a path with one (a Windows or macOS
+    // user folder like "Jane Doe") can't be recorded to: no video, said so, no throw.
     const started = await runAdb(
       sdk,
       serial,
       { name: "emu", command: { name: "screenrecord-start", path: video } },
       15_000,
-    );
-    if (!/OK/.test(started.stdout)) video = null;
+    ).catch((error: unknown) => ({ stdout: "", stderr: String(error) }));
+    if (!/OK/.test(started.stdout)) {
+      notes.push(
+        /\s/.test(video)
+          ? `No screen recording: the evidence folder's path has a space (${redact(evidenceDir)}); pass evidence.dir without one.`
+          : "No screen recording: the emulator did not start recording.",
+      );
+      video = null;
+    }
   }
 
   // 7. A calm, idle system first: the launcher up, and any system dialog about
@@ -1350,10 +1438,12 @@ export async function openAndroidSession(
     resetMs,
     installMs,
     driverMs,
+    driverRestarts,
     readyMs,
     launchMs: 0,
     totalMs: 0,
     systemDialogs,
+    notes,
     ...(bootMs !== undefined ? { bootMs } : {}),
   };
   const session = new AndroidSession({

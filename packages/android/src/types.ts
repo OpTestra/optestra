@@ -240,6 +240,8 @@ export interface SessionTimings {
   resetMs: number;
   installMs: number;
   driverMs: number;
+  /** Times the on-device driver had to be started again (it exited before serving). */
+  driverRestarts: number;
   /** Waiting for the system to be idle (launcher up, no system dialog) before launching the app. */
   readyMs: number;
   launchMs: number;
@@ -249,6 +251,8 @@ export interface SessionTimings {
    * session). Dialogs about the app under test are never dismissed.
    */
   systemDialogs: DismissedDialog[];
+  /** Things the session couldn't do as asked (e.g. no screen recording), in words. */
+  notes: string[];
 }
 
 export type OpenSessionResult =

@@ -223,18 +223,34 @@ describe("sessions", () => {
     for (const round of [1, 2]) {
       const session = await open();
       try {
-        await signIn(session);
-        await session.act({
+        // Every step's outcome is asserted, so a failure says which step and why.
+        const describe = (o: {
+          status: string;
+          message?: string;
+          ms: number;
+          settle: unknown;
+          post: unknown;
+        }) =>
+          `round ${round}: ${o.status} ${o.message ?? ""} ms=${o.ms} settle=${JSON.stringify(o.settle)} ${JSON.stringify(o.post)}`;
+        const signedIn = await signIn(session);
+        expect(signedIn.post.urlAfter, describe(signedIn)).toBe(
+          "android-app://com.acme.shop/.ProjectsActivity",
+        );
+        const project = await session.act({
           type: "tap",
           target: { kind: "role", role: "listitem", name: "Website redesign" },
         });
+        expect(project.post.urlAfter, describe(project)).toBe(
+          "android-app://com.acme.shop/.ProjectActivity",
+        );
         const asked = await session.act({
           type: "tap",
           target: { kind: "role", role: "button", name: "Scan badge" },
         });
+        expect(asked.status, describe(asked)).toBe("ok");
         expect(
           asked.post.dialogs.map((d) => d.type),
-          `round ${round}`,
+          describe(asked),
         ).toEqual(["permission"]);
         const allowed = await session.act({ type: "permission", decision: "allow" });
         expect(allowed.status).toBe("ok");

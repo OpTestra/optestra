@@ -330,16 +330,28 @@ export class Screen {
   }
 
   /**
-   * Busy: between screens (no window yet, or a window whose content isn't there
-   * yet), or a visible indeterminate progress indicator in a window of the app.
+   * Between screens: no window yet, a window whose content isn't there yet, or
+   * the resumed activity's own window not reported yet (the activity manager
+   * switches before the accessibility tree does).
    */
-  busy(): boolean {
+  transitioning(): boolean {
     if (this.frames.length === 0) return true;
+    const resumed = this.dump.activity?.split("/")[0];
+    if (resumed && !this.dump.windows.some((w) => w.package === resumed)) return true;
     for (const window of this.frames) {
       let count = 0;
       for (const node of this.dump.nodes) if (node.window === window.id && ++count >= 3) break;
       if (count < 3) return true;
     }
+    return false;
+  }
+
+  /**
+   * Busy: between screens (no window yet, or a window whose content isn't there
+   * yet), or a visible indeterminate progress indicator in a window of the app.
+   */
+  busy(): boolean {
+    if (this.transitioning()) return true;
     for (const entry of this.shown()) {
       if (
         entry.role === "progressbar" &&

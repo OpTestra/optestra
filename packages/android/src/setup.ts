@@ -101,7 +101,12 @@ export function androidSetupPlan(
   if (missing.length > 0) {
     const tool = sdkmanager ? quote(sdkmanager) : "sdkmanager";
     const target =
-      root ?? (process.platform === "darwin" ? "$HOME/Library/Android/sdk" : "$HOME/Android/Sdk");
+      root ??
+      (process.platform === "darwin"
+        ? "$HOME/Library/Android/sdk"
+        : process.platform === "win32"
+          ? "%LOCALAPPDATA%\\Android\\Sdk"
+          : "$HOME/Android/Sdk");
     commands.push(`${tool} --sdk_root=${quote(target)} --licenses`);
     commands.push(
       `${tool} --sdk_root=${quote(target)} ${missing.map((item) => `"${item.package}"`).join(" ")}`,

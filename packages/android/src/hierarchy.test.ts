@@ -145,7 +145,16 @@ describe("hierarchy → observation (MOB-3, SAF-3)", () => {
     expect(screenOf("sign-in").busy()).toBe(false);
     const empty = dump("sign-in");
     empty.nodes = empty.nodes.slice(0, 1);
-    expect(new Screen(empty, { appPackage: "com.acme.shop" }).busy()).toBe(true);
+    const between = new Screen(empty, { appPackage: "com.acme.shop" });
+    expect(between.busy()).toBe(true);
+    expect(between.transitioning()).toBe(true);
+    expect(screenOf("sign-in").transitioning()).toBe(false);
+    // The activity manager already resumed the permission prompt; its window isn't reported yet.
+    const stale = dump("project");
+    stale.activity =
+      "com.google.android.permissioncontroller/com.android.permissioncontroller.permission.ui.GrantPermissionsActivity";
+    expect(new Screen(stale, { appPackage: "com.acme.shop" }).transitioning()).toBe(true);
+    expect(screenOf("permission").transitioning()).toBe(false);
   });
 });
 

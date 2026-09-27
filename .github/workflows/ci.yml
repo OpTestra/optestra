@@ -3,7 +3,7 @@ name: ci
 on:
   # Local-first (2026-09-27): builds are checked locally; CI runs only when
   # started by hand at a milestone (Windows, Linux and what this Mac can't do).
-  #   gh workflow run ci.yml -R TestamentHQ/testament --ref <branch>
+  #   gh workflow run ci.yml --ref <branch>   (from a checkout of the engine repo)
   workflow_dispatch:
 
 concurrency:

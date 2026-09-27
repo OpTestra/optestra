@@ -253,14 +253,41 @@ async function collect(running: Running, timeoutMs: number): Promise<RunResult> 
 const serialArgs = (serial: string | null) =>
   serial ? ["-s", check(serial, /^[A-Za-z0-9._:-]+$/, "serial")] : [];
 
-/** Runs one adb command to completion. Never throws for a failing command. */
-export function runAdb(
+/**
+ * Runs one adb command to completion. Never throws for a failing command; an
+ * invalid one rejects (it is async, so the rejection can be caught).
+ */
+export async function runAdb(
   sdk: Sdk,
   serial: string | null,
   command: AdbCommand,
   timeoutMs = 30_000,
 ): Promise<RunResult> {
-  return collect(launch(sdk.adb, [...serialArgs(serial), ...adbArgs(command)]), timeoutMs);
+  const args = [...serialArgs(serial), ...adbArgs(command)];
+  let result = await collect(launch(sdk.adb, args), timeoutMs);
+  // adb's link to a busy emulator can drop for a moment: wait for the device and
+  // run the command again, rather than report the app or the device as broken.
+  for (let attempt = 1; attempt < 3 && serial && isTransient(result, command); attempt++) {
+    await collect(launch(sdk.adb, [...serialArgs(serial), "wait-for-device"]), 30_000);
+    result = await collect(launch(sdk.adb, args), timeoutMs);
+  }
+  return result;
+}
+
+const TRANSIENT =
+  /device offline|device '[^']*' not found|no devices\/emulators found|error: closed|protocol fault/i;
+
+/** A failure of adb's link to the device, not of the command. */
+export function isTransient(result: RunResult, command: AdbCommand): boolean {
+  if (command.name === "wait-for-device" || command.name === "devices") return false;
+  const output = `${result.stderr}\n${result.stdout}`;
+  if (command.name === "install") {
+    // A real install failure always says why (INSTALL_FAILED_…, Failure [...]). One
+    // that doesn't, or that hung (a link dropped mid-transfer hangs adb), is the link's.
+    if (/\bSuccess\b/.test(result.stdout)) return false;
+    return result.timedOut || (result.code !== 0 && !/INSTALL_[A-Z_]+|Failure \[/.test(output));
+  }
+  return result.code !== 0 && TRANSIENT.test(output);
 }
 
 /** Starts a long-running adb command (the driver, logcat). */

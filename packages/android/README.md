@@ -139,6 +139,14 @@ emulator).
    on a fully booted, idle system: the boot animation stopped, the launcher up
    and quiet for a second, animations off.
 
+8. **A dropped adb link is not the app's fault.** adb's link to a busy emulator can
+   drop for a moment ("device offline"), and an install interrupted that way can
+   hang. Such commands wait for the device and run again. An install fails only
+   with Android's own reason (`INSTALL_FAILED_…`). The driver start repeats its
+   forward and instrumentation after a drop (`timings().driverRestarts`). What the
+   session couldn't do as asked, such as a screen recording when the evidence
+   folder's path has a space, is in `timings().notes`.
+
 **Known limits** (for the security docs, SAF-5):
 - **Certificate pinning.** TLS is tunnelled, never decrypted, so pinned apps
   work. The same reason means the network log has one `CONNECT` entry per HTTPS
@@ -225,6 +233,14 @@ not counted as changes.
 - no window is still empty and no indeterminate progress bar shows.
 
 The limit is `timeoutMs` (default 10 000).
+
+Two more rules make post-states trustworthy on slow machines:
+- **Never between windows.** The post-state is never read while the screen is
+  between windows: no window, an empty one, or the resumed activity's window not
+  reported yet.
+- **A second look.** An action that seems to have changed nothing is looked at
+  again after a second. Apps sometimes react that late with nothing in between.
+  The silent-tap trap still reports `changed: false`, one look later.
 
 ## Observation format
 
