@@ -447,7 +447,11 @@ export function renderHtmlReport(data: RunData, options: HtmlReportOptions = {})
   const base = options.artifactBase?.replace(/\/+$/, "") ?? "";
   const ctx: Ctx = {
     model,
-    href: (path) => encodePath(base ? `${base}/${path}` : path),
+    // A file: URL base (a run folder on another drive) is already encoded; only the path joins it.
+    href: (path) =>
+      base.startsWith("file:")
+        ? `${base}/${encodePath(path)}`
+        : encodePath(base ? `${base}/${path}` : path),
     productName: options.productName ?? brand.productName,
     cliName: options.cliName ?? brand.cliName,
   };

@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, renameSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { pathToFileURL } from "node:url";
 import { brand } from "@testament/brand";
 import { isUlid, RUN_FILE, RUNS_DIR } from "@testament/contract";
 import { type ReadDiagnostic, readRun } from "@testament/contract/node";
@@ -45,7 +46,11 @@ export function writeHtmlReport(
   options: WriteReportOptions = {},
 ): string {
   const outDir = resolve(options.outDir ?? runDir);
-  const base = relative(outDir, resolve(runDir)).split(sep).join("/");
+  const fromOut = relative(outDir, resolve(runDir));
+  // On Windows a run folder on another drive has no relative path: link by file URL instead.
+  const base = isAbsolute(fromOut)
+    ? pathToFileURL(resolve(runDir)).href
+    : fromOut.split(sep).join("/");
   const path = join(outDir, REPORT_FILE);
   const { productName, cliName, tokens } = options;
   writeFileAtomic(

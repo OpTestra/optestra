@@ -147,6 +147,16 @@ describe("html report", () => {
     expect(shot).toBeLessThan(main.indexOf('id="summary-h"'));
   });
 
+  it("links artifacts by file URL when the run folder has no relative path (another drive)", () => {
+    const html = renderHtmlReport(load(join(FIXTURES, "failed-product-bug")), {
+      ...NAMES,
+      artifactBase: "file:///D:/runs/r%201",
+    });
+    expect(html).toContain(
+      'src="file:///D:/runs/r%201/tests/tests__checkout__discount-code/2/steps/2-after.png"',
+    );
+  });
+
   it("keeps soft-check warnings apart from failures", () => {
     const data = load(join(FIXTURES, "all-passed"));
     const test = structuredClone(data.tests[0]) as TestResult;

@@ -46,7 +46,8 @@ describe("report command", { timeout: 30_000 }, () => {
     expect(result.status).toBe(0);
     expect(existsSync(join(fixtures, "failed-product-bug", "index.html"))).toBe(false);
     expect(readFileSync(join(out, "index.html"), "utf8")).toMatch(
-      /src="(\.\.\/)+[^"]*failed-product-bug\/tests\/tests__checkout__discount-code\/2\/steps\/2-after\.png"/,
+      // Relative when both folders share a drive; a file: URL when they don't (Windows CI).
+      /src="(?:(\.\.\/)+|file:\/\/\/)[^"]*failed-product-bug\/tests\/tests__checkout__discount-code\/2\/steps\/2-after\.png"/,
     );
   });
 
