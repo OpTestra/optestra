@@ -17,8 +17,8 @@ import { normalizeText } from "./tasks/shared.js";
 export interface ObservedRequest {
   method: string;
   url: string;
-  /** HTTP status, or "failed"/"refused". */
-  status: number | "failed" | "refused";
+  /** HTTP status, or "failed"/"refused"; "pending" when still running. */
+  status: number | "failed" | "refused" | "pending";
   resourceType?: string;
 }
 

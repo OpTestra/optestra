@@ -129,8 +129,13 @@ export interface RequestSummary {
   method: string;
   url: string;
   resourceType: string;
-  /** HTTP status, or "failed"/"refused". */
-  status: number | "failed" | "refused";
+  /**
+   * HTTP status; "failed"/"refused" when it didn't complete; "pending" when it
+   * was still running (no response yet) at the time of the report.
+   */
+  status: number | "failed" | "refused" | "pending";
+  /** Playwright's failure text, for "failed" requests. */
+  failure?: string;
 }
 
 export interface DialogSummary {

@@ -4,7 +4,9 @@ import type { RequestSummary, SettleResult } from "./types.js";
 
 // Settle (LRN-4 foundation): the page is settled when no document/fetch/XHR
 // request is in flight, the network and the DOM have both been quiet for a
-// window, and nothing is marked aria-busy. The DOM side is reported by a small
+// window, and nothing is marked aria-busy. The window counts from the start of
+// the settle at the earliest: an action's request can reach us a few ms after
+// the action returns, so quiet before the action proves nothing. The DOM side is reported by a small
 // script in every frame through a binding, so settling adds no page calls.
 
 const TRACKED = new Set(["document", "fetch", "xhr"]);
@@ -57,7 +59,7 @@ export class ActivityTracker {
           method: request.method(),
           url: this.redact(request.url()),
           resourceType: request.resourceType(),
-          status: "failed",
+          status: "pending",
         },
       };
       this.#log.push(tracked);
@@ -73,8 +75,14 @@ export class ActivityTracker {
       this.#inflight.delete(request);
       this.#lastNetwork = Date.now();
       const tracked = this.#byRequest.get(request);
-      if (tracked && failed)
-        tracked.summary.status = this.isRefused(request) ? "refused" : "failed";
+      if (!tracked || !failed) return;
+      if (this.isRefused(request)) {
+        tracked.summary.status = "refused";
+        return;
+      }
+      tracked.summary.status = "failed";
+      const failure = request.failure()?.errorText;
+      if (failure) tracked.summary.failure = this.redact(failure);
     };
     context.on("requestfinished", (request) => done(request, false));
     context.on("requestfailed", (request) => done(request, true));
@@ -109,8 +117,9 @@ export class ActivityTracker {
       const now = Date.now();
       const step = now - previous;
       previous = now;
-      const network = this.#inflight.size === 0 && now - this.#lastNetwork >= quietMs;
-      const dom = now - this.#lastMutation >= quietMs;
+      const network =
+        this.#inflight.size === 0 && now - Math.max(this.#lastNetwork, start) >= quietMs;
+      const dom = now - Math.max(this.#lastMutation, start) >= quietMs;
       const busy = [...this.#busy.entries()].some(([frame, value]) => value && !frame.isDetached());
       if (!network) waitedFor.network += step;
       if (!dom) waitedFor.dom += step;

@@ -144,7 +144,7 @@ interface ActionOutcome {
 interface PostState {
   urlBefore: string; urlAfter: string;
   added: ElementSummary[]; removed: ElementSummary[];   // { role, name, text? }
-  requests: RequestSummary[];                            // { method, url, resourceType, status | "failed" | "refused" }
+  requests: RequestSummary[];                            // { method, url, resourceType, status | "failed" | "refused" | "pending", failure? }
   dialogs: DialogSummary[];  // native (alert/confirm/prompt, with how it was handled) and page dialogs
   popups: string[];
   refused: Refusal[];        // { url, type, frame, at }
@@ -163,8 +163,15 @@ Native dialogs are handled at once: alerts and `beforeunload` are accepted;
 
 **Settle** (LRN-4 foundation). The page is settled when no document, fetch or
 XHR request is in flight, the network and the DOM have been quiet for
-`quietMs` (default 300), and no element is `aria-busy="true"`. The limit is
+`quietMs` (default 300), and no element is `aria-busy="true"`. The quiet
+window counts from when settling starts at the earliest, so activity before the
+action can't make a page look settled while the action's own request is only
+just starting; every settle therefore takes at least `quietMs`. The limit is
 `timeoutMs` (default 10 000). Every action settles afterwards and reports it.
+A request's `status` is its HTTP status once a response arrives; `"failed"`
+(with Playwright's `failure` text) or `"refused"` when it didn't complete; and
+`"pending"` when it was still running when the outcome was built (for example
+after a settle timeout, or an image still loading).
 The DOM side comes from a small script in every frame through a binding, so
 settling doesn't flood the trace with page calls.
 
