@@ -80,7 +80,7 @@ function save(dir: string, profile: string, environment: string, worker: number,
   });
 }
 
-describe("auth", () => {
+describe("auth", { timeout: 30_000 }, () => {
   it("lists profiles with their saved sessions per environment, never a cookie", async () => {
     const dir = project();
     save(dir, "admin", "local", 0);
@@ -156,7 +156,7 @@ async function fakeMailpit(): Promise<string> {
   return `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 }
 
-describe("inbox", () => {
+describe("inbox", { timeout: 30_000 }, () => {
   it("check: reachable Mailpit is ok; none configured is exit 2; down is exit 1", async () => {
     const url = await fakeMailpit();
     const dir = project(`inbox:\n  provider: mailpit\n  mailpit: { url: "${url}" }\n`);

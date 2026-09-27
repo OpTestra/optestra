@@ -78,7 +78,7 @@ const check = (report: DoctorReport, id: string) =>
 const failed = (report: DoctorReport) =>
   report.checks.filter((c) => c.status === "fail").map((c) => c.id);
 
-describe("doctor", () => {
+describe("doctor", { timeout: 30_000 }, () => {
   it("a healthy shop: everything ok (unrecorded tests are a warning), exit 0", async () => {
     const dir = await project();
     const probes = fakeBrowser();

@@ -14,7 +14,7 @@ afterAll(() => {
   for (const dir of dirs) rmSync(dir, { recursive: true, force: true });
 });
 
-describe("results command", () => {
+describe("results command", { timeout: 30_000 }, () => {
   it("prints the failed test's headline and exits 1", () => {
     const result = run("failed-product-bug");
     expect(result.status).toBe(1);

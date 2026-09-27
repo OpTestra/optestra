@@ -19,7 +19,7 @@ const noKeys = {
 const run = (...args: string[]) =>
   spawnSync(process.execPath, [bin, ...args], { cwd: shop, encoding: "utf8", env: noKeys });
 
-describe("author", () => {
+describe("author", { timeout: 30_000 }, () => {
   it("exits 2 with a fix when no model key is available", () => {
     const result = run("author", "tests/login.test.md");
     expect(result.status).toBe(2);

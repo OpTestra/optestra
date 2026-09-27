@@ -1,30 +1,39 @@
+// First, so the project-file sections register in their usual order.
+import "./sections.js";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { createInterface } from "node:readline/promises";
+import { fileURLToPath } from "node:url";
 import { brand } from "@testament/brand";
-import { version } from "@testament/core";
 import { Command } from "commander";
 import { registerAuthCommands } from "./commands/auth.js";
-import { type AuthorCommandOptions, runAuthorCommand } from "./commands/author.js";
+import type { AuthorCommandOptions } from "./commands/author.js";
 import { registerBrowserCommands } from "./commands/browser.js";
-import { type ChecksCommandOptions, runChecksCommand } from "./commands/checks.js";
-import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
-import { type DeciderSetupOptions, runDeciderSetup } from "./commands/decider.js";
-import { type DecisionsCommandOptions, runDecisionsCommand } from "./commands/decisions.js";
-import { registerDoctorCommand } from "./commands/doctor.js";
+import type { ChecksCommandOptions } from "./commands/checks.js";
+import type { ConfigCommandOptions } from "./commands/config.js";
+import type { DeciderSetupOptions } from "./commands/decider.js";
+import type { DecisionsCommandOptions } from "./commands/decisions.js";
+import type { DoctorCommandOptions } from "./commands/doctor.js";
 import { registerExportCommand } from "./commands/export.js";
-import { type GenerateCommandOptions, runGenerateCommand } from "./commands/generate.js";
+import type { GenerateCommandOptions } from "./commands/generate.js";
 import { registerInitCommand } from "./commands/init.js";
-import { type LintCommandOptions, runLintCommand } from "./commands/lint.js";
-import { runLoginCommand } from "./commands/login.js";
-import { type ModelsCommandOptions, runModelsCommand } from "./commands/models.js";
+import type { LintCommandOptions } from "./commands/lint.js";
+import type { ModelsCommandOptions } from "./commands/models.js";
 import type { ReportCommandOptions } from "./commands/report.js";
-import { type ResultsCommandOptions, runResultsCommand } from "./commands/results.js";
-import { type RunCommandOptions, runRunCommand } from "./commands/run.js";
-import {
-  type ListCommandOptions,
-  runListCommand,
-  runShowCommand,
-  type ShowCommandOptions,
-} from "./commands/tests.js";
+import type { ResultsCommandOptions } from "./commands/results.js";
+import type { RunCommandOptions } from "./commands/run.js";
+import type { ListCommandOptions, ShowCommandOptions } from "./commands/tests.js";
+
+// Startup stays light: every command loads its implementation inside its action,
+// so `--help` or `config` never loads Playwright, the AI SDK or the decision
+// backends. Only light modules (options, the project-file sections) load here.
+
+/** The engine version, read without loading the engine. */
+function engineVersion(): string {
+  const entry = fileURLToPath(import.meta.resolve("@testament/core"));
+  const pkg = JSON.parse(readFileSync(join(dirname(entry), "..", "package.json"), "utf8"));
+  return (pkg as { version: string }).version;
+}
 
 async function askYesNo(question: string): Promise<boolean> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -41,7 +50,7 @@ export function createProgram(): Command {
     .description(
       `${brand.productName}: test websites and Android apps from plain-English descriptions.`,
     )
-    .version(version(), "-v, --version", "print the engine version")
+    .version(engineVersion(), "-v, --version", "print the engine version")
     .helpOption("-h, --help", "show this help");
 
   program
@@ -50,7 +59,8 @@ export function createProgram(): Command {
     .option("-e, --env <name>", "environment to resolve")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .option("--json", "print machine-readable JSON")
-    .action((options: ConfigCommandOptions) => {
+    .action(async (options: ConfigCommandOptions) => {
+      const { runConfigCommand } = await import("./commands/config.js");
       process.exitCode = runConfigCommand(options, {
         cwd: process.cwd(),
         env: process.env,
@@ -66,6 +76,7 @@ export function createProgram(): Command {
     .option("--check", "check every provider's API key with the cheapest possible call")
     .option("--json", "print machine-readable JSON")
     .action(async (options: ModelsCommandOptions) => {
+      const { runModelsCommand } = await import("./commands/models.js");
       process.exitCode = await runModelsCommand(options, {
         cwd: process.cwd(),
         env: process.env,
@@ -92,6 +103,7 @@ export function createProgram(): Command {
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .option("--json", "print machine-readable JSON")
     .action(async (options: DecisionsCommandOptions) => {
+      const { runDecisionsCommand } = await import("./commands/decisions.js");
       process.exitCode = await runDecisionsCommand(options, {
         cwd: process.cwd(),
         env: process.env,
@@ -112,6 +124,7 @@ export function createProgram(): Command {
     .option("-e, --env <name>", "environment to resolve")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (backend: string, options: DeciderSetupOptions) => {
+      const { runDeciderSetup } = await import("./commands/decider.js");
       process.exitCode = await runDeciderSetup(backend, options, {
         cwd: process.cwd(),
         env: process.env,
@@ -136,6 +149,7 @@ export function createProgram(): Command {
     .option("--flaky-passes", "do not fail the exit code for flaky tests")
     .action(async (runDir: string, options: ResultsCommandOptions) => {
       const { shouldUseColor } = await import("@testament/report/node");
+      const { runResultsCommand } = await import("./commands/results.js");
       process.exitCode = runResultsCommand(runDir, options, {
         cwd: process.cwd(),
         env: process.env,
@@ -168,6 +182,7 @@ export function createProgram(): Command {
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .option("--json", "print machine-readable JSON")
     .action(async (options: ListCommandOptions) => {
+      const { runListCommand } = await import("./commands/tests.js");
       process.exitCode = await runListCommand(options, {
         cwd: process.cwd(),
         env: process.env,
@@ -185,6 +200,7 @@ export function createProgram(): Command {
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .option("--json", "print machine-readable JSON")
     .action(async (file: string, options: ShowCommandOptions) => {
+      const { runShowCommand } = await import("./commands/tests.js");
       process.exitCode = await runShowCommand(file, options, {
         cwd: process.cwd(),
         env: process.env,
@@ -204,6 +220,7 @@ export function createProgram(): Command {
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .option("--json", "print machine-readable JSON")
     .action(async (paths: string[], options: LintCommandOptions) => {
+      const { runLintCommand } = await import("./commands/lint.js");
       process.exitCode = await runLintCommand(paths, options, {
         cwd: process.cwd(),
         env: process.env,
@@ -224,6 +241,7 @@ export function createProgram(): Command {
     .option("--video", "also record a video")
     .option("-C, --dir <path>", "project folder (default: the test's nearest project)")
     .action(async (file: string, options: AuthorCommandOptions) => {
+      const { runAuthorCommand } = await import("./commands/author.js");
       process.exitCode = await runAuthorCommand(file, options, {
         cwd: process.cwd(),
         env: process.env,
@@ -256,6 +274,7 @@ export function createProgram(): Command {
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (tests: string[], options: RunCommandOptions) => {
       const { shouldUseColor } = await import("@testament/report/node");
+      const { runRunCommand } = await import("./commands/run.js");
       process.exitCode = await runRunCommand(tests, options, {
         cwd: process.cwd(),
         env: process.env,
@@ -274,6 +293,7 @@ export function createProgram(): Command {
     .option("-e, --env <name>", "environment (for the project settings)")
     .option("-C, --dir <path>", "project folder (default: the test's nearest project)")
     .action(async (file: string, options: ChecksCommandOptions) => {
+      const { runChecksCommand } = await import("./commands/checks.js");
       process.exitCode = await runChecksCommand(file, options, {
         cwd: process.cwd(),
         env: process.env,
@@ -293,6 +313,7 @@ export function createProgram(): Command {
       "show which AI subscription tools (Claude Code, Codex) are ready, and how to sign in to them",
     )
     .action(async () => {
+      const { runLoginCommand } = await import("./commands/login.js");
       process.exitCode = await runLoginCommand({
         cwd: process.cwd(),
         env: process.env,
@@ -311,6 +332,7 @@ export function createProgram(): Command {
     .option("-e, --env <name>", "environment whose base URL and allowed domains the specs use")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (tests: string[], options: GenerateCommandOptions) => {
+      const { runGenerateCommand } = await import("./commands/generate.js");
       process.exitCode = await runGenerateCommand(tests, options, {
         cwd: process.cwd(),
         env: process.env,
@@ -330,7 +352,19 @@ export function createProgram(): Command {
     stdout: (text: string) => process.stdout.write(text),
   });
   registerInitCommand(program, io);
-  registerDoctorCommand(program, io);
+  program
+    .command("doctor")
+    .description(
+      "check the project, tests, secrets, AI setup, browsers and recordings; every problem comes with its fix",
+    )
+    .option("-e, --env <name>", "check only this environment (default: all)")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .option("--strict", "exit 1 when there are warnings")
+    .option("--json", "print machine-readable JSON")
+    .action(async (options: DoctorCommandOptions) => {
+      const { runDoctorCommand } = await import("./commands/doctor.js");
+      process.exitCode = await runDoctorCommand(options, io());
+    });
   registerExportCommand(program, io);
 
   program.action(() => program.help());

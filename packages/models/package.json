@@ -9,6 +9,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./section": {
+      "types": "./dist/config.d.ts",
+      "default": "./dist/config.js"
+    },
     "./testing": {
       "types": "./dist/testing.d.ts",
       "default": "./dist/testing.js"

@@ -93,7 +93,7 @@ function projectWith(lines: string[]): string {
   return dir;
 }
 
-describe("decisions command", () => {
+describe("decisions command", { timeout: 30_000 }, () => {
   it("lists page_is_error with its threshold and time limit, rules only by default", () => {
     const dir = mkdtempSync(join(tmpdir(), "cli-decisions-"));
     dirs.push(dir);

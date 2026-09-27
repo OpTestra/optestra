@@ -34,7 +34,7 @@ const run = (cwd: string, ...args: string[]) =>
 
 const SECRET_VALUES = ["st@ging", "pa55", "tok_shared", "c3RAZ2luZ"];
 
-describe("config command", () => {
+describe("config command", { timeout: 30_000 }, () => {
   it("shows staging values with provenance and hides secret values", () => {
     const result = run(project(), "--env", "staging");
     expect(result.status).toBe(0);

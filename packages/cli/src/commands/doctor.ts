@@ -32,7 +32,6 @@ import {
 } from "@testament/models";
 import { recordingPath } from "@testament/recording/node";
 import { DEFAULT_TESTS, loadTests } from "@testament/spec/node";
-import type { Command } from "commander";
 import type { CommandIo } from "./config.js";
 import { runLintCommand } from "./lint.js";
 import { playwrightOverlap } from "./playwright-setup.js";
@@ -804,19 +803,4 @@ export async function runDoctorCommand(
   const text = options.json ? JSON.stringify(report, null, 2) : formatDoctorReport(report);
   io.stdout(`${defaultRedactor.redact(text)}\n`);
   return report.exitCode;
-}
-
-export function registerDoctorCommand(program: Command, io: () => CommandIo): void {
-  program
-    .command("doctor")
-    .description(
-      "check the project, tests, secrets, AI setup, browsers and recordings; every problem comes with its fix",
-    )
-    .option("-e, --env <name>", "check only this environment (default: all)")
-    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
-    .option("--strict", "exit 1 when there are warnings")
-    .option("--json", "print machine-readable JSON")
-    .action(async (options: DoctorCommandOptions) => {
-      process.exitCode = await runDoctorCommand(options, io());
-    });
 }

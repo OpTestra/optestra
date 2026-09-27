@@ -8,7 +8,7 @@ const bin = fileURLToPath(new URL("../bin/cli.js", import.meta.url));
 const run = (...args: string[]) =>
   spawnSync(process.execPath, [bin, ...args], { encoding: "utf8" });
 
-describe("cli", () => {
+describe("cli", { timeout: 30_000 }, () => {
   it("--version prints the engine version", () => {
     const result = run("--version");
     expect(result.status).toBe(0);

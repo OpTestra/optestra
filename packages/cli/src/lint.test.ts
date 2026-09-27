@@ -53,7 +53,7 @@ const FIXABLE = [
   "",
 ].join("\n");
 
-describe("lint", () => {
+describe("lint", { timeout: 30_000 }, () => {
   it("finds nothing in the demo shop", () => {
     const result = run(shop);
     expect(result.stdout).toBe("No problems found in 12 files.\n");

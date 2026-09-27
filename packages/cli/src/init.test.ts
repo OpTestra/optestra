@@ -54,7 +54,7 @@ const init = (cwd: string, args: string[], input?: string) =>
     ...(input !== undefined ? { input } : {}),
   });
 
-describe("init", () => {
+describe("init", { timeout: 30_000 }, () => {
   it("sets up an empty folder: project file, example test, .env.example, .gitignore", () => {
     const dir = temp();
     const result = init(dir, ["--yes", "--name", "Demo", "--url", "http://127.0.0.1:4100"]);

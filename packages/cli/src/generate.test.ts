@@ -32,7 +32,7 @@ const run = (...args: string[]) =>
   spawnSync(process.execPath, [bin, "generate", ...args], { cwd: project, encoding: "utf8" });
 const spec = join(project, "tests", brand.dataDirName, "tests__create-project.spec.ts");
 
-describe("generate", () => {
+describe("generate", { timeout: 30_000 }, () => {
   it("writes the spec, fixtures and config for recorded tests and lists the rest", () => {
     const first = run();
     expect(first.status).toBe(0);

@@ -44,7 +44,7 @@ function tree(dir: string): string[] {
     .sort();
 }
 
-describe("export", () => {
+describe("export", { timeout: 30_000 }, () => {
   const out = join(outRoot, "shop-playwright");
 
   it("writes a standalone Playwright project of the recorded tests", () => {

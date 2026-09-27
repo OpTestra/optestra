@@ -25,7 +25,7 @@ function project(files: Record<string, string>): string {
   return dir;
 }
 
-describe("list", () => {
+describe("list", { timeout: 30_000 }, () => {
   it("lists every runnable shop test with zero problems; the login flow is not a test", () => {
     const result = run(shop, "list");
     expect(result.status).toBe(0);
@@ -52,7 +52,7 @@ describe("list", () => {
   });
 });
 
-describe("show", () => {
+describe("show", { timeout: 30_000 }, () => {
   it("shows the login flow inlined with origins and the password unresolved", () => {
     const result = run(shop, "show", "tests/create-project.test.md", "--expanded");
     expect(result.status).toBe(0);

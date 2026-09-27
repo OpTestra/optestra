@@ -20,8 +20,7 @@ import {
   saveProject,
 } from "@testament/config/node";
 // Registers the sections the project file may use (models, tests, decisions, auth).
-import "@testament/models";
-import "@testament/spec";
+import "../sections.js";
 import type { Command } from "commander";
 import type { CommandIo } from "./config.js";
 import type { DoctorProbes } from "./doctor.js";

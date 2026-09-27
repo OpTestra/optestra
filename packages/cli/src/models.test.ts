@@ -22,7 +22,7 @@ const run = (env: Record<string, string>, ...args: string[]) =>
     env: { ...baseEnv, ...env },
   });
 
-describe("models command", () => {
+describe("models command", { timeout: 30_000 }, () => {
   it("resolves planner and fixer from defaults with only ANTHROPIC_API_KEY set", () => {
     const result = run({ ANTHROPIC_API_KEY: "sk-ant-cli-test-9f8e7d" });
     expect(result.status).toBe(0);

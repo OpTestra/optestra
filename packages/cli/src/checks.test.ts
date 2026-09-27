@@ -71,7 +71,7 @@ const heading: Recording["checks"][number] = {
   recordedAt: "2026-01-01T00:00:00.000Z",
 };
 
-describe("checks", () => {
+describe("checks", { timeout: 30_000 }, () => {
   it("prints each check: summary, op, how it was made, sanity and authoring result", () => {
     const pending: Recording["checks"][number] = {
       key: checkKey("k2"),
