@@ -80,7 +80,12 @@ export const failureCauseInput = z.object({
       z.object({
         method: z.string().max(10),
         path: z.string().max(300),
-        status: z.union([z.number().int(), z.literal("failed"), z.literal("refused")]),
+        status: z.union([
+          z.number().int(),
+          z.literal("failed"),
+          z.literal("refused"),
+          z.literal("pending"),
+        ]),
         document: z.boolean(),
         /** Another site's request (analytics, fonts, ads): never evidence about the app. */
         thirdParty: z.boolean(),
