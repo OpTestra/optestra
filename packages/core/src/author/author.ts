@@ -1,11 +1,13 @@
-import type { Action, LocatorSpec } from "@testament/browser";
+import type { Action, LocatorSpec, PageCopy } from "@testament/browser";
 import { defaultRedactor } from "@testament/config/node";
-import { ulid } from "@testament/contract";
+import { type ModelCall, ulid } from "@testament/contract";
+import { type ModelCallRecord, toModelCall } from "@testament/models";
 import {
   type CheckOp,
   type CheckRecording,
   checkKey,
   type Command,
+  describeCheck,
   type Locator,
   RECORDING_EPOCH,
   RECORDING_VERSION,
@@ -22,6 +24,7 @@ import type {
   ExpandedTest,
   Locator as SpecLocator,
 } from "@testament/spec";
+import { type CompiledCheck, compileCheck, verifyCheck } from "../checks/index.js";
 import { type ActionStepResult, PROMPT_VERSION, runActionStep } from "./agent.js";
 import { commandOf } from "./commands.js";
 import { parseGuard } from "./guards.js";
@@ -29,6 +32,7 @@ import {
   type AuthoringReport,
   type AuthorOptions,
   type AuthorResult,
+  type CheckReport,
   DEFAULT_LIMITS,
   FAILURE_REASONS,
   type HookReport,
@@ -39,7 +43,9 @@ import { type StepVariables, segmentsTemplate, stepVariables } from "./variables
 
 // authorTest (LOOP-1): runs a test's expanded steps once with the AI agent and
 // returns the recording (what was done, for replay without AI) and an authoring
-// report. No verdicts: Expect/Soft lines become pending checks (LOOP-2).
+// report. No verdicts. Expect/Soft lines are compiled into typed checks against
+// the page as it is at that point (LOOP-2), evaluated once and sanity-tested; a
+// check that fails while authoring is kept and flagged, never dropped.
 
 type BoundValue = BoundText;
 
@@ -102,6 +108,9 @@ export async function authorTest(
   const hooks: HookReport[] = [];
   const steps: StepReport[] = [];
   const recorded = new Map<string, StepRecording>();
+  const compiled = new Map<string, CheckRecording>();
+  // The page as the latest action step began (sanity before-state; network checks count from here).
+  let before: PageCopy | undefined;
   let stop: { reason: StopReason; message?: string } | undefined;
   let model: string | null = null;
   const emit = options.onEvent ?? (() => {});
@@ -159,20 +168,72 @@ export async function authorTest(
         screenshots: {},
         refusals: [],
       };
-      if (step.kind === "expect" || step.kind === "soft") {
-        steps.push({
-          ...base,
-          status: "pending",
-          message: "Checks are compiled in a later phase.",
+      const exact =
+        step.kind === "exact" && step.exact?.form === "op"
+          ? exactCheck(step.exact.op as ExactOp<BoundValue>)
+          : undefined;
+      if (step.kind === "expect" || step.kind === "soft" || exact) {
+        if (stop || options.checks === false || controller.signal.aborted) {
+          steps.push({
+            ...base,
+            status: stop || controller.signal.aborted ? "skipped" : "pending",
+            message: stop
+              ? "Not checked: the test stopped before this step."
+              : "Checks were not compiled in this run.",
+          });
+          continue;
+        }
+        emit({ type: "step.started", index: step.index, number: step.number, text: step.text });
+        const report: StepReport = { ...base, route: routeOf(session.url) };
+        const outcome = await authorCheck(step, exact, {
+          session,
+          models: options.models,
+          budget: options.budget,
+          signal: controller.signal,
+          tags: { test: test.id, step: String(step.number ?? step.index + 1) },
+          values: stepVariables(test, step).values,
+          before,
+          ...(options.checkTimeoutMs !== undefined ? { timeoutMs: options.checkTimeoutMs } : {}),
         });
-        continue;
-      }
-      if (
-        step.kind === "exact" &&
-        step.exact?.form === "op" &&
-        exactCheck(step.exact.op as ExactOp<BoundValue>)
-      ) {
-        steps.push({ ...base, status: "pending", message: "Exact check; evaluated at replay." });
+        report.status = outcome.check.op.type === "pending" ? "pending" : "recorded";
+        report.check = {
+          ...outcome.check,
+          ...(outcome.check.problem ? { problem: redact(outcome.check.problem) } : {}),
+          ...(outcome.check.actual !== null ? { actual: redact(outcome.check.actual) } : {}),
+        };
+        if (outcome.check.problem) report.message = redact(outcome.check.problem);
+        else if (outcome.check.passed === false)
+          report.message = redact(
+            `The check failed while authoring: expected ${JSON.stringify(outcome.check.expected)}, saw ${JSON.stringify(outcome.check.actual)}.`,
+          );
+        report.modelCalls = outcome.modelCalls;
+        report.costUsd = outcome.modelCalls.some((c) => c.costUsd === null)
+          ? null
+          : outcome.modelCalls.reduce((sum, c) => sum + (c.costUsd ?? 0), 0);
+        if (outcome.model) model = outcome.model;
+        steps.push(report);
+        emit({ type: "step.finished", step: report });
+        compiled.set(step.textKey, {
+          key: checkKey(step.textKey),
+          textKey: step.textKey,
+          text: step.text,
+          soft: step.kind === "soft",
+          check: outcome.check.op,
+          generatedBy: outcome.check.generatedBy,
+          summary: outcome.check.summary,
+          ...(outcome.check.rule ? { rule: outcome.check.rule } : {}),
+          ...(outcome.check.sanity ? { sanity: outcome.check.sanity } : {}),
+          ...(outcome.check.passed === false
+            ? {
+                failedAtAuthoring: {
+                  expected: outcome.check.expected,
+                  actual: outcome.check.actual === null ? null : redact(outcome.check.actual),
+                },
+              }
+            : {}),
+          ...(outcome.check.problem ? { problem: redact(outcome.check.problem) } : {}),
+          recordedAt: now().toISOString(),
+        });
         continue;
       }
       if (stop) {
@@ -200,6 +261,8 @@ export async function authorTest(
       };
 
       let outcome: ActionStepResult;
+      // A copy of the page before the action, for the sanity test of the checks after it (VER-6).
+      if (options.checks !== false) before = await session.pageCopy();
       await shoot("before");
       if (step.kind === "exact" && step.exact?.form === "code") {
         outcome = {
@@ -282,8 +345,9 @@ export async function authorTest(
     clearTimeout(timer);
   }
 
-  const recording = assemble(test, options, recorded, model, now);
+  const recording = assemble(test, options, recorded, compiled, model, now);
   const calls = steps.flatMap((s) => s.modelCalls);
+  const checkReports = steps.flatMap((s) => (s.check ? [s.check] : []));
   const report: AuthoringReport = {
     reportVersion: 1,
     runId,
@@ -312,6 +376,16 @@ export async function authorTest(
       unknownCostCalls: calls.filter((c) => c.costUsd === null).length,
       billing: billingOf(calls),
     },
+    checks: {
+      total: checkReports.length,
+      rules: checkReports.filter((c) => c.generatedBy === "rules" && c.op.type !== "pending")
+        .length,
+      ai: checkReports.filter((c) => c.generatedBy === "ai").length,
+      exact: checkReports.filter((c) => c.generatedBy === "exact").length,
+      notCompiled: checkReports.filter((c) => c.op.type === "pending").length,
+      failedAtAuthoring: checkReports.filter((c) => c.passed === false).length,
+      provesNothing: checkReports.filter((c) => c.sanity?.provesNothing).length,
+    },
     evidence: [],
   };
   return { recording, report, screenshots };
@@ -330,6 +404,7 @@ function assemble(
   test: ExpandedTest,
   options: AuthorOptions,
   recorded: Map<string, StepRecording>,
+  compiled: Map<string, CheckRecording>,
   model: string | null,
   now: () => Date,
 ): Recording {
@@ -350,9 +425,12 @@ function assemble(
         ? exactCheck(step.exact.op as ExactOp<BoundValue>)
         : undefined;
     if (step.kind === "expect" || step.kind === "soft" || exact) {
+      const fresh = compiled.get(step.textKey);
       const old = previousChecks.get(step.textKey);
-      // A compiled check (LOOP-2) survives re-authoring; a pending one is rewritten.
-      if (old && old.check.type !== "pending" && !exact) checks.push(old);
+      // This run's check; else a compiled one from before survives; a pending one is rewritten.
+      if (fresh) checks.push(fresh);
+      else if (old && old.check.type !== "pending" && !exact && old.text === step.text)
+        checks.push(old);
       else {
         checks.push({
           key: checkKey(step.textKey),
@@ -360,7 +438,8 @@ function assemble(
           text: step.text,
           soft: step.kind === "soft",
           check: exact ?? { type: "pending" },
-          generatedBy: exact ? "exact" : "ai",
+          generatedBy: exact ? "exact" : "rules",
+          summary: describeCheck(exact ?? { type: "pending" }),
           recordedAt: old?.check.type === "pending" && old.text === step.text ? old.recordedAt : at,
         });
       }
@@ -385,6 +464,71 @@ function assemble(
     updatedAt: at,
     steps,
     checks,
+  };
+}
+
+interface CheckOutcome {
+  check: CheckReport & { op: CheckRecording["check"] };
+  modelCalls: ModelCall[];
+  model?: string;
+}
+
+/** Compiles (or, for exact ops, takes) the step's check, evaluates it once and sanity-tests it. */
+async function authorCheck(
+  step: ExpandedStep,
+  exact: CheckOp | undefined,
+  ctx: Parameters<typeof compileCheck>[1],
+): Promise<CheckOutcome> {
+  let result: CompiledCheck | (Omit<CompiledCheck, "generatedBy"> & { generatedBy: "exact" });
+  if (exact) {
+    const verified = await verifyCheck(exact, ctx);
+    const problem = verified.sanity.provesNothing
+      ? "This check also passes where it shouldn't (see the sanity test), so it can't show that the step worked."
+      : verified.evaluation.status === "refused" || verified.evaluation.status === "error"
+        ? verified.evaluation.message
+        : undefined;
+    result = {
+      op: exact,
+      generatedBy: "exact",
+      summary: describeCheck(exact),
+      evaluation: verified.evaluation,
+      sanity: verified.sanity,
+      ...(problem ? { problem } : {}),
+      records: verified.evaluation.record ? [verified.evaluation.record] : [],
+    };
+  } else {
+    result = await compileCheck(
+      { text: segmentsTemplate(step.bound), soft: step.kind === "soft" },
+      ctx,
+    );
+  }
+  const evaluation = result.evaluation;
+  const ran = evaluation && (evaluation.status === "passed" || evaluation.status === "failed");
+  const records: ModelCallRecord[] = [
+    ...result.records,
+    ...(evaluation?.record && !result.records.includes(evaluation.record)
+      ? [evaluation.record]
+      : []),
+  ];
+  return {
+    check: {
+      op: result.op,
+      summary: result.summary,
+      generatedBy: result.generatedBy,
+      ...(result.rule ? { rule: result.rule } : {}),
+      status: evaluation ? evaluation.status : "not_compiled",
+      passed: ran ? evaluation.passed : null,
+      expected: evaluation?.expected ?? null,
+      actual: evaluation?.actual ?? null,
+      sanity: result.sanity,
+      ...(result.problem ? { problem: result.problem } : {}),
+    },
+    modelCalls: records.map(toModelCall),
+    ...(result.model
+      ? { model: result.model }
+      : evaluation?.model
+        ? { model: evaluation.model }
+        : {}),
   };
 }
 

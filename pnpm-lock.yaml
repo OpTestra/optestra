@@ -79,6 +79,9 @@ importers:
       '@testament/contract':
         specifier: workspace:^
         version: link:../contract
+      '@testament/recording':
+        specifier: workspace:^
+        version: link:../recording
       playwright:
         specifier: 1.63.0
         version: 1.63.0

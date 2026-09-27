@@ -13,7 +13,8 @@
       "!**/*.tsbuildinfo",
       "!packages/contract/fixtures",
       "!packages/decide/fixtures",
-      "!**/*.steps.json"
+      "!**/*.steps.json",
+      "!packages/core/fixtures"
     ]
   },
   "formatter": {

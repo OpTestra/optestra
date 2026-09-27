@@ -90,7 +90,7 @@ async function author(
 }
 
 describe("authorTest on the shop (scripted model)", () => {
-  it("authors the login test with role/label locators, templates and pending checks", async () => {
+  it("authors the login test with role/label locators, templates and compiled checks", async () => {
     const { recording, report, calls, closed } = await author("correct", "tests/login.test.md", [
       ...loginPlans,
       [/^Click "Log out"/, [{ name: "click", on: { role: "button", name: "Log out" } }]],
@@ -103,10 +103,10 @@ describe("authorTest on the shop (scripted model)", () => {
       "recorded",
       "recorded",
       "recorded",
-      "pending",
-      "pending",
       "recorded",
-      "pending",
+      "recorded",
+      "recorded",
+      "recorded",
     ]);
     const actions = recording.steps.map((s) => s.commands[0]?.action);
     expect(actions).toEqual([
@@ -137,7 +137,11 @@ describe("authorTest on the shop (scripted model)", () => {
       "/login",
       "/dashboard",
     ]);
-    expect(recording.checks.map((c) => c.check.type)).toEqual(["pending", "pending", "pending"]);
+    expect(recording.checks.map((c) => [c.check.type, c.generatedBy])).toEqual([
+      ["text", "rules"],
+      ["url", "rules"],
+      ["text", "rules"],
+    ]);
     // The secret is typed but appears nowhere: recording, report, prompts, evidence.
     const leak = [serializeRecording(recording), JSON.stringify(report), ...calls.map(promptText)];
     for (const file of closed.evidence) leak.push(readFileSync(file.path).toString("latin1"));

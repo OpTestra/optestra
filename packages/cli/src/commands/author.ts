@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
+import { brand } from "@testament/brand";
 import { hasErrors } from "@testament/config";
 import {
   dotenvSource,
@@ -161,6 +162,35 @@ export async function runAuthorCommand(
           const step = event.step;
           const label = `${step.number ?? ""}. ${step.text}`.slice(0, 60).padEnd(60);
           const detail = `${step.actions.length} action${step.actions.length === 1 ? "" : "s"} · ${step.modelCalls.length} AI call${step.modelCalls.length === 1 ? "" : "s"} · ${costText(step.modelCalls, step.costUsd)}`;
+          if (step.check) {
+            // A compiled check (LOOP-2): how it was made, how it did, and what it checks.
+            const check = step.check;
+            const how =
+              check.generatedBy === "rules" && check.rule
+                ? `rules/${check.rule}`
+                : check.generatedBy;
+            const result =
+              check.status === "not_compiled"
+                ? "not compiled"
+                : check.passed === null
+                  ? check.status
+                  : check.passed
+                    ? "passed"
+                    : "FAILED";
+            const ai = step.modelCalls.length
+              ? ` · ${step.modelCalls.length} AI call${step.modelCalls.length === 1 ? "" : "s"}`
+              : "";
+            io.stdout(
+              `  ${label}  check     ${how} · ${result}${check.sanity?.provesNothing ? " · proves nothing" : ""}${ai}\n`,
+            );
+            io.stdout(`      ${check.summary}\n`);
+            if (check.passed === false)
+              io.stdout(
+                `      expected ${JSON.stringify(check.expected)}, saw ${JSON.stringify(check.actual)}\n`,
+              );
+            if (check.problem) io.stdout(`      ${check.problem}\n`);
+            return;
+          }
           io.stdout(`  ${label}  ${step.status.padEnd(8)}  ${detail}\n`);
           if (step.status !== "recorded" && step.message)
             io.stdout(`      ${step.reason}: ${step.message}\n`);
@@ -182,6 +212,12 @@ export async function runAuthorCommand(
     io.stdout(`  ${`${step.number ?? ""}. ${step.text}`.slice(0, 60).padEnd(60)}  skipped\n`);
   }
   const t = report.totals;
+  const c = report.checks;
+  io.stdout(
+    `\nChecks: ${c.total - c.notCompiled} of ${c.total} compiled (${c.rules} by rules, ${c.ai} by AI, ${c.exact} exact)` +
+      `${c.failedAtAuthoring ? `, ${c.failedAtAuthoring} failed while authoring (a bug in the app, or the test is wrong)` : ""}` +
+      `${c.provesNothing ? `, ${c.provesNothing} prove nothing` : ""}. Details: ${brand.cliName} checks ${file}\n`,
+  );
   io.stdout(
     `\n${report.outcome === "recorded" ? "Recorded every action step." : `Stopped: ${report.stopReason}${report.message ? ` (${report.message})` : ""}`}\n` +
       `AI: ${t.aiCalls} calls, ${t.tokens.input} input + ${t.tokens.output} output tokens, ${t.billing === "subscription" ? "via your subscription (no API cost)" : money(t.costUsd)}${t.billing === "mixed" ? " (partly via your subscription)" : ""}${t.unknownCostCalls ? ` (+${t.unknownCostCalls} calls of unknown cost)` : ""}\n` +

@@ -6,5 +6,10 @@
     "lib": ["es2024", "dom"]
   },
   "include": ["src", "src/*.json"],
-  "references": [{ "path": "../brand" }, { "path": "../config" }, { "path": "../contract" }]
+  "references": [
+    { "path": "../brand" },
+    { "path": "../config" },
+    { "path": "../contract" },
+    { "path": "../recording" }
+  ]
 }

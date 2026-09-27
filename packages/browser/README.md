@@ -53,8 +53,10 @@ These hold by construction; each has a test that fails if it breaks
    `disallowed_domain`. Refused subresources are recorded in `post.refused` and
    `observe().refused`, and the test goes on.
 2. **Closed action set (SAF-2).** The `Session` exposes `observe`, `candidates`,
-   `act`, `screenshot`, `settle`, `refusals`, `url`, `browserName` and `close`.
-   Nothing else. No Playwright object is reachable: fields are private, and a
+   `act`, `screenshot`, `settle`, `refusals`, `url`, `browserName` and `close`,
+   plus the read-only `check` and `pageCopy` (LOOP-2, below) and the
+   setup-only `hookRequest`, none of which the agent can call. Nothing else.
+   No Playwright object is reachable: fields are private, and a
    `LaunchedBrowser` keeps its browser in a module-private map. There is no
    evaluate, no raw HTTP and no file access. Upload works only with
    `allowUpload: { dir }`, and only for files inside that folder (after
@@ -316,3 +318,56 @@ arrive. Exit codes: 0 when the page opened, 1 when it was refused or failed,
   and the CI `fixtures` job include them.
 - `BROWSER_ENGINES` picks the engines for the Firefox/WebKit launch-path test
   (default `firefox,webkit`).
+
+## Checks (LOOP-2)
+
+`session.check(op, options)` evaluates one typed `CheckOp` from
+`@testament/recording` (src/check.ts). It is read-only and not part of the
+action set: the agent has no tool for it; the check compiler (LOOP-2) and the
+replayer (LOOP-4) call it.
+
+```ts
+const stepStart = session.requestMark();       // as each action step begins (or a pageCopy())
+// … the step's actions …
+const result = await session.check(
+  { type: "text", target: { kind: "role", role: "heading", level: 1 }, match: "equals", value: "Welcome to {{data.plan}}" },
+  { timeoutMs: 5_000, values: { "data.plan": "Pro" } },
+);
+// { status: "passed" | "failed" | "refused" | "unsupported" | "error",
+//   passed, expected: "Welcome to Pro", actual: "Welcome to Pro", ms, attempts, matched: 1, seen: "…" }
+```
+
+- **Auto-waiting**, like Playwright's assertions: it retries every 100 ms until
+  the check passes or `timeoutMs` (default 5000; 0 = one attempt) is up.
+  `actual` is what the final attempt saw: the text, URL, count, value or state.
+  For a text that isn't there, `actual` is the closest line of the target's
+  text ("$29.00 due today" for an expected "$0.00 due today").
+- **Locators** are the recording's: role (with an optional heading `level`),
+  label, placeholder, alt, title, test id, text or CSS, each with a frame path
+  and `nth`; `scope` finds the container first. A target that matches several
+  elements passes if any one of them does.
+- **Templates** are bound from `values` first. A `{{secret.X}}` reference is
+  `refused`, and so is a value that contains any secret of the session: secrets
+  are never check values. Everything returned is scrubbed.
+- **text** reads a form field's value (input, textarea, select: like Playwright's
+  `toHaveValue`), and every other element's innerText.
+- **network** checks count only requests sent since the current action step
+  began: pass `since`, either `session.requestMark()` taken as the step began
+  (cheap: a position in the request log; what replay should use) or the
+  `pageCopy()` taken then (the author does this, since it needs the copy for
+  the sanity test anyway). Requests seen while waiting count
+  too. Without `since`, only those seen while waiting count.
+- `code`, `soft_judgment` and `pending` are `unsupported` here: code runs from
+  the generated spec, soft judgments need a model (the engine does them).
+- `seen` is a hash of everything the check looked at, so the sanity test can
+  tell whether an action changed its subject.
+
+`on` chooses the page: `"page"` (default), `"blank"` (about:blank) or a
+`PageCopy`. `session.pageCopy()` takes a static copy of the page as it is now:
+the DOM with live field values, checked boxes, selected options and open
+dialogs written into attributes, all stylesheets inlined, and scripts, event
+handlers, frame contents, and password and secret-field values removed. It is
+opaque (the HTML can't be read back) and scrubbed. `"blank"` and copies run in
+a separate context of the same browser, offline, with JavaScript disabled, a
+CSP that blocks everything but inline styles, and every request aborted; it is
+closed with the session's page. None of this touches the page under test.

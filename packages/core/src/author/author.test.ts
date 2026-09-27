@@ -7,6 +7,7 @@ import { checkGuards, destructiveIntent, parseGuard } from "./guards.js";
 import {
   agentScript,
   element,
+  evaluation,
   fakeSession,
   promptText,
   scriptedModels,
@@ -42,6 +43,99 @@ const loginPage = [
   element("e3", "button", "Log in"),
   element("e4", "button", "Delete account"),
 ];
+
+describe("authorTest checks (no browser)", () => {
+  it("keeps the line verbatim and a check that fails while authoring, flagged with expected/actual", async () => {
+    const line = "The page shows “$0.00  due today”";
+    const test = await expanded(`1. Click "Log in"\n2. Expect: ${line}`);
+    const session = fakeSession(loginPage, undefined, (_op, options) =>
+      evaluation(false, {
+        expected: "$0.00  due today",
+        actual: options?.on ? "(nothing)" : "$29.00 due today",
+      }),
+    );
+    const { recording, report } = await authorTest(test, {
+      session,
+      models: scriptedModels(
+        agentScript([[/Click/, [{ name: "click", on: { role: "button", name: "Log in" } }]]]),
+      ).models,
+      timeoutMs: 30_000,
+      meta,
+      screenshots: false,
+    });
+    expect(recording.checks).toHaveLength(1);
+    expect(recording.checks[0]).toMatchObject({
+      text: line,
+      generatedBy: "rules",
+      rule: "visible-text",
+      check: { type: "text", match: "contains", value: "$0.00  due today" },
+      failedAtAuthoring: { expected: "$0.00  due today", actual: "$29.00 due today" },
+      sanity: { provesNothing: false },
+    });
+    // Evaluated once on the page, then on the empty page and the before-state copy.
+    expect(
+      session.checked.map((c) =>
+        typeof c.options?.on === "object" ? "before" : (c.options?.on ?? "page"),
+      ),
+    ).toEqual(["page", "blank", "before"]);
+    expect(report.steps[1]).toMatchObject({
+      status: "recorded",
+      check: { status: "failed", passed: false, actual: "$29.00 due today" },
+    });
+    expect(report.steps[1]?.message).toContain("The check failed while authoring");
+    expect(report.outcome).toBe("recorded");
+    expect(report.checks).toMatchObject({ total: 1, rules: 1, failedAtAuthoring: 1 });
+  });
+
+  it("leaves checks after a stop uncompiled and keeps an earlier compiled one", async () => {
+    const test = await expanded('1. Click "Log in"\n2. Expect: the page heading is "Dashboard"');
+    const session = fakeSession(loginPage, () => ({ post: { changed: false } }));
+    const previous = {
+      recordingVersion: 1 as const,
+      testId: "tests__t",
+      testPath: "tests/t.test.md",
+      target: "web" as const,
+      recordedWith: {
+        engineVersion: "0.1.0",
+        epoch: 1,
+        browser: "chromium",
+        device: "desktop",
+        environment: "local",
+        model: null,
+        promptVersion: null,
+      },
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      steps: [],
+      checks: [
+        {
+          key: "0123456789abcdef",
+          textKey: test.steps[1]?.textKey ?? "",
+          text: 'the page heading is "Dashboard"',
+          soft: false,
+          check: { type: "url" as const, match: "contains" as const, value: "/dashboard" },
+          generatedBy: "rules" as const,
+          recordedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    };
+    const { recording, report } = await authorTest(test, {
+      session,
+      models: scriptedModels(
+        agentScript([[/Click/, [{ name: "click", on: { role: "button", name: "Log in" } }]]]),
+      ).models,
+      timeoutMs: 30_000,
+      meta,
+      screenshots: false,
+      previous,
+    });
+    expect(report.steps[1]).toMatchObject({ status: "skipped" });
+    expect(recording.checks[0]?.check).toEqual({
+      type: "url",
+      match: "contains",
+      value: "/dashboard",
+    });
+  });
+});
 
 describe("authorTest (no browser)", () => {
   it("records commands with locators and templates, never values or secrets", async () => {
@@ -87,11 +181,12 @@ describe("authorTest (no browser)", () => {
     });
 
     expect(report.outcome).toBe("recorded");
+    // The Expect line compiles by rules; the Soft one has no rule and the model gives no check.
     expect(report.steps.map((s) => s.status)).toEqual([
       "recorded",
       "recorded",
       "recorded",
-      "pending",
+      "recorded",
       "pending",
     ]);
     expect(recording.steps.map((s) => s.commands.map((c) => c.action))).toEqual([
@@ -121,10 +216,17 @@ describe("authorTest (no browser)", () => {
     expect(recording.steps[0]?.commands[0]?.fingerprint?.fallbacks).toEqual([
       { kind: "css", selector: "#e1" },
     ]);
-    expect(recording.checks.map((c) => [c.text, c.soft, c.check.type])).toEqual([
-      ['the heading is "Dashboard"', false, "pending"],
-      ["it looks fine", true, "pending"],
+    expect(recording.checks.map((c) => [c.text, c.soft, c.check.type, c.generatedBy])).toEqual([
+      ['the heading is "Dashboard"', false, "text", "rules"],
+      ["it looks fine", true, "pending", "rules"],
     ]);
+    expect(recording.checks[0]).toMatchObject({
+      check: { target: { kind: "role", role: "heading" }, match: "equals", value: "Dashboard" },
+      summary: "Checked that a heading is exactly 'Dashboard'",
+      rule: "heading",
+      sanity: { empty: { result: "failed" }, before: { result: "failed" }, provesNothing: false },
+    });
+    expect(recording.checks[1]?.problem).toContain("No phrase rule matches this line.");
     expect(recording.steps.every((s) => /^[0-9a-f]{16}$/.test(s.key) && s.route === "/login")).toBe(
       true,
     );
@@ -136,7 +238,7 @@ describe("authorTest (no browser)", () => {
     ].join("\n");
     expect(everything).not.toContain(SECRET);
     expect(calls.map(promptText).join("\n")).toContain("{{secret.SHOP_PASSWORD}} = (secret");
-    expect(report.totals.aiCalls).toBe(6);
+    expect(report.totals.aiCalls).toBe(7); // 6 for the actions, 1 to compile the Soft line
     expect(report.totals.costUsd).toBeGreaterThan(0);
   });
 
@@ -363,7 +465,7 @@ describe("authorTest (no browser)", () => {
     });
     expect(report.steps.map((s) => [s.status, s.reason ?? null])).toEqual([
       ["recorded", null],
-      ["pending", null],
+      ["recorded", null],
       ["stopped", "code_step_needs_replay"],
       ["skipped", null],
     ]);

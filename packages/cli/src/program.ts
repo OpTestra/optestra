@@ -5,6 +5,7 @@ import { Command } from "commander";
 import { registerAuthCommands } from "./commands/auth.js";
 import { type AuthorCommandOptions, runAuthorCommand } from "./commands/author.js";
 import { registerBrowserCommands } from "./commands/browser.js";
+import { type ChecksCommandOptions, runChecksCommand } from "./commands/checks.js";
 import { type ConfigCommandOptions, runConfigCommand } from "./commands/config.js";
 import { type DeciderSetupOptions, runDeciderSetup } from "./commands/decider.js";
 import { type DecisionsCommandOptions, runDecisionsCommand } from "./commands/decisions.js";
@@ -196,6 +197,23 @@ export function createProgram(): Command {
     .option("-C, --dir <path>", "project folder (default: the test's nearest project)")
     .action(async (file: string, options: AuthorCommandOptions) => {
       process.exitCode = await runAuthorCommand(file, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("checks")
+    .description(
+      "show what each Expect line of a test was compiled into: the check, how it was made, its sanity test",
+    )
+    .argument("<file>", "the .test.md file")
+    .option("--json", "print JSON")
+    .option("-e, --env <name>", "environment (for the project settings)")
+    .option("-C, --dir <path>", "project folder (default: the test's nearest project)")
+    .action(async (file: string, options: ChecksCommandOptions) => {
+      process.exitCode = await runChecksCommand(file, options, {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),

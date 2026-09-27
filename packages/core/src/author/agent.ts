@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from "node:timers/promises";
 import type { Action, ActionOutcome, Observation, ObservedElement } from "@testament/browser";
 import { renderForModel } from "@testament/browser";
 import type { ModelCall } from "@testament/contract";
@@ -30,9 +31,20 @@ export const PROMPT_VERSION: string = prompt.version;
 // upload: attaching a file often shows nothing until the form is sent (the next step).
 const NO_EFFECT_OK = new Set(["hover", "scroll", "waitFor", "press", "upload"]);
 
+/** The harness's settle can return before a click's async work starts: grace before looking again. */
+const LATE_EFFECT_MS = 400;
+
 /** The page's elements in order (refs and focus left out), to notice reordering such as a sort. */
 function orderSignature(observation: Observation): string {
   return JSON.stringify(observation.elements.map((e) => [e.role, e.name, e.text ?? ""]));
+}
+
+/** How the page differs from `before`: reordered (same elements), changed, or not at all. */
+function pageChange(before: Observation, after: Observation): "reordered" | "changed" | null {
+  if (orderSignature(after) === orderSignature(before)) return null;
+  const sorted = (o: Observation) =>
+    JSON.stringify(o.elements.map((e) => [e.role, e.name, e.text ?? ""]).sort());
+  return sorted(after) === sorted(before) ? "reordered" : "changed";
 }
 
 export interface AgentContext {
@@ -352,14 +364,22 @@ export async function runActionStep(
       // Compare the order with the snapshot this action was planned on (only valid for the
       // first action since that snapshot). Observing resets the refs, so stop this reply here.
       if (!effect && actedSinceObserve === 1) {
-        const after = await ctx.session.observe();
-        if (orderSignature(after) !== orderSignature(observation)) {
+        // 1. Compare with the planning snapshot, order included.
+        let change = pageChange(observation, await ctx.session.observe());
+        // 2. Still nothing: the effect may come late (a toast, a slow re-render). Look again.
+        if (!change && !NO_EFFECT_OK.has(planned.recorded.type)) {
+          await sleep(LATE_EFFECT_MS);
+          change = pageChange(observation, await ctx.session.observe());
+        }
+        if (change) {
           effect = true;
           report.changed = true;
           const last = history.length - 1;
           history[last] = (history[last] ?? "").replace(
             "NO visible change",
-            "the page changed: its elements were reordered",
+            change === "reordered"
+              ? "the page changed: its elements were reordered"
+              : "the page changed a moment later",
           );
         }
         executed.push({ outcome, recorded: planned.recorded, command, effect });

@@ -1,12 +1,14 @@
 # @testament/core
 
 The engine. Today it holds the **author** (LOOP-1): the first AI run of a test,
-which records every action step so that later runs can replay it without AI.
-Replay, verdicts and healing come in LOOP-4 and HEAL.
+which records every action step so that later runs can replay it without AI,
+and the **check compiler** (LOOP-2), which turns every `Expect:` and `Soft:`
+line into a typed, deterministic check at authoring time. Replay, verdicts and
+healing come in LOOP-4 and HEAL.
 
 | Import | Use |
 |---|---|
-| `@testament/core` | `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `PROMPT_VERSION`, `version()`, the redacting `logger` |
+| `@testament/core` | `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `PROMPT_VERSION`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION` |
 | `@testament/core/node` | `saveAuthoring` (writes the recording, report, screenshots and evidence) |
 
 ## authorTest
@@ -34,12 +36,17 @@ saveAuthoring({ projectDir, testsDir, result, evidence: (await session.close()).
    - **action**: the agent loop (below).
    - **`Exact:` actions** (`goto click fill select press`): run directly
      through the harness with no model, and recorded with `source: exact`.
-   - **`Exact:` expect ops**: written as typed checks (`generatedBy: exact`).
+   - **`Exact:` expect ops**: already typed; evaluated once and sanity-tested
+     like any other check (`generatedBy: exact`).
    - **code blocks**: stop the test with `code_step_needs_replay`. The harness
      has no eval, by design, so code runs from the generated Playwright spec
      (LOOP-3/4).
-   - **Expect / Soft**: written as `pending` checks. Nothing is evaluated here
-     (LOOP-2).
+   - **Expect / Soft**: compiled into a check against the page as it is at
+     that point, evaluated once and sanity-tested (see "How Expect lines become
+     checks"). A check that fails while authoring is kept and flagged, never
+     dropped: it may be a real bug, and the user decides. Once the test has
+     stopped, later checks are not compiled (the page isn't where the test
+     expects it to be); an earlier compiled check for the same line survives.
    - **Never**: the guard list. Flows are already inlined, and each step keeps
      its origin.
 4. Runs the `teardown` request hooks.
@@ -74,10 +81,22 @@ There are no verdicts and no contract run folder (LOOP-4 adds those).
 
 **VER-5.** `step_done` is accepted only if at least one action the harness ran
 reported `changed: true`. The exception: every action was of a kind that
-legitimately changes nothing (hover, scroll, waitFor, press, upload: a chosen file often shows only when the form is sent). A change in the order of the page's elements counts as a change too (the harness compares elements as a set, so a table sort would otherwise look like nothing happened). Otherwise the step
+legitimately changes nothing (hover, scroll, waitFor, press, upload: a chosen
+file often shows only when the form is sent). Otherwise the step
 fails with `no_visible_effect`, whatever the model says. The shop's
 `broken-silent-click` variant fails here. `step_done` with no action at all gets
 one nudge ("perform the step's action"), then fails.
+
+The harness compares pages as sets of elements, and its settle can return
+before a click's asynchronous work has started. So when the first action after
+a snapshot reports no change, the agent:
+1. observes again and compares with the snapshot it planned on, order
+   included: a table sort (rows reordered, nothing added) is a change, and the
+   model is told "the page changed: its elements were reordered";
+2. if nothing changed (and the action is one that should change the page),
+   waits 400 ms and compares content and order once more: a late toast or a
+   slow re-render counts ("the page changed a moment later");
+3. otherwise the action had no visible effect. A dead button still fails.
 
 ### Tools
 
@@ -116,6 +135,112 @@ recording and the report, so evals can compare prompts (LRN-10). Key rules:
 The first step that doesn't end recorded stops the test, and the remaining steps
 are `skipped`. Nothing is reported as a partial success.
 
+## How Expect lines become checks
+
+"A pass means a real check passed." Every `Expect:` and `Soft:` line becomes,
+while the test is authored, one typed `CheckOp` from `@testament/recording`
+(VER-1). The op is shown to the user, stored in the recording and re-run on
+every run by plain code in the browser harness, with no model (VER-2). The
+line itself is never changed, split, merged or dropped (HEAL-3); a line that
+can't be compiled faithfully stays `pending`, with the reason, instead of
+getting a weaker check.
+
+At each check step, `compileCheck` (`src/checks/`):
+
+1. **Rules first.** `compileByRules` matches the line against the phrase rules
+   in `src/checks/phrases.json` (data, not code: patterns, role and state
+   words, container kinds, selectors). The builders pick the concrete locator
+   by looking at the live page, through the observation and read-only probes
+   (`session.check` with no wait), and prefer role and label locators like
+   LOOP-1's candidates. No model is involved. Every Expect line in the shop
+   suite compiles this way.
+2. **AI second.** Only a line no rule can map goes to the `planner` role, with
+   the rules that were tried and the page as untrusted content (SAF-3), as in
+   LOOP-1. The answer is structured output: a `CheckOp` (never `pending` or
+   `code`; `soft_judgment` only for `Soft:` lines), or `faithful: false` with a
+   reason. A line that uses a secret is never compiled and never sent.
+3. **Evaluate once** on the page (auto-waiting up to 5 s). A failure is stored
+   as `failedAtAuthoring: { expected, actual }` and shown in the report.
+4. **Sanity test** (VER-6, below). A check that proves nothing is regenerated
+   once by the AI compiler; if that doesn't help, it is kept and flagged
+   (`sanity.provesNothing`, `problem`) for the user.
+5. **Summary** (EVD-3): `describeCheck(op)`, generated from the op, never
+   from a model, e.g. "Checked that the main heading is exactly 'Welcome to
+   Pro'".
+
+### The phrase rules
+
+| Phrase (examples) | Op |
+|---|---|
+| `the page heading is "X"` | `text` equals on `role=heading level=1`, or any heading when the page has no h1 |
+| `the URL contains /x` · `is` · `matches` · `ends with` · `starts with` · `we are on /x` | `url` contains / is / matches |
+| `a message says "X"` · `a notification shows "X"` | `text` contains on `role=status`, else `role=alert`, else the page's visible text |
+| `an error says "X"` | `text` contains on `role=alert`, else an element marked as an error (`[class*=error]`, `[aria-invalid]`-style); if X isn't on the page at all, `role=alert` (so it fails, visibly) |
+| `the text "X" is shown` · `the page shows "X"` · `"X" is visible` | `text` contains on `body` (the page's visible text) |
+| `the page doesn't show "X"` · `"X" is gone` | `element_state` hidden on the text X |
+| `a dialog titled "X" is open` | `element_state` visible on `role=dialog name=X` (or `alertdialog`) |
+| `a "X" button is shown` · `the "X" link is disabled` · `the checkbox "X" is checked` · `the image "X" is visible` | `element_state` on `role=<button\|link\|checkbox\|img…> name=X` |
+| `the projects list shows "X"` · `the orders table says "X"` | `text` contains on the list/table the page names that way (`role=list name=Projects`), else the only one |
+| `the orders table shows 5 orders` | `count` of `tbody tr:visible` (tables) or `listitem` (lists) in it |
+| `the first order in the table is A-1002 ($8.90)` | `text` of the first visible data row: `matches` every part, in order |
+| `"Full name" contains "Ada King"` · `"Time zone" is "Europe/London"` | `value` of the field with that label (else `textbox`/`combobox` name) |
+
+Values keep their `{{refs}}` (templates, bound at evaluation). Text matching
+collapses whitespace; `equals` is exact otherwise.
+
+Where a rule has a choice (status vs alert vs visible text), it takes the most
+specific place where the expected text is now, after waiting up to 3 s for it
+to appear. The result is never weaker than "the page shows X".
+
+### The sanity test (VER-6)
+
+A check must be able to fail. `sanityTest` evaluates it once more, with no
+waiting, on two pages where it should not hold:
+
+- **An empty page**: `about:blank` in a throwaway, offline, script-free page
+  of the same browser.
+- **The page before the preceding action.** Just before every action step the
+  author takes `session.pageCopy()`: a static copy of the DOM with live field
+  values, open dialogs and selected options written into attributes, styles
+  inlined, scripts, frames and password/secret values removed. The check runs
+  against that copy in the same throwaway page, with the copy's URL. This is
+  more faithful than re-evaluating an accessibility snapshot (CSS selectors,
+  `:visible`, field values and heading levels all behave as on the live page)
+  and costs one DOM serialisation per action step.
+
+A check that passes on the empty page proves nothing. On the before-state it
+depends on whether the action changed what the check looks at: every
+evaluation returns `seen`, a hash of the check's subject (matched texts, URL,
+count, states). If the subject is the same before and after, the check
+verifies something the action was not meant to change ("the URL contains
+/checkout" after a declined card, "the page heading is 'Create your account'"
+after a rejected form, a list after a reload), and the before-state is
+skipped. If the subject changed and the check still passed before, it proves
+nothing ("the page shows 'Acme'", which is on every page). Absence checks
+(`hidden`, at most N) hold on an empty page by nature, so it isn't used for
+them.
+
+### Soft checks
+
+A `Soft:` line compiles like any other line, and rules come first; the check
+is labelled `soft: true`. Only when a soft line is visual or qualitative ("the
+chart looks reasonable") may the AI compiler return `soft_judgment`
+(`{ question, screenshot: page | element, target? }`). The recording schema
+refuses it on a non-soft line. Evaluating it (`evaluateCheck`) sends a
+screenshot to the model and asks yes / no / unsure; the result is marked
+`warnOnly` and can never make a test pass (VER-3). Soft judgments are not
+sanity-tested.
+
+### Evaluating checks (for LOOP-4)
+
+`evaluateCheck(session, op, { values, timeoutMs, since, models })` runs a
+deterministic op through `session.check` (see `@testament/browser`) and a
+`soft_judgment` through the model. `since` marks where the current action
+step began: network checks count only requests from there on. Replay should
+pass `session.requestMark()` (cheap); a `pageCopy()` works too.
+The author already takes that copy before every action step (it is also the
+sanity test's before-state) and passes it for every check after the step. `verifyCheck(op, ctx)` is evaluate + sanity.
+
 ## Guards (AUT-2, SAF-4)
 
 Guards are rule-based for now (DEC-2 improves them). They are checked before
@@ -145,7 +270,12 @@ every action, and a refusal is shown to the model and recorded in the report.
 - per step: status (`recorded`, `failed`, `stopped`, `pending` or `skipped`),
   reason, route, key, actions (with templates, never values), the contract
   `ModelCall`s, cost, screenshot paths and refusals;
-- totals: AI calls, tokens and cost.
+- per check step, `check`: the op, its summary, `generatedBy` (and rule), the
+  authoring result (`status`, `passed`, `expected`, `actual`), the sanity test
+  and any `problem`. A compiled check's step is `recorded`; an uncompiled one
+  is `pending`;
+- totals: AI calls, tokens and cost; `checks`: total, by rules / AI / exact,
+  not compiled, failed while authoring, proving nothing.
 
 Stop reasons:
 - failures: `step_impossible`, `no_visible_effect`, `guard_refused`,
@@ -172,7 +302,19 @@ evidence for it.
 testament author tests/create-project.test.md [--env local] [--headed] [--device laptop] [--browser webkit] [--video]
 ```
 
-It prints one line per step (status, actions, AI calls and cost), then the
-totals and the paths of the recording and the report. Exit codes: 0 when every
-action step was recorded, 1 when a step failed, 2 when the run stopped or the
-config or test has a problem (including "no model key").
+It prints one line per step (status, actions, AI calls and cost). For a check
+step it prints how the check was made (`rules/heading`, `ai`, `exact`), how it
+did (`passed`, `FAILED` with expected and actual, `proves nothing`) and its
+summary. Then the totals, a line about the checks, and the paths of the
+recording and the report. Exit codes: 0 when every action step was recorded,
+1 when a step failed, 2 when the run stopped or the config or test has a
+problem (including "no model key"). A check that failed while authoring
+doesn't change the exit code: authoring has no verdicts.
+
+```bash
+testament checks tests/create-project.test.md [--json]
+```
+
+Prints each check from the recording: the line, the summary, the op, how it
+was made, the sanity test and the authoring result. Exit 2 when the test has
+no recording yet.

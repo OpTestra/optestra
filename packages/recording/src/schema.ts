@@ -75,6 +75,8 @@ export const LocatorSchema = z.discriminatedUnion("kind", [
     role: z.string().min(1),
     name: z.string().optional(),
     exact,
+    /** Heading level (`getByRole("heading", { level })`); checks only. */
+    level: z.number().int().min(1).max(6).optional(),
     frame: framePath,
     nth: z.number().int().min(0).optional(),
   }),
@@ -250,16 +252,21 @@ export const StepRecordingSchema = z.object({
 });
 export type StepRecording = z.infer<typeof StepRecordingSchema>;
 
-// ── Checks (typed now, filled by LOOP-2) ─────────────────────────────────────
+// ── Checks (LOOP-2) ──────────────────────────────────────────────────────────
 
 const scope = LocatorSchema.optional();
 
-/** A typed check. Every op may be scoped to a container (which carries the frame path). */
+/**
+ * A typed check (VER-1). Every op with a target may be scoped to a container
+ * (which carries the frame path). Evaluating any op except `soft_judgment` needs
+ * no model: it is deterministic code (VER-2).
+ */
 export const CheckOpSchema = z.discriminatedUnion("type", [
+  /** The visible text (innerText, whitespace collapsed) of the target. `matches` is a regex source. */
   z.object({
     type: z.literal("text"),
     target: LocatorSchema,
-    match: z.enum(["equals", "contains"]),
+    match: z.enum(["equals", "contains", "matches"]),
     value: TemplateSchema,
     scope,
   }),
@@ -292,6 +299,14 @@ export const CheckOpSchema = z.discriminatedUnion("type", [
     max: z.number().int().min(0).optional(),
     scope,
   }),
+  /** A form field's current value (a select's chosen option label). */
+  z.object({
+    type: z.literal("value"),
+    target: LocatorSchema,
+    match: z.enum(["equals", "contains"]),
+    value: TemplateSchema,
+    scope,
+  }),
   z.object({
     type: z.literal("network"),
     method: z.string(),
@@ -304,23 +319,86 @@ export const CheckOpSchema = z.discriminatedUnion("type", [
     snapshot: z.string(),
     scope,
   }),
-  /** Verbatim Playwright code (from an Exact code block or LOOP-2). */
+  /** Verbatim Playwright code (from an Exact code block). Runs from the generated spec only. */
   z.object({ type: z.literal("code"), code: z.string() }),
-  /** Not compiled yet: LOOP-2 turns the line into one of the ops above. */
+  /**
+   * A model's yes/no judgment of a screenshot, for `Soft:` lines that can't be
+   * pinned (VER-3). Allowed only on soft checks; its result can only warn.
+   */
+  z.object({
+    type: z.literal("soft_judgment"),
+    /** The question put to the model: the expectation as written. */
+    question: z.string().min(1),
+    /** What the model sees: the whole page, or one element (`target`). */
+    screenshot: z.enum(["page", "element"]),
+    target: LocatorSchema.optional(),
+  }),
+  /** Not compiled (yet): the line has no check. `problem` on the recording says why. */
   z.object({ type: z.literal("pending") }),
 ]);
 export type CheckOp = z.infer<typeof CheckOpSchema>;
+export type CheckOpType = CheckOp["type"];
 
-export const CheckRecordingSchema = z.object({
-  key: z.string().regex(/^[0-9a-f]{16}$/),
-  textKey: z.string(),
-  /** The Expect/Soft line verbatim (secrets as `{{secret.NAME}}`). */
-  text: z.string(),
-  soft: z.boolean(),
-  check: CheckOpSchema,
-  generatedBy: z.enum(["ai", "exact"]),
-  recordedAt: z.string(),
+/** How a check was made: phrase rules, the AI compiler, or a typed `Exact:` op. */
+export const CheckSourceSchema = z.enum(["ai", "exact", "rules"]);
+
+/** One sanity probe (VER-6): `failed` is good, `passed` means the check proved nothing there. */
+export const SanityProbeSchema = z.object({
+  result: z.enum(["failed", "passed", "skipped"]),
+  note: z.string().optional(),
 });
+
+export const SanitySchema = z.object({
+  /** On an empty page (about:blank). */
+  empty: SanityProbeSchema,
+  /** On the page as it was before the preceding action. */
+  before: SanityProbeSchema,
+  provesNothing: z.boolean(),
+});
+export type Sanity = z.infer<typeof SanitySchema>;
+
+export const CheckRecordingSchema = z
+  .object({
+    key: z.string().regex(/^[0-9a-f]{16}$/),
+    textKey: z.string(),
+    /** The Expect/Soft line verbatim (secrets as `{{secret.NAME}}`). Never rewritten (HEAL-3). */
+    text: z.string(),
+    soft: z.boolean(),
+    check: CheckOpSchema,
+    generatedBy: CheckSourceSchema,
+    /** Plain English, generated from the op by `describeCheck` (EVD-3). */
+    summary: z.string().optional(),
+    /** The phrase rule that compiled the line (generatedBy "rules"). */
+    rule: z.string().optional(),
+    sanity: SanitySchema.optional(),
+    /** Set when the check failed the one time it was evaluated while authoring. */
+    failedAtAuthoring: z
+      .object({ expected: z.string().nullable(), actual: z.string().nullable() })
+      .optional(),
+    /** Why the line has no trustworthy check (not compiled, or proves nothing). For the user. */
+    problem: z.string().optional(),
+    recordedAt: z.string(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.check.type === "soft_judgment" && !value.soft) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["check", "type"],
+        message: "soft_judgment is only allowed on Soft: lines (VER-3).",
+      });
+    }
+    if (
+      value.check.type === "soft_judgment" &&
+      value.check.screenshot === "element" &&
+      !value.check.target
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["check", "target"],
+        message: "An element screenshot needs a target.",
+      });
+    }
+  });
 export type CheckRecording = z.infer<typeof CheckRecordingSchema>;
 
 // ── The file ─────────────────────────────────────────────────────────────────

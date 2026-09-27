@@ -6,6 +6,7 @@ import { brand } from "@testament/brand";
 import { defaultRedactor, Redactor } from "@testament/config/node";
 // RESTRICTED import: the browser driver types secrets into allowed domains (SEC-1).
 import { prepareSecret, revealSecret } from "@testament/config/reveal";
+import type { CheckOp } from "@testament/recording";
 import type {
   Browser,
   BrowserContext,
@@ -18,6 +19,14 @@ import type {
   Request,
 } from "playwright";
 import { Allowlist, isBlank, isHttp, parseUrl } from "./allowlist.js";
+import {
+  type CheckEvaluation,
+  type CheckOptions,
+  copyPage,
+  evaluateCheck,
+  type PageCopy,
+  RequestMark,
+} from "./check.js";
 import { deviceOptions } from "./devices.js";
 import { Evidence } from "./evidence.js";
 import { BrowserSetupError, browserOf, type LaunchedBrowser, launchBrowser } from "./launch.js";
@@ -622,6 +631,38 @@ export class Session {
     } catch (error) {
       return fail("error", this.#redact(errorResult(error).message ?? ""));
     }
+  }
+
+  /**
+   * Evaluates a typed check (LOOP-2) with auto-waiting, on the page, an empty
+   * page or a `pageCopy()`. Read-only; not an agent action (see check.ts).
+   */
+  async check(op: CheckOp, options: CheckOptions = {}): Promise<CheckEvaluation> {
+    return evaluateCheck(op, options, {
+      page: this.#page,
+      browser: browserOf(this.#browser),
+      redact: this.#redact,
+      mark: () => this.#tracker.mark(),
+      requestsSince: (mark) => this.#tracker.requestsSince(mark),
+      unusable: () => this.#unusable(),
+    });
+  }
+
+  /** Marks where a step begins, for `check(op, { since: mark })` on network checks. Cheap. */
+  requestMark(): RequestMark {
+    return RequestMark.create(this.#tracker.mark());
+  }
+
+  /**
+   * A static, script-free copy of the page as it is now, for `check(op, { on: copy })`
+   * (VER-6). It also marks where a step began, for `check(op, { since: copy })`.
+   */
+  async pageCopy(): Promise<PageCopy> {
+    return copyPage(this.#page, {
+      redact: this.#redact,
+      secretAttribute: this.#secretAttribute,
+      requestMark: this.#tracker.mark(),
+    });
   }
 
   /**

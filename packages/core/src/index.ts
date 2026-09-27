@@ -17,3 +17,4 @@ export function version(): string {
 }
 
 export * from "./author/index.js";
+export * from "./checks/index.js";

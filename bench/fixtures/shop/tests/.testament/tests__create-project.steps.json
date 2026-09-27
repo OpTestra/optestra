@@ -12,7 +12,7 @@
     "model": "claude-code/sonnet",
     "promptVersion": "planner-v2"
   },
-  "updatedAt": "2026-09-26T17:55:27.967Z",
+  "updatedAt": "2026-09-27T02:56:55.917Z",
   "steps": [
     {
       "key": "ba8ec515221832df",
@@ -37,10 +37,10 @@
             ]
           },
           "wait": {
-            "settledMs": 338,
+            "settledMs": 364,
             "waitedFor": {
               "network": 286,
-              "dom": 286,
+              "dom": 312,
               "busy": 0
             }
           }
@@ -48,7 +48,7 @@
       ],
       "reasoning": "Login page loaded with Email/Password fields and Log in button",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:54:49.301Z"
+      "recordedAt": "2026-09-27T02:56:22.356Z"
     },
     {
       "key": "fee215fde0226031",
@@ -130,7 +130,7 @@
       ],
       "reasoning": "Email field shows '{{params.email}}'",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:54:54.503Z"
+      "recordedAt": "2026-09-27T02:56:26.923Z"
     },
     {
       "key": "f8b84006aa2051c6",
@@ -210,9 +210,9 @@
           }
         }
       ],
-      "reasoning": "Password field now shows masked secret value entered",
+      "reasoning": "Password field now shows the secret value entered",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:55:00.254Z"
+      "recordedAt": "2026-09-27T02:56:31.454Z"
     },
     {
       "key": "d4cfb673a893fa2a",
@@ -376,18 +376,18 @@
             ]
           },
           "wait": {
-            "settledMs": 964,
+            "settledMs": 963,
             "waitedFor": {
-              "network": 600,
-              "dom": 576,
-              "busy": 625
+              "network": 599,
+              "dom": 599,
+              "busy": 624
             }
           }
         }
       ],
       "reasoning": "Logged in; navigated to Dashboard page with Orders, Billing, Settings links and Log out button.",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:55:07.242Z"
+      "recordedAt": "2026-09-27T02:56:37.130Z"
     },
     {
       "key": "57d1d8e28ae0754b",
@@ -480,9 +480,9 @@
           }
         }
       ],
-      "reasoning": "Dialog 'New project' opened with project name field",
+      "reasoning": "Clicked Create project button",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:55:12.843Z"
+      "recordedAt": "2026-09-27T02:56:39.550Z"
     },
     {
       "key": "0aa847d979a1e30b",
@@ -562,9 +562,9 @@
           }
         }
       ],
-      "reasoning": "Project name field now shows 'Q3 roadmap'",
+      "reasoning": "Textbox now shows 'Q3 roadmap'",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:55:18.276Z"
+      "recordedAt": "2026-09-27T02:56:44.603Z"
     },
     {
       "key": "657a650a6d6c57b4",
@@ -672,18 +672,18 @@
             ]
           },
           "wait": {
-            "settledMs": 363,
+            "settledMs": 362,
             "waitedFor": {
-              "network": 311,
-              "dom": 287,
+              "network": 310,
+              "dom": 284,
               "busy": 0
             }
           }
         }
       ],
-      "reasoning": "Clicked Create button to submit the new project dialog",
+      "reasoning": "Project 'Q3 roadmap' created; 'Project created' message shown",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:55:21.387Z"
+      "recordedAt": "2026-09-27T02:56:50.364Z"
     },
     {
       "key": "bc64d2da2785dcb2",
@@ -698,13 +698,6 @@
           },
           "fingerprint": null,
           "expectPost": {
-            "removed": [
-              {
-                "role": "paragraph",
-                "name": "",
-                "text": "Project created"
-              }
-            ],
             "requests": [
               {
                 "method": "GET",
@@ -719,18 +712,18 @@
             ]
           },
           "wait": {
-            "settledMs": 963,
+            "settledMs": 951,
             "waitedFor": {
-              "network": 572,
-              "dom": 599,
-              "busy": 599
+              "network": 601,
+              "dom": 575,
+              "busy": 611
             }
           }
         }
       ],
-      "reasoning": "Page reloaded; 'Project created' message no longer shown, Projects list visible",
+      "reasoning": "Dashboard page reloaded, showing Projects list with Q3 roadmap",
       "source": "ai",
-      "recordedAt": "2026-09-26T17:55:27.967Z"
+      "recordedAt": "2026-09-27T02:56:55.899Z"
     }
   ],
   "checks": [
@@ -740,10 +733,28 @@
       "text": "the page heading is \"Dashboard\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading",
+          "level": 1
+        },
+        "match": "equals",
+        "value": "Dashboard"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:28:25.962Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the main heading is exactly 'Dashboard'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T02:56:37.183Z"
     },
     {
       "key": "457217bce737a3e1",
@@ -751,10 +762,28 @@
       "text": "a dialog titled \"New project\" is open",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "element_state",
+        "target": {
+          "kind": "role",
+          "role": "dialog",
+          "name": "New project",
+          "exact": true
+        },
+        "state": "visible"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:28:25.962Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the dialog 'New project' is visible",
+      "rule": "dialog",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T02:56:39.566Z"
     },
     {
       "key": "2bca0e75e86257aa",
@@ -762,10 +791,27 @@
       "text": "a message says \"Project created\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "status"
+        },
+        "match": "contains",
+        "value": "Project created"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:28:25.962Z"
+      "generatedBy": "rules",
+      "summary": "Checked that a status message contains 'Project created'",
+      "rule": "message",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T02:56:50.386Z"
     },
     {
       "key": "26caeda07ad841c0",
@@ -773,10 +819,29 @@
       "text": "the projects list shows \"Q3 roadmap\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "list",
+          "name": "Projects",
+          "exact": true
+        },
+        "match": "contains",
+        "value": "Q3 roadmap"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:28:25.962Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the list 'Projects' contains 'Q3 roadmap'",
+      "rule": "container-text",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T02:56:50.401Z"
     },
     {
       "key": "4c3ca6a049dc1b50",
@@ -784,10 +849,30 @@
       "text": "the projects list shows \"Q3 roadmap\"",
       "soft": false,
       "check": {
-        "type": "pending"
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "list",
+          "name": "Projects",
+          "exact": true
+        },
+        "match": "contains",
+        "value": "Q3 roadmap"
       },
-      "generatedBy": "ai",
-      "recordedAt": "2026-09-26T17:28:25.962Z"
+      "generatedBy": "rules",
+      "summary": "Checked that the list 'Projects' contains 'Q3 roadmap'",
+      "rule": "container-text",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "skipped",
+          "note": "The preceding action didn't change what this check looks at."
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-27T02:56:55.916Z"
     }
   ]
 }

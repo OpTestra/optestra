@@ -1,0 +1,144 @@
+[
+  {
+    "key": "089ede1f96b46138",
+    "textKey": "5c6d25b275ab76c6",
+    "text": "the page heading is \"Dashboard\"",
+    "soft": false,
+    "check": {
+      "type": "text",
+      "target": {
+        "kind": "role",
+        "role": "heading",
+        "level": 1
+      },
+      "match": "equals",
+      "value": "Dashboard"
+    },
+    "generatedBy": "rules",
+    "summary": "Checked that the main heading is exactly 'Dashboard'",
+    "rule": "heading",
+    "sanity": {
+      "empty": {
+        "result": "failed"
+      },
+      "before": {
+        "result": "failed"
+      },
+      "provesNothing": false
+    }
+  },
+  {
+    "key": "457217bce737a3e1",
+    "textKey": "a28e4e38dcf9f5ac",
+    "text": "a dialog titled \"New project\" is open",
+    "soft": false,
+    "check": {
+      "type": "element_state",
+      "target": {
+        "kind": "role",
+        "role": "dialog",
+        "name": "New project",
+        "exact": true
+      },
+      "state": "visible"
+    },
+    "generatedBy": "rules",
+    "summary": "Checked that the dialog 'New project' is visible",
+    "rule": "dialog",
+    "sanity": {
+      "empty": {
+        "result": "failed"
+      },
+      "before": {
+        "result": "failed"
+      },
+      "provesNothing": false
+    }
+  },
+  {
+    "key": "2bca0e75e86257aa",
+    "textKey": "3012cf8765d52ab1",
+    "text": "a message says \"Project created\"",
+    "soft": false,
+    "check": {
+      "type": "text",
+      "target": {
+        "kind": "role",
+        "role": "status"
+      },
+      "match": "contains",
+      "value": "Project created"
+    },
+    "generatedBy": "rules",
+    "summary": "Checked that a status message contains 'Project created'",
+    "rule": "message",
+    "sanity": {
+      "empty": {
+        "result": "failed"
+      },
+      "before": {
+        "result": "failed"
+      },
+      "provesNothing": false
+    }
+  },
+  {
+    "key": "26caeda07ad841c0",
+    "textKey": "949ced657cbde369",
+    "text": "the projects list shows \"Q3 roadmap\"",
+    "soft": false,
+    "check": {
+      "type": "text",
+      "target": {
+        "kind": "role",
+        "role": "list",
+        "name": "Projects",
+        "exact": true
+      },
+      "match": "contains",
+      "value": "Q3 roadmap"
+    },
+    "generatedBy": "rules",
+    "summary": "Checked that the list 'Projects' contains 'Q3 roadmap'",
+    "rule": "container-text",
+    "sanity": {
+      "empty": {
+        "result": "failed"
+      },
+      "before": {
+        "result": "failed"
+      },
+      "provesNothing": false
+    }
+  },
+  {
+    "key": "4c3ca6a049dc1b50",
+    "textKey": "949fe9657cc01274",
+    "text": "the projects list shows \"Q3 roadmap\"",
+    "soft": false,
+    "check": {
+      "type": "text",
+      "target": {
+        "kind": "role",
+        "role": "list",
+        "name": "Projects",
+        "exact": true
+      },
+      "match": "contains",
+      "value": "Q3 roadmap"
+    },
+    "generatedBy": "rules",
+    "summary": "Checked that the list 'Projects' contains 'Q3 roadmap'",
+    "rule": "container-text",
+    "sanity": {
+      "empty": {
+        "result": "failed"
+      },
+      "before": {
+        "result": "skipped",
+        "note": "The preceding action didn't change what this check looks at."
+      },
+      "provesNothing": false
+    }
+  }
+]
