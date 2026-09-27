@@ -39,6 +39,12 @@ export const BLOCKED_REASONS = [
   "app_install_failed",
   "config_error",
   "aborted",
+  // 1.2 (AUTH-1): the test inbox had no message in time, or couldn't be read.
+  "inbox_unavailable",
+  // 1.2 (AUTH-1): a profile's login couldn't complete for a reason that isn't the app's.
+  "login_failed",
+  // 1.2 (AUTH-1): a setup hook failed (the app said no to the test's own setup request).
+  "setup_failed",
 ] as const;
 export const BlockedReasonSchema = openEnum(BLOCKED_REASONS);
 export type BlockedReason = z.infer<typeof BlockedReasonSchema>;
