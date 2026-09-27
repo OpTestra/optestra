@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="demo-shop · staging" tests="1" failures="0" errors="0" skipped="0" time="12.565">
+  <testsuite name="demo-shop · staging" tests="1" failures="0" errors="0" skipped="0" time="12.565" timestamp="2026-09-26T09:30:00" id="01M3EGSME0Y0HFX5XMJ3B771ER">
+    <properties><property name="runId" value="01M3EGSME0Y0HFX5XMJ3B771ER"/><property name="project" value="demo-shop"/><property name="environment" value="staging"/><property name="target" value="web"/><property name="trigger" value="schedule"/><property name="mode" value="normal"/><property name="engineVersion" value="0.1.0"/><property name="contractVersion" value="1.0"/><property name="aiCalls" value="0"/><property name="costUsd" value="0"/><property name="git.branch" value="main"/><property name="git.commit" value="4f1c2e9a7b3d5f60812c4e9d0a1b2c3d4e5f6071"/><property name="totals.passed" value="0"/><property name="totals.healed" value="0"/><property name="totals.flaky" value="1"/></properties>
+    <testcase name="Search finds products" classname="tests/search/search-products.md" file="tests/search/search-products.md" time="12.485">
+      <properties><property name="verdict" value="flaky"/><property name="testId" value="tests__search__search-products"/><property name="matrix" value="chromium"/><property name="tag" value="search"/><property name="attempts" value="2"/><property name="aiCalls" value="0"/><property name="costUsd" value="0"/><property name="flaky" value="true"/><property name="flaky.headline" value="Failed, then passed on retry: GET /api/search returned 503 on the first attempt"/><property name="flaky.cause" value="environment"/></properties>
+    </testcase>
+  </testsuite>
+</testsuites>

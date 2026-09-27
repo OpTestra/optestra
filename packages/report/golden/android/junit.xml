@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="demo-shop · staging" tests="1" failures="0" errors="0" skipped="0" time="6.205">
+  <testsuite name="demo-shop · staging" tests="1" failures="0" errors="0" skipped="0" time="6.205" timestamp="2026-09-26T10:00:00" id="01M3EJGJ80CW0YWY81PDJ70RB6">
+    <properties><property name="runId" value="01M3EJGJ80CW0YWY81PDJ70RB6"/><property name="project" value="demo-shop"/><property name="environment" value="staging"/><property name="target" value="android"/><property name="trigger" value="cloud"/><property name="mode" value="normal"/><property name="engineVersion" value="0.1.0"/><property name="contractVersion" value="1.0"/><property name="aiCalls" value="0"/><property name="costUsd" value="0"/><property name="totals.passed" value="1"/><property name="totals.healed" value="0"/><property name="totals.flaky" value="0"/></properties>
+    <testcase name="Log in and see the home feed" classname="tests/android/login.md" file="tests/android/login.md" time="6.125">
+      <properties><property name="verdict" value="passed"/><property name="testId" value="tests__android__login"/><property name="matrix" value="Android 14 · Pixel 7"/><property name="tag" value="android"/><property name="tag" value="smoke"/><property name="aiCalls" value="0"/><property name="costUsd" value="0"/></properties>
+    </testcase>
+  </testsuite>
+</testsuites>

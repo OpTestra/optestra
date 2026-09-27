@@ -1,0 +1,6 @@
+Run 01M3EF2PM04CMHWHZ9D1V41QWH  demo-shop · staging · web
+
+  PASSED      3.3s       0 AI     $0.00  Guest checkout
+  PASSED      1.6s       0 AI     $0.00  Search finds products
+
+  2 passed · 4.9s · 0 AI calls · $0.00

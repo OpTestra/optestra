@@ -1,0 +1,10 @@
+Run 01M3EGSME0Y0HFX5XMJ3B771ER  demo-shop · staging · web
+
+  FLAKY      12.5s       0 AI     $0.00  Search finds products
+                                         Failed, then passed on retry: GET /api/search returned 503 on the first attempt
+
+  What went wrong
+  ● Failed, then passed on retry: GET /api/search returned 503 on the first attempt
+      environment · 1 test: Search finds products (tests/search/search-products.md, step 2)
+
+  1 flaky · 12.6s · 0 AI calls · $0.00

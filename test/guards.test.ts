@@ -145,6 +145,8 @@ describe("engine guards", () => {
     "packages/brand/src/run.ts",
     "packages/browser/src/launch.ts",
     "packages/models/src/delegated/process.ts",
+    // `report --open`: the system opener with the report path, no shell.
+    "packages/report/src/node/open.ts",
   ];
 
   it("starts other programs only from the named files, never through a shell", () => {
@@ -160,6 +162,11 @@ describe("engine guards", () => {
     // It runs only the resolved CLI binary (or Node for a .js install), plus taskkill to stop it.
     expect(delegated).toContain("const command = binary.viaNode ? process.execPath : binary.path;");
     expect([...delegated.matchAll(/spawn\(/g)]).toHaveLength(2);
+    const opener = readFileSync(join(root, "packages/report/src/node/open.ts"), "utf8");
+    expect(opener).toContain(
+      'spawn(command, [path], { detached: true, stdio: "ignore", shell: false });',
+    );
+    expect([...opener.matchAll(/spawn\(/g)]).toHaveLength(1);
   });
 
   it("keeps fixtures out of engine packages (tests may use them)", () => {

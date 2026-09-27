@@ -1,62 +1,65 @@
-import { resolve } from "node:path";
-import {
-  exitCodeFor,
-  formatDuration,
-  formatUsd,
-  type Run,
-  summarize,
-  type Verdict,
-} from "@testament/contract";
+import { relative, resolve } from "node:path";
+import { exitCodeFor, type ExitPolicy } from "@testament/contract";
 import { readRun } from "@testament/contract/node";
+import {
+  formatTerminal,
+  type RunData,
+  renderJsonSummary,
+  renderJunit,
+  renderMarkdownSummary,
+} from "@testament/report";
+import { writeFileAtomic } from "@testament/report/node";
 import type { CommandIo } from "./config.js";
 
 export interface ResultsCommandOptions {
-  json?: boolean;
+  /** true: print the JSON summary; a path: write it there. */
+  json?: boolean | string;
+  /** Write JUnit XML here (EVD-4). */
+  junit?: string;
+  /** Write the Markdown summary here (CI-2, CI-5). */
+  markdown?: string;
   /** Healed tests count as passed for the exit code. */
   healedPasses?: boolean;
   /** Flaky tests don't fail the exit code. */
   flakyPasses?: boolean;
 }
 
-const LABEL: Record<Verdict, string> = {
-  passed: "PASSED",
-  healed: "HEALED",
-  failed: "FAILED",
-  flaky: "FLAKY",
-  blocked: "BLOCKED",
-};
-
-function human(run: Run, exitCode: number): string {
-  const summary = summarize(run);
-  const where = [run.project, run.environment, run.target].filter(Boolean).join(" · ");
-  const lines = [`Run ${run.runId}  ${where}`, ""];
-  if (run.blocked) lines.push(`  Run blocked (${run.blocked.reason}): ${run.blocked.message}`, "");
-  for (const test of run.tests) {
-    lines.push(
-      `  ${LABEL[test.verdict].padEnd(8)} ${formatDuration(test.durationMs).padStart(7)}  ${formatUsd(test.costUsd).padStart(8)}  ${test.name}`,
-    );
-    if (test.headline) lines.push(`${" ".repeat(29)}${test.headline}`);
+function writeExports(
+  data: RunData,
+  options: ResultsCommandOptions,
+  policy: ExitPolicy,
+  io: CommandIo,
+): string[] {
+  const files: [string | undefined, () => string][] = [
+    [options.junit, () => renderJunit(data)],
+    [
+      typeof options.json === "string" ? options.json : undefined,
+      () => renderJsonSummary(data, policy),
+    ],
+    [options.markdown, () => renderMarkdownSummary(data)],
+  ];
+  const written: string[] = [];
+  for (const [file, render] of files) {
+    if (!file) continue;
+    const path = resolve(io.cwd, file);
+    writeFileAtomic(path, render());
+    const shown = relative(io.cwd, path);
+    written.push(shown.startsWith("..") ? path : shown);
   }
-  const ai = `${summary.aiCalls} AI call${summary.aiCalls === 1 ? "" : "s"}`;
-  const unpriced = summary.unpricedCalls > 0 ? ` (${summary.unpricedCalls} unpriced)` : "";
-  lines.push(
-    "",
-    `  ${summary.line} · ${formatDuration(summary.durationMs)} · ${formatUsd(summary.costUsd)} · ${ai}${unpriced}`,
-    `  exit code ${exitCode}`,
-  );
-  return lines.join("\n");
+  return written;
 }
 
 /**
- * `results <runDir>`: prints a run's summary and returns the CI exit code
+ * `results <runDir>`: prints a run's summary, writes any requested exports
+ * (--junit, --json <file>, --markdown) and returns the CI exit code
  * (0 passed, 1 failures, 2 blocked or unreadable).
  */
 export function runResultsCommand(
   runDir: string,
   options: ResultsCommandOptions,
-  io: CommandIo,
+  io: CommandIo & { color?: boolean },
 ): number {
-  const { run, diagnostics } = readRun(resolve(io.cwd, runDir));
+  const { run, tests, diagnostics } = readRun(resolve(io.cwd, runDir));
   const errors = diagnostics.filter((d) => d.severity === "error");
   if (!run || errors.length > 0) {
     const problems = errors.map((d) => `  ${d.file}${d.line ? `:${d.line}` : ""}  ${d.message}`);
@@ -67,14 +70,20 @@ export function runResultsCommand(
     );
     return 2;
   }
-  const exitCode = exitCodeFor(run, {
+  const policy: ExitPolicy = {
     healedCountsAsPass: options.healedPasses ?? false,
     flakyCountsAsFailure: !options.flakyPasses,
-  });
+  };
+  const exitCode = exitCodeFor(run, policy);
+  const data: RunData = { run, tests };
+  const written = writeExports(data, options, policy, io);
+  if (options.json === true) {
+    io.stdout(renderJsonSummary(data, policy));
+    return exitCode;
+  }
+  const wrote = written.map((file) => `  wrote ${file}\n`).join("");
   io.stdout(
-    options.json
-      ? `${JSON.stringify({ summary: summarize(run), exitCode, run }, null, 2)}\n`
-      : `${human(run, exitCode)}\n`,
+    `${formatTerminal(data, { color: io.color ?? false })}\n  exit code ${exitCode}\n${wrote}`,
   );
   return exitCode;
 }

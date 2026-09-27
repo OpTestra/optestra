@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The JUnit XML shape that Jenkins, GitLab, GitHub test reporters, Azure DevOps
+  and Surefire readers accept: testsuites > testsuite > testcase, with
+  properties, failure, error, skipped, system-out and system-err. Written for
+  the report tests; stricter than most readers (no unknown elements).
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:simpleType name="seconds">
+    <xs:restriction base="xs:decimal"><xs:minInclusive value="0"/></xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="properties">
+    <xs:sequence>
+      <xs:element name="property" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:attribute name="name" type="xs:string" use="required"/>
+          <xs:attribute name="value" type="xs:string" use="required"/>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="problem">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="message" type="xs:string"/>
+        <xs:attribute name="type" type="xs:string"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="testcase">
+    <xs:sequence>
+      <xs:element name="properties" type="properties" minOccurs="0"/>
+      <xs:choice minOccurs="0">
+        <xs:element name="failure" type="problem"/>
+        <xs:element name="error" type="problem"/>
+        <xs:element name="skipped" type="problem"/>
+      </xs:choice>
+      <xs:element name="system-out" type="xs:string" minOccurs="0"/>
+      <xs:element name="system-err" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="classname" type="xs:string" use="required"/>
+    <xs:attribute name="file" type="xs:string"/>
+    <xs:attribute name="time" type="seconds" use="required"/>
+  </xs:complexType>
+  <xs:attributeGroup name="counts">
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="tests" type="xs:nonNegativeInteger" use="required"/>
+    <xs:attribute name="failures" type="xs:nonNegativeInteger" use="required"/>
+    <xs:attribute name="errors" type="xs:nonNegativeInteger" use="required"/>
+    <xs:attribute name="skipped" type="xs:nonNegativeInteger"/>
+    <xs:attribute name="time" type="seconds"/>
+  </xs:attributeGroup>
+  <xs:element name="testsuites">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="testsuite" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="properties" type="properties" minOccurs="0"/>
+              <xs:element name="testcase" type="testcase" minOccurs="0" maxOccurs="unbounded"/>
+              <xs:element name="system-out" type="xs:string" minOccurs="0"/>
+              <xs:element name="system-err" type="xs:string" minOccurs="0"/>
+            </xs:sequence>
+            <xs:attributeGroup ref="counts"/>
+            <xs:attribute name="timestamp" type="xs:dateTime"/>
+            <xs:attribute name="id" type="xs:string"/>
+            <xs:attribute name="hostname" type="xs:string"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attributeGroup ref="counts"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

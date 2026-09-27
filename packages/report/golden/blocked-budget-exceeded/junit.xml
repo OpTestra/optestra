@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="demo-shop · local" tests="1" failures="0" errors="0" skipped="1" time="12.865">
+  <testsuite name="demo-shop · local" tests="1" failures="0" errors="0" skipped="1" time="12.865" timestamp="2026-09-26T09:50:00" id="01M3EHY8A0Z0PMNVCJH2CPRFHD">
+    <properties><property name="runId" value="01M3EHY8A0Z0PMNVCJH2CPRFHD"/><property name="project" value="demo-shop"/><property name="environment" value="local"/><property name="target" value="web"/><property name="trigger" value="cli"/><property name="mode" value="rerecord"/><property name="engineVersion" value="0.1.0"/><property name="contractVersion" value="1.0"/><property name="aiCalls" value="4"/><property name="costUsd" value="1.08"/><property name="totals.passed" value="0"/><property name="totals.healed" value="0"/><property name="totals.flaky" value="0"/></properties>
+    <testcase name="Sign up for a new account" classname="tests/account/sign-up.md" file="tests/account/sign-up.md" time="12.785">
+      <properties><property name="verdict" value="blocked"/><property name="testId" value="tests__account__sign-up"/><property name="matrix" value="chromium"/><property name="tag" value="account"/><property name="aiCalls" value="4"/><property name="costUsd" value="1.08"/></properties>
+      <skipped message="Blocked (budget exceeded: The run budget of $1.00 was reached ($1.08 spent). Raise run.budget.maxPerRunUsd or run in replay mode.)"/>
+    </testcase>
+  </testsuite>
+</testsuites>

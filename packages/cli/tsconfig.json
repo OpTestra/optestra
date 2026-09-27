@@ -16,6 +16,7 @@
     { "path": "../decide" },
     { "path": "../models" },
     { "path": "../recording" },
+    { "path": "../report" },
     { "path": "../spec" }
   ]
 }

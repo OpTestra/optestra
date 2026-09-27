@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="demo-shop · local" tests="1" failures="0" errors="0" skipped="0" time="6.403">
+  <testsuite name="demo-shop · local" tests="1" failures="0" errors="0" skipped="0" time="6.403" timestamp="2026-09-26T09:10:00" id="01M3EFN0J0FQBKEWDYW4JQ19PW">
+    <properties><property name="runId" value="01M3EFN0J0FQBKEWDYW4JQ19PW"/><property name="project" value="demo-shop"/><property name="environment" value="local"/><property name="target" value="web"/><property name="trigger" value="desktop"/><property name="mode" value="normal"/><property name="engineVersion" value="0.1.0"/><property name="contractVersion" value="1.0"/><property name="aiCalls" value="1"/><property name="costUsd" value="0.0184"/><property name="totals.passed" value="0"/><property name="totals.healed" value="1"/><property name="totals.flaky" value="0"/></properties>
+    <testcase name="Add a product to the cart" classname="tests/cart/add-to-cart.md" file="tests/cart/add-to-cart.md" time="6.323">
+      <properties><property name="verdict" value="healed"/><property name="testId" value="tests__cart__add-to-cart"/><property name="matrix" value="chromium"/><property name="tag" value="cart"/><property name="aiCalls" value="1"/><property name="costUsd" value="0.0184"/><property name="healed" value="true"/><property name="healed.fixes" value="1"/></properties>
+    </testcase>
+  </testsuite>
+</testsuites>

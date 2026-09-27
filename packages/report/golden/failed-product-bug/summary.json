@@ -1,0 +1,120 @@
+{
+  "kind": "results-summary",
+  "version": "1.0",
+  "contractVersion": "1.0",
+  "runId": "01M3EG7AG0M0AHEMTHAS09ZS7Y",
+  "project": "demo-shop",
+  "environment": "staging",
+  "target": "web",
+  "trigger": "ci",
+  "mode": "normal",
+  "startedAt": "2026-09-26T09:20:00.000Z",
+  "durationMs": 16085,
+  "git": {
+    "branch": "feature/discounts",
+    "commit": "9b8a7c6d5e4f30211203f4e5d6c7b8a9e0f1a2b3",
+    "pr": 42
+  },
+  "blocked": null,
+  "exitCode": 1,
+  "totals": {
+    "tests": 2,
+    "passed": 1,
+    "healed": 0,
+    "failed": 1,
+    "flaky": 0,
+    "blocked": 0
+  },
+  "cost": {
+    "usd": 0,
+    "unpricedCalls": 0,
+    "aiCalls": 0,
+    "subscriptionCalls": 0
+  },
+  "failureGroups": [
+    {
+      "headline": "Expected order total '$90.00', found '$100.00'",
+      "cause": "product_bug",
+      "tests": [
+        "tests__checkout__discount-code"
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "testId": "tests__checkout__discount-code",
+      "name": "Discount code takes 10% off",
+      "file": "tests/checkout/discount-code.md",
+      "tags": [
+        "checkout"
+      ],
+      "matrix": "chromium",
+      "verdict": "failed",
+      "cause": "product_bug",
+      "headline": "Expected order total '$90.00', found '$100.00'",
+      "blocked": null,
+      "failingCheck": {
+        "attempt": 2,
+        "checkId": "c1",
+        "stepIndex": 2,
+        "kind": "text",
+        "expectation": "The order total is $90.00",
+        "description": "The order total shows '$90.00'",
+        "expected": "'$90.00'",
+        "actual": "'$100.00'"
+      },
+      "failingStep": {
+        "attempt": 2,
+        "index": 2,
+        "key": "expect:the-order-total-is-90-00",
+        "text": "The order total is $90.00",
+        "status": "failed",
+        "error": "Expected order total '$90.00', found '$100.00'"
+      },
+      "softWarnings": [],
+      "heals": [],
+      "screenshot": "tests/tests__checkout__discount-code/2/steps/2-after.png",
+      "durationMs": 12725,
+      "attempts": 2,
+      "ai": {
+        "calls": 0,
+        "costUsd": 0,
+        "recent": {
+          "runs": 20,
+          "calls": 0
+        }
+      },
+      "result": "tests/tests__checkout__discount-code/result.json"
+    },
+    {
+      "testId": "tests__checkout__guest-checkout",
+      "name": "Guest checkout",
+      "file": "tests/checkout/guest-checkout.md",
+      "tags": [
+        "checkout",
+        "smoke"
+      ],
+      "matrix": "chromium",
+      "verdict": "passed",
+      "cause": null,
+      "headline": null,
+      "blocked": null,
+      "failingCheck": null,
+      "failingStep": null,
+      "softWarnings": [],
+      "heals": [],
+      "screenshot": null,
+      "durationMs": 3250,
+      "attempts": 1,
+      "ai": {
+        "calls": 0,
+        "costUsd": 0,
+        "recent": {
+          "runs": 20,
+          "calls": 0
+        }
+      },
+      "result": "tests/tests__checkout__guest-checkout/result.json"
+    }
+  ]
+}

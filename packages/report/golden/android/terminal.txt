@@ -1,0 +1,5 @@
+Run 01M3EJGJ80CW0YWY81PDJ70RB6  demo-shop · staging · android
+
+  PASSED      6.1s       0 AI     $0.00  Log in and see the home feed
+
+  1 passed · 6.2s · 0 AI calls · $0.00
