@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src", "src/*.json"],
+  "references": [
+    { "path": "../brand" },
+    { "path": "../browser" },
+    { "path": "../config" },
+    { "path": "../contract" },
+    { "path": "../recording" }
+  ]
+}

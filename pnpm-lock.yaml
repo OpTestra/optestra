@@ -30,6 +30,15 @@ importers:
         specifier: 5.0.2
         version: 5.0.2(@types/node@24.19.0)(vite@8.3.1(@types/node@24.19.0)(yaml@2.9.1))
 
+  bench/fixtures/android:
+    devDependencies:
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+
   bench/fixtures/shop:
     devDependencies:
       '@playwright/test':
@@ -43,6 +52,34 @@ importers:
         version: 4.6.5
 
   packages/action: {}
+
+  packages/android:
+    dependencies:
+      '@testament/brand':
+        specifier: workspace:^
+        version: link:../brand
+      '@testament/browser':
+        specifier: workspace:^
+        version: link:../browser
+      '@testament/config':
+        specifier: workspace:^
+        version: link:../config
+      '@testament/contract':
+        specifier: workspace:^
+        version: link:../contract
+      '@testament/recording':
+        specifier: workspace:^
+        version: link:../recording
+    devDependencies:
+      '@testament/fixture-android':
+        specifier: workspace:*
+        version: link:../../bench/fixtures/android
+      '@testament/fixture-shop':
+        specifier: workspace:*
+        version: link:../../bench/fixtures/shop
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
 
   packages/auth:
     dependencies:
@@ -92,6 +129,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@testament/android':
+        specifier: workspace:^
+        version: link:../android
       '@testament/auth':
         specifier: workspace:^
         version: link:../auth

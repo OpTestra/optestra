@@ -1,0 +1,25 @@
+{
+  "name": "@testament/fixture-android",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Acme Shop for Android: the Bench fixture app (BEN-1), one APK per variant.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "build:apks": "node scripts/build-apks.mjs"
+  },
+  "devDependencies": {
+    "yaml": "^2.9.1",
+    "zod": "^4.6.5"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

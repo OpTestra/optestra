@@ -10,11 +10,13 @@
     { "path": "packages/recording" },
     { "path": "packages/decide" },
     { "path": "packages/browser" },
+    { "path": "packages/android" },
     { "path": "packages/auth" },
     { "path": "packages/codegen" },
     { "path": "packages/cli" },
     { "path": "packages/mcp" },
     { "path": "packages/action" },
-    { "path": "bench/fixtures/shop" }
+    { "path": "bench/fixtures/shop" },
+    { "path": "bench/fixtures/android" }
   ]
 }

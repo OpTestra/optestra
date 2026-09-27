@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- View ids (they show up as resource ids). The cosmetic build uses the second set. -->
+<resources>
+  <item name="sign_in_email" type="id" />
+  <item name="sign_in_password" type="id" />
+  <item name="sign_in_button" type="id" />
+  <item name="sign_in_error" type="id" />
+  <item name="projects_list" type="id" />
+  <item name="new_project_button" type="id" />
+  <item name="refresh_button" type="id" />
+  <item name="settings_button" type="id" />
+  <item name="sign_out_button" type="id" />
+  <item name="project_name" type="id" />
+  <item name="create_project_button" type="id" />
+  <item name="form_error" type="id" />
+  <item name="project_title" type="id" />
+  <item name="scan_badge_button" type="id" />
+  <item name="camera_status" type="id" />
+  <item name="notifications_switch" type="id" />
+  <item name="check_updates_button" type="id" />
+  <item name="update_status" type="id" />
+
+  <item name="login_email" type="id" />
+  <item name="login_pass" type="id" />
+  <item name="login_submit" type="id" />
+  <item name="login_alert" type="id" />
+  <item name="project_items" type="id" />
+  <item name="add_project" type="id" />
+  <item name="reload_items" type="id" />
+  <item name="prefs_link" type="id" />
+  <item name="logout_link" type="id" />
+  <item name="name_input" type="id" />
+  <item name="save_project" type="id" />
+  <item name="name_error" type="id" />
+  <item name="detail_heading" type="id" />
+  <item name="badge_scan" type="id" />
+  <item name="camera_result" type="id" />
+  <item name="email_alerts_toggle" type="id" />
+  <item name="updates_check" type="id" />
+  <item name="updates_result" type="id" />
+</resources>

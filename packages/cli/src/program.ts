@@ -2,6 +2,7 @@ import { createInterface } from "node:readline/promises";
 import { brand } from "@testament/brand";
 import { version } from "@testament/core";
 import { Command } from "commander";
+import { registerAndroidCommands } from "./commands/android.js";
 import { registerAuthCommands } from "./commands/auth.js";
 import { type AuthorCommandOptions, runAuthorCommand } from "./commands/author.js";
 import { registerBrowserCommands } from "./commands/browser.js";
@@ -261,6 +262,13 @@ export function createProgram(): Command {
     cwd: process.cwd(),
     env: process.env,
     stdout: (text) => process.stdout.write(text),
+  }));
+
+  registerAndroidCommands(program, () => ({
+    cwd: process.cwd(),
+    env: process.env,
+    stdout: (text) => process.stdout.write(text),
+    ...(process.stdin.isTTY ? { confirm: askYesNo } : {}),
   }));
 
   program.action(() => program.help());

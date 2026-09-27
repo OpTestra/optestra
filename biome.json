@@ -14,7 +14,8 @@
       "!packages/contract/fixtures",
       "!packages/decide/fixtures",
       "!**/*.steps.json",
-      "!packages/core/fixtures"
+      "!packages/core/fixtures",
+      "!packages/android/src/fixtures"
     ]
   },
   "formatter": {

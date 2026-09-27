@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.CAMERA" />
+  <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+  <!-- Cleartext only to the emulator's host alias, where the shop runs. -->
+  <application
+    android:label="Acme Shop"
+    android:networkSecurityConfig="@xml/network_security_config"
+    android:theme="@android:style/Theme.Material.Light.NoActionBar">
+    <activity android:name=".SignInActivity" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+    <activity android:name=".ProjectsActivity" android:exported="false" />
+    <activity android:name=".NewProjectActivity" android:exported="false" />
+    <activity android:name=".SettingsActivity" android:exported="false" />
+    <!-- Deep link: acmeshop://projects/<name> -->
+    <activity android:name=".ProjectActivity" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="acmeshop" android:host="projects" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>
