@@ -28,6 +28,12 @@ export interface GenerateProjectOptions {
   force?: boolean;
   /** Compare only, write nothing (CI). */
   check?: boolean;
+  /**
+   * Write somewhere else than `<tests dir>/<data dir>/` (export): `dir` is the
+   * absolute folder, `label` how it is named in results and in the config's
+   * comment. Upload paths stay relative to the folder's parent.
+   */
+  out?: { dir: string; label: string } | undefined;
 }
 
 export type FileStatus =
@@ -160,14 +166,15 @@ export async function generateProject(
   const config = loaded.config;
   const testsSettings = config.tests ?? DEFAULT_TESTS;
   const testsDir = testsSettings.dir;
-  const specDir = posix(join(testsDir, brand.dataDirName));
+  const specDir = options.out?.label ?? posix(join(testsDir, brand.dataDirName));
   const environment = supportEnvironment(config, loaded.environment, specDir);
   if (typeof environment === "string") {
     result.ok = false;
     result.problems.push(environment);
     return result;
   }
-  const outDir = join(projectDir, specDir);
+  const recordingsDir = join(projectDir, testsDir, brand.dataDirName);
+  const outDir = options.out?.dir ?? join(projectDir, specDir);
   const readFile = nodeFileReader(projectDir);
   const files = selected(projectDir, findTestFiles(projectDir, testsSettings), options.tests, cwd);
   const generated: Array<{ file: GeneratedFile; test?: string }> = [];
@@ -177,7 +184,7 @@ export async function generateProject(
       seed: "codegen",
     });
     if (test?.expanded.kind !== "test") continue;
-    const recordingFile = join(outDir, recordingFileName(test.id));
+    const recordingFile = join(recordingsDir, recordingFileName(test.id));
     if (!existsSync(recordingFile)) {
       result.skipped.push({ test: path, reason: "not recorded yet" });
       continue;
