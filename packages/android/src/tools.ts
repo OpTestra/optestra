@@ -25,6 +25,7 @@ export const ADB_COMMANDS = [
   "logcat-mark",
   "prepare-device",
   "firewall",
+  "timezone-auto-off",
   "set-timezone",
   "set-app-locales",
   "emu",
@@ -62,6 +63,7 @@ export type AdbCommand =
   | { name: "prepare-device" }
   | { name: "firewall"; rules: readonly (readonly string[])[] }
   /** ENV-5: the device's timezone (an IANA id) and the app's language (BCP 47 tags). */
+  | { name: "timezone-auto-off" }
   | { name: "set-timezone"; timezone: string }
   | { name: "set-app-locales"; appPackage: string; locales: string }
   | { name: "emu"; command: EmuCommand };
@@ -125,6 +127,9 @@ export function adbArgs(command: AdbCommand): string[] {
       return ["shell", "getprop", command.key];
     case "root":
       return ["root"];
+    case "timezone-auto-off":
+      // Automatic detection would put the image's own timezone back later.
+      return ["shell", "cmd", "time_zone_detector", "set_auto_detection_enabled", "false"];
     case "set-timezone":
       return [
         "shell",

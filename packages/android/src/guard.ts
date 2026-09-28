@@ -180,7 +180,13 @@ export class NetworkGuard {
         timeout: UPSTREAM_TIMEOUT_MS,
       },
       (response) => {
-        res.writeHead(response.statusCode ?? 502, response.headers);
+        // One request per connection: the emulator's proxy pools its connections to
+        // this guard across sessions (and snapshot restores), and a pooled one this
+        // side has already closed (idle timeout, a session reset) fails the app's
+        // request before it gets here.
+        const { connection: _c, "keep-alive": _k, ...kept } = response.headers;
+        res.shouldKeepAlive = false;
+        res.writeHead(response.statusCode ?? 502, { ...kept, connection: "close" });
         response.on("data", () => this.#touch());
         response.pipe(res);
         response.once("end", () => finish(response.statusCode ?? 502));

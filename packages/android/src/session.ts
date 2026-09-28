@@ -427,10 +427,19 @@ export class AndroidSession {
   /** The package that took the foreground from the app, when the test didn't send the app away. */
   #stolenBy(screen: Screen): string | null {
     if (this.#sentAway) return null;
-    const resumed = screen.dump.activity?.split("/")[0];
-    return resumed && resumed !== this.#appPackage && FOREGROUND_THIEVES.test(resumed)
-      ? resumed
-      : null;
+    const thief = (pkg: string | null | undefined) =>
+      pkg && pkg !== this.#appPackage && FOREGROUND_THIEVES.test(pkg) ? pkg : null;
+    const resumed = thief(screen.dump.activity?.split("/")[0]);
+    if (resumed) return resumed;
+    // Mid-switch the activity manager may still name the app while the launcher's
+    // window is already what is shown: no app window, a thief's window.
+    const apps = screen.dump.windows.filter((w) => w.type === "application");
+    if (apps.some((w) => w.package === this.#appPackage)) return null;
+    for (const window of apps) {
+      const found = thief(window.package);
+      if (found) return found;
+    }
+    return null;
   }
 
   /** Moves the driver's new toasts into the log (they are reported once). Returns the new ones. */
@@ -1472,8 +1481,10 @@ export async function openAndroidSession(
 
   // ENV-5: the device's timezone and the app's language, before the app first runs
   // (the clean snapshot restores both for the next session).
-  if (options.timezone !== undefined)
+  if (options.timezone !== undefined) {
+    await runAdb(sdk, serial, { name: "timezone-auto-off" }, 10_000);
     await runAdb(sdk, serial, { name: "set-timezone", timezone: options.timezone }, 10_000);
+  }
   if (options.locale !== undefined)
     await runAdb(
       sdk,

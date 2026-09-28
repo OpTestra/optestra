@@ -114,6 +114,7 @@ describe("the adb wrapper (guarantee 5)", () => {
       "logcat-mark",
       "prepare-device",
       "firewall",
+      "timezone-auto-off",
       "set-timezone",
       "set-app-locales",
       "emu",
