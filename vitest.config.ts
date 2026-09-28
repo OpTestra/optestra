@@ -7,6 +7,7 @@ export default defineConfig({
       "test/**/*.test.ts",
       "bench/fixtures/*/src/**/*.test.ts",
       "bench/fixtures/*/e2e/**/*.test.ts",
+      "docs/test/**/*.test.ts",
     ],
   },
 });

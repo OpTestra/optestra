@@ -4,7 +4,8 @@
     "composite": false,
     "declaration": false,
     "declarationMap": false,
-    "noEmit": true
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
   "include": [
     "test",
@@ -24,6 +25,9 @@
     "packages/cli/vitest.config.ts",
     "packages/report/e2e",
     "packages/report/vitest.config.ts",
-    "bench/fixtures/*/playwright.config.ts"
+    "bench/fixtures/*/playwright.config.ts",
+    "docs/.vitepress",
+    "docs/scripts",
+    "docs/test"
   ]
 }
