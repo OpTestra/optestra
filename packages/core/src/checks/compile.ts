@@ -1,6 +1,6 @@
-import type { PageCopy } from "@testament/browser";
 import type { BudgetMeter, ModelCallRecord, Models } from "@testament/models";
 import { type CheckOp, describeCheck, type Sanity } from "@testament/recording";
+import type { PageCopy } from "../target/harness.js";
 import { compileByAi } from "./ai.js";
 import { type CheckSession, type EvaluatedCheck, evaluateCheck } from "./evaluate.js";
 import { compileByRules, type Probe } from "./rules.js";
@@ -110,6 +110,8 @@ export async function compileCheck(line: CheckLine, ctx: CompileContext): Promis
     const result = await ctx.session.check(op, {
       timeoutMs: options?.timeoutMs ?? 0,
       values: ctx.values,
+      // Since the step began: a toast it showed counts even once it's gone (Android).
+      ...(ctx.before ? { since: ctx.before } : {}),
     });
     return {
       passed: result.passed,

@@ -76,6 +76,9 @@ describe("engine guards", () => {
     "packages/android/src/guard.ts",
     // The link to the on-device driver, through adb's forward on 127.0.0.1 only.
     "packages/android/src/driver.ts",
+    // Android tests' setup/teardown requests (AUT-10): only to an allowed host or the
+    // environment's baseUrl, checked before sending (below).
+    "packages/android/src/hooks.ts",
   ];
   const AI_SDK_PACKAGE = "packages/models/";
 
@@ -215,6 +218,15 @@ describe("engine guards", () => {
     expect(driver).toContain('export const DRIVER_HOST = "127.0.0.1";');
     expect([...driver.matchAll(/connect\(\{/g)]).toHaveLength(1);
     expect(driver).toContain("connect({ host: DRIVER_HOST, port })");
+  });
+
+  it("sends Android hook requests only after the host check", () => {
+    const hooks = readFileSync(join(root, "packages/android/src/hooks.ts"), "utf8");
+    const send = hooks.slice(hooks.indexOf("export async function sendHookRequest("));
+    expect(
+      send.indexOf("if (!hookAllowed(url, context.allowlist, context.baseUrl))"),
+    ).toBeGreaterThan(0);
+    expect(send.indexOf("if (!hookAllowed(")).toBeLessThan(send.indexOf("send("));
   });
 
   it("keeps fixtures out of engine packages (tests may use them)", () => {

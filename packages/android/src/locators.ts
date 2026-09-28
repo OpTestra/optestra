@@ -9,6 +9,9 @@ import type { CandidatesResult, ElementFacts, LocatorCandidate, LocatorSpec } fr
 // `[resource-id="…"]`, `[content-desc="…"]` or `[text="…"]`. Frame paths are
 // ignored: windows are searched together, top window first.
 
+/** CSS selectors that mean the whole page on the web, and so the whole screen here. */
+export const WHOLE_SCREEN_SELECTORS: ReadonlySet<string> = new Set(["body", "html", ":root"]);
+
 const norm = (text: string) => text.replace(/\s+/g, " ").trim();
 
 function textMatch(
@@ -74,6 +77,8 @@ function matches(entry: ScreenNode, spec: LocatorSpec): boolean {
     case "text":
       return entry.role !== "textbox" && textMatch(node.text, spec.text, spec.exact);
     case "css": {
+      // The web's page body is the whole screen: every window's root.
+      if (WHOLE_SCREEN_SELECTORS.has(spec.selector.trim())) return entry.parent < 0;
       const css = parseCss(spec.selector);
       if (!css) return false;
       const cls = css.cls.includes(".")

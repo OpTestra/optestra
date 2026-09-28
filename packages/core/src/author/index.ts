@@ -1,4 +1,4 @@
-export { PROMPT_VERSION } from "./agent.js";
+export { ANDROID_PROMPT_VERSION, PROMPT_VERSION, promptVersionFor } from "./agent.js";
 export { authorTest } from "./author.js";
 export {
   checkGuards,
@@ -20,5 +20,5 @@ export {
   type TestInbox,
   type TestInboxOptions,
 } from "./inbox.js";
-export { PLANNER_TOOLS } from "./tools.js";
+export { ANDROID_TOOLS, PLANNER_TOOLS, toolsFor } from "./tools.js";
 export * from "./types.js";

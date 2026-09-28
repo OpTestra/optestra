@@ -6,6 +6,9 @@ import type {
   ElementStates,
   ElementSummary,
   FillValue,
+  HookRequest,
+  HookResult,
+  InspectResult,
   LocatorCandidate,
   LocatorSpec,
   Observation,
@@ -37,6 +40,9 @@ export type {
   ElementStates,
   ElementSummary,
   FillValue,
+  HookRequest,
+  HookResult,
+  InspectResult,
   LocatorCandidate,
   LocatorSpec,
   Observation,
@@ -76,7 +82,12 @@ export type AndroidAction =
   | { type: "rotate"; orientation: "portrait" | "landscape" }
   | { type: "open_deep_link"; url: string }
   | { type: "permission"; decision: "allow" | "allow_once" | "deny" }
-  | { type: "waitFor"; text?: string; target?: Target; timeoutMs?: number };
+  | { type: "waitFor"; text?: string; target?: Target; timeoutMs?: number }
+  /** The web's `goto`: on Android, opening a link in the app (a test's `start:`). */
+  | { type: "goto"; url: string }
+  /** The web's check/uncheck: tap a checkbox or switch only if it isn't in that state yet. */
+  | { type: "check"; target: Target }
+  | { type: "uncheck"; target: Target };
 
 export type AndroidActionType = AndroidAction["type"];
 
@@ -98,6 +109,9 @@ export const ANDROID_ACTION_TYPES: readonly AndroidActionType[] = [
   "open_deep_link",
   "permission",
   "waitFor",
+  "goto",
+  "check",
+  "uncheck",
 ];
 
 /**
@@ -136,6 +150,12 @@ export interface AndroidPostState extends Omit<PostState, "refused"> {
   app: AppState;
   /** False when nothing observable happened: same screen, no element, request, dialog, toast or crash. */
   changed: boolean;
+}
+
+/** The engine's learned wait (LRN-4); the harness settles fully either way. */
+export interface AndroidActOptions {
+  until?: (post: AndroidPostState) => boolean;
+  ceilingMs?: number;
 }
 
 export interface AndroidActionOutcome extends Omit<ActionOutcome, "action" | "reason" | "post"> {
@@ -205,6 +225,16 @@ export interface AndroidSessionOptions {
    * (the host machine's port 4180, through the emulator's host alias).
    */
   allowedDomains: readonly string[];
+  /**
+   * The environment's base URL: where setup/teardown requests (`hookRequest`) go,
+   * from this machine (e.g. http://127.0.0.1:4180 for the fixture's shop). Relative
+   * `goto` targets are refused on Android: a deep link needs its scheme.
+   */
+  baseUrl?: string;
+  /** ENV-5: the device's timezone for this session (an IANA id, e.g. "Europe/Berlin"). */
+  timezone?: string;
+  /** ENV-5: the app's language for this session (a BCP 47 tag, e.g. "de-DE"; Android 13+ per-app language). */
+  locale?: string;
   /** Loaded secrets; a secret can be typed only into an app whose package is in its `domains`. */
   secrets?: Readonly<Record<string, SecretValue>>;
   evidence?: AndroidEvidenceOptions;

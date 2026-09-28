@@ -7,6 +7,7 @@ import "@testament/spec";
 import "@testament/models/section";
 import "@testament/decide";
 import "@testament/auth";
+import "@testament/android/section";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { BUILT_IN_DEFAULTS, configJsonSchema } from "@testament/config";

@@ -1,6 +1,6 @@
 import type { ToolDefinition } from "@testament/models";
 import { z } from "zod";
-import { PLANNER_TOOLS, type PlannerToolCall, parseToolCall } from "../author/tools.js";
+import { PLANNER_TOOLS, parseToolCall, type WebToolCall } from "../author/tools.js";
 
 // The drafter's tools (AGT-0): the planner's closed action set (SAF-2), without
 // read_inbox (drafts have no test inbox) and without the step control tools,
@@ -37,7 +37,7 @@ export const DRAFT_TOOLS: ToolDefinition[] = [
 ];
 
 export type DraftToolCall =
-  | Exclude<PlannerToolCall, { name: "read_inbox" | "step_done" | "step_impossible" | "look" }>
+  | Exclude<WebToolCall, { name: "read_inbox" | "step_done" | "step_impossible" | "look" }>
   | { name: "look"; input: Record<string, never> }
   | { name: "expect"; input: { text: string } }
   | { name: "draft_done"; input: { name: string } }

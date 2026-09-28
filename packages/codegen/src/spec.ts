@@ -406,6 +406,9 @@ class SpecWriter {
           ),
         );
       }
+      // Android actions have no web spec (Android tests export to Maestro, MOB-2).
+      default:
+        return this.skip(`"${action.type}" is an Android action; a web spec can't run it`);
     }
   }
 

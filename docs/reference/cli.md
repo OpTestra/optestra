@@ -234,9 +234,10 @@ let the AI carry out a test's steps once and save the recording that later runs 
 | Option | | Default |
 |---|---|---|
 | `-e, --env <name>` | environment to run against |  |
-| `--headed` | show the browser window |  |
-| `--device <preset>` | device preset, e.g. desktop, laptop, iphone-15 |  |
+| `--headed` | show the browser or emulator window |  |
+| `--device <preset>` | device preset, e.g. desktop, laptop, iphone-15 (Android: a device profile, e.g. pixel-8) |  |
 | `--browser <name>` | chromium (default), firefox or webkit |  |
+| `--android <version>` | Android projects: the Android version (default: android.version) |  |
 | `--video` | also record a video |  |
 | `-C, --dir <path>` | project folder (default: the test's nearest project) |  |
 
@@ -298,14 +299,15 @@ run tests: replay each recording with no AI, evaluate every check, write a resul
 | `--replay-only` | no AI at all: a missed or unrecorded step fails (strict CI) |  |
 | `--rerecord` | ignore the recordings and record every step again with AI |  |
 | `--retries <n>` | extra attempts after a failure (default: run.retries) |  |
-| `--workers <n>` | tests in parallel, one browser each (default 1) |  |
+| `--workers <n>` | tests in parallel, one browser or emulator each (default 1) |  |
 | `--budget <usd>` | AI budget for this run in dollars (default: run.budget.maxPerRunUsd) |  |
-| `--headed` | show the browser windows |  |
+| `--headed` | show the browser or emulator windows |  |
 | `--browser <name>` | chromium (default), firefox or webkit; repeat for a matrix (one result per browser × device) | `[]` |
-| `--device <preset>` | device preset, e.g. desktop, laptop, iphone-15; repeat for a matrix | `[]` |
-| `--locale <code>` | browser locale, e.g. de-DE |  |
-| `--timezone <id>` | browser timezone, e.g. Europe/Berlin |  |
+| `--device <preset>` | device preset, e.g. desktop, laptop, iphone-15 (Android: a device profile, e.g. pixel-8); repeat for a matrix | `[]` |
+| `--locale <code>` | browser locale, or the Android app's language, e.g. de-DE |  |
+| `--timezone <id>` | browser or device timezone, e.g. Europe/Berlin |  |
 | `--evidence <mode>` | full \| failures \| minimal (default: run.evidence, else full in CI and failures elsewhere) |  |
+| `--android <version>` | Android projects: the Android version (default: android.version); repeat for a matrix | `[]` |
 | `--no-video` | don't record a video per attempt |  |
 | `--verbose` | print every step, heal and warning |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |

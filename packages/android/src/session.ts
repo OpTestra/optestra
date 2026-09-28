@@ -32,7 +32,8 @@ import {
   Screen,
   type ScreenNode,
 } from "./hierarchy.js";
-import { candidatesFor, resolveLocator } from "./locators.js";
+import { sendHookRequest } from "./hooks.js";
+import { candidatesFor, factsOf, resolveLocator } from "./locators.js";
 import { Logcat } from "./logcat.js";
 import { AndroidSetupError } from "./sdk.js";
 import { findSystemDialogs } from "./system-dialogs.js";
@@ -40,6 +41,7 @@ import { PACKAGE_NAME, type Running, runAdb, startAdb } from "./tools.js";
 import type {
   AndroidAction,
   AndroidActionOutcome,
+  AndroidActOptions,
   AndroidCloseResult,
   AndroidEvidenceFile,
   AndroidObservation,
@@ -52,6 +54,11 @@ import type {
   CandidatesResult,
   DialogSummary,
   DismissedDialog,
+  ElementFacts,
+  HookRequest,
+  HookResult,
+  InspectResult,
+  LocatorSpec,
   OpenFailureReason,
   OpenSessionResult,
   OutcomeStatus,
@@ -67,6 +74,8 @@ import type {
 const ACTION_TIMEOUT_MS = 5_000;
 const MODEL_MAX_WIDTH = 1280;
 const MAX_ELEMENTS = 400;
+/** How long a toast counts as "shown now" for observations (Android shows one for 2 to 3.5 s). */
+const TOAST_MS = 6_000;
 const DEFAULT_SETTLE = { timeoutMs: 10_000, quietMs: 300 };
 const AFTER_NETWORK_QUIET_MS = 800;
 /** How long to wait before looking again at an action that seemed to change nothing. */
@@ -257,6 +266,9 @@ export class AndroidSession {
   readonly #secretFields = new Map<string, string>();
   #refs = new Map<string, RefKey>();
   #latest: Screen | null = null;
+  /** Every toast seen, with when: toasts vanish, so checks and observations read them here. */
+  readonly #toasts: { text: string; at: number }[] = [];
+  #toastCursor = 0;
   #refusalCursor = 0;
   #counters: FirewallCounters = { app: 0, system: 0 };
   #closed: AndroidCloseResult | undefined;
@@ -333,8 +345,18 @@ export class AndroidSession {
   }
 
   /** `android-app://<package>/<activity>` of the last screen seen (scrubbed). */
-  url(): string {
+  get url(): string {
     return this.#redact(this.#latest?.url ?? `android-app://${this.#appPackage}`);
+  }
+
+  /** The engine the session runs on, like the web harness's browser name. */
+  get browserName(): "android" {
+    return "android";
+  }
+
+  /** Every act settles fully, so no settle is ever owed (the web harness's `unsettled`). */
+  get unsettled(): false {
+    return false;
   }
 
   /** Every connection refused so far. */
@@ -382,6 +404,22 @@ export class AndroidSession {
     return screen;
   }
 
+  /** Moves the driver's new toasts into the log (they are reported once). Returns the new ones. */
+  async #drainToasts(): Promise<{ text: string }[]> {
+    if (this.#problem()) return [];
+    const events = (await this.#driver.call("events").catch(() => ({}))) as {
+      toasts?: { text: string; toast?: boolean }[];
+    };
+    const fresh = (events.toasts ?? []).filter((t) => t.toast !== false && t.text);
+    for (const toast of fresh) this.#toasts.push({ text: toast.text, at: Date.now() });
+    return fresh;
+  }
+
+  /** Toasts shown since `since` (ms), scrubbed. */
+  #toastsSince(since: number): string[] {
+    return this.#toasts.filter((t) => t.at >= since).map((t) => this.#redact(t.text));
+  }
+
   #blank(): Screen {
     const dump: Dump = { windows: [], nodes: [], truncated: false, activity: null, rotation: 0 };
     return new Screen(dump, { appPackage: this.#appPackage });
@@ -417,6 +455,23 @@ export class AndroidSession {
       refused,
     });
     this.#refs = built.refs;
+    // Toasts aren't in the accessibility tree: shown ones since the last observe
+    // (a few seconds at most) appear as status messages, as the web shows a role=status.
+    await this.#drainToasts();
+    const recent = this.#toasts
+      .slice(this.#toastCursor)
+      .filter((t) => Date.now() - t.at < TOAST_MS);
+    this.#toastCursor = this.#toasts.length;
+    for (const toast of recent)
+      built.observation.elements.push({
+        role: "status",
+        name: "",
+        text: this.#redact(toast.text),
+        depth: 0,
+        states: {},
+        interactive: false,
+        frame: 0,
+      });
     return built.observation;
   }
 
@@ -448,9 +503,44 @@ export class AndroidSession {
     return candidatesFor(screen, entry, this.#redact);
   }
 
+  /** How many elements a locator matches now, and the facts of the one it matches (REP-5). */
+  async inspect(target: LocatorSpec): Promise<InspectResult> {
+    const screen = await this.#clearScreen();
+    if (!screen)
+      return { status: "error", matches: 0, facts: null, message: "The device is gone." };
+    const { entry, count } = resolveLocator(screen, target);
+    if (count === 0) return { status: "not_found", matches: 0, facts: null };
+    if (!entry) return { status: "multiple", matches: count, facts: null };
+    return { status: "ok", matches: count, facts: factsOf(screen, entry, this.#redact) };
+  }
+
+  /** The fingerprint facts of a ref from the latest observe. */
+  async factsOf(ref: string): Promise<ElementFacts | null> {
+    const screen = await this.#screen();
+    const key = this.#refs.get(ref);
+    const entry = screen && key ? screen.find(key) : undefined;
+    return screen && entry ? factsOf(screen, entry, this.#redact) : null;
+  }
+
+  /**
+   * A setup/teardown request (AUT-10), sent from this machine to the environment's
+   * baseUrl or an allowed host. Not an agent action.
+   */
+  hookRequest(request: HookRequest): Promise<HookResult> {
+    return sendHookRequest(request, {
+      allowlist: this.#allowlist,
+      baseUrl: this.#options.baseUrl,
+      redact: this.#redact,
+    });
+  }
+
   // ── Actions ───────────────────────────────────────────────────────────────
 
-  async act(action: AndroidAction): Promise<AndroidActionOutcome> {
+  /**
+   * `options` (the engine's learned wait) is accepted for the engine's sake: the
+   * screen is always settled fully before the outcome is built.
+   */
+  async act(action: AndroidAction, _options?: AndroidActOptions): Promise<AndroidActionOutcome> {
     const started = Date.now();
     const timeout = this.#options.actionTimeoutMs ?? ACTION_TIMEOUT_MS;
     const before = await this.#clearScreen();
@@ -462,7 +552,7 @@ export class AndroidSession {
           .observation.elements
       : [];
     const beforeWindows = before ? dialogWindows(before) : [];
-    await this.#driver.call("events").catch(() => {});
+    await this.#drainToasts();
 
     let result: Result;
     const problem = this.#problem();
@@ -515,13 +605,7 @@ export class AndroidSession {
       // Never read the post-state off a screen that is between windows (one gone,
       // the next not reported yet: settle can end just before a new window shows).
       const after = await this.#readyScreen();
-      const notices =
-        (
-          (await this.#driver.call("events").catch(() => ({ toasts: [] }))) as {
-            toasts?: { text: string; toast?: boolean }[];
-          }
-        ).toasts ?? [];
-      toasts.push(...notices.filter((n) => n.toast !== false));
+      toasts.push(...(await this.#drainToasts()));
       await this.#firewallRefusals().catch(() => []);
       const afterElements = after
         ? buildObservation(after, { maxElements: MAX_ELEMENTS, redact: this.#redact, refused: [] })
@@ -782,12 +866,27 @@ export class AndroidSession {
       case "rotate":
         await this.#driver.call("rotate", { degrees: action.orientation === "landscape" ? 90 : 0 });
         return ok;
+      case "check":
+      case "uncheck": {
+        const found = await this.#target(action.target, screen);
+        if ("result" in found) return found.result;
+        const flags = found.entry.node.flags;
+        if (!flags.includes("checkable"))
+          return refused("invalid_action", "The target is not a checkbox or a switch.");
+        if (flags.includes("checked") === (action.type === "check")) return ok;
+        await this.#driver.call("tap", AndroidSession.#center(found.entry, found.screen));
+        return ok;
+      }
+      case "goto":
       case "open_deep_link": {
         let url: URL;
         try {
           url = new URL(action.url);
         } catch {
-          return refused("invalid_action", "The link is not a URL.");
+          return refused(
+            "invalid_action",
+            "An Android link needs its scheme (e.g. myapp://screen or https://…); there is no page to go to.",
+          );
         }
         const scheme = url.protocol.replace(/:$/, "").toLowerCase();
         if (BLOCKED_SCHEMES.has(scheme))
@@ -963,6 +1062,10 @@ export class AndroidSession {
       mark: () => this.#requests.length,
       requestsSince: (mark) => this.#requests.slice(mark).map((r) => r.summary),
       blank: () => this.#blank(),
+      toasts: async (since) => {
+        await this.#drainToasts();
+        return this.#toastsSince(since);
+      },
     });
   }
 
@@ -972,7 +1075,7 @@ export class AndroidSession {
   }
 
   /** A frozen copy of the current screen, for checks that must not see later changes. */
-  async screenCopy(): Promise<ScreenCopy> {
+  async pageCopy(): Promise<ScreenCopy> {
     const screen = (await this.#screen()) ?? this.#blank();
     return ScreenCopy.create(screen, this.#requests.length, this.#redact(screen.url));
   }
@@ -1223,6 +1326,17 @@ export async function openAndroidSession(
   }
   const apk = isAbsolute(options.apk) ? options.apk : resolve(options.apk);
   if (!existsSync(apk)) return failure("app_install_failed", `The APK ${apk} does not exist.`);
+  // ENV-5: checked here, on this machine (the device accepts any timezone name).
+  if (options.timezone !== undefined && !validTimezone(options.timezone))
+    throw new AndroidSetupError(
+      `"${options.timezone}" is not a timezone.`,
+      "Use an IANA timezone id, e.g. Europe/Berlin.",
+    );
+  if (options.locale !== undefined && !validLocale(options.locale))
+    throw new AndroidSetupError(
+      `"${options.locale}" is not a locale.`,
+      "Use a language tag, e.g. de-DE.",
+    );
 
   let emulator = options.emulator;
   let bootMs: number | undefined;
@@ -1318,6 +1432,18 @@ export async function openAndroidSession(
       }),
   });
   const installMs = Date.now() - installStarted;
+
+  // ENV-5: the device's timezone and the app's language, before the app first runs
+  // (the clean snapshot restores both for the next session).
+  if (options.timezone !== undefined)
+    await runAdb(sdk, serial, { name: "set-timezone", timezone: options.timezone }, 10_000);
+  if (options.locale !== undefined)
+    await runAdb(
+      sdk,
+      serial,
+      { name: "set-app-locales", appPackage, locales: options.locale },
+      10_000,
+    );
 
   // 5. The driver.
   const driverStarted = Date.now();
@@ -1483,4 +1609,21 @@ export async function openAndroidSession(
   timings.launchMs = Date.now() - launchStarted;
   timings.totalMs = Date.now() - opened;
   return { ok: true, session };
+}
+
+function validTimezone(timezone: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: timezone });
+    return /^[A-Za-z]/.test(timezone);
+  } catch {
+    return false;
+  }
+}
+
+function validLocale(locale: string): boolean {
+  try {
+    return Intl.getCanonicalLocales(locale).length === 1;
+  } catch {
+    return false;
+  }
 }

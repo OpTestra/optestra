@@ -25,6 +25,8 @@ export const ADB_COMMANDS = [
   "logcat-mark",
   "prepare-device",
   "firewall",
+  "set-timezone",
+  "set-app-locales",
   "emu",
 ] as const;
 
@@ -59,11 +61,17 @@ export type AdbCommand =
   | { name: "logcat-mark"; mark: number }
   | { name: "prepare-device" }
   | { name: "firewall"; rules: readonly (readonly string[])[] }
+  /** ENV-5: the device's timezone (an IANA id) and the app's language (BCP 47 tags). */
+  | { name: "set-timezone"; timezone: string }
+  | { name: "set-app-locales"; appPackage: string; locales: string }
   | { name: "emu"; command: EmuCommand };
 
 /** Tokens that may go into a device command line. */
 export const SAFE_TOKEN = /^[A-Za-z0-9_.:/,=+-]+$/;
 const NAME = /^[A-Za-z0-9_-]{1,64}$/;
+const TIMEZONE = /^[A-Za-z][A-Za-z0-9_+-]*(?:\/[A-Za-z0-9_+-]+){0,2}$/;
+const LOCALE = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/;
+const PACKAGE = /^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+$/;
 const HEX = /^[0-9a-f]{16,64}$/;
 export const PACKAGE_NAME = /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/;
 const DRIVER = "dev.uiharness.driver/.Driver";
@@ -117,6 +125,24 @@ export function adbArgs(command: AdbCommand): string[] {
       return ["shell", "getprop", command.key];
     case "root":
       return ["root"];
+    case "set-timezone":
+      return [
+        "shell",
+        "cmd",
+        "alarm",
+        "set-timezone",
+        check(command.timezone, TIMEZONE, "timezone"),
+      ];
+    case "set-app-locales":
+      return [
+        "shell",
+        "cmd",
+        "locale",
+        "set-app-locales",
+        check(command.appPackage, PACKAGE, "package"),
+        "--locales",
+        check(command.locales, LOCALE, "locale"),
+      ];
     case "whoami":
       return ["shell", "id", "-u"];
     case "install":

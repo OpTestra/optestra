@@ -1,5 +1,5 @@
-import type { CheckEvaluation, PageCopy } from "@testament/browser";
 import type { CheckOp, Sanity } from "@testament/recording";
+import type { CheckEvaluation, PageCopy } from "../target/harness.js";
 import type { CheckSession } from "./evaluate.js";
 
 // The check sanity test (VER-6): a check must be able to fail. It runs once

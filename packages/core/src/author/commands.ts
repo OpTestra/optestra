@@ -1,4 +1,3 @@
-import type { ActionOutcome, CandidatesResult, ElementSummary } from "@testament/browser";
 import {
   type Command,
   type ExpectPost,
@@ -9,6 +8,7 @@ import {
   type TemplateVariable,
   toTemplate,
 } from "@testament/recording";
+import type { ActionOutcome, CandidatesResult, ElementSummary } from "../target/harness.js";
 
 // Turning what the harness did into recorded commands: locators instead of refs
 // (the top unique candidate first), the element's fingerprint, what replay

@@ -1,6 +1,6 @@
-import type { CheckEvaluation } from "@testament/browser";
 import type { CheckKind, CheckResult } from "@testament/contract";
 import { type CheckOp, type CheckRecording, describeCheck } from "@testament/recording";
+import type { CheckEvaluation } from "../target/harness.js";
 
 // A recorded check → the contract's CheckResult (VER-1). Every run evaluates
 // the check again (LRN-2); nothing from authoring is reused as a result.

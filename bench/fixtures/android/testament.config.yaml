@@ -15,8 +15,8 @@ environments:
     app: app/build/outputs/apk/correct/debug/acme-shop-android-correct-debug.apk
     # Setup hooks (seed, reset) go to the shop's server from this machine.
     baseUrl: http://127.0.0.1:4180
-    # The emulator's host alias for this machine: the shop runs there.
-    allowedDomains: [10.0.2.2]
+    # The emulator's host alias for this machine, on the shop's port only.
+    allowedDomains: [10.0.2.2:4180]
 
 secrets:
   SHOP_PASSWORD:
@@ -24,8 +24,8 @@ secrets:
     domains: [com.acme.shop]
     description: Password of the seeded user ada@example.com
 
-# An Android test starts on the app's launcher screen (or a deep link), so a
-# test without `start:` is normal here.
-lint:
-  rules:
-    missing-start: off
+# Tests run on Android 16, on a Pixel 8 profile (the defaults; --android and
+# --device override them).
+android:
+  version: "16"
+  device: pixel-8

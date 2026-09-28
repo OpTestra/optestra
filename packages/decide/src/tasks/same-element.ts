@@ -23,7 +23,8 @@ export const elementIdentitySchema = z.object({
   role: z.string().max(60),
   /** Accessible name. */
   name: z.string().max(300),
-  tag: z.string().max(30),
+  /** A web tag, or an Android view class (android.widget.EditText). */
+  tag: z.string().max(80),
   attributes: z.record(z.string().max(40), z.string().max(300)),
   /** Visible text ("" when unknown: fingerprints don't store it). */
   text: z.string().max(300),
@@ -64,7 +65,7 @@ const hrefPath = (href: string) => {
 const lastToken = (id: string) =>
   id
     .toLowerCase()
-    .split(/[-_:.\s]+/)
+    .split(/[-_:./\s]+/)
     .filter(Boolean)
     .at(-1) ?? "";
 const q = (text: string) => `'${text.length > 60 ? `${text.slice(0, 60)}…` : text}'`;
@@ -93,8 +94,11 @@ export function scoreSameElement(input: SameElementInput) {
     text === "unknown" ? "not recorded" : `${q(r.text)} → ${q(c.text)} (${text})`,
   );
 
-  const tr = r.attributes["data-testid"];
-  const tc = c.attributes["data-testid"];
+  // On Android the resource id plays the test id's part (com.acme.shop:id/sign_in → sign_in).
+  const testId = (a: Record<string, string>) =>
+    a["data-testid"] ?? a["resource-id"]?.replace(/^[^/]*:id\//, "");
+  const tr = testId(r.attributes);
+  const tc = testId(c.attributes);
   const testIdEqual = Boolean(tr && tc && tr === tc);
   const testIdUnrelated = Boolean(tr && tc && tr !== tc && lastToken(tr) !== lastToken(tc));
   add(
@@ -117,7 +121,7 @@ export function scoreSameElement(input: SameElementInput) {
       const same = hrefPath(a) === hrefPath(b);
       hrefDiffers = !same;
       score = same ? 1 : -1;
-    } else if (key === "type") {
+    } else if (key === "type" || key === "input-type") {
       typeDiffers = a.toLowerCase() !== b.toLowerCase();
       score = typeDiffers ? -1 : 1;
     } else if (key === "name" || key === "for") {

@@ -45,6 +45,12 @@ export const BLOCKED_REASONS = [
   "login_failed",
   // 1.2 (AUTH-1): a setup hook failed (the app said no to the test's own setup request).
   "setup_failed",
+  // 1.4 (MOB-1): the Android app installed but didn't start (it crashed or exited at launch).
+  "app_launch_failed",
+  // 1.4 (MOB-1): the Android emulator couldn't boot, reset or be set up for the test.
+  "emulator_failed",
+  // 1.4 (MOB-1): the on-device driver (the harness's link to the device) didn't start.
+  "driver_failed",
 ] as const;
 export const BlockedReasonSchema = openEnum(BLOCKED_REASONS);
 export type BlockedReason = z.infer<typeof BlockedReasonSchema>;

@@ -1,12 +1,4 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import type {
-  ActionOutcome,
-  CheckEvaluation,
-  ElementFacts,
-  Observation,
-  PageCopy,
-  RequestMark,
-} from "@testament/browser";
 import { defaultRedactor } from "@testament/config/node";
 import {
   type CheckResult,
@@ -58,7 +50,16 @@ import {
 import { evaluateCheck } from "../checks/evaluate.js";
 import { isAbsence } from "../checks/sanity.js";
 import { runFixer } from "../heal/fixer.js";
-import { type HealPatch, HEAL_PATCH_VERSION, relocatedCommand } from "../heal/patch.js";
+import { HEAL_PATCH_VERSION, type HealPatch, relocatedCommand } from "../heal/patch.js";
+import type {
+  ActionOutcome,
+  CheckEvaluation,
+  ElementFacts,
+  Observation,
+  PageCopy,
+  RequestMark,
+} from "../target/harness.js";
+import { targetOfSession } from "../target/harness.js";
 import { bindAction, retarget, targetOf } from "./bind.js";
 import { checkResult, evaluationText, unusableCheck } from "./checks.js";
 import { fixerProposal, healFacts, healProposal } from "./heal.js";
@@ -183,6 +184,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
   let healedByFixer = 0;
   const patches: HealPatch[] = [];
   let lastOutcome: ActionOutcome | undefined;
+  // Android (MOB-1): the app crashing or hanging is the app's fault, like an uncaught page error.
+  const appProblems: string[] = [];
   let notFoundAtFailure = false;
   // Where the current action step began: network checks count from here.
   let stepMark: RequestMark | undefined;
@@ -401,6 +404,14 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
   ) => {
     const outcome = await session.act(action, actOptions);
     lastOutcome = outcome;
+    const crashed = outcome.problem === "app_crashed" || outcome.post?.app === "crashed";
+    const hung = outcome.problem === "app_not_responding" || outcome.post?.app === "not_responding";
+    if (crashed || hung)
+      appProblems.push(
+        crashed
+          ? `FATAL EXCEPTION: the app crashed during ${outcome.action.type}`
+          : `ANR: the app stopped responding during ${outcome.action.type}`,
+      );
     return outcome;
   };
 
@@ -911,6 +922,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
         guardLines: test.guards.map((g) => g.display),
         signal: controller.signal,
         tags: { test: test.id },
+        target: targetOfSession(session),
         // Done once the step's recorded effect shows (a toast may be gone after another model call).
         doneWhen: (outcome) =>
           verifyOutcome(
@@ -1422,6 +1434,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
                   signal: controller.signal,
                   tags: { test: test.id },
                   inbox: { runtime: options.inbox, test },
+                  target: targetOfSession(session),
                 },
                 step,
                 variables,
@@ -1650,6 +1663,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     pageIsError: observationsAt?.isError ?? null,
     route: routeOf(session.url),
     notFound: notFoundAtFailure,
+    ...(appProblems.length > 0 ? { consoleErrors: appProblems.slice(0, 5) } : {}),
   };
   return {
     attempt,

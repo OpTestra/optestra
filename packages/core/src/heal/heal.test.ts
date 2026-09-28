@@ -2,6 +2,7 @@ import { HealProposalSchema } from "@testament/contract";
 import type { Command } from "@testament/recording";
 import { describe, expect, it } from "vitest";
 import { agentScript, promptText, scriptedModels } from "../author/test-kit.test-support.js";
+import { fixerProposal } from "../run/heal.js";
 import {
   command,
   expanded,
@@ -13,7 +14,6 @@ import {
   replay,
   role,
 } from "../run/test-kit.test-support.js";
-import { fixerProposal } from "../run/heal.js";
 import { decideVerdict } from "../run/verdict.js";
 import { fixerContext } from "./fixer.js";
 import { applyPatches, describeCommand } from "./patch.js";

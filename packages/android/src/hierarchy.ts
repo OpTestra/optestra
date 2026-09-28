@@ -8,6 +8,9 @@ import type {
   ObservedFrame,
 } from "./types.js";
 
+/** A short "-ing…" text: a loading or working message. */
+const BUSY_TEXT = /^(?![A-Z][a-z]*thing\b)[A-Z][a-z]+ing(?: [a-z]+){0,2}(?:…|\.\.\.)$/;
+
 // The screen as data (MOB-3, MOD-3): the driver's accessibility dump mapped to the
 // web harness's Observation shape. Windows play the part of frames: frame 0 is
 // the app's own window, later frames are windows on top of it (dialogs, the
@@ -227,6 +230,18 @@ export class Screen {
       : `android-app://${this.frames[0]?.package ?? context.appPackage}`;
     const top = this.frames[this.frames.length - 1];
     this.title = clean(top?.title ?? "");
+    // A dialog window's root is the dialog (role dialog, named by its title), so
+    // "a dialog titled X" finds it like the web's role=dialog.
+    for (const window of this.frames) {
+      if (!this.isDialog(window)) continue;
+      for (const root of this.nodes) {
+        if (!root || root.node.window !== window.id || root.parent >= 0) continue;
+        root.role = window.package === this.appPackage ? "dialog" : "alertdialog";
+        root.name =
+          clean(window.title ?? undefined) ||
+          clean(this.nodes.find((n) => n && n.node.window === window.id && n.node.text)?.node.text);
+      }
+    }
   }
 
   /** Joined text of non-interactive descendants: how a row without its own label reads. */
@@ -297,6 +312,8 @@ export class Screen {
     if (entry.interactive) return true;
     if (inSummarised) return false;
     switch (entry.role) {
+      case "dialog":
+      case "alertdialog":
       case "heading":
       case "list":
       case "tablist":
@@ -361,6 +378,9 @@ export class Screen {
       ) {
         return true;
       }
+      // An app saying it's at work ("Checking…", "Loading...", "Saving changes…"),
+      // often before its request has even started (MOB-1).
+      if (entry.visible && entry.node.text && BUSY_TEXT.test(entry.node.text.trim())) return true;
     }
     return false;
   }
@@ -418,24 +438,6 @@ export function buildObservation(screen: Screen, options: BuildOptions): Built {
 
   screen.frames.forEach((window, frameIndex) => {
     frames.push({ url: redact(`android-app://${window.package ?? ""}`), parentRef: null });
-    let base = 0;
-    if (screen.isDialog(window)) {
-      // A window above the app: a dialog, the permission prompt, a system dialog.
-      const title = window.title ?? "";
-      push(
-        {
-          role: window.package === screen.appPackage ? "dialog" : "alertdialog",
-          name: redact(title),
-          depth: 0,
-          states: {},
-          interactive: false,
-          frame: frameIndex,
-          box: box(window.bounds),
-        },
-        null,
-      );
-      base = 1;
-    }
     const roots = screen.nodes.filter((n) => n && n.node.window === window.id && n.parent < 0);
     const walk = (entry: ScreenNode, depth: number, summarised: boolean) => {
       if (truncated) return;
@@ -469,7 +471,7 @@ export function buildObservation(screen: Screen, options: BuildOptions): Built {
         if (node) walk(node, childDepth, childSummarised);
       }
     };
-    for (const root of roots) if (root) walk(root, base, false);
+    for (const root of roots) if (root) walk(root, 0, false);
   });
 
   return {

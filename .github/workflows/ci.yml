@@ -95,7 +95,7 @@ jobs:
   android:
     name: android emulator (ubuntu)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 100
     env:
       ANDROID_PACKAGES: platform-tools emulator platforms;android-36 build-tools;36.0.0 system-images;android-36;google_apis;x86_64
     steps:
@@ -148,3 +148,5 @@ jobs:
           pnpm --filter @testament/android build:driver
           pnpm --filter @testament/fixture-android build:apks
       - run: pnpm --filter @testament/android test:android
+      - run: pnpm --filter @testament/core test:android
+      - run: pnpm bench:replay:android

@@ -1,6 +1,4 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import type { Action, ActionOutcome, Observation, ObservedElement } from "@testament/browser";
-import { renderForModel } from "@testament/browser";
 import type { ModelCall } from "@testament/contract";
 import {
   type BudgetMeter,
@@ -13,11 +11,14 @@ import {
 import type { Command, Fingerprint, Locator, RecordedAction } from "@testament/recording";
 import { toTemplate } from "@testament/recording";
 import type { ExpandedStep, ExpandedTest } from "@testament/spec";
+import type { Action, ActionOutcome, Observation, ObservedElement } from "../target/harness.js";
+import { renderForModel } from "../target/render.js";
 import { commandOf, fingerprintOf, pageTemplate } from "./commands.js";
 import { checkGuards, type GuardContext } from "./guards.js";
 import { inboxMemberOfAction, prepareInbox, type TestInbox } from "./inbox.js";
+import androidPrompt from "./planner-android-prompt.json" with { type: "json" };
 import prompt from "./planner-prompt.json" with { type: "json" };
-import { PLANNER_TOOLS, type PlannerToolCall, parseToolCall } from "./tools.js";
+import { type PlannerToolCall, parseToolCall, toolsFor } from "./tools.js";
 import type { ActionReport, AuthorLimits, AuthorSession, StopReason } from "./types.js";
 import { describeVariables, harnessValue, type StepVariables, withInbox } from "./variables.js";
 
@@ -38,6 +39,14 @@ export interface AgentPrompt {
 }
 
 const PLANNER_PROMPT: AgentPrompt = prompt;
+/** The planner prompt for an app screen (MOB-1): the same rules, the Android tools. */
+const ANDROID_PLANNER_PROMPT: AgentPrompt = androidPrompt;
+export const ANDROID_PROMPT_VERSION: string = androidPrompt.version;
+
+/** The planner prompt's version for a target (recorded with every recording, LRN-10). */
+export function promptVersionFor(target: "web" | "android" | undefined): string {
+  return target === "android" ? ANDROID_PROMPT_VERSION : PROMPT_VERSION;
+}
 
 /** The model's short reasoning for a call (EVD-1): its text, else what its control tool said. */
 function noteOf(
@@ -56,7 +65,18 @@ function noteOf(
 
 /** Actions that may legitimately leave the page unchanged. */
 // upload: attaching a file often shows nothing until the form is sent (the next step).
-const NO_EFFECT_OK = new Set(["hover", "scroll", "waitFor", "press", "upload"]);
+// swipe and rotate (Android): a scroll view keeps its elements, and rotation isn't compared.
+const NO_EFFECT_OK = new Set(["hover", "scroll", "waitFor", "press", "upload", "swipe", "rotate"]);
+
+/** How a tool is guarded (AUT-2): as the web action it amounts to. */
+const GUARD_KIND: Record<string, string> = {
+  wait_for: "waitFor",
+  tap: "click",
+  long_press: "click",
+  type: "fill",
+  clear: "fill",
+  open_link: "goto",
+};
 
 /** The harness's settle can return before a click's async work starts: grace before looking again. */
 const LATE_EFFECT_MS = 400;
@@ -98,6 +118,8 @@ export interface AgentContext {
   doneWhen?: (outcome: ActionOutcome) => boolean;
   /** The test inbox of this attempt and the test (for its address), for read_inbox (AUTH-1). */
   inbox?: { runtime: TestInbox | undefined; test: ExpandedTest };
+  /** The project's target: Android gets the app tools and the app prompt (MOB-1). Default web. */
+  target?: "web" | "android";
 }
 
 export interface ActionStepResult {
@@ -212,7 +234,9 @@ export async function runActionStep(
   let nudged = false;
   let actedSinceObserve = 0;
   let lastRefusalWasGuard = false;
-  const template = ctx.prompt ?? PLANNER_PROMPT;
+  const template =
+    ctx.prompt ?? (ctx.target === "android" ? ANDROID_PLANNER_PROMPT : PLANNER_PROMPT);
+  const tools = toolsFor(ctx.target);
   const role = ctx.role ?? "planner";
 
   const end = (status: ActionStepResult["status"], reason?: StopReason, message?: string) => {
@@ -265,7 +289,7 @@ export async function runActionStep(
     const reply = await ctx.models.complete(role, {
       system: template.system,
       messages: [{ role: "user", content }],
-      tools: PLANNER_TOOLS,
+      tools,
       maxOutputTokens: 500,
       temperature: 0,
       cache: true,
@@ -295,7 +319,7 @@ export async function runActionStep(
     }
 
     for (const raw of reply.toolCalls) {
-      const parsed = parseToolCall(raw.name, raw.input);
+      const parsed = parseToolCall(raw.name, raw.input, tools);
       if (!parsed.ok) {
         note(`${raw.name}: ${parsed.error}`);
         result.actions.push({
@@ -573,16 +597,18 @@ async function plan(
   let value: string | { secret: string } | undefined;
   if (
     call.name === "fill" ||
+    call.name === "type" ||
     call.name === "select" ||
     call.name === "goto" ||
+    call.name === "open_link" ||
     (call.name === "wait_for" && call.input.text !== undefined)
   ) {
     const typed =
-      call.name === "fill"
+      call.name === "fill" || call.name === "type"
         ? call.input.value
         : call.name === "select"
           ? call.input.option
-          : call.name === "goto"
+          : call.name === "goto" || call.name === "open_link"
             ? call.input.url
             : (call.input.text as string);
     template = toTemplate(typed, variables.list);
@@ -592,6 +618,7 @@ async function plan(
     if (
       typeof resolved.value !== "string" &&
       call.name !== "fill" &&
+      call.name !== "type" &&
       !(
         call.name === "goto" &&
         inboxMemberOfAction({ type: "goto", url: resolved.value }) === "link"
@@ -611,9 +638,12 @@ async function plan(
     : undefined;
   const decision = checkGuards(
     {
-      type: call.name === "wait_for" ? "waitFor" : call.name,
+      // Android's tools are guarded as their web kinds (Never: click "Delete" covers a tap).
+      type: GUARD_KIND[call.name] ?? call.name,
       ...(target ? { target } : {}),
-      ...(call.name === "goto" && typeof value === "string" ? { url: value } : {}),
+      ...((call.name === "goto" || call.name === "open_link") && typeof value === "string"
+        ? { url: value }
+        : {}),
     },
     ctx.guards,
   );
@@ -706,6 +736,73 @@ async function plan(
       return {
         action: { type: call.name },
         recorded: { type: call.name },
+        fingerprint: null,
+        description,
+      };
+    // Android (MOB-1): tap and type are click and fill, recorded the same way.
+    case "tap":
+      return {
+        action: { type: "click", target: need(ref) },
+        recorded: { type: "click", target: need(locator) },
+        fingerprint,
+        description,
+      };
+    case "type":
+      return {
+        action: { type: "fill", target: need(ref), value: need(value) },
+        recorded: { type: "fill", target: need(locator), value: need(template) },
+        fingerprint,
+        description,
+      };
+    case "long_press":
+    case "clear":
+      return {
+        action: { type: call.name, target: need(ref) },
+        recorded: { type: call.name, target: need(locator) },
+        fingerprint,
+        description,
+      };
+    case "swipe":
+      description = `swipe ${call.input.direction}${on ? ` on ${on}` : ""}`;
+      return {
+        action: { type: "swipe", direction: call.input.direction, ...(ref ? { target: ref } : {}) },
+        recorded: {
+          type: "swipe",
+          direction: call.input.direction,
+          ...(locator ? { target: locator } : {}),
+        },
+        fingerprint,
+        description,
+      };
+    case "home":
+    case "launch_app":
+      return {
+        action: { type: call.name },
+        recorded: { type: call.name },
+        fingerprint: null,
+        description,
+      };
+    case "rotate":
+      description = `rotate to ${call.input.orientation}`;
+      return {
+        action: { type: "rotate", orientation: call.input.orientation },
+        recorded: { type: "rotate", orientation: call.input.orientation },
+        fingerprint: null,
+        description,
+      };
+    case "open_link":
+      if (typeof value !== "string") return { error: "A link can't be a secret.", description };
+      return {
+        action: { type: "open_deep_link", url: value },
+        recorded: { type: "open_deep_link", url: need(template) },
+        fingerprint: null,
+        description,
+      };
+    case "permission":
+      description = `permission: ${call.input.decision}`;
+      return {
+        action: { type: "permission", decision: call.input.decision },
+        recorded: { type: "permission", decision: call.input.decision },
         fingerprint: null,
         description,
       };

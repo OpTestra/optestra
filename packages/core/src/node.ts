@@ -33,3 +33,13 @@ export {
 } from "./run/runner.js";
 export { parseShard, type Shard, selectShard } from "./run/shard.js";
 export { runSpecTest, type SpecTestOptions } from "./run/spec-run.js";
+export {
+  type AttemptEvidence,
+  type AttemptSession,
+  launchWorker,
+  type OpenedAttempt,
+  type RunTarget,
+  resolveTarget,
+  TargetLaunchError,
+  type TargetWorker,
+} from "./run/target.js";

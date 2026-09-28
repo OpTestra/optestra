@@ -8,7 +8,7 @@ import {
   describeLocator,
 } from "@testament/recording";
 import type { Screen, ScreenNode } from "./hierarchy.js";
-import { matchAll } from "./locators.js";
+import { matchAll, WHOLE_SCREEN_SELECTORS } from "./locators.js";
 import type { RequestSummary } from "./types.js";
 
 // The check evaluator for Android (LOOP-2's `session.check`, VER-1/VER-2): one
@@ -71,7 +71,21 @@ export interface CheckContext {
   mark(): number;
   requestsSince(mark: number): RequestSummary[];
   blank(): Screen;
+  /** Toasts shown since `since` (ms since the epoch); reads new ones from the device first. */
+  toasts?(since: number): Promise<string[]>;
 }
+
+/** Toasts count as the screen's status messages (they are not in the accessibility tree). */
+const TOAST_ROLES = new Set(["status", "alert"]);
+/** Without a step mark, a toast shown this recently counts. */
+const RECENT_TOAST_MS = 6_000;
+
+/** A status/alert region or the whole screen: where a toast is part of what's shown. */
+const toastTarget = (target: CheckLocator, scope: CheckLocator | undefined) =>
+  !scope &&
+  target.nth === undefined &&
+  ((target.kind === "role" && TOAST_ROLES.has(target.role)) ||
+    (target.kind === "css" && WHOLE_SCREEN_SELECTORS.has(target.selector.trim())));
 
 const DEFAULT_TIMEOUT_MS = 5_000;
 const RETRY_MS = 100;
@@ -253,11 +267,17 @@ function closest(texts: readonly string[], expected: string): string | null {
   return [...lines].sort((a, b) => score(a) - score(b))[0] ?? null;
 }
 
-function attempt(op: CheckOp, screen: Screen, requests: () => RequestSummary[]): Attempt {
+function attempt(
+  op: CheckOp,
+  screen: Screen,
+  requests: () => RequestSummary[],
+  toasts: readonly string[] = [],
+): Attempt {
   switch (op.type) {
     case "text": {
       const found = targets(screen, op.target, op.scope);
       const texts = found.map((entry) => innerText(screen, entry));
+      if (toastTarget(op.target, op.scope)) texts.push(...toasts);
       const hit = texts.find((text) => textMatches(text, op.match, op.value));
       if (hit !== undefined)
         return { passed: true, actual: collapse(hit), matched: found.length, seen: texts };
@@ -388,6 +408,7 @@ export async function evaluateCheck(
   const on = options.on ?? "page";
   let frozen: Screen | null = null;
   let requests: () => RequestSummary[] = () => [];
+  let toastsFrom: number | null = null;
   if (on === "blank") frozen = ctx.blank();
   else if (on instanceof ScreenCopy) {
     const copy = copies.get(on);
@@ -402,6 +423,11 @@ export async function evaluateCheck(
           : undefined;
     const mark = since ?? ctx.mark();
     requests = () => ctx.requestsSince(mark);
+    const markTime =
+      options.since instanceof AndroidRequestMark || options.since instanceof ScreenCopy
+        ? Date.parse(options.since.takenAt)
+        : Number.NaN;
+    toastsFrom = Number.isNaN(markTime) ? started - RECENT_TOAST_MS : markTime;
   }
 
   const timeoutMs = frozen ? 0 : (options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
@@ -413,7 +439,11 @@ export async function evaluateCheck(
     const screen = frozen ?? (await ctx.screen());
     if (!screen)
       return result("error", { expected, attempts, message: "The device or its driver is gone." });
-    last = attempt(op, screen, requests);
+    const toasts =
+      toastsFrom !== null && ctx.toasts && op.type === "text" && toastTarget(op.target, op.scope)
+        ? await ctx.toasts(toastsFrom)
+        : [];
+    last = attempt(op, screen, requests, toasts);
     if (last.passed || Date.now() + RETRY_MS > deadline) break;
     await sleep(RETRY_MS);
   }

@@ -56,6 +56,9 @@ importers:
       '@testament/action':
         specifier: workspace:*
         version: link:../packages/action
+      '@testament/android':
+        specifier: workspace:*
+        version: link:../packages/android
       '@testament/auth':
         specifier: workspace:*
         version: link:../packages/auth
@@ -121,6 +124,9 @@ importers:
       '@testament/recording':
         specifier: workspace:^
         version: link:../recording
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@testament/fixture-android':
         specifier: workspace:*
@@ -275,6 +281,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@testament/android':
+        specifier: workspace:^
+        version: link:../android
       '@testament/auth':
         specifier: workspace:^
         version: link:../auth
@@ -309,6 +318,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
+      '@testament/fixture-android':
+        specifier: workspace:*
+        version: link:../../bench/fixtures/android
       '@testament/fixture-shop':
         specifier: workspace:*
         version: link:../../bench/fixtures/shop

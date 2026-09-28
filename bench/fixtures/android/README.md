@@ -42,3 +42,19 @@ the manifest is complete and consistent with the tests, the flavors and the view
 ids. The reference suite (`packages/android/e2e/fixture-reference.test.ts`)
 drives every test × variant through the Android harness and must reach exactly
 the manifest's verdicts and failing steps.
+
+## Recordings and the Bench (MOB-1)
+
+`tests/.testament/*.steps.json` are the engine's recordings of every test,
+authored once on the `correct` build with Claude Sonnet 4.6. A run replays them
+with no AI:
+
+```bash
+pnpm --filter @testament/fixture-shop start -- --port 4180
+SHOP_PASSWORD=shop-demo-pass testament run -C bench/fixtures/android   # 7 passed, 0 AI calls
+pnpm bench:replay:android   # every variant scored against manifest.yaml (starts its own shop)
+```
+
+`bench:replay:android` runs each variant `--replay-only`, except `cosmetic`,
+which may heal without AI (a miss only an AI heal could fix counts as "needs
+AI", not as a wrong answer).

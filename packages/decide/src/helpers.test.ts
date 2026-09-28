@@ -73,6 +73,23 @@ describe("helpers for the runner (on the contract fixtures)", () => {
     expect(c.kind === "decide" && c.input.consoleErrors).toHaveLength(1);
   });
 
+  it("reads an Android app crash as the app's fault (MOB-1)", async () => {
+    const attempts = Object.fromEntries(
+      bug.attempts.map((a) => [
+        a.attempt,
+        { consoleErrors: ["FATAL EXCEPTION: the app crashed during click"] },
+      ]),
+    );
+    const answer = await classifyFailure(bug, { context: { attempts } });
+    expect(answer.cause).toBe("product_bug");
+    expect(answer.evidence).toContainEqual(
+      expect.objectContaining({
+        signal: "console_error",
+        detail: expect.stringContaining("FATAL"),
+      }),
+    );
+  });
+
   it("builds flaky_or_real input with per-attempt signatures", () => {
     const input = flakyInput(bug, { history: [{ verdict: "passed", signature: null }] });
     expect(input?.attempts.map((a) => a.signature)).toEqual([

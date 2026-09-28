@@ -28,6 +28,7 @@ export {
   DEVICE_PROFILES,
   type DeviceProfile,
 } from "./sdk.js";
+export { type AndroidSettings, androidSchema } from "./section.js";
 export { AndroidSession, openAndroidSession } from "./session.js";
 export {
   type AndroidDoctorReport,

@@ -1,0 +1,453 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__deep-link",
+  "testPath": "tests/deep-link.test.md",
+  "target": "android",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "android",
+    "device": "pixel-8",
+    "environment": "local",
+    "model": "claude-code/claude-sonnet-4-6",
+    "promptVersion": "planner-android-v1"
+  },
+  "updatedAt": "2026-09-28T08:08:08.941Z",
+  "steps": [
+    {
+      "key": "97a2a6e864636cd7",
+      "textKey": "727d0a18b88674d5",
+      "route": "android-app:/.SignInActivity",
+      "text": "Type {{params.email}} into \"Email\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "{{params.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "sign_in_email"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/sign_in_email\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_email",
+              "hint": "Email",
+              "input-type": "33"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 221,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 408,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Email field shows '{{params.email}}'",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:07:15.461Z"
+    },
+    {
+      "key": "73ff4ccf4583d073",
+      "textKey": "1ccd1851bdb8219d",
+      "route": "android-app:/.SignInActivity",
+      "text": "Type {{params.password}} into \"Password\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "sign_in_password"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/sign_in_password\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_password",
+              "hint": "Password",
+              "password": "true",
+              "input-type": "129"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 339,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 346,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Password field shows {{secret.SHOP_PASSWORD}} indicating the secret was entered.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:07:26.887Z"
+    },
+    {
+      "key": "460a49462e00b836",
+      "textKey": "b1aafbb4c44130be",
+      "route": "android-app:/.SignInActivity",
+      "text": "Tap \"Sign in\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign in",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign in",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "sign_in_button"
+              },
+              {
+                "kind": "text",
+                "text": "Sign in",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/sign_in_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Sign in",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_button"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 457,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/.ProjectsActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "listitem",
+                "name": "Mobile launch"
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Sign in to Acme Shop"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              },
+              {
+                "role": "button",
+                "name": "Sign in"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 1258,
+            "waitedFor": {
+              "network": 802,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Navigated to Projects screen with heading 'Projects' and list item 'Mobile launch' visible.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:07:36.436Z"
+    },
+    {
+      "key": "082a78a5111f53bf",
+      "textKey": "1029709386123519",
+      "route": "android-app:/.ProjectsActivity",
+      "text": "Open the link acmeshop://projects/Mobile%20launch",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "open_deep_link",
+            "url": "acmeshop://projects/Mobile%20launch"
+          },
+          "fingerprint": null,
+          "expectPost": {
+            "urlChange": "android-app:/.ProjectActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Mobile launch"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Owner: you"
+              },
+              {
+                "role": "button",
+                "name": "Scan badge"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "listitem",
+                "name": "Mobile launch"
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 377,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Screen shows 'Mobile launch' project page with heading, 'Owner: you', and 'Scan badge' button.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:08:08.785Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "7d7b88c7f41e3f50",
+      "textKey": "2a51334284b514eb",
+      "text": "the screen heading is \"Projects\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading"
+        },
+        "match": "equals",
+        "value": "Projects"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that a heading is exactly 'Projects'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T08:07:36.529Z"
+    },
+    {
+      "key": "a531c8159b2e5082",
+      "textKey": "3cd5ed461f4cf2d6",
+      "text": "the screen heading is \"Mobile launch\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading"
+        },
+        "match": "equals",
+        "value": "Mobile launch"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that a heading is exactly 'Mobile launch'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T08:08:08.894Z"
+    }
+  ]
+}

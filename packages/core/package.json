@@ -15,6 +15,7 @@
     }
   },
   "dependencies": {
+    "@testament/android": "workspace:^",
     "@testament/auth": "workspace:^",
     "@testament/brand": "workspace:^",
     "@testament/browser": "workspace:^",
@@ -35,12 +36,15 @@
     "build": "tsc -b",
     "test:browser": "tsc -b ../../bench/fixtures/shop . && vitest run --config vitest.config.ts",
     "bench:replay": "tsc -b ../../bench/fixtures/shop ../codegen . && node bench/replay.ts --equivalence",
-    "perf": "tsc -b ../../bench/fixtures/shop ../codegen . && node bench/perf.ts"
+    "perf": "tsc -b ../../bench/fixtures/shop ../codegen . && node bench/perf.ts",
+    "bench:replay:android": "tsc -b ../../bench/fixtures/shop ../../bench/fixtures/android . && node bench/replay-android.ts",
+    "test:android": "tsc -b ../../bench/fixtures/shop ../../bench/fixtures/android . && vitest run --config vitest.android.config.ts"
   },
   "engines": {
     "node": ">=24"
   },
   "devDependencies": {
+    "@testament/fixture-android": "workspace:*",
     "@testament/fixture-shop": "workspace:*"
   }
 }

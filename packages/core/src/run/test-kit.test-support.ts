@@ -1,3 +1,17 @@
+import type { ModelCall } from "@testament/contract";
+import { createDecisions } from "@testament/decide";
+import {
+  type Command,
+  checkKey,
+  type Fingerprint,
+  type Locator,
+  RECORDING_EPOCH,
+  RECORDING_VERSION,
+  type Recording,
+  routeOf,
+  stepKey,
+} from "@testament/recording";
+import { type ExpandedTest, expandTest, mapReader, parseTest } from "@testament/spec";
 import type {
   ActOptions,
   ActionOutcome,
@@ -10,21 +24,7 @@ import type {
   PageCopy,
   PostState,
   RequestMark,
-} from "@testament/browser";
-import type { ModelCall } from "@testament/contract";
-import { createDecisions } from "@testament/decide";
-import {
-  type Command,
-  type Fingerprint,
-  type Locator,
-  RECORDING_EPOCH,
-  RECORDING_VERSION,
-  type Recording,
-  checkKey,
-  routeOf,
-  stepKey,
-} from "@testament/recording";
-import { type ExpandedTest, expandTest, mapReader, parseTest } from "@testament/spec";
+} from "../target/harness.js";
 import { replayAttempt } from "./replay.js";
 import type { ReplayEvent, ReplayOptions, ReplaySession } from "./types.js";
 

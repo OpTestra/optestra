@@ -28,6 +28,8 @@ export interface RunCommandOptions {
   locale?: string;
   timezone?: string;
   evidence?: string;
+  /** Android projects: the Android version; repeatable (a matrix of versions × devices). */
+  android?: string | string[];
   video?: boolean;
   verbose?: boolean;
   dir?: string;
@@ -73,6 +75,7 @@ export async function runRunCommand(
   }
   const browsers = list(options.browser);
   const devices = list(options.device);
+  const androidVersions = list(options.android);
   const badBrowser = browsers.find((b) => !(BROWSERS as readonly string[]).includes(b));
   if (badBrowser) {
     io.stdout(`--browser must be chromium, firefox or webkit, not "${badBrowser}".\n`);
@@ -151,6 +154,7 @@ export async function runRunCommand(
       ...(options.locale ? { locale: options.locale } : {}),
       ...(options.timezone ? { timezone: options.timezone } : {}),
       ...(options.evidence ? { evidence: options.evidence as (typeof EVIDENCE)[number] } : {}),
+      ...(androidVersions.length ? { androidVersions } : {}),
       ...(options.video === false ? { video: false } : {}),
       ...(io.signal ? { signal: io.signal } : {}),
       trigger: io.env.CI ? "ci" : "cli",

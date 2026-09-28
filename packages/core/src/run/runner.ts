@@ -12,6 +12,8 @@ import {
   SessionStore,
   testAuth,
 } from "@testament/auth";
+// The android config section (version, device), so Android projects load here too.
+import "@testament/android/section";
 import { brand } from "@testament/brand";
 import {
   type Config,
@@ -39,6 +41,7 @@ import {
   type FailureCause,
   type HealPolicy,
   type HealProposal,
+  type MatrixEntry,
   type ModelCall,
   needsRerecord,
   portablePath,
@@ -71,7 +74,7 @@ import {
 import { readRecording, recordingPath, writeRecording } from "@testament/recording/node";
 import { type ExpandedTest, hasSpecErrors } from "@testament/spec";
 import { loadTest, loadTests } from "@testament/spec/node";
-import { PROMPT_VERSION } from "../author/agent.js";
+import { promptVersionFor } from "../author/agent.js";
 import { createTestInbox, type TestInbox } from "../author/inbox.js";
 import { applyPatches, type HealPatch } from "../heal/patch.js";
 import { markAutoApplied } from "../heal/policy.js";
@@ -81,6 +84,16 @@ import { profileFlowPath, profileLogin, replayProfileFlow } from "./profiles.js"
 import { replayAttempt } from "./replay.js";
 import { type Shard, selectShard } from "./shard.js";
 import { runSpecTest } from "./spec-run.js";
+import {
+  cellLabel,
+  engineKey,
+  launchWorker,
+  matrixOf,
+  resolveTarget,
+  TargetLaunchError,
+  type TargetCell,
+  type TargetWorker,
+} from "./target.js";
 import type { ReplayResult, ReplaySession, StepShotType } from "./types.js";
 import { type AttemptRecord, decideVerdict, fallbackCause } from "./verdict.js";
 
@@ -112,14 +125,21 @@ export interface RunTestsOptions {
   budgetUsd?: number;
   headless?: boolean;
   browser?: BrowserName;
+  /** A web device preset, or on Android a device profile. Default: the project's. */
   device?: string;
+  /** Android: the version to run on. Default: the project's android.version. */
+  androidVersion?: string;
   /**
-   * A matrix (TGT-5): every test runs once per browser × device, with one
-   * TestResult per entry (its testId gets `@<browser>-<device>`). Overrides
-   * `browser` / `device`.
+   * A matrix (TGT-5): every test runs once per browser × device (web) or Android
+   * version × device (Android), with one TestResult per entry (its testId gets
+   * `@<browser>-<device>` / `@android<version>-<device>`). Overrides the single
+   * values.
    */
   browsers?: readonly BrowserName[];
   devices?: readonly string[];
+  androidVersions?: readonly string[];
+  /** Android: a running emulator to share (tests, Bench); left running. Implies one worker. */
+  emulator?: import("@testament/android").LaunchedEmulator;
   /** Browser locale and timezone for every session (ENV-5), e.g. "de-DE", "Europe/Berlin". */
   locale?: string;
   timezone?: string;
@@ -196,12 +216,6 @@ export interface RunTestsResult {
 export type EvidenceMode = "full" | "failures" | "minimal";
 
 type BrowserName = "chromium" | "firefox" | "webkit";
-
-/** One entry of the run's matrix (TGT-5). */
-interface MatrixCell {
-  browser: BrowserName;
-  device: string;
-}
 
 interface TestPlan {
   path: string;
@@ -287,7 +301,7 @@ export function mergeRecording(
       environment: meta.environment,
       model: authored.model ?? previous?.recordedWith.model ?? null,
       promptVersion: authored.model
-        ? PROMPT_VERSION
+        ? promptVersionFor(meta.target)
         : (previous?.recordedWith.promptVersion ?? null),
     },
     updatedAt: meta.now,
@@ -339,12 +353,14 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     );
   }
   const settings = environment?.settings;
-  if (!environment || !settings?.baseUrl)
+  if (!environment || !settings)
     return finishBlocked(
       "config_error",
-      `The environment${environment ? ` "${environment.name}"` : ""} has no baseUrl. Choose one with --env, or set baseUrl.`,
+      "No environment is selected. Choose one with --env, or set defaultEnvironment.",
     );
-  const baseUrl = settings.baseUrl;
+  const resolvedTarget = await resolveTarget(projectDir, config, environment, options);
+  if (!resolvedTarget.ok) return finishBlocked("config_error", resolvedTarget.message);
+  const target = resolvedTarget.target;
 
   const sources = options.secretSources ?? [processEnvSource(env), dotenvSource(projectDir)];
   // The test inbox (SEC-5): {{unique.email}} lands in it (ENV-3), codes and links are read from it.
@@ -524,25 +540,10 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       });
   }
 
-  const browserModule = await import("@testament/browser");
-  const browserNames: BrowserName[] = options.browsers?.length
-    ? [...new Set(options.browsers)]
-    : [options.browser ?? "chromium"];
-  const deviceNames: string[] = options.devices?.length
-    ? [...new Set(options.devices)]
-    : [options.device ?? browserModule.DEFAULT_DEVICE];
-  const unknownDevices = deviceNames.filter((d) => !(d in browserModule.DEVICE_PRESETS));
-  if (unknownDevices.length > 0)
-    return finishBlocked(
-      "config_error",
-      `Unknown device ${unknownDevices.join(", ")}. Choose one of: ${Object.keys(browserModule.DEVICE_PRESETS).join(", ")}.`,
-    );
-  const cells: MatrixCell[] = browserNames.flatMap((browser) =>
-    deviceNames.map((device) => ({ browser, device })),
-  );
+  const cells: TargetCell[] = target.cells;
   /** A matrix run gives each entry its own TestResult (TGT-5): the test id plus the entry. */
-  const resultId = (plan: TestPlan, cell: MatrixCell) =>
-    cells.length > 1 ? `${plan.id}@${cell.browser}-${cell.device}` : plan.id;
+  const resultId = (plan: TestPlan, cell: TargetCell) =>
+    cells.length > 1 ? `${plan.id}@${cellLabel(cell)}` : plan.id;
   const evidenceMode: EvidenceMode =
     options.evidence ??
     (settings.run?.evidence as EvidenceMode | undefined) ??
@@ -564,13 +565,16 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
 
   const runOne = async (
     plan: TestPlan,
-    cell: MatrixCell,
-    launched: import("@testament/browser").LaunchedBrowser,
+    cell: TargetCell,
+    worker: TargetWorker,
     workerIndex: number,
   ) => {
-    const { browser: browserName, device } = cell;
+    const device = cell.device;
+    const browserName: BrowserName = cell.target === "web" ? cell.browser : "chromium";
+    // What recordings note as the browser: the web engine, or "android".
+    const recordedBrowser = cell.target === "web" ? cell.browser : "android";
     const testId = resultId(plan, cell);
-    const matrix = { target: "web" as const, browser: browserName, device };
+    const matrix = matrixOf(cell);
     emit({
       type: "test.started",
       testId,
@@ -668,6 +672,32 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       expandedForFlows = expanded;
       policy = (expanded.heal ?? settings.run?.healPolicy ?? config.run.healPolicy) as HealPolicy;
       const hasCode = expanded.steps.some((s) => s.kind === "exact" && s.exact?.form === "code");
+      const auth = testAuth(expanded.auth ?? undefined, config.auth);
+      // Not on Android yet (MOB-1): code steps run in Playwright, auth profiles keep browser state.
+      const unsupported =
+        target.name !== "android"
+          ? undefined
+          : hasCode
+            ? "Code steps (```ts) run in a browser: they can't run on Android yet."
+            : auth.kind === "profile"
+              ? `The auth profile "${auth.name}" keeps a browser login: profiles can't be used on Android yet. Log in with steps instead.`
+              : undefined;
+      if (unsupported) {
+        emit({ type: "attempt.finished", testId: plan.id, attempt, status: "blocked" });
+        records.push({
+          attempt,
+          status: "blocked",
+          steps: [],
+          checks: [],
+          heals: [],
+          failure: null,
+          blocked: { reason: "config_error", message: unsupported, stepIndex: null },
+          modelCalls: [],
+          decisions: sink,
+          artifacts,
+        });
+        break;
+      }
       const attemptEmit = (event: Parameters<Parameters<typeof replayAttempt>[0]["emit"]>[0]) => {
         switch (event.type) {
           case "step.started":
@@ -723,29 +753,20 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         // Minimal evidence records no trace or network log, except on a retry (after a failure).
         const fullCapture = evidenceMode !== "minimal" || attempt > 1;
         const attemptInbox = testInbox(new Date());
-        let session: import("@testament/browser").Session | undefined;
-        try {
-          session = await browserModule.openSession({
-            browser: launched,
-            device,
-            baseUrl,
-            allowedDomains: settings.allowedDomains,
-            secrets: { ...secrets.secrets, ...attemptInbox?.secrets },
-            ...(protectedHeaders.length > 0 ? { protectedHeaders } : {}),
-            allowUpload: { dir: dirname(join(projectDir, plan.path)) },
-            ...(options.locale ? { locale: options.locale } : {}),
-            ...(options.timezone ? { timezone: options.timezone } : {}),
-            evidence: {
-              trace: fullCapture,
-              console: true,
-              network: fullCapture,
-              video: options.video ?? true,
-              dir: evidenceDir,
-            },
-            redact: (text) => redactor.redact(text),
-          });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
+        const opened = await worker.openAttempt({
+          allowedDomains: settings.allowedDomains,
+          secrets: { ...secrets.secrets, ...attemptInbox?.secrets },
+          protectedHeaders,
+          uploadDir: dirname(join(projectDir, plan.path)),
+          evidenceDir,
+          video: options.video ?? true,
+          capture: { trace: fullCapture, network: fullCapture },
+          ...(options.locale ? { locale: options.locale } : {}),
+          ...(options.timezone ? { timezone: options.timezone } : {}),
+          redact: (text) => redactor.redact(text),
+        });
+        if (!opened.ok) {
+          rmSync(evidenceDir, { recursive: true, force: true });
           emit({ type: "attempt.finished", testId, attempt, status: "blocked" });
           records.push({
             attempt,
@@ -754,19 +775,15 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             checks: [],
             heals: [],
             failure: null,
-            blocked: {
-              reason: "config_error",
-              message: `The browser could not start: ${message}`,
-              stepIndex: null,
-            },
+            blocked: { reason: opened.reason, message: opened.message, stepIndex: null },
             modelCalls: [],
             decisions: sink,
             artifacts,
           });
           break;
         }
-        const open = session;
-        const auth = testAuth(expanded.auth ?? undefined, config.auth);
+        const open = opened.session;
+        const web = opened.web;
         const commonReplay = {
           mode,
           decisions,
@@ -781,8 +798,9 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
           newId: ulid,
           redact: (text: string) => redactor.redact(text),
         };
+        const openLogin = worker.openLoginSession;
         const prepare =
-          auth.kind === "profile"
+          auth.kind === "profile" && web && openLogin
             ? () =>
                 profileLogin({
                   name: auth.name,
@@ -791,7 +809,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                   store: sessions,
                   environment: environment.name,
                   worker: workerIndex,
-                  session: open,
+                  session: web,
                   stepIndex: expanded.steps.length,
                   runFlow: () =>
                     replayProfileFlow({
@@ -803,15 +821,11 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                       emailDomain,
                       inbox: () => testInbox(new Date()),
                       openSession: (extra) =>
-                        browserModule.openSession({
-                          browser: launched,
-                          device,
-                          baseUrl,
+                        openLogin({
                           allowedDomains: settings.allowedDomains,
                           secrets: { ...secrets.secrets, ...extra },
                           ...(options.locale ? { locale: options.locale } : {}),
                           ...(options.timezone ? { timezone: options.timezone } : {}),
-                          evidence: { trace: false, console: false, network: false, video: false },
                           redact: (text) => redactor.redact(text),
                         }),
                       replay: {
@@ -826,7 +840,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                             testPath: paths.test,
                             target: config.project?.target ?? "web",
                             engineVersion,
-                            browser: browserName,
+                            browser: recordedBrowser,
                             device,
                             environment: environment.name,
                             now: new Date().toISOString(),
@@ -1009,7 +1023,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         runId,
         records,
         verdict,
-        matrixOf(browserName, device),
+        matrix,
       );
       const lastAttempt = last?.attempt ?? 1;
       const sink = records.at(-1)?.decisions ?? [];
@@ -1110,7 +1124,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
           testPath: plan.path,
           target: config.project?.target ?? "web",
           engineVersion,
-          browser: browserName,
+          browser: recordedBrowser,
           device,
           environment: environment.name,
           now: new Date().toISOString(),
@@ -1123,7 +1137,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         specs: [] as string[],
         warnings: [] as string[],
       };
-      if (options.generateSpecs ?? true) {
+      // The portable spec is Playwright: none for Android recordings.
+      if ((options.generateSpecs ?? true) && target.name === "web") {
         try {
           const { generateAfterRecording } = await import("@testament/codegen/node");
           const generated = await generateAfterRecording(projectDir, plan.path, {
@@ -1151,37 +1166,48 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   };
 
   // ── workers: tests (× matrix entries) pulled from a shared queue; each worker
-  // launches a browser per engine it needs, once ─────────────────────────────
-  const queue = plans.flatMap((plan) => cells.map((cell) => ({ plan, cell })));
+  // launches an engine (a browser, an emulator) per kind of cell it needs, once ──
+  // Android runs every test on one emulator before booting the next (cell by cell).
+  const queue =
+    target.name === "android"
+      ? cells.flatMap((cell) => plans.map((plan) => ({ plan, cell })))
+      : plans.flatMap((plan) => cells.map((cell) => ({ plan, cell })));
   const total = queue.length;
-  const workerCount = Math.max(1, Math.min(options.workers ?? 1, queue.length || 1));
-  const launchErrors = new Map<BrowserName, string>();
+  const workerCount = options.emulator
+    ? 1
+    : Math.max(1, Math.min(options.workers ?? 1, queue.length || 1));
+  const launchErrors = new Map<string, { message: string; reason: BlockedReason }>();
   const unlaunched: typeof queue = [];
   let started = 0;
   const worker = async (index: number) => {
-    const launchedBrowsers = new Map<BrowserName, import("@testament/browser").LaunchedBrowser>();
+    const engines = new Map<string, TargetWorker>();
     try {
       for (let item = queue.shift(); item; item = queue.shift()) {
         if (signal?.aborted) {
           queue.unshift(item);
           break;
         }
-        const name = item.cell.browser;
-        let launched = launchedBrowsers.get(name);
-        if (!launched && !launchErrors.has(name)) {
+        const key = engineKey(item.cell);
+        let launched = engines.get(key);
+        if (!launched && item.cell.target === "android") {
+          // One emulator per worker at a time: they are heavy.
+          for (const [other, engine] of engines) {
+            await engine.close();
+            engines.delete(other);
+          }
+        }
+        if (!launched && !launchErrors.has(key)) {
           try {
-            launched = await browserModule.launchBrowser({
-              browser: name,
+            launched = await launchWorker(target, item.cell, {
               headless: options.headless ?? true,
+              ...(options.emulator ? { emulator: options.emulator } : {}),
             });
-            launchedBrowsers.set(name, launched);
+            engines.set(key, launched);
           } catch (error) {
-            const fix =
-              error instanceof browserModule.BrowserSetupError ? ` Fix: ${error.fix}` : "";
-            launchErrors.set(
-              name,
-              `${error instanceof Error ? error.message : String(error)}${fix}`,
-            );
+            launchErrors.set(key, {
+              message: error instanceof Error ? error.message : String(error),
+              reason: error instanceof TargetLaunchError ? error.reason : "config_error",
+            });
           }
         }
         if (!launched) {
@@ -1192,7 +1218,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         await runOne(item.plan, item.cell, launched, index);
       }
     } finally {
-      for (const launched of launchedBrowsers.values()) await launched.close();
+      for (const engine of engines.values()) await engine.close();
     }
   };
   try {
@@ -1200,28 +1226,31 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
-  if (unlaunched.length > 0 && started === 0 && !signal?.aborted)
+  if (unlaunched.length > 0 && started === 0 && !signal?.aborted) {
+    const first = [...launchErrors.values()][0];
     return finishBlocked(
-      "config_error",
-      `The browser could not start: ${[...launchErrors.values()].join(" ")}`,
+      first?.reason ?? "config_error",
+      [...new Set([...launchErrors.values()].map((e) => e.message))].join(" "),
     );
-  // A browser of the matrix that couldn't start: its entries are blocked, the rest ran.
+  }
+  // An engine of the matrix that couldn't start: its entries are blocked, the rest ran.
   for (const { plan, cell } of unlaunched) {
     const testId = resultId(plan, cell);
-    const message = `The browser could not start: ${launchErrors.get(cell.browser) ?? cell.browser}`;
+    const failed = launchErrors.get(engineKey(cell));
+    const message = failed?.message ?? `${cellLabel(cell)} could not start.`;
     emit({
       type: "test.started",
       testId,
       file: plan.path,
       name: plan.name,
       tags: plan.tags,
-      matrix: { target: "web", browser: cell.browser, device: cell.device },
+      matrix: matrixOf(cell),
     });
     emit({
       type: "test.finished",
       testId,
       verdict: "blocked",
-      decidedBy: [{ kind: "blocked", reason: "config_error", message }],
+      decidedBy: [{ kind: "blocked", reason: failed?.reason ?? "config_error", message }],
       failureCause: "blocked",
       headline: `Blocked: ${message}`,
     });
@@ -1268,10 +1297,6 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   });
   const final = writer.finish();
   return { dir, run: final.run, tests: final.tests, groups, recorded, heals: healsPerTest };
-}
-
-function matrixOf(browser: BrowserName, device: string) {
-  return { target: "web" as const, browser, device };
 }
 
 /** CI is set (GitHub Actions, GitLab, most CI services), and not to "false" or "0". */
@@ -1338,7 +1363,7 @@ function provisionalResult(
     artifacts: ArtifactRef[];
   })[],
   verdict: ReturnType<typeof decideVerdict>,
-  matrix: ReturnType<typeof matrixOf>,
+  matrix: MatrixEntry,
 ): TestResult {
   const now = new Date().toISOString();
   const attempts: Attempt[] = records.map((r) => ({

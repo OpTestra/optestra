@@ -1,17 +1,17 @@
-import type {
-  ActionOutcome,
-  CandidatesResult,
-  CheckEvaluation,
-  CheckOptions,
-  PageCopy,
-  Observation,
-  ObservedElement,
-  PostState,
-} from "@testament/browser";
 import { type Config, resolveConfig } from "@testament/config";
 import { memorySource, Redactor } from "@testament/config/node";
 import { BudgetMeter, createModels, type Models } from "@testament/models";
 import { type ScriptedCall, type ScriptedReply, scriptedModel } from "@testament/models/testing";
+import type {
+  ActionOutcome,
+  CandidatesResult,
+  CheckEvaluation,
+  HarnessCheckOptions as CheckOptions,
+  Observation,
+  ObservedElement,
+  PageCopy,
+  PostState,
+} from "../target/harness.js";
 import type { AuthorSession } from "./types.js";
 
 // Test support for the author: a models client backed by a scripted model, a
@@ -95,7 +95,8 @@ export function agentScript(
   return (call: ScriptedCall): ScriptedReply => {
     const text = promptText(call);
     const stepLine = /Current step [^:]*: (.*)/.exec(text)?.[1] ?? "";
-    const history = /Done so far in this step:\n([\s\S]*?)\n\nCurrent page:/.exec(text)?.[1] ?? "";
+    const history =
+      /Done so far in this step:\n([\s\S]*?)\n\nCurrent (?:page|screen):/.exec(text)?.[1] ?? "";
     const turn = history.trim() === "(nothing yet)" ? 0 : history.trim().split("\n").length;
     const entry = plans.find(([pattern]) => pattern.test(stepLine));
     if (!entry)

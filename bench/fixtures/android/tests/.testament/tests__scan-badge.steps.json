@@ -1,0 +1,714 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__scan-badge",
+  "testPath": "tests/scan-badge.test.md",
+  "target": "android",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "android",
+    "device": "pixel-8",
+    "environment": "local",
+    "model": "claude-code/claude-sonnet-4-6",
+    "promptVersion": "planner-android-v2"
+  },
+  "updatedAt": "2026-09-28T09:01:11.038Z",
+  "steps": [
+    {
+      "key": "97a2a6e864636cd7",
+      "textKey": "727d0a18b88674d5",
+      "route": "android-app:/.SignInActivity",
+      "text": "Type {{params.email}} into \"Email\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "{{params.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "sign_in_email"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/sign_in_email\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_email",
+              "hint": "Email",
+              "input-type": "33"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 221,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 358,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Email field shows '{{params.email}}'",
+      "source": "ai",
+      "recordedAt": "2026-09-28T09:00:26.963Z"
+    },
+    {
+      "key": "73ff4ccf4583d073",
+      "textKey": "1ccd1851bdb8219d",
+      "route": "android-app:/.SignInActivity",
+      "text": "Type {{params.password}} into \"Password\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "sign_in_password"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/sign_in_password\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_password",
+              "hint": "Password",
+              "password": "true",
+              "input-type": "129"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 339,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 324,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Password field shows the secret value filled in",
+      "source": "ai",
+      "recordedAt": "2026-09-28T09:00:36.829Z"
+    },
+    {
+      "key": "460a49462e00b836",
+      "textKey": "b1aafbb4c44130be",
+      "route": "android-app:/.SignInActivity",
+      "text": "Tap \"Sign in\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign in",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign in",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "sign_in_button"
+              },
+              {
+                "kind": "text",
+                "text": "Sign in",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/sign_in_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Sign in",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_button"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 457,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/.ProjectsActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "listitem",
+                "name": "Website redesign"
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Sign in to Acme Shop"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              },
+              {
+                "role": "button",
+                "name": "Sign in"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 1406,
+            "waitedFor": {
+              "network": 916,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Signed in successfully; now showing Projects screen with 'Website redesign' list item and 'Sign out' button.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T09:00:45.643Z"
+    },
+    {
+      "key": "e87fd5764fc03ab9",
+      "textKey": "37ba7a1badaf76dc",
+      "route": "android-app:/.ProjectsActivity",
+      "text": "Tap \"Website redesign\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "listitem",
+              "name": "Website redesign",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "listitem",
+              "name": "Website redesign",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "text1"
+              },
+              {
+                "kind": "text",
+                "text": "Website redesign",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.TextView[resource-id=\"android:id/text1\"]"
+              }
+            ],
+            "role": "listitem",
+            "name": "Website redesign",
+            "tag": "android.widget.TextView",
+            "attributes": {
+              "class": "android.widget.TextView",
+              "package": "com.acme.shop",
+              "resource-id": "android:id/text1"
+            },
+            "anchorText": "Projects",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 428,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/.ProjectActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Website redesign"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Owner: you"
+              },
+              {
+                "role": "button",
+                "name": "Scan badge"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "listitem",
+                "name": "Website redesign"
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 562,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Screen now shows 'Website redesign' project page with heading and 'Owner: you' text",
+      "source": "ai",
+      "recordedAt": "2026-09-28T09:00:54.693Z"
+    },
+    {
+      "key": "5dc293828759456e",
+      "textKey": "c42f720f0e1d0dce",
+      "route": "android-app:/.ProjectActivity",
+      "text": "Tap \"Scan badge\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Scan badge",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Scan badge",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "scan_badge_button"
+              },
+              {
+                "kind": "text",
+                "text": "Scan badge",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/scan_badge_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Scan badge",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/scan_badge_button"
+            },
+            "anchorText": "Website redesign",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 302,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/com.android.permissioncontroller.permission.ui.GrantPermissionsActivity",
+            "appeared": [
+              {
+                "role": "alertdialog",
+                "name": "Allow Acme Shop to take pictures and record video?"
+              },
+              {
+                "role": "button",
+                "name": ""
+              },
+              {
+                "role": "button",
+                "name": "Allow Acme Shop to take pictures and record video?"
+              },
+              {
+                "role": "button",
+                "name": "While using the app"
+              },
+              {
+                "role": "button",
+                "name": "Only this time"
+              },
+              {
+                "role": "button",
+                "name": "Don’t allow"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Website redesign"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Owner: you"
+              },
+              {
+                "role": "button",
+                "name": "Scan badge"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 643,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Permission dialog 'Allow Acme Shop to take pictures and record video?' appeared after tapping Scan badge",
+      "source": "ai",
+      "recordedAt": "2026-09-28T09:01:02.468Z"
+    },
+    {
+      "key": "40af0216bc698ca2",
+      "textKey": "4257d415f9ebb9ee",
+      "route": "android-app:/com.android.permissioncontroller.permission.ui.GrantPermissionsActivity",
+      "text": "Allow camera access when Android asks",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "permission",
+            "decision": "allow"
+          },
+          "fingerprint": null,
+          "expectPost": {
+            "urlChange": "android-app:/.ProjectActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Website redesign"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Owner: you"
+              },
+              {
+                "role": "button",
+                "name": "Scan badge"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Camera access allowed"
+              }
+            ],
+            "removed": [
+              {
+                "role": "alertdialog",
+                "name": "Allow Acme Shop to take pictures and record video?"
+              },
+              {
+                "role": "button",
+                "name": ""
+              },
+              {
+                "role": "button",
+                "name": "Allow Acme Shop to take pictures and record video?"
+              },
+              {
+                "role": "button",
+                "name": "While using the app"
+              },
+              {
+                "role": "button",
+                "name": "Only this time"
+              },
+              {
+                "role": "button",
+                "name": "Don’t allow"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 361,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Screen shows 'Camera access allowed' text, confirming permission was granted.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T09:01:10.868Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "7d7b88c7f41e3f50",
+      "textKey": "2a51334284b514eb",
+      "text": "the screen heading is \"Projects\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading"
+        },
+        "match": "equals",
+        "value": "Projects"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that a heading is exactly 'Projects'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T09:00:45.740Z"
+    },
+    {
+      "key": "31fc2d8ca10eb702",
+      "textKey": "51be1cdc6bcf61e7",
+      "text": "the screen heading is \"Website redesign\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading"
+        },
+        "match": "equals",
+        "value": "Website redesign"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that a heading is exactly 'Website redesign'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T09:00:54.797Z"
+    },
+    {
+      "key": "6c9afe53a22b62bc",
+      "textKey": "8a0c355a02438452",
+      "text": "the screen says \"Camera access allowed\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "body"
+        },
+        "match": "contains",
+        "value": "Camera access allowed"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that the page shows 'Camera access allowed'",
+      "rule": "visible-text",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T09:01:10.973Z"
+    }
+  ]
+}

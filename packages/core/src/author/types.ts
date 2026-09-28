@@ -1,11 +1,11 @@
-import type { CheckStatus, Session } from "@testament/browser";
 import type { ModelCall } from "@testament/contract";
 import type { BudgetMeter, Models } from "@testament/models";
 import type { CheckOp, Recording, Sanity } from "@testament/recording";
+import type { CheckStatus, HarnessSession } from "../target/harness.js";
 
-/** The harness calls the author uses. A LOOP-0 Session satisfies it. */
+/** The harness calls the author uses. A web Session and an AndroidSession satisfy it. */
 export type AuthorSession = Pick<
-  Session,
+  HarnessSession,
   | "observe"
   | "act"
   | "candidates"

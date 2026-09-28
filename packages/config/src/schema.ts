@@ -6,8 +6,8 @@ export const SECRET_NAME = /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/;
 export const domainSchema = z
   .string()
   .regex(
-    /^(?:\*\.)?[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*$/i,
-    "expected a host name like example.com or *.example.com",
+    /^(?:\*\.)?[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*(?::(?:6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}))?$/i,
+    "expected a host name like example.com, *.example.com or 10.0.2.2:4180 (a port limits it to that port)",
   );
 
 export const httpUrlSchema = z.string().refine((value) => {

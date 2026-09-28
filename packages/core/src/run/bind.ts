@@ -1,6 +1,6 @@
-import type { Action, LocatorSpec } from "@testament/browser";
 import { type Locator, type RecordedAction, templateParts } from "@testament/recording";
 import { harnessValue, inboxMemberOf, type StepVariables } from "../author/variables.js";
+import type { Action, LocatorSpec } from "../target/harness.js";
 
 // Binding a recorded command for this run (REP-7): templates get this run's
 // values (data, params, env, generated unique/faker values); secrets stay
@@ -130,6 +130,38 @@ export function bindAction(recorded: RecordedAction, variables: StepVariables): 
     case "back":
     case "reload":
       return { ok: true, action: { type: recorded.type } };
+    // Android (MOB-1).
+    case "long_press":
+      return {
+        ok: true,
+        action: {
+          type: "long_press",
+          target: asSpec(recorded.target),
+          ...(recorded.ms !== undefined ? { ms: recorded.ms } : {}),
+        },
+      };
+    case "clear":
+      return { ok: true, action: { type: "clear", target: asSpec(recorded.target) } };
+    case "swipe":
+      return {
+        ok: true,
+        action: {
+          type: "swipe",
+          direction: recorded.direction,
+          ...(recorded.target ? { target: asSpec(recorded.target) } : {}),
+        },
+      };
+    case "home":
+    case "launch_app":
+      return { ok: true, action: { type: recorded.type } };
+    case "rotate":
+      return { ok: true, action: { type: "rotate", orientation: recorded.orientation } };
+    case "open_deep_link": {
+      const url = text(recorded.url, variables);
+      return url.ok ? { ok: true, action: { type: "open_deep_link", url: url.text } } : url;
+    }
+    case "permission":
+      return { ok: true, action: { type: "permission", decision: recorded.decision } };
   }
 }
 

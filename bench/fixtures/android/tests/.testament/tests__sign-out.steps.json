@@ -1,0 +1,652 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__sign-out",
+  "testPath": "tests/sign-out.test.md",
+  "target": "android",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "android",
+    "device": "pixel-8",
+    "environment": "local",
+    "model": "claude-code/claude-sonnet-4-6",
+    "promptVersion": "planner-android-v1"
+  },
+  "updatedAt": "2026-09-28T08:12:15.659Z",
+  "steps": [
+    {
+      "key": "97a2a6e864636cd7",
+      "textKey": "727d0a18b88674d5",
+      "route": "android-app:/.SignInActivity",
+      "text": "Type {{params.email}} into \"Email\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "{{params.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "sign_in_email"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/sign_in_email\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_email",
+              "hint": "Email",
+              "input-type": "33"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 221,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 326,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Email field shows '{{params.email}}'",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:11:36.403Z"
+    },
+    {
+      "key": "73ff4ccf4583d073",
+      "textKey": "1ccd1851bdb8219d",
+      "route": "android-app:/.SignInActivity",
+      "text": "Type {{params.password}} into \"Password\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "sign_in_password"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/sign_in_password\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_password",
+              "hint": "Password",
+              "password": "true",
+              "input-type": "129"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 339,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 335,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Password field shows the secret value filled in",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:11:45.403Z"
+    },
+    {
+      "key": "460a49462e00b836",
+      "textKey": "b1aafbb4c44130be",
+      "route": "android-app:/.SignInActivity",
+      "text": "Tap \"Sign in\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign in",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign in",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "sign_in_button"
+              },
+              {
+                "kind": "text",
+                "text": "Sign in",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/sign_in_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Sign in",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_button"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 457,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/.ProjectsActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "No projects yet"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Sign in to Acme Shop"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              },
+              {
+                "role": "button",
+                "name": "Sign in"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 1148,
+            "waitedFor": {
+              "network": 720,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Signed in successfully; now showing Projects screen with heading 'Projects' and 'No projects yet' message.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:11:54.344Z"
+    },
+    {
+      "key": "79937f0320df2b4b",
+      "textKey": "a0bafdb5a7657021",
+      "route": "android-app:/.ProjectsActivity",
+      "text": "Tap \"Sign out\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign out",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign out",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "sign_out_button"
+              },
+              {
+                "kind": "text",
+                "text": "Sign out",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/sign_out_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Sign out",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_out_button"
+            },
+            "anchorText": "Projects",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 1415,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "dialog",
+                "name": "Sign out of Acme Shop?"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Sign out of Acme Shop?"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "You'll need your password to sign in again."
+              },
+              {
+                "role": "button",
+                "name": "CANCEL"
+              },
+              {
+                "role": "button",
+                "name": "SIGN OUT"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "No projects yet"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 447,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Sign out button tapped",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:12:00.376Z"
+    },
+    {
+      "key": "405142b0cbbf1819",
+      "textKey": "1de7185b93b2aa45",
+      "route": "android-app:/.ProjectsActivity",
+      "text": "Tap \"Sign out\" in the dialog",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "SIGN OUT",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "SIGN OUT",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "button1"
+              },
+              {
+                "kind": "text",
+                "text": "SIGN OUT",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"android:id/button1\"]"
+              }
+            ],
+            "role": "button",
+            "name": "SIGN OUT",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "android:id/button1"
+            },
+            "anchorText": "Sign out of Acme Shop?",
+            "framePath": [],
+            "box": {
+              "x": 752,
+              "y": 1261,
+              "width": 226,
+              "height": 142
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/.SignInActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Sign in to Acme Shop"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": ""
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": ""
+              },
+              {
+                "role": "button",
+                "name": "Sign in"
+              }
+            ],
+            "removed": [
+              {
+                "role": "dialog",
+                "name": "Sign out of Acme Shop?"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Sign out of Acme Shop?"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "You'll need your password to sign in again."
+              },
+              {
+                "role": "button",
+                "name": "CANCEL"
+              },
+              {
+                "role": "button",
+                "name": "SIGN OUT"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 430,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Dialog dismissed and app navigated to Sign In screen with Email and Password fields visible.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:12:15.527Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "7d7b88c7f41e3f50",
+      "textKey": "2a51334284b514eb",
+      "text": "the screen heading is \"Projects\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading"
+        },
+        "match": "equals",
+        "value": "Projects"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that a heading is exactly 'Projects'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T08:11:54.431Z"
+    },
+    {
+      "key": "682b24b37b04f750",
+      "textKey": "a0bed62e0f108a92",
+      "text": "a dialog asks \"Sign out of Acme Shop?\"",
+      "soft": false,
+      "check": {
+        "type": "element_state",
+        "target": {
+          "kind": "role",
+          "role": "dialog",
+          "name": "Sign out of Acme Shop?",
+          "exact": true
+        },
+        "state": "visible"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that the dialog 'Sign out of Acme Shop?' is visible",
+      "rule": "dialog",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T08:12:00.482Z"
+    },
+    {
+      "key": "8d2c8c79681df591",
+      "textKey": "35630b21ddd17564",
+      "text": "the screen heading is \"Sign in to Acme Shop\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading"
+        },
+        "match": "equals",
+        "value": "Sign in to Acme Shop"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that a heading is exactly 'Sign in to Acme Shop'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T08:12:15.614Z"
+    }
+  ]
+}

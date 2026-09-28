@@ -173,8 +173,38 @@ export const RecordedActionSchema = z.discriminatedUnion("type", [
     target: LocatorSchema.optional(),
     timeoutMs: z.number().int().positive().optional(),
   }),
+  // Android (MOB-1). A tap records as click and typing as fill: the same concepts
+  // share one shape. These have no web equivalent (recordings with target android).
+  z.object({
+    type: z.literal("long_press"),
+    target: LocatorSchema,
+    ms: z.number().int().positive().optional(),
+  }),
+  z.object({ type: z.literal("clear"), target: LocatorSchema }),
+  z.object({
+    type: z.literal("swipe"),
+    direction: z.enum(["up", "down", "left", "right"]),
+    target: LocatorSchema.optional(),
+  }),
+  z.object({ type: z.literal("home") }),
+  z.object({ type: z.literal("launch_app") }),
+  z.object({ type: z.literal("rotate"), orientation: z.enum(["portrait", "landscape"]) }),
+  z.object({ type: z.literal("open_deep_link"), url: TemplateSchema }),
+  z.object({ type: z.literal("permission"), decision: z.enum(["allow", "allow_once", "deny"]) }),
 ]);
 export type RecordedAction = z.infer<typeof RecordedActionSchema>;
+
+/** Recorded actions only an Android recording has. */
+export const ANDROID_ONLY_ACTIONS: ReadonlySet<RecordedAction["type"]> = new Set([
+  "long_press",
+  "clear",
+  "swipe",
+  "home",
+  "launch_app",
+  "rotate",
+  "open_deep_link",
+  "permission",
+]);
 
 const BoxSchema = z.object({ x: z.number(), y: z.number(), width: z.number(), height: z.number() });
 

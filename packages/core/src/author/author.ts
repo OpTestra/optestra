@@ -1,12 +1,11 @@
-import type { Action, LocatorSpec, PageCopy } from "@testament/browser";
 import { defaultRedactor } from "@testament/config/node";
 import { type ModelCall, ulid } from "@testament/contract";
 import { type ModelCallRecord, toModelCall } from "@testament/models";
 import {
   type CheckOp,
   type CheckRecording,
-  checkKey,
   type Command,
+  checkKey,
   describeCheck,
   type Locator,
   RECORDING_EPOCH,
@@ -25,7 +24,9 @@ import type {
   Locator as SpecLocator,
 } from "@testament/spec";
 import { type CompiledCheck, compileCheck, verifyCheck } from "../checks/index.js";
-import { type ActionStepResult, PROMPT_VERSION, runActionStep } from "./agent.js";
+import type { Action, LocatorSpec, PageCopy } from "../target/harness.js";
+import { targetOfSession } from "../target/harness.js";
+import { type ActionStepResult, promptVersionFor, runActionStep } from "./agent.js";
 import { commandOf } from "./commands.js";
 import { parseGuard } from "./guards.js";
 import {
@@ -297,6 +298,7 @@ export async function authorTest(
             signal: controller.signal,
             tags: { test: test.id },
             inbox: { runtime: options.inbox, test },
+            target: targetOfSession(session),
           },
           step,
           variables,
@@ -366,7 +368,7 @@ export async function authorTest(
     environment: options.meta.environment,
     browser: session.browserName,
     device: options.meta.device,
-    promptVersion: PROMPT_VERSION,
+    promptVersion: promptVersionFor(targetOfSession(session)),
     outcome: !stop ? "recorded" : FAILURE_REASONS.has(stop.reason) ? "failed" : "stopped",
     ...(stop ? { stopReason: stop.reason } : {}),
     ...(stop?.message ? { message: redact(stop.message) } : {}),
@@ -466,7 +468,7 @@ function assemble(
       environment: options.meta.environment,
       model: model ?? options.previous?.recordedWith.model ?? null,
       promptVersion: model
-        ? PROMPT_VERSION
+        ? promptVersionFor(options.meta.target)
         : (options.previous?.recordedWith.promptVersion ?? null),
     },
     updatedAt: at,

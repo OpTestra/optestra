@@ -21,3 +21,13 @@ export * from "./checks/index.js";
 export * from "./draft/index.js";
 export * from "./heal/index.js";
 export * from "./run/index.js";
+export {
+  type AndroidOnlyAction,
+  type HarnessAction,
+  type HarnessObservation,
+  type HarnessOutcome,
+  type HarnessSession,
+  type TargetName,
+  targetOfSession,
+} from "./target/harness.js";
+export { isScreen } from "./target/render.js";

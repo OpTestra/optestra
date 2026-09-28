@@ -25,6 +25,10 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
     rules: {},
     strict: false,
   },
+  android: {
+    version: "16",
+    device: "pixel-8",
+  },
   models: {
     providers: {
       anthropic: {

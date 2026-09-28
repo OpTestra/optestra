@@ -11,7 +11,7 @@ export interface SaveOptions {
   testsDir: string;
   result: AuthorResult;
   /** The harness's evidence files (already scrubbed). */
-  evidence?: readonly EvidenceFile[];
+  evidence?: readonly Pick<EvidenceFile, "path">[];
   redact?: (text: string) => string;
 }
 

@@ -8,6 +8,7 @@ import {
 } from "../author/agent.js";
 import type { AuthorLimits } from "../author/types.js";
 import type { StepVariables } from "../author/variables.js";
+import androidPrompt from "./fixer-android-prompt.json" with { type: "json" };
 import prompt from "./fixer-prompt.json" with { type: "json" };
 import { describeCommand } from "./patch.js";
 
@@ -23,6 +24,8 @@ import { describeCommand } from "./patch.js";
 export const FIXER_PROMPT_VERSION: string = prompt.version;
 
 export const FIXER_PROMPT: AgentPrompt = prompt;
+/** The fixer prompt for an app screen (MOB-1). */
+export const ANDROID_FIXER_PROMPT: AgentPrompt = androidPrompt;
 
 /** The fixer's own limits: one step, a few actions (guarantee 2). */
 export const FIXER_LIMITS: AuthorLimits = {
@@ -71,7 +74,7 @@ export function runFixer(
       ...ctx,
       limits: ctx.limits ?? FIXER_LIMITS,
       role: "fixer",
-      prompt: FIXER_PROMPT,
+      prompt: ctx.target === "android" ? ANDROID_FIXER_PROMPT : FIXER_PROMPT,
       context: fixerContext(miss),
       tags: { ...ctx.tags, purpose: "heal" },
     },

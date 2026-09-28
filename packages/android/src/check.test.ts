@@ -256,3 +256,27 @@ describe("checks on Android (LOOP-2 ops)", () => {
     expect(a.seen).toBe(c.seen);
   });
 });
+
+describe("toasts (MOB-1)", () => {
+  it("counts a toast for a message region and for the whole screen, not for other targets", async () => {
+    const asked: number[] = [];
+    const ctx: CheckContext = {
+      ...context([projects]),
+      toasts: async (since) => {
+        asked.push(since);
+        return ["Project created"];
+      },
+    };
+    const text = (target: object) =>
+      evaluateCheck(
+        { type: "text", target: target as never, match: "contains", value: "Project created" },
+        { timeoutMs: 0 },
+        ctx,
+      );
+    expect((await text({ kind: "role", role: "status" })).passed).toBe(true);
+    expect((await text({ kind: "css", selector: "body" })).passed).toBe(true);
+    expect((await text({ kind: "role", role: "heading" })).passed).toBe(false);
+    // Without a mark, the last few seconds count.
+    expect(asked.every((t) => Date.now() - t >= 6_000 && Date.now() - t < 60_000)).toBe(true);
+  });
+});

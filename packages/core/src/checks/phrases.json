@@ -1,6 +1,6 @@
 {
-  "$comment": "Phrase rules for Expect/Soft lines (LOOP-2). Tried in order; the first rule whose pattern matches and whose builder finds the page element wins. Q stands for a quote (straight or curly). Patterns are case-insensitive. Named groups feed the builder (see rules.ts).",
-  "version": 1,
+  "$comment": "Phrase rules for Expect/Soft lines (LOOP-2). Tried in order; the first rule whose pattern matches and whose builder finds the page element wins. Q stands for a quote (straight or curly). Patterns are case-insensitive. Named groups feed the builder (see rules.ts). App screens (MOB-1) use the same rules: \"screen\" wherever \"page\" is accepted, toasts count as status messages.",
+  "version": 2,
   "rules": [
     {
       "id": "url",
@@ -14,8 +14,8 @@
       "id": "heading",
       "build": "heading",
       "patterns": [
-        "^the (?:page |main |top )?heading (?:is|says|reads|shows) Q(?<text>.+)Q$",
-        "^the page is titled Q(?<text>.+)Q$"
+        "^the (?:page |screen |main |top )?heading (?:is|says|reads|shows) Q(?<text>.+)Q$",
+        "^the (?:page|screen) is titled Q(?<text>.+)Q$"
       ]
     },
     {
@@ -23,7 +23,8 @@
       "build": "dialog",
       "patterns": [
         "^an? (?:dialog|modal|pop-?up)(?: window)? (?:titled|called|named|with the title|labelled|labeled) Q(?<name>.+)Q is (?:open|opened|shown|showing|visible|displayed)$",
-        "^the Q(?<name>.+)Q (?:dialog|modal|pop-?up) is (?:open|opened|shown|showing|visible|displayed)$"
+        "^the Q(?<name>.+)Q (?:dialog|modal|pop-?up) is (?:open|opened|shown|showing|visible|displayed)$",
+        "^an? (?:dialog|modal|pop-?up)(?: window)? (?:asks|says|reads|shows) Q(?<name>.+)Q$"
       ]
     },
     {
@@ -72,7 +73,8 @@
       "build": "containerText",
       "patterns": [
         "^the (?<noun>[\\w -]+?) (?<kind>list|table|grid|panel|section|sidebar|menu|navigation|card|form|box|area) (?:shows|says|contains|includes|lists|displays|reads) Q(?<text>.+)Q$",
-        "^Q(?<text>.+)Q (?:is|appears) (?:shown |listed |visible |displayed )?in the (?<noun>[\\w -]+?) (?<kind>list|table|grid|panel|section|sidebar|menu|navigation|card|form|box|area)$"
+        "^Q(?<text>.+)Q (?:is|appears) (?:shown |listed |visible |displayed )?in the (?<noun>[\\w -]+?) (?<kind>list|table|grid|panel|section|sidebar|menu|navigation|card|form|box|area)$",
+        "^the (?<kind>list|table|grid) (?:shows|says|contains|includes|lists|displays|reads) Q(?<text>.+)Q$"
       ]
     },
     {
@@ -87,7 +89,7 @@
       "id": "no-text",
       "build": "noText",
       "patterns": [
-        "^the page (?:does not|doesn't|no longer) (?:show|display|contain|say)s? Q(?<text>.+)Q$",
+        "^the (?:page|screen) (?:does not|doesn't|no longer) (?:show|display|contain|say)s? Q(?<text>.+)Q$",
         "^the text Q(?<text>.+)Q is (?:not shown|not visible|not displayed|gone|hidden)$",
         "^Q(?<text>.+)Q is (?:not shown|not visible|not displayed|no longer shown|gone)$"
       ]
@@ -97,7 +99,7 @@
       "build": "visibleText",
       "patterns": [
         "^the text Q(?<text>.+)Q is (?:shown|visible|displayed|on the page|present)$",
-        "^the page (?:shows|displays|says|contains|reads|mentions) Q(?<text>.+)Q$",
+        "^the (?:page|screen) (?:shows|displays|says|contains|reads|mentions) Q(?<text>.+)Q$",
         "^Q(?<text>.+)Q is (?:shown|visible|displayed|on the page|present)$",
         "^(?:I|you|we|the user) (?:see|sees|can see) Q(?<text>.+)Q$"
       ]

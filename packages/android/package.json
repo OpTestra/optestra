@@ -8,6 +8,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./section": {
+      "types": "./dist/section.d.ts",
+      "default": "./dist/section.js"
     }
   },
   "files": [
@@ -25,7 +29,8 @@
     "@testament/browser": "workspace:^",
     "@testament/config": "workspace:^",
     "@testament/contract": "workspace:^",
-    "@testament/recording": "workspace:^"
+    "@testament/recording": "workspace:^",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@testament/fixture-android": "workspace:*",

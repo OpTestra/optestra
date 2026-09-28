@@ -49,6 +49,7 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `environments.<env>.run` | object |  | Overrides of "run" for this environment. |
 | `environments.<env>.models` | object |  | Overrides of "models" for this environment. |
 | `environments.<env>.decisions` | object |  | Overrides of "decisions" for this environment. |
+| `environments.<env>.android` | object |  | Overrides of "android" for this environment. |
 
 ## secrets
 
@@ -195,3 +196,11 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `inbox.mailslurp.baseUrl` | string | `"https://api.mailslurp.com"` |  |
 | `inbox.mailslurp.inboxId` | string |  | An existing inbox to reuse. |
 | `inbox.mailslurp.keySecret` | string | `"MAILSLURP_API_KEY"` | Secret holding the API key. Sent only to this provider's host. |
+
+## android
+
+| Key | Type | Default | |
+|---|---|---|---|
+| `android` | object |  | Android runs: version and device profile (Android projects). |
+| `android.version` | string | `"16"` | Android version the tests run on. |
+| `android.device` | string | `"pixel-8"` | Device profile the tests run on (screen size and density). |

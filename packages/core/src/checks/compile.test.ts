@@ -1,4 +1,3 @@
-import type { CheckOptions, PageCopy } from "@testament/browser";
 import type { CheckOp } from "@testament/recording";
 import { describe, expect, it } from "vitest";
 import {
@@ -8,6 +7,7 @@ import {
   promptText,
   scriptedModels,
 } from "../author/test-kit.test-support.js";
+import type { HarnessCheckOptions as CheckOptions, PageCopy } from "../target/harness.js";
 import { compileCheck } from "./compile.js";
 import { evaluateCheck } from "./evaluate.js";
 import { sanityTest } from "./sanity.js";

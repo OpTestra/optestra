@@ -1,7 +1,7 @@
-import type { ActionOutcome, ElementSummary, Observation } from "@testament/browser";
 import type { StepResult } from "@testament/contract";
 import { type ExpectPost, routeOf, type TemplateVariable } from "@testament/recording";
 import { pageTemplate } from "../author/commands.js";
+import type { ActionOutcome, ElementSummary, Observation } from "../target/harness.js";
 
 // VER-5 at replay: the replayed command's recorded effect must show up. The
 // recording says what happened when the step was recorded (URL change,

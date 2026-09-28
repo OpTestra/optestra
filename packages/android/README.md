@@ -1,7 +1,7 @@
 # @testament/android
 
 The Android harness: the one safe, controlled emulator session that the agent
-and the replayer (MOB-1) will drive, the Android counterpart of
+and the replayer (MOB-1) drive, the Android counterpart of
 [`@testament/browser`](../browser/README.md). It boots and resets emulators,
 installs the APK under test fresh for every session, enforces the allowed domains
 at the network layer, observes screens through the accessibility tree, offers a
@@ -102,9 +102,10 @@ emulator).
    the HAR. A field a secret was typed into shows `[secret:NAME]`. Any other
    password field shows a fixed `••••••••`, never its length.
 5. **Closed action set (SAF-2).** `AndroidSession` exposes `observe`,
-   `candidates`, `act`, `screenshot`, `settle`, `check`, `requestMark`,
-   `screenCopy`, `refusals`, `url`, `device`, `matrixEntry`, `timings`,
-   `appPackage` and `close`, and nothing else (pinned in `src/misc.test.ts`).
+   `candidates`, `factsOf`, `inspect`, `act`, `screenshot`, `settle`, `check`,
+   `requestMark`, `pageCopy`, `hookRequest`, `refusals`, `url`, `browserName`,
+   `device`, `matrixEntry`, `timings`, `appPackage` and `close`, and nothing
+   else (pinned in `src/misc.test.ts`).
    There is no shell, no raw adb, no file access and no network call for the
    agent. Programs start only in `src/tools.ts`:
    - adb, with a fixed command list (`ADB_COMMANDS`, pinned by tests). Every
@@ -245,8 +246,9 @@ Two more rules make post-states trustworthy on slow machines:
 ## Observation format
 
 Windows play the part of frames: frame 0 is the bottom window. A dialog, the
-permission prompt or a system dialog is wrapped as a `dialog` / `alertdialog`
-element. Pure layout containers are dropped and their children move up. A
+permission prompt or a system dialog is a `dialog` / `alertdialog` element (the
+window's root view, named by the window title, else its first text). Recent
+toasts (the last 6 s) are listed as `status` elements. Pure layout containers are dropped and their children move up. A
 clickable row is named after its texts. The status bar, navigation bar and
 keyboard are never shown. `renderForModel` on the fixture's sign-in screen, after
 typing the email and the password secret:
@@ -276,10 +278,35 @@ to Acme Shop") and bounds.
 `session.check(op, { timeoutMs, values, on, since })` runs the recording's
 `CheckOp` with auto-waiting. Supported ops: `text`, `url` (matched against the
 `android-app://` URL, the component or the activity name), `element_state`,
-`count`, `value` and `network` (since `requestMark()` or a `screenCopy()`).
+`count`, `value` and `network` (since `requestMark()` or a `pageCopy()`).
 `aria_snapshot`, `code`, `soft_judgment` and `pending` are `unsupported`. Secrets
-are refused as check values. `screenCopy()` freezes a screen for the sanity test
-(VER-6), and `on: "blank"` checks an empty screen.
+are refused as check values. `pageCopy()` freezes a screen for the sanity test
+(VER-6), and `on: "blank"` checks an empty screen. A `text` check on a `status`
+or `alert` target also reads the toasts shown since the step began (or in the
+last 6 s), so "a toast says …" holds after the toast is gone. CSS `body`,
+`html` and `:root` mean the whole screen.
+
+## Engine seam (MOB-1)
+
+The session fits the engine's `HarnessSession` as it is: besides the above it
+has `url` and `browserName` (`"android"`), `factsOf(ref)`, `inspect(locator)`
+(facts of what a locator finds, for fallback heals), `hookRequest(request)`
+(setup/teardown requests, sent from this machine by `src/hooks.ts` to the
+environment's `baseUrl` or an allowed host; `10.0.2.2` means this machine) and
+the web names of shared actions: `goto` (a deep link; a URL needs its scheme),
+`check` / `uncheck` (tap only when the state differs). `openAndroidSession`
+takes `baseUrl` for the hooks.
+
+The package registers the `android` config section (light entry point
+`@testament/android/section`):
+
+```yaml
+android:
+  version: "16"      # from versions.json
+  device: pixel-8    # from devices.json
+```
+
+Environments may override it; the CLI's `--android` / `--device` override both.
 
 ## Evidence
 

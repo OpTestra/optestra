@@ -18,7 +18,19 @@
     "different": -0.6,
     "opposite": -1
   },
-  "keyAttributes": ["name", "type", "href", "for", "placeholder", "alt", "title", "aria-label"],
+  "keyAttributes": [
+    "name",
+    "type",
+    "href",
+    "for",
+    "placeholder",
+    "alt",
+    "title",
+    "aria-label",
+    "input-type",
+    "hint",
+    "content-desc"
+  ],
   "position": {
     "nearPx": 16,
     "farPx": 600

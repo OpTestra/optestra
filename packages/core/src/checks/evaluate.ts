@@ -1,13 +1,13 @@
-import type {
-  CheckEvaluation,
-  LocatorSpec,
-  PageCopy,
-  RequestMark,
-  Session,
-} from "@testament/browser";
 import type { BudgetMeter, ModelCallRecord, Models } from "@testament/models";
 import type { CheckOp } from "@testament/recording";
 import { z } from "zod";
+import type {
+  CheckEvaluation,
+  HarnessSession,
+  LocatorSpec,
+  PageCopy,
+  RequestMark,
+} from "../target/harness.js";
 import prompt from "./check-prompt.json" with { type: "json" };
 
 // Evaluating a check: every deterministic op runs in the harness
@@ -15,8 +15,8 @@ import prompt from "./check-prompt.json" with { type: "json" };
 // screenshot; its result is marked `warnOnly` and can never make a test pass
 // (VER-3).
 
-/** The harness calls checks need. A LOOP-0 Session satisfies it. */
-export type CheckSession = Pick<Session, "check" | "observe" | "screenshot" | "pageCopy">;
+/** The harness calls checks need. A web Session and an AndroidSession satisfy it. */
+export type CheckSession = Pick<HarnessSession, "check" | "observe" | "screenshot" | "pageCopy">;
 
 export interface EvaluateOptions {
   values?: Readonly<Record<string, string>>;

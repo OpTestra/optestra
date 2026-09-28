@@ -1,4 +1,3 @@
-import type { Session } from "@testament/browser";
 import type {
   CheckResult,
   HealPolicy,
@@ -13,13 +12,14 @@ import type { CheckRecording, Recording, StepRecording } from "@testament/record
 import type { ExpandedTest } from "@testament/spec";
 import type { TestInbox } from "../author/inbox.js";
 import type { HealPatch } from "../heal/patch.js";
+import type { HarnessSession } from "../target/harness.js";
 import type { AttemptRecord } from "./verdict.js";
 
 export type StepShotType = "image/png" | "image/jpeg";
 
-/** The harness calls a replay uses. A LOOP-0 Session satisfies it. */
+/** The harness calls a replay uses. A web Session and an AndroidSession satisfy it. */
 export type ReplaySession = Pick<
-  Session,
+  HarnessSession,
   | "observe"
   | "act"
   | "candidates"

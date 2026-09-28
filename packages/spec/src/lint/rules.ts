@@ -253,6 +253,8 @@ const missingStart: LintRule = {
     'Adds "start: /" to the frontmatter for you to complete (not applied automatically).',
   check(ctx) {
     if (ctx.spec.frontmatter.kind !== "test" || ctx.spec.frontmatter.start) return;
+    // An Android test starts on the app's launcher screen, freshly installed: a known place.
+    if (ctx.config?.project.target === "android") return;
     const first = ctx.expanded.steps[0];
     if (!first) return;
     const navigates =

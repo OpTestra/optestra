@@ -46,6 +46,13 @@ lint:
   # Warnings count as errors for the exit code (CI).
   strict: false
 
+# Android runs (MOB-1, TGT-4). The android package registers this section.
+android:
+  # Android version, from the android package's versions.json (13 to 17).
+  version: "16"
+  # Device profile, from its devices.json (small-phone, pixel-8, pixel-tablet…).
+  device: pixel-8
+
 # AI models (MOD-7): the ONLY place default model ids live. The models package
 # registers this section. A pool entry is used only when its provider's key is
 # available, so these pools switch on by themselves when the standard key env

@@ -576,6 +576,32 @@ describe("actions", () => {
   });
 });
 
+describe("locale and timezone (ENV-5)", () => {
+  const adb = (...args: string[]) =>
+    spawnSync(emulator.sdk.adb, ["-s", emulator.serial, ...args], { encoding: "utf8" }).stdout;
+
+  it("sets the device's timezone and the app's language for the session only", async () => {
+    const session = await open("correct", { timezone: "Europe/Berlin", locale: "de-DE" });
+    try {
+      expect(adb("shell", "getprop", "persist.sys.timezone").trim()).toBe("Europe/Berlin");
+      expect(adb("shell", "cmd", "locale", "get-app-locales", "com.acme.shop")).toContain("de-DE");
+    } finally {
+      await session.close();
+    }
+    const next = await open();
+    try {
+      expect(adb("shell", "getprop", "persist.sys.timezone").trim()).not.toBe("Europe/Berlin");
+    } finally {
+      await next.close();
+    }
+  });
+
+  it("refuses a timezone or locale that isn't one", async () => {
+    await expect(open("correct", { timezone: "Mars/Olympus" })).rejects.toThrow(/not a timezone/);
+    await expect(open("correct", { locale: "not a locale" })).rejects.toThrow(/not a locale/);
+  });
+});
+
 describe("system dialogs on slow machines", () => {
   // The test (not the harness) freezes a process with raw adb, so Android shows its
   // "isn't responding" dialog, as it does for System UI on a slow CI emulator.

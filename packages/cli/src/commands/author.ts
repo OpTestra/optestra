@@ -1,5 +1,6 @@
-import { existsSync } from "node:fs";
-import { dirname, relative, resolve, sep } from "node:path";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { brand } from "@testament/brand";
 import { hasErrors } from "@testament/config";
 import {
@@ -25,6 +26,8 @@ export interface AuthorCommandOptions {
   headed?: boolean;
   device?: string;
   browser?: string;
+  /** Android projects: the Android version. */
+  android?: string;
   video?: boolean;
   dir?: string;
 }
@@ -66,13 +69,23 @@ export async function runAuthorCommand(
   }
   const environment = loaded.environment;
   const settings = environment?.settings;
-  if (!environment || !settings?.baseUrl) {
-    io.stdout(
-      `The environment${environment ? ` "${environment.name}"` : ""} has no baseUrl. Choose one with --env, or set baseUrl.\n`,
-    );
+  if (!environment || !settings) {
+    io.stdout("No environment is selected. Choose one with --env, or set defaultEnvironment.\n");
     return 2;
   }
   const config = loaded.config;
+  const coreNode = await import("@testament/core/node");
+  // The target (MOB-1): a browser on the environment's baseUrl, or the app on an emulator.
+  const resolved = await coreNode.resolveTarget(dir, config, environment, {
+    ...(options.browser ? { browser: options.browser as "chromium" | "firefox" | "webkit" } : {}),
+    ...(options.device ? { device: options.device } : {}),
+    ...(options.android ? { androidVersion: options.android } : {}),
+  });
+  if (!resolved.ok) {
+    io.stdout(`${resolved.message}\n`);
+    return 2;
+  }
+  const target = resolved.target;
   const path = posix(relative(dir, absolute));
   const auth = await import("@testament/auth");
   const usesInbox = config.inbox !== undefined && config.inbox.provider !== "none";
@@ -97,9 +110,7 @@ export async function runAuthorCommand(
 
   const sources = [processEnvSource(io.env), dotenvSource(dir)];
   const secrets = resolveSecrets(config, sources, { environment: environment.name });
-  const browser = await import("@testament/browser");
   const core = await import("@testament/core");
-  const coreNode = await import("@testament/core/node");
   const { readRecording, recordingPath } = await import("@testament/recording/node");
 
   const budget = models.BudgetMeter.forRun(config);
@@ -137,56 +148,68 @@ export async function runAuthorCommand(
 `);
   }
 
-  const device = options.device ?? browser.DEFAULT_DEVICE;
-  let session: Awaited<ReturnType<typeof browser.openSession>>;
-  try {
-    session = await browser.openSession({
-      browser: (options.browser as "chromium" | "firefox" | "webkit" | undefined) ?? "chromium",
-      headless: !options.headed,
-      device,
-      baseUrl: settings.baseUrl,
-      allowedDomains: settings.allowedDomains,
-      secrets: { ...secrets.secrets, ...inbox?.secrets },
-      allowUpload: { dir: dirname(absolute) },
-      evidence: { trace: true, console: true, network: true, video: options.video ?? false },
-    });
-  } catch (error) {
-    const fix = error instanceof browser.BrowserSetupError ? `\nFix: ${error.fix}` : "";
-    io.stdout(`${error instanceof Error ? error.message : String(error)}${fix}\n`);
+  // Authoring records once, on one matrix entry: the first (browser/device, or Android version/device).
+  const cell = target.cells[0];
+  if (!cell) {
+    io.stdout("Nothing to author on: the run has no matrix entry.\n");
     return 2;
   }
-
+  const device = cell.device;
   // auth: <profile> (SEC-3): log in like a run does, before the start page.
   const profileName = test.expanded.auth;
   const profile =
     profileName && profileName !== "none" ? config.auth?.profiles?.[profileName] : undefined;
   if (profileName && profileName !== "none" && !profile) {
     io.stdout(`auth: ${profileName} is not a profile in the project settings.\n`);
-    await session.close();
     return 2;
   }
+  if (profile && target.name === "android") {
+    io.stdout(
+      `auth: ${profileName} keeps a browser login: profiles can't be used on Android yet. Log in with steps instead.\n`,
+    );
+    return 2;
+  }
+
+  let worker: import("@testament/core/node").TargetWorker;
+  try {
+    worker = await coreNode.launchWorker(target, cell, { headless: !options.headed });
+  } catch (error) {
+    io.stdout(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 2;
+  }
+  const evidenceDir = mkdtempSync(join(tmpdir(), `${brand.cliName}-author-`));
+  const opened = await worker.openAttempt({
+    allowedDomains: settings.allowedDomains,
+    secrets: { ...secrets.secrets, ...inbox?.secrets },
+    uploadDir: dirname(absolute),
+    evidenceDir,
+    video: options.video ?? false,
+  });
+  if (!opened.ok) {
+    await worker.close();
+    rmSync(evidenceDir, { recursive: true, force: true });
+    io.stdout(`${opened.reason}: ${opened.message}\n`);
+    return 2;
+  }
+  const session = opened.session;
+  const web = opened.web;
+  const openLogin = worker.openLoginSession;
   const { createDecisions } = await import("@testament/decide");
   const { ulid } = await import("@testament/contract");
   const prepare =
-    profileName && profile
+    profileName && profile && web && openLogin
       ? coreNode.authoringLogin({
           projectDir: dir,
           config,
           environment: environment.name,
           name: profileName,
           profile,
-          session,
+          session: web,
           emailDomain: usesInbox ? auth.inboxEmailDomain(config.inbox) : undefined,
           openSession: (extra) =>
-            browser.openSession({
-              browser:
-                (options.browser as "chromium" | "firefox" | "webkit" | undefined) ?? "chromium",
-              headless: !options.headed,
-              device,
-              baseUrl: settings.baseUrl as string,
+            openLogin({
               allowedDomains: settings.allowedDomains,
               secrets: { ...secrets.secrets, ...extra },
-              evidence: { trace: false, console: false, network: false, video: false },
             }),
           replay: {
             mode: "normal",
@@ -206,7 +229,11 @@ export async function runAuthorCommand(
 
   const testsDir = resolve(dir, config.tests?.dir ?? "tests");
   const previous = readRecording(recordingPath(testsDir, test.id));
-  io.stdout(`Authoring ${path} on ${settings.baseUrl} (${environment.name})\n`);
+  const where =
+    target.name === "web"
+      ? target.baseUrl
+      : `Android ${cell.target === "android" ? cell.androidVersion : ""} (${device})`;
+  io.stdout(`Authoring ${path} on ${where} (${environment.name})\n`);
   let result: Awaited<ReturnType<typeof core.authorTest>>;
   let closed: Awaited<ReturnType<typeof session.close>> | undefined;
   try {
@@ -272,8 +299,12 @@ export async function runAuthorCommand(
       },
     });
   } finally {
-    // Closing always happens: evidence is written and the browser shut down.
-    closed = await session.close();
+    // Closing always happens: evidence is written and the browser or emulator shut down.
+    try {
+      closed = await session.close();
+    } finally {
+      await worker.close();
+    }
   }
   const saved = coreNode.saveAuthoring({
     projectDir: dir,
@@ -281,25 +312,28 @@ export async function runAuthorCommand(
     result,
     evidence: closed.evidence,
   });
+  rmSync(evidenceDir, { recursive: true, force: true });
   const report = saved.report;
   // Keep the portable Playwright spec in sync with the recording (never over a hand edit).
+  // Android recordings have none: the spec is Playwright.
   const specNotes: string[] = [];
-  try {
-    const { generateAfterRecording } = await import("@testament/codegen/node");
-    const generated = await generateAfterRecording(dir, path, {
-      environment: environment.name,
-      env: io.env,
-    });
-    for (const f of generated.files) {
-      if (f.status === "edited")
-        specNotes.push(`${f.path} was changed by hand: not regenerated (use generate --force).`);
-      else if (f.status !== "unchanged" && f.test) specNotes.push(`Spec:      ${f.path}`);
+  if (target.name === "web")
+    try {
+      const { generateAfterRecording } = await import("@testament/codegen/node");
+      const generated = await generateAfterRecording(dir, path, {
+        environment: environment.name,
+        env: io.env,
+      });
+      for (const f of generated.files) {
+        if (f.status === "edited")
+          specNotes.push(`${f.path} was changed by hand: not regenerated (use generate --force).`);
+        else if (f.status !== "unchanged" && f.test) specNotes.push(`Spec:      ${f.path}`);
+      }
+    } catch (error) {
+      specNotes.push(
+        `The spec could not be regenerated: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
-  } catch (error) {
-    specNotes.push(
-      `The spec could not be regenerated: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
   for (const step of report.steps.filter((s) => s.status === "skipped")) {
     io.stdout(`  ${`${step.number ?? ""}. ${step.text}`.slice(0, 60).padEnd(60)}  skipped\n`);
   }

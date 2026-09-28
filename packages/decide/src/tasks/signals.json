@@ -63,7 +63,9 @@
       "is not defined",
       "chunkloaderror",
       "minified react error",
-      "hydration failed"
+      "hydration failed",
+      "fatal exception",
+      "anr: "
     ],
     "ignoredConsole": [
       "favicon",
@@ -204,6 +206,8 @@
       ["back", "previous"],
       ["edit", "change", "modify"],
       ["help", "support"],
+      ["email", "email address", "e-mail"],
+      ["refresh", "reload"],
       ["add", "create", "new"],
       ["avatar", "photo", "picture", "image"],
       ["show", "include"],

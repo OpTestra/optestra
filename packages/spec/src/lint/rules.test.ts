@@ -312,6 +312,20 @@ describe("rule levels", () => {
     expect(findings.map((f) => [f.rule, f.severity])).toEqual([["fixed-wait", "error"]]);
   });
 
+  it("doesn't ask Android tests for a start page (the app starts at its launcher)", async () => {
+    const text = doc(["name: T"], ['1. Tap "Sign in"', '2. Expect: the heading is "Hi"']);
+    const android = resolveConfig({
+      project: {
+        version: 1,
+        project: { name: "x", target: "android" },
+        environments: { local: { app: "app.apk" } },
+      },
+    }).config;
+    const rules = (findings: { rule?: string }[]) => findings.map((f) => f.rule);
+    expect(rules(await lint(text, config(undefined)))).toContain("missing-start");
+    expect(rules(await lint(text, android))).not.toContain("missing-start");
+  });
+
   it("rejects unknown levels", () => {
     const { diagnostics } = resolveConfig({
       project: {

@@ -33,6 +33,7 @@ describe("public API (SAF-2: the closed action set)", () => {
       "LaunchedEmulator",
       "ScreenCopy",
       "androidDoctor",
+      "androidSchema",
       "androidSetupPlan",
       "installAndroidSdk",
       "launchEmulator",
@@ -45,19 +46,24 @@ describe("public API (SAF-2: the closed action set)", () => {
     expect(Object.getOwnPropertyNames(AndroidSession.prototype).sort()).toEqual([
       "act",
       "appPackage",
+      "browserName",
       "candidates",
       "check",
       "close",
       "constructor",
       "device",
+      "factsOf",
+      "hookRequest",
+      "inspect",
       "matrixEntry",
       "observe",
+      "pageCopy",
       "refusals",
       "requestMark",
-      "screenCopy",
       "screenshot",
       "settle",
       "timings",
+      "unsettled",
       "url",
     ]);
   });
@@ -65,9 +71,11 @@ describe("public API (SAF-2: the closed action set)", () => {
   it("has a closed list of actions, each handled, anything else refused", () => {
     expect([...ANDROID_ACTION_TYPES].sort()).toEqual([
       "back",
+      "check",
       "clear",
       "click",
       "fill",
+      "goto",
       "home",
       "launch_app",
       "long_press",
@@ -79,6 +87,7 @@ describe("public API (SAF-2: the closed action set)", () => {
       "swipe",
       "tap",
       "type",
+      "uncheck",
       "waitFor",
     ]);
     const source = readFileSync(new URL("./session.ts", import.meta.url), "utf8");
@@ -105,6 +114,8 @@ describe("the adb wrapper (guarantee 5)", () => {
       "logcat-mark",
       "prepare-device",
       "firewall",
+      "set-timezone",
+      "set-app-locales",
       "emu",
     ]);
     const source = readFileSync(new URL("./tools.ts", import.meta.url), "utf8");
@@ -133,7 +144,21 @@ describe("the adb wrapper (guarantee 5)", () => {
       "uih",
       "mark-3",
     ]);
+    expect(adbArgs({ name: "set-timezone", timezone: "Europe/Berlin" })).toEqual([
+      "shell",
+      "cmd",
+      "alarm",
+      "set-timezone",
+      "Europe/Berlin",
+    ]);
+    expect(
+      adbArgs({ name: "set-app-locales", appPackage: "com.acme.shop", locales: "de-DE" }),
+    ).toEqual(["shell", "cmd", "locale", "set-app-locales", "com.acme.shop", "--locales", "de-DE"]);
     const bad: Parameters<typeof adbArgs>[0][] = [
+      { name: "set-timezone", timezone: "Europe/Berlin; reboot" },
+      { name: "set-timezone", timezone: "../etc" },
+      { name: "set-app-locales", appPackage: "com.acme.shop", locales: "de-DE,$(id)" },
+      { name: "set-app-locales", appPackage: "-x", locales: "de" },
       { name: "install", apk: "-g" },
       { name: "forward", socket: "x;reboot" },
       { name: "instrument", token: "abc def", socket: "s" },

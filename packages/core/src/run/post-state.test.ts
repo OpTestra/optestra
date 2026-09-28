@@ -1,9 +1,9 @@
-import type { ActionOutcome } from "@testament/browser";
 import { describe, expect, it } from "vitest";
 import { stepVariables } from "../author/variables.js";
+import type { ActionOutcome } from "../target/harness.js";
 import { bindAction } from "./bind.js";
-import { mergeRecording } from "./runner.js";
 import { lateMatch, verifyOutcome } from "./post-state.js";
+import { mergeRecording } from "./runner.js";
 import { command, expanded, post, recordingFor, role, URL0 } from "./test-kit.test-support.js";
 
 const outcome = (p: Partial<ReturnType<typeof post>>): ActionOutcome =>

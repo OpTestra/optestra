@@ -38,6 +38,12 @@ per entry, its `testId` suffixed `@<browser>-<device>` (the `matrix` field says
 which); `createRunWriter({ onEvent })` sees every event as written. All
 optional: older documents parse as before.
 
+**1.4** (MOB-1): BlockedReason `app_launch_failed` (the Android app installed but
+didn't start), `emulator_failed` (the emulator couldn't boot, reset or be set up)
+and `driver_failed` (the on-device driver didn't start); an Android matrix entry's
+`testId` is suffixed `@android<version>-<device>`. New open-enum values only:
+1.0–1.3 readers accept them.
+
 `fixtures/v1/` is frozen once released: `pnpm gen:fixtures` skips folders that
 exist. `_future-minor/` is a 1.9 run with extra fields and an unknown event, to
 prove 1.0 readers still read it.
@@ -48,7 +54,7 @@ prove 1.0 readers still read it.
 |---|---|
 | Verdict | `passed healed failed flaky blocked` |
 | FailureCause | `product_bug test_drift environment test_data blocked` |
-| BlockedReason (open) | `captcha missing_secret disallowed_domain ai_unavailable budget_exceeded app_down app_install_failed config_error aborted inbox_unavailable login_failed setup_failed` (the last three since 1.2) |
+| BlockedReason (open) | `captcha missing_secret disallowed_domain ai_unavailable budget_exceeded app_down app_install_failed config_error aborted inbox_unavailable login_failed setup_failed app_launch_failed emulator_failed driver_failed` (`inbox_unavailable`…`setup_failed` since 1.2, the last three since 1.4) |
 | StepKind | `action expect soft guard exact flow` |
 | RecoveryLevel | `replay refind fixer none` |
 | Trigger | `desktop web cloud ci cli agent schedule` |

@@ -1,0 +1,684 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__check-updates",
+  "testPath": "tests/check-updates.test.md",
+  "target": "android",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "android",
+    "device": "pixel-8",
+    "environment": "local",
+    "model": "claude-code/claude-sonnet-4-6",
+    "promptVersion": "planner-android-v1"
+  },
+  "updatedAt": "2026-09-28T08:05:30.716Z",
+  "steps": [
+    {
+      "key": "97a2a6e864636cd7",
+      "textKey": "727d0a18b88674d5",
+      "route": "android-app:/.SignInActivity",
+      "text": "Type {{params.email}} into \"Email\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "{{params.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "sign_in_email"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/sign_in_email\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_email",
+              "hint": "Email",
+              "input-type": "33"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 221,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 327,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Email field shows '{{params.email}}'",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:04:41.997Z"
+    },
+    {
+      "key": "73ff4ccf4583d073",
+      "textKey": "1ccd1851bdb8219d",
+      "route": "android-app:/.SignInActivity",
+      "text": "Type {{params.password}} into \"Password\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "sign_in_password"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/sign_in_password\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_password",
+              "hint": "Password",
+              "password": "true",
+              "input-type": "129"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 339,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 339,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Password field now contains the secret value {{secret.SHOP_PASSWORD}}",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:04:51.737Z"
+    },
+    {
+      "key": "460a49462e00b836",
+      "textKey": "b1aafbb4c44130be",
+      "route": "android-app:/.SignInActivity",
+      "text": "Tap \"Sign in\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign in",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign in",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "sign_in_button"
+              },
+              {
+                "kind": "text",
+                "text": "Sign in",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/sign_in_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Sign in",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_button"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 457,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/.ProjectsActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "No projects yet"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Sign in to Acme Shop"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              },
+              {
+                "role": "button",
+                "name": "Sign in"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 1254,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Navigated to Projects screen with heading 'Projects' and 'No projects yet' message",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:05:00.312Z"
+    },
+    {
+      "key": "fcb93798130f50a4",
+      "textKey": "17667227f53ce8b1",
+      "route": "android-app:/.ProjectsActivity",
+      "text": "Tap \"Settings\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Settings",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Settings",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "settings_button"
+              },
+              {
+                "kind": "text",
+                "text": "Settings",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/settings_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Settings",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/settings_button"
+            },
+            "anchorText": "Projects",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 1289,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/.SettingsActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Settings"
+              },
+              {
+                "role": "switch",
+                "name": "Email notifications"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Account"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Manage how Acme Shop handles account on this device."
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Privacy"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Manage how Acme Shop handles privacy on this device."
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Storage"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Manage how Acme Shop handles storage on this device."
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Downloads"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "Manage how Acme Shop handles downloads on this device."
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "text",
+                "name": "",
+                "text": "No projects yet"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 523,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Settings screen is displayed with heading 'Settings', Email notifications switch, and various settings options.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:05:07.676Z"
+    },
+    {
+      "key": "94515f3ef12e6477",
+      "textKey": "2a096c1d3d49e43a",
+      "route": "android-app:/.SettingsActivity",
+      "text": "Scroll down to \"Check for updates\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "scroll",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Check for updates",
+              "exact": true
+            },
+            "direction": "down"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Check for updates",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "check_updates_button"
+              },
+              {
+                "kind": "text",
+                "text": "Check for updates",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/check_updates_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Check for updates",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/check_updates_button"
+            },
+            "anchorText": "Settings",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 1980,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 1666,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "\"Check for updates\" button is visible on screen",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:05:20.709Z"
+    },
+    {
+      "key": "310a9f0eaccb6535",
+      "textKey": "13b085deb23f1bb7",
+      "route": "android-app:/.SettingsActivity",
+      "text": "Tap \"Check for updates\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Check for updates",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Check for updates",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "check_updates_button"
+              },
+              {
+                "kind": "text",
+                "text": "Check for updates",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/check_updates_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Check for updates",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/check_updates_button"
+            },
+            "anchorText": "Settings",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 1980,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "text",
+                "name": "",
+                "text": "Couldn't check for updates."
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 1179,
+            "waitedFor": {
+              "network": 849,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "\"Couldn't check for updates.\" message appeared below the button.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:05:30.538Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "7d7b88c7f41e3f50",
+      "textKey": "2a51334284b514eb",
+      "text": "the screen heading is \"Projects\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading"
+        },
+        "match": "equals",
+        "value": "Projects"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that a heading is exactly 'Projects'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T08:05:00.418Z"
+    },
+    {
+      "key": "d899788e0a69f3dc",
+      "textKey": "ea2640efcbc29f8f",
+      "text": "the screen says \"Couldn't check for updates.\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "body"
+        },
+        "match": "contains",
+        "value": "Couldn't check for updates."
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that the page shows 'Couldn't check for updates.'",
+      "rule": "visible-text",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T08:05:30.664Z"
+    }
+  ]
+}

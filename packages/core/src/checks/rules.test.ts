@@ -1,7 +1,7 @@
-import { readFileSync } from "node:fs";
-import type { Observation } from "@testament/browser";
+import { readdirSync, readFileSync } from "node:fs";
 import type { CheckOp } from "@testament/recording";
 import { describe, expect, it } from "vitest";
+import type { Observation } from "../target/harness.js";
 import { compileByRules, matchRules, namesMatch, type Probe } from "./rules.js";
 
 // The rule compiler against saved observations of the shop pages (captured by
@@ -278,5 +278,30 @@ describe("rule compiler phrases", () => {
     expect(namesMatch("projects", "Projects")).toBe(true);
     expect(namesMatch("orders", "Your orders")).toBe(true);
     expect(namesMatch("orders", "Projects")).toBe(false);
+  });
+});
+
+describe("Android app screens (MOB-1)", () => {
+  const dir = new URL("../../../../bench/fixtures/android/tests/", import.meta.url);
+  const lines = readdirSync(dir, { recursive: true, encoding: "utf8" })
+    .filter((f) => f.endsWith(".test.md"))
+    .flatMap((f) =>
+      [...readFileSync(new URL(f, dir), "utf8").matchAll(/^\d+\. Expect: (.+)$/gm)].map(
+        (m) => m[1] ?? "",
+      ),
+    );
+
+  it("has a phrase rule for every Expect line of the Android fixture", () => {
+    expect(lines.length).toBeGreaterThan(8);
+    for (const line of lines) expect(matchRules(line), line).not.toEqual([]);
+  });
+
+  it("reads screen, toast and dialog wording", () => {
+    const first = (line: string) => matchRules(line)[0]?.rule.id;
+    expect(first('the screen heading is "Projects"')).toBe("heading");
+    expect(first('the screen says "Saved"')).toBe("visible-text");
+    expect(first('a toast says "Project created"')).toBe("message");
+    expect(first('a dialog asks "Sign out?"')).toBe("dialog");
+    expect(first('the list shows "Q3 roadmap"')).toBe("container-text");
   });
 });

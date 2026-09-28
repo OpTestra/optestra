@@ -1,0 +1,839 @@
+{
+  "recordingVersion": 1,
+  "testId": "tests__create-project",
+  "testPath": "tests/create-project.test.md",
+  "target": "android",
+  "recordedWith": {
+    "engineVersion": "0.1.0",
+    "epoch": 1,
+    "browser": "android",
+    "device": "pixel-8",
+    "environment": "local",
+    "model": "claude-code/claude-sonnet-4-6",
+    "promptVersion": "planner-android-v2"
+  },
+  "updatedAt": "2026-09-28T08:59:27.009Z",
+  "steps": [
+    {
+      "key": "97a2a6e864636cd7",
+      "textKey": "727d0a18b88674d5",
+      "route": "android-app:/.SignInActivity",
+      "text": "Type {{params.email}} into \"Email\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "value": "{{params.email}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Email",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Email",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "sign_in_email"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/sign_in_email\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Email",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_email",
+              "hint": "Email",
+              "input-type": "33"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 221,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 337,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Email field now shows '{{params.email}}'",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:05:53.452Z"
+    },
+    {
+      "key": "73ff4ccf4583d073",
+      "textKey": "1ccd1851bdb8219d",
+      "route": "android-app:/.SignInActivity",
+      "text": "Type {{params.password}} into \"Password\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "value": "{{secret.SHOP_PASSWORD}}"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Password",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Password",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "sign_in_password"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/sign_in_password\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Password",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_password",
+              "hint": "Password",
+              "password": "true",
+              "input-type": "129"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 339,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 326,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Password field shows the secret value entered (masked as {{secret.SHOP_PASSWORD}})",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:06:01.845Z"
+    },
+    {
+      "key": "460a49462e00b836",
+      "textKey": "b1aafbb4c44130be",
+      "route": "android-app:/.SignInActivity",
+      "text": "Tap \"Sign in\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign in",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Sign in",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "sign_in_button"
+              },
+              {
+                "kind": "text",
+                "text": "Sign in",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/sign_in_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Sign in",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/sign_in_button"
+            },
+            "anchorText": "Sign in to Acme Shop",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 457,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/.ProjectsActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "listitem",
+                "name": "Website redesign"
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Sign in to Acme Shop"
+              },
+              {
+                "role": "textbox",
+                "name": "Email",
+                "text": "{{params.email}}"
+              },
+              {
+                "role": "textbox",
+                "name": "Password",
+                "text": "{{secret.SHOP_PASSWORD}}"
+              },
+              {
+                "role": "button",
+                "name": "Sign in"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 1214,
+            "waitedFor": {
+              "network": 376,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Navigated to Projects screen with heading 'Projects' and list of projects visible",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:06:10.933Z"
+    },
+    {
+      "key": "a7a2e2c5a7895863",
+      "textKey": "d4a0cc95d2681a7d",
+      "route": "android-app:/.ProjectsActivity",
+      "text": "Tap \"New project\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "New project",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "New project",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "new_project_button"
+              },
+              {
+                "kind": "text",
+                "text": "New project",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/new_project_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "New project",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/new_project_button"
+            },
+            "anchorText": "Projects",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 221,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/.NewProjectActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "New project"
+              },
+              {
+                "role": "textbox",
+                "name": "Project name",
+                "text": ""
+              },
+              {
+                "role": "button",
+                "name": "Create project"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "listitem",
+                "name": "Website redesign"
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 471,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Screen changed to New project activity with heading 'New project' and a Project name text field visible.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:06:20.854Z"
+    },
+    {
+      "key": "5f3ab2b098f958f8",
+      "textKey": "b8a10d58e78c7bd9",
+      "route": "android-app:/.NewProjectActivity",
+      "text": "Type Q3 roadmap into \"Project name\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "fill",
+            "target": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Project name",
+              "exact": true
+            },
+            "value": "Q3 roadmap"
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "textbox",
+              "name": "Project name",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "placeholder",
+                "text": "Project name",
+                "exact": true
+              },
+              {
+                "kind": "testId",
+                "value": "project_name"
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.EditText[resource-id=\"com.acme.shop:id/project_name\"]"
+              }
+            ],
+            "role": "textbox",
+            "name": "Project name",
+            "tag": "android.widget.EditText",
+            "attributes": {
+              "class": "android.widget.EditText",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/project_name",
+              "hint": "Project name",
+              "input-type": "33"
+            },
+            "anchorText": "New project",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 221,
+              "width": 976,
+              "height": 118
+            }
+          },
+          "expectPost": {
+            "appeared": [
+              {
+                "role": "textbox",
+                "name": "Project name",
+                "text": "Q3 roadmap"
+              }
+            ],
+            "removed": [
+              {
+                "role": "textbox",
+                "name": "Project name",
+                "text": ""
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 602,
+            "waitedFor": {
+              "network": 0,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Textbox 'Project name' shows 'Q3 roadmap'",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:06:30.570Z"
+    },
+    {
+      "key": "d908877e17d0e57a",
+      "textKey": "a954109f6a904efd",
+      "route": "android-app:/.NewProjectActivity",
+      "text": "Tap \"Create project\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Create project",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Create project",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "create_project_button"
+              },
+              {
+                "kind": "text",
+                "text": "Create project",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/create_project_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Create project",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/create_project_button"
+            },
+            "anchorText": "New project",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 339,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {
+            "urlChange": "android-app:/.ProjectsActivity",
+            "appeared": [
+              {
+                "role": "heading",
+                "name": "Projects"
+              },
+              {
+                "role": "button",
+                "name": "New project"
+              },
+              {
+                "role": "list",
+                "name": ""
+              },
+              {
+                "role": "listitem",
+                "name": "Website redesign"
+              },
+              {
+                "role": "listitem",
+                "name": "Q3 roadmap"
+              },
+              {
+                "role": "button",
+                "name": "Refresh"
+              },
+              {
+                "role": "button",
+                "name": "Settings"
+              },
+              {
+                "role": "button",
+                "name": "Sign out"
+              }
+            ],
+            "removed": [
+              {
+                "role": "heading",
+                "name": "New project"
+              },
+              {
+                "role": "textbox",
+                "name": "Project name",
+                "text": "Q3 roadmap"
+              },
+              {
+                "role": "button",
+                "name": "Create project"
+              }
+            ]
+          },
+          "wait": {
+            "settledMs": 5135,
+            "waitedFor": {
+              "network": 1440,
+              "dom": 0,
+              "busy": 3095
+            }
+          }
+        }
+      ],
+      "reasoning": "Project created; screen shows Projects list with 'Q3 roadmap' added and status 'Project created'.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:06:44.500Z"
+    },
+    {
+      "key": "9586d2bec7b79d0f",
+      "textKey": "91500e289f387a19",
+      "route": "android-app:/.ProjectsActivity",
+      "text": "Tap \"Refresh\"",
+      "kind": "action",
+      "commands": [
+        {
+          "action": {
+            "type": "click",
+            "target": {
+              "kind": "role",
+              "role": "button",
+              "name": "Refresh",
+              "exact": true
+            }
+          },
+          "fingerprint": {
+            "primary": {
+              "kind": "role",
+              "role": "button",
+              "name": "Refresh",
+              "exact": true
+            },
+            "fallbacks": [
+              {
+                "kind": "testId",
+                "value": "refresh_button"
+              },
+              {
+                "kind": "text",
+                "text": "Refresh",
+                "exact": true
+              },
+              {
+                "kind": "css",
+                "selector": "android.widget.Button[resource-id=\"com.acme.shop:id/refresh_button\"]"
+              }
+            ],
+            "role": "button",
+            "name": "Refresh",
+            "tag": "android.widget.Button",
+            "attributes": {
+              "class": "android.widget.Button",
+              "package": "com.acme.shop",
+              "resource-id": "com.acme.shop:id/refresh_button"
+            },
+            "anchorText": "Projects",
+            "framePath": [],
+            "box": {
+              "x": 52,
+              "y": 1163,
+              "width": 976,
+              "height": 126
+            }
+          },
+          "expectPost": {},
+          "wait": {
+            "settledMs": 867,
+            "waitedFor": {
+              "network": 370,
+              "dom": 0,
+              "busy": 0
+            }
+          }
+        }
+      ],
+      "reasoning": "Refresh button tapped, Projects list is visible with items.",
+      "source": "ai",
+      "recordedAt": "2026-09-28T08:59:26.704Z"
+    }
+  ],
+  "checks": [
+    {
+      "key": "7d7b88c7f41e3f50",
+      "textKey": "2a51334284b514eb",
+      "text": "the screen heading is \"Projects\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "heading"
+        },
+        "match": "equals",
+        "value": "Projects"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that a heading is exactly 'Projects'",
+      "rule": "heading",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T08:06:11.066Z"
+    },
+    {
+      "key": "2bca0e75e86257aa",
+      "textKey": "3012cf8765d52ab1",
+      "text": "a message says \"Project created\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "css",
+          "selector": "body"
+        },
+        "match": "contains",
+        "value": "Project created"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that the page shows 'Project created'",
+      "rule": "message",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "failedAtAuthoring": {
+        "expected": "Project created",
+        "actual": "New project"
+      },
+      "recordedAt": "2026-09-28T08:06:52.682Z"
+    },
+    {
+      "key": "751bc159bc7fff2b",
+      "textKey": "edc5c762b787bc03",
+      "text": "the list shows \"Q3 roadmap\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "list"
+        },
+        "match": "contains",
+        "value": "Q3 roadmap"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that a list contains 'Q3 roadmap'",
+      "rule": "container-text",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "failed"
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T08:59:13.731Z"
+    },
+    {
+      "key": "772ce964617a5b31",
+      "textKey": "edc88b62b7898be6",
+      "text": "the list shows \"Q3 roadmap\"",
+      "soft": false,
+      "check": {
+        "type": "text",
+        "target": {
+          "kind": "role",
+          "role": "list"
+        },
+        "match": "contains",
+        "value": "Q3 roadmap"
+      },
+      "generatedBy": "rules",
+      "summary": "Checked that a list contains 'Q3 roadmap'",
+      "rule": "container-text",
+      "sanity": {
+        "empty": {
+          "result": "failed"
+        },
+        "before": {
+          "result": "skipped",
+          "note": "The preceding action didn't change what this check looks at."
+        },
+        "provesNothing": false
+      },
+      "recordedAt": "2026-09-28T08:59:26.920Z"
+    }
+  ]
+}

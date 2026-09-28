@@ -11,8 +11,54 @@ the fix policies, and review and accept.
 
 | Import | Use |
 |---|---|
-| `@testament/core` | drafting: `exploreDraft`, `exploreStarters`, `finishDraft`, `DRAFT_TOOLS`, `DRAFT_LIMITS`, `DRAFT_PROMPT_VERSION`; `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `PROMPT_VERSION`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `fixerProposal`, `chaptersVtt`; heals: `runFixer`, `fixerContext`, `FIXER_LIMITS`, `FIXER_PROMPT_VERSION`, `applyPatches`, `HealPatchSchema`, `describeCommand`, `markAutoApplied` |
-| `@testament/core/node` | `draftTest`, `suggestStarterTests` (drafting against a project folder); `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `mergeRecording`, `recentAiUsage`, `recentHeals`, `runSpecTest`; heals: `listHeals`, `applyHeals` |
+| `@testament/core` | drafting: `exploreDraft`, `exploreStarters`, `finishDraft`, `DRAFT_TOOLS`, `DRAFT_LIMITS`, `DRAFT_PROMPT_VERSION`; `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `ANDROID_TOOLS`, `toolsFor`, `PROMPT_VERSION`, `promptVersionFor`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `fixerProposal`, `chaptersVtt`; heals: `runFixer`, `fixerContext`, `FIXER_LIMITS`, `FIXER_PROMPT_VERSION`, `applyPatches`, `HealPatchSchema`, `describeCommand`, `markAutoApplied` |
+| `@testament/core/node` | `draftTest`, `suggestStarterTests` (drafting against a project folder); `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `resolveTarget` / `launchWorker` (the target layer), `mergeRecording`, `recentAiUsage`, `recentHeals`, `runSpecTest`; heals: `listHeals`, `applyHeals` |
+
+Types for either target: `HarnessSession`, `HarnessAction`, `HarnessObservation`,
+`HarnessOutcome`, `TargetName`, `targetOfSession`, `isScreen` (from `@testament/core`).
+
+## Targets: web and Android (MOB-1)
+
+One engine drives both. Everything after "open a session" talks to a
+`HarnessSession` (`src/target/harness.ts`): `observe`, `act`, `candidates`,
+`factsOf`, `inspect`, `check`, `pageCopy`, `requestMark`, `hookRequest`,
+`screenshot`, `settle`, `unsettled`, `url`, `browserName`. The browser's `Session` and the Android
+harness's `AndroidSession` both fit it as they are; the target is read from the
+session (`browserName === "android"`).
+
+The runner's part is `src/run/target.ts`:
+
+- `resolveTarget(projectDir, config, environment, { browsers, devices, androidVersions, … })`
+  → the target and its matrix of cells (TGT-5): web = browser × device (needs
+  `baseUrl`), Android = Android version × device (needs `app:`, the APK relative
+  to the project; defaults from the `android` section, which an environment may
+  override; `--android` / `--device`, repeatable, win). Each cell is its own
+  TestResult: `<test>@chromium-desktop`, `<test>@android16-pixel-8` (no suffix
+  when the matrix has one cell). Matrix entries: `{ target: "web", browser,
+  device }` and `{ target: "android", androidVersion, device }`.
+- `launchWorker(target, cell, { headless, emulator? })`: a worker launches one
+  engine per kind of cell it meets (a browser per browser name, an emulator per
+  version and device) and keeps it; a shared emulator from tests or the Bench
+  is used and left running. `openAttempt({ …, capture, locale, timezone })`
+  gives each attempt a fresh session: a new browser context, or the clean
+  snapshot with the APK installed fresh. Evidence modes (`capture`) and the
+  locale and timezone reach both targets; on Android `close({ discard })` drops
+  the network log of a clean first attempt like the web's trace and HAR.
+  Android acts accept replay's learned wait but always settle fully.
+- Open failures are blocked with their reason: `app_install_failed`,
+  `app_launch_failed`, `emulator_failed`, `driver_failed` (a missing SDK or
+  system image is a `config_error` with the fix).
+
+On Android:
+
+| | |
+|---|---|
+| Recording | Same shapes: a tap records as `click`, typing as `fill`, plus `long_press`, `clear`, `swipe`, `home`, `launch_app`, `rotate`, `open_deep_link`, `permission`. Locators: role, label, placeholder (hint), alt (content-desc), testId (resource id), text, css (`class[resource-id=…]`); fingerprints from the harness's candidates. The route (REP-7) is the activity: `android-app:/.SignInActivity`. |
+| Authoring | `ANDROID_TOOLS` (tap, long_press, type, clear, press, swipe, scroll, back, home, launch_app, rotate, open_link, permission, wait_for, read_inbox, look, step_done, step_impossible) and the `planner-android-v2` prompt; the fixer uses `fixer-android-v1`. |
+| Checks | The same phrase rules, with screen wording: "the screen heading is", "the screen says", "a message says" / "a toast says" (toasts are `status` elements), "a dialog asks", "the list shows". CSS `body` is the whole screen. |
+| Heals | The same ladder; same_element reads the resource id as the test id and `hint`, `content-desc`, `input-type` as key attributes. |
+| Setup hooks | Sent from this machine to the environment's `baseUrl` (or an allowed host), never from the device. |
+| Not yet | Code steps (```ts) and auth profiles are blocked (`config_error`, with the reason); no portable Playwright spec is generated. |
 
 ## How a run works (LOOP-4)
 
@@ -25,7 +71,10 @@ const result = await runTests({
   environment,            // default: the project's defaultEnvironment
   mode,                   // "replay-only" | "normal" | "rerecord" (default run.mode)
   retries,                // default run.retries (1)
-  workers,                // parallel browsers (default 1)
+  workers,                // parallel browsers or emulators (default 1)
+  browser, device,        // web: chromium | firefox | webkit and a device preset
+  androidVersion,         // android: the version (device: a device profile)
+  emulator,               // android: a running emulator to share (tests, Bench)
   budgetUsd,              // default run.budget.maxPerRunUsd
   browsers, devices,      // a matrix (TGT-5): one TestResult per browser × device
   locale, timezone,       // every session's locale and timezone (ENV-5)
@@ -38,7 +87,7 @@ const result = await runTests({
 // result.run, result.tests: the contract documents; result.groups: failure groups (DIA-4)
 ```
 
-One browser per worker, one fresh session per test attempt. Each attempt runs
+One browser (or emulator) per worker, one fresh session per test attempt. Each attempt runs
 the test's `setup` request hooks, opens its `start` page, then goes through the
 expanded steps (flows inlined):
 
@@ -758,6 +807,7 @@ evidence for it.
 
 ```bash
 testament author tests/create-project.test.md [--env local] [--headed] [--device laptop] [--browser webkit] [--video]
+testament author tests/sign-in.test.md --android 16 --device pixel-8   # an Android project
 ```
 
 It prints one line per step (status, actions, AI calls and cost). For a check

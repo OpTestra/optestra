@@ -266,9 +266,16 @@ export function createProgram(): Command {
     )
     .argument("<file>", "the .test.md file")
     .option("-e, --env <name>", "environment to run against")
-    .option("--headed", "show the browser window")
-    .option("--device <preset>", "device preset, e.g. desktop, laptop, iphone-15")
+    .option("--headed", "show the browser or emulator window")
+    .option(
+      "--device <preset>",
+      "device preset, e.g. desktop, laptop, iphone-15 (Android: a device profile, e.g. pixel-8)",
+    )
     .option("--browser <name>", "chromium (default), firefox or webkit")
+    .option(
+      "--android <version>",
+      "Android projects: the Android version (default: android.version)",
+    )
     .option("--video", "also record a video")
     .option("-C, --dir <path>", "project folder (default: the test's nearest project)")
     .action(async (file: string, options: AuthorCommandOptions) => {
@@ -335,12 +342,12 @@ export function createProgram(): Command {
     .option("--replay-only", "no AI at all: a missed or unrecorded step fails (strict CI)")
     .option("--rerecord", "ignore the recordings and record every step again with AI")
     .option("--retries <n>", "extra attempts after a failure (default: run.retries)")
-    .option("--workers <n>", "tests in parallel, one browser each (default 1)")
+    .option("--workers <n>", "tests in parallel, one browser or emulator each (default 1)")
     .option(
       "--budget <usd>",
       "AI budget for this run in dollars (default: run.budget.maxPerRunUsd)",
     )
-    .option("--headed", "show the browser windows")
+    .option("--headed", "show the browser or emulator windows")
     .option(
       "--browser <name>",
       "chromium (default), firefox or webkit; repeat for a matrix (one result per browser × device)",
@@ -349,15 +356,21 @@ export function createProgram(): Command {
     )
     .option(
       "--device <preset>",
-      "device preset, e.g. desktop, laptop, iphone-15; repeat for a matrix",
+      "device preset, e.g. desktop, laptop, iphone-15 (Android: a device profile, e.g. pixel-8); repeat for a matrix",
       collect,
       [],
     )
-    .option("--locale <code>", "browser locale, e.g. de-DE")
-    .option("--timezone <id>", "browser timezone, e.g. Europe/Berlin")
+    .option("--locale <code>", "browser locale, or the Android app's language, e.g. de-DE")
+    .option("--timezone <id>", "browser or device timezone, e.g. Europe/Berlin")
     .option(
       "--evidence <mode>",
       "full | failures | minimal (default: run.evidence, else full in CI and failures elsewhere)",
+    )
+    .option(
+      "--android <version>",
+      "Android projects: the Android version (default: android.version); repeat for a matrix",
+      collect,
+      [],
     )
     .option("--no-video", "don't record a video per attempt")
     .option("--verbose", "print every step, heal and warning")

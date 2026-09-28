@@ -1,4 +1,3 @@
-import type { ElementFacts } from "@testament/browser";
 import {
   type Command,
   CommandSchema,
@@ -8,6 +7,7 @@ import {
   type Recording,
 } from "@testament/recording";
 import { z } from "zod";
+import type { ElementFacts } from "../target/harness.js";
 
 // What a heal changes in the recording (HEAL-3, LRN-3): a splice of one step's
 // commands, never a check. Written next to the proposal in the run folder
@@ -60,6 +60,9 @@ export function describeCommand(command: Command): string {
     key?: string;
     text?: string;
     files?: string[];
+    direction?: string;
+    orientation?: string;
+    decision?: string;
   };
   const parts: string[] = [action.type];
   if (action.target) parts.push(describeLocator(action.target));
@@ -69,6 +72,9 @@ export function describeCommand(command: Command): string {
   if (action.key !== undefined) parts.push(action.key);
   if (action.text !== undefined) parts.push(JSON.stringify(action.text));
   if (action.files?.length) parts.push(action.files.join(", "));
+  // Android (MOB-1): swipe up, rotate landscape, permission allow.
+  for (const word of [action.direction, action.orientation, action.decision])
+    if (word !== undefined) parts.push(word);
   return parts.join(" ");
 }
 

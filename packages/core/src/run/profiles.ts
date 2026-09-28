@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import {
   type AuthProfile,
   type AuthSettings,
@@ -14,7 +15,6 @@ import { type Recording, routeOf } from "@testament/recording";
 import { readRecording, recordingPath } from "@testament/recording/node";
 import type { ExpandedTest } from "@testament/spec";
 import { loadTest } from "@testament/spec/node";
-import { resolve } from "node:path";
 import type { TestInbox } from "../author/inbox.js";
 import { replayAttempt } from "./replay.js";
 import type { PrepareOutcome, ReplayOptions, ReplayResult } from "./types.js";

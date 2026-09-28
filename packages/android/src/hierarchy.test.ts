@@ -141,6 +141,16 @@ describe("hierarchy → observation (MOB-3, SAF-3)", () => {
     expect(diffElements(before, before)).toEqual({ added: [], removed: [] });
   });
 
+  it('is busy while the app says it\'s at work ("Checking…", MOB-1)', () => {
+    const working = dump("sign-in");
+    const heading = working.nodes.find((n) => n.text === "Sign in to Acme Shop");
+    if (!heading) throw new Error("no heading in the dump");
+    heading.text = "Checking…";
+    expect(new Screen(working, { appPackage: "com.acme.shop" }).busy()).toBe(true);
+    heading.text = "Something… went wrong";
+    expect(new Screen(working, { appPackage: "com.acme.shop" }).busy()).toBe(false);
+  });
+
   it("is busy between screens (a window without content)", () => {
     expect(screenOf("sign-in").busy()).toBe(false);
     const empty = dump("sign-in");

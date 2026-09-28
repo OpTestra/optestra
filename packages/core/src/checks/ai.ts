@@ -1,7 +1,8 @@
-import { type Observation, renderForModel } from "@testament/browser";
 import type { BudgetMeter, ModelCallRecord, Models } from "@testament/models";
 import { type CheckOp, CheckOpSchema } from "@testament/recording";
 import { z } from "zod";
+import type { Observation } from "../target/harness.js";
+import { isScreen, renderForModel } from "../target/render.js";
 import prompt from "./check-prompt.json" with { type: "json" };
 
 // The AI check compiler (LOOP-2): only for lines the phrase rules can't map.
@@ -70,7 +71,10 @@ export async function compileByAi(
     .replace("{variables}", variables || "(none)")
     .replace("{page}", renderForModel(input.observation));
   const reply = await ctx.models.complete("planner", {
-    system: prompt.system.replace("{soft}", input.soft ? prompt.soft : ""),
+    // On an app screen the same ops apply, with Android's words for them (MOB-1).
+    system:
+      prompt.system.replace("{soft}", input.soft ? prompt.soft : "") +
+      (isScreen(input.observation) ? prompt.android : ""),
     messages: [{ role: "user", content: [{ type: "text", text: user }] }],
     output: opSchema(input.soft),
     maxOutputTokens: 600,

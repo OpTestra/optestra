@@ -23,8 +23,8 @@ export {
   matchRules,
   namesMatch,
   type Probe,
+  RULES,
   type RuleContext,
   type RuleResult,
-  RULES,
 } from "./rules.js";
 export { type SanityInput, sanityTest } from "./sanity.js";

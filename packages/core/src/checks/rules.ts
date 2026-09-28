@@ -1,5 +1,5 @@
-import type { Observation } from "@testament/browser";
 import type { CheckOp, Locator } from "@testament/recording";
+import type { Observation } from "../target/harness.js";
 import phrases from "./phrases.json" with { type: "json" };
 
 // The rule compiler (LOOP-2): common Expect phrasings become typed checks by
