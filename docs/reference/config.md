@@ -68,6 +68,7 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `run.retries` | integer | `1` | Extra attempts after a failure before the test is reported as failed. |
 | `run.healPolicy` | "strict" \| "review" \| "auto" | `"review"` | strict: never heal; review: propose fixes for approval; auto: apply and flag. |
 | `run.mode` | "replay-only" \| "normal" \| "rerecord" | `"normal"` | replay-only: never call AI; normal: AI only when a step breaks; rerecord: record again. |
+| `run.evidence` | "full" \| "failures" \| "minimal" |  | full: trace, network log and a screenshot per step for every test. failures: the same is recorded, but a clean pass keeps only its screenshots, video and console. minimal: no trace or network log, screenshots only where a step failed (a retry records full evidence). Default: full in CI, failures elsewhere. |
 | `run.budget` | object |  | AI budget caps. |
 | `run.budget.maxPerRunUsd` | number | `1` | AI spend cap for one test run, in USD. |
 | `run.budget.maxPerSuiteUsd` | number | `10` | AI spend cap for one suite run, in USD. |
@@ -120,7 +121,7 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `models.prices.<model>.cacheWrite` | number |  |  |
 | `models.timeoutSeconds` | number | `120` | Maximum time for one model request. |
 | `models.allowDelegated` | boolean | `true` | Allow claude-code / codex (your own AI subscription through its CLI). The cloud sets false. |
-| `models.delegatedCallsPerRun` | integer | `300` | Most calls one run may make through each subscription CLI (plans assume ordinary individual use). |
+| `models.delegatedCallsPerRun` | integer | `60` | Most calls one run may make through each subscription CLI (plans assume ordinary individual use). |
 
 ## decisions
 

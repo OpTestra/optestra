@@ -19,6 +19,8 @@ Exit codes follow one rule for every command that runs or checks something: **0*
 | [`show`](#show) | show one test file as the engine reads it (exit 2 when it has errors) |
 | [`lint`](#lint) | check test files for problems and weak tests (exit 1 on errors, 2 if a file can't be parsed) |
 | [`author`](#author) | let the AI carry out a test's steps once and save the recording that later runs replay |
+| [`new`](#new) | draft a test from one sentence by exploring the app (AI); prints it, and saves it only with --accept or --out |
+| [`mcp`](#mcp) | start the MCP server for coding agents (stdio) on this project: list, draft, save and run tests, read results, accept heals |
 | [`run`](#run) | run tests: replay each recording with no AI, evaluate every check, write a results folder (exit 0 passed, 1 failed, 2 blocked) |
 | [`heal`](#heal) | review a run's heals (default: the latest run): the recording diff, why, confidence; accept or reject them |
 | [`checks`](#checks) | show what each Expect line of a test was compiled into: the check, how it was made, its sanity test |
@@ -238,6 +240,42 @@ let the AI carry out a test's steps once and save the recording that later runs 
 | `--video` | also record a video |  |
 | `-C, --dir <path>` | project folder (default: the test's nearest project) |  |
 
+## new {#new}
+
+draft a test from one sentence by exploring the app (AI); prints it, and saves it only with --accept or --out
+
+```sh
+%cli% new [options] <sentence>
+```
+
+| Argument | |
+|---|---|
+| `<sentence>` | what the test should show, e.g. "a returning user can log in" |
+
+| Option | | Default |
+|---|---|---|
+| `--accept` | save the draft in the tests folder (only when lint is clean) |  |
+| `--out <file>` | write the draft to this file instead (never over an existing file) |  |
+| `--start <path>` | where the test starts, e.g. /login (default /) |  |
+| `-e, --env <name>` | environment to explore |  |
+| `--headed` | show the browser window |  |
+| `--json` | print machine-readable JSON (never asks) |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## mcp {#mcp}
+
+start the MCP server for coding agents (stdio) on this project: list, draft, save and run tests, read results, accept heals
+
+```sh
+%cli% mcp [options]
+```
+
+| Option | | Default |
+|---|---|---|
+| `-e, --env <name>` | default environment for runs and drafts |  |
+| `--headed` | show the browser windows |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
 ## run {#run}
 
 run tests: replay each recording with no AI, evaluate every check, write a results folder (exit 0 passed, 1 failed, 2 blocked)
@@ -263,8 +301,11 @@ run tests: replay each recording with no AI, evaluate every check, write a resul
 | `--workers <n>` | tests in parallel, one browser each (default 1) |  |
 | `--budget <usd>` | AI budget for this run in dollars (default: run.budget.maxPerRunUsd) |  |
 | `--headed` | show the browser windows |  |
-| `--browser <name>` | chromium (default), firefox or webkit |  |
-| `--device <preset>` | device preset, e.g. desktop, laptop, iphone-15 |  |
+| `--browser <name>` | chromium (default), firefox or webkit; repeat for a matrix (one result per browser × device) | `[]` |
+| `--device <preset>` | device preset, e.g. desktop, laptop, iphone-15; repeat for a matrix | `[]` |
+| `--locale <code>` | browser locale, e.g. de-DE |  |
+| `--timezone <id>` | browser timezone, e.g. Europe/Berlin |  |
+| `--evidence <mode>` | full \| failures \| minimal (default: run.evidence, else full in CI and failures elsewhere) |  |
 | `--no-video` | don't record a video per attempt |  |
 | `--verbose` | print every step, heal and warning |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
@@ -441,6 +482,8 @@ set up a project in this repository: project file, an example test, .env.example
 | `--ai-model <model>` | for --ai openrouter or openai-compatible: the model |  |
 | `--key-stdin` | read the API key for --ai from stdin (it goes to .env only) |  |
 | `--no-doctor` | don't run the doctor checks at the end |  |
+| `--suggest` | explore the running app and propose 3 starter tests (AI); each is saved only when you say yes |  |
+| `--agents` | append the instructions for coding agents to AGENTS.md / CLAUDE.md without asking |  |
 
 ## doctor {#doctor}
 
