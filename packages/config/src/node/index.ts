@@ -48,3 +48,10 @@ export {
   type SecretSource,
 } from "./secrets.js";
 export { type ParsedYaml, parseYaml } from "./yaml-file.js";
+export {
+  execPathIsNode,
+  isNodeScript,
+  type NodeRuntime,
+  nodeOnPath,
+  nodeRuntime,
+} from "./node-runtime.js";

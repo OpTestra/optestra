@@ -68,7 +68,10 @@ and never reads its files.
   `billing: "subscription"` and cost 0 to the run budget. Tokens and the tool's
   own cost estimate (`reportedCostUsd`) are kept for information. Advertised
   plan limits assume ordinary individual use, so each tool gets at most
-  `models.delegatedCallsPerRun` calls per run (default 300). When the vendor
+  `models.delegatedCallsPerRun` calls per run (default 60, PERF-0). A run that
+  reaches it gets no more subscription calls: the call fails with "This run has
+  made its 60 calls through your AI subscription…" (and how to raise it), so its
+  remaining AI steps are blocked `ai_unavailable` with that message. When the vendor
   says the plan limit is hit, the call fails over to the next pool entry, or
   stops with "Plan limit reached".
 

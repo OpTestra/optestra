@@ -183,18 +183,18 @@ describe("engine guards", () => {
     const delegated = readFileSync(join(root, "packages/models/src/delegated/process.ts"), "utf8");
     expect(delegated).toContain("shell: false,");
     expect(delegated).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
-    // It runs only the resolved CLI binary (or Node for a .js install), plus taskkill to stop it.
-    expect(delegated).toContain("const command = binary.viaNode ? process.execPath : binary.path;");
+    // It runs only the resolved CLI binary (or a Node for a JS install, see nodeRuntime), plus taskkill to stop it.
+    expect(delegated).toContain("const command = node ? node.command : binary.path;");
     expect([...delegated.matchAll(/spawn\(/g)]).toHaveLength(2);
     const opener = readFileSync(join(root, "packages/report/src/node/open.ts"), "utf8");
     expect(opener).toContain(
       'spawn(command, [path], { detached: true, stdio: "ignore", shell: false });',
     );
     expect([...opener.matchAll(/spawn\(/g)]).toHaveLength(1);
-    // The spec runner starts only Node itself, without a shell.
+    // The spec runner starts only a Node (nodeRuntime: this Node, or one found for the desktop app), without a shell.
     const spec = readFileSync(join(root, "packages/core/src/run/spec-run.ts"), "utf8");
     expect([...spec.matchAll(/spawn\(/g)]).toHaveLength(1);
-    expect(spec).toContain("spawn(process.execPath, args,");
+    expect(spec).toContain("spawn(node.command, args, {");
     expect(spec).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
   });
 

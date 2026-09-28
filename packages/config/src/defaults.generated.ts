@@ -95,7 +95,7 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
     prices: {},
     timeoutSeconds: 120,
     allowDelegated: true,
-    delegatedCallsPerRun: 300,
+    delegatedCallsPerRun: 60,
   },
   decisions: {
     backend: "auto",

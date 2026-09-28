@@ -53,13 +53,15 @@ export function resolveProviders(
   sources: readonly SecretSource[] = [processEnvSource()],
   environment?: string,
   env: Readonly<Record<string, string | undefined>> = process.env,
+  /** The Node for JS subscription CLIs (default: detected). */
+  node?: string,
 ): Map<string, ResolvedProvider> {
   const out = new Map<string, ResolvedProvider>();
   for (const [id, settings] of Object.entries(config.models?.providers ?? {})) {
     if (isDelegatedKind(settings.kind)) {
       // No key and no host: the user's own signed-in CLI, found on PATH (MOD-6).
       const allowed = config.models?.allowDelegated !== false;
-      const found = allowed ? findBinary(settings.kind, settings.binary, env) : undefined;
+      const found = allowed ? findBinary(settings.kind, settings.binary, env, node) : undefined;
       out.set(id, {
         id,
         settings,
