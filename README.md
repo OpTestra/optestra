@@ -78,6 +78,19 @@ npx testament doctor          # one line per check: ok / warn / FAIL, each probl
 npx testament doctor --json   # exit 0 all ok, 1 warnings with --strict, 2 any failure
 ```
 
+Describe a test in one sentence and let it explore the app for a draft
+(`init --suggest` proposes three starter tests the same way). Nothing is saved
+until you say so:
+
+```sh
+npx testament new "a returning user can log in and see the dashboard"          # prints the draft
+npx testament new "a returning user can log in and see the dashboard" --accept # saves it in tests/
+```
+
+Coding agents (Claude Code, Cursor, Codex) use the same tests through the MCP
+server, `npx testament mcp` (for Claude Code: `claude mcp add testament -- npx
+testament mcp`), and the instructions in [integrations/](integrations/README.md).
+
 The recorded test is also a plain Playwright spec you own:
 
 ```sh

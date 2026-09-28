@@ -18,5 +18,6 @@ export function version(): string {
 
 export * from "./author/index.js";
 export * from "./checks/index.js";
+export * from "./draft/index.js";
 export * from "./heal/index.js";
 export * from "./run/index.js";

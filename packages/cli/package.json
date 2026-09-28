@@ -26,6 +26,7 @@
     "@testament/contract": "workspace:^",
     "@testament/core": "workspace:^",
     "@testament/decide": "workspace:^",
+    "@testament/mcp": "workspace:^",
     "@testament/models": "workspace:^",
     "@testament/recording": "workspace:^",
     "@testament/report": "workspace:^",

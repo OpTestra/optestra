@@ -20,8 +20,10 @@ import type { GenerateCommandOptions } from "./commands/generate.js";
 import type { HealCommandOptions } from "./commands/heal.js";
 import { registerInitCommand } from "./commands/init.js";
 import type { LintCommandOptions } from "./commands/lint.js";
+import type { McpCommandOptions } from "./commands/mcp.js";
 import type { MergeRunsCommandOptions } from "./commands/merge-runs.js";
 import type { ModelsCommandOptions } from "./commands/models.js";
+import type { NewCommandOptions } from "./commands/new.js";
 import type { ReportCommandOptions } from "./commands/report.js";
 import type { ResultsCommandOptions } from "./commands/results.js";
 import type { RunCommandOptions } from "./commands/run.js";
@@ -275,6 +277,47 @@ export function createProgram(): Command {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("new")
+    .description(
+      "draft a test from one sentence by exploring the app (AI); prints it, and saves it only with --accept or --out",
+    )
+    .argument("<sentence>", 'what the test should show, e.g. "a returning user can log in"')
+    .option("--accept", "save the draft in the tests folder (only when lint is clean)")
+    .option("--out <file>", "write the draft to this file instead (never over an existing file)")
+    .option("--start <path>", "where the test starts, e.g. /login (default /)")
+    .option("-e, --env <name>", "environment to explore")
+    .option("--headed", "show the browser window")
+    .option("--json", "print machine-readable JSON (never asks)")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (sentence: string, options: NewCommandOptions) => {
+      const { runNewCommand } = await import("./commands/new.js");
+      const interactive = process.stdin.isTTY && process.stdout.isTTY && !options.json;
+      process.exitCode = await runNewCommand(sentence, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+        ...(interactive ? { confirm: askYesNo } : {}),
+      });
+    });
+
+  program
+    .command("mcp")
+    .description(
+      "start the MCP server for coding agents (stdio) on this project: list, draft, save and run tests, read results, accept heals",
+    )
+    .option("-e, --env <name>", "default environment for runs and drafts")
+    .option("--headed", "show the browser windows")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (options: McpCommandOptions) => {
+      const { runMcpCommand } = await import("./commands/mcp.js");
+      process.exitCode = await runMcpCommand(options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stderr: (text) => process.stderr.write(text),
       });
     });
 
