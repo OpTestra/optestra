@@ -4,8 +4,10 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { brand } from "@testament/brand";
+import { type NodeRuntime, nodeRuntime } from "@testament/config/node";
 import type { StepResult } from "@testament/contract";
 import type { ExpandedTest } from "@testament/spec";
+import { stepLabelOf } from "./replay.js";
 import type { ReplayEvent, ReplayResult } from "./types.js";
 
 // Tests with ```ts code steps run through their generated Playwright spec
@@ -42,6 +44,8 @@ export interface SpecTestOptions {
   newId: () => string;
   headless: boolean;
   browser: "chromium" | "firefox" | "webkit";
+  /** The Node that runs Playwright Test (default: detected, see `nodeRuntime`). */
+  node?: string | undefined;
 }
 
 const blockedResult = (attempt: number, reason: string, message: string): ReplayResult => ({
@@ -66,9 +70,14 @@ function run(
   args: string[],
   cwd: string,
   env: Record<string, string>,
+  node: NodeRuntime,
 ): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, args, { cwd, env, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(node.command, args, {
+      cwd,
+      env: { ...env, ...node.env },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk) => {
@@ -137,6 +146,7 @@ export async function runSpecTest(options: SpecTestOptions): Promise<ReplayResul
       ],
       projectDir,
       env,
+      nodeRuntime({ node: options.node, env: options.env }),
     );
     let json: { suites?: ReportSuite[] };
     try {
@@ -171,9 +181,11 @@ function mapResult(options: SpecTestOptions, result: ReportResult, ms: number): 
   top.forEach((step, index) => {
     const failed = Boolean(step.error);
     if (failed && failedIndex === null) failedIndex = index;
+    const expanded = test.steps[index];
     const item: StepResult = {
       index,
-      key: test.steps[index]?.textKey ?? `spec-${index}`,
+      ...(expanded ? { label: stepLabelOf(expanded) } : {}),
+      key: expanded?.textKey ?? `spec-${index}`,
       text: step.title,
       kind: "exact",
       status:

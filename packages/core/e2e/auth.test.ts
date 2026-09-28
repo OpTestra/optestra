@@ -179,9 +179,8 @@ describe("test inboxes in runs (SEC-5)", () => {
     const { result, calls, outbox } = await run(
       "correct",
       ["signup-email-code", "checkout-trial"],
-      {
-        dir,
-      },
+      // Full evidence (trace, HAR): the codes must be scrubbed from all of it.
+      { dir, evidence: "full" },
     );
     expect(calls).toHaveLength(0);
     expect(result.tests.map((t) => t.verdict)).toEqual(["passed", "passed"]);

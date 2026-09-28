@@ -41,6 +41,8 @@ import {
   type HealProposal,
   type ModelCall,
   needsRerecord,
+  portablePath,
+  portableSegment,
   REPEATED_HEALS,
   type Run,
   type RunMode,
@@ -79,7 +81,7 @@ import { profileFlowPath, profileLogin, replayProfileFlow } from "./profiles.js"
 import { replayAttempt } from "./replay.js";
 import { type Shard, selectShard } from "./shard.js";
 import { runSpecTest } from "./spec-run.js";
-import type { ReplayResult, ReplaySession } from "./types.js";
+import type { ReplayResult, ReplaySession, StepShotType } from "./types.js";
 import { type AttemptRecord, decideVerdict, fallbackCause } from "./verdict.js";
 
 // runTests (LOOP-4): the whole run. One browser per worker, one fresh session
@@ -109,12 +111,39 @@ export interface RunTestsOptions {
   /** Overrides run.budget.maxPerRunUsd. */
   budgetUsd?: number;
   headless?: boolean;
-  browser?: "chromium" | "firefox" | "webkit";
+  browser?: BrowserName;
   device?: string;
+  /**
+   * A matrix (TGT-5): every test runs once per browser × device, with one
+   * TestResult per entry (its testId gets `@<browser>-<device>`). Overrides
+   * `browser` / `device`.
+   */
+  browsers?: readonly BrowserName[];
+  devices?: readonly string[];
+  /** Browser locale and timezone for every session (ENV-5), e.g. "de-DE", "Europe/Berlin". */
+  locale?: string;
+  timezone?: string;
   /** Record a video per attempt (default true, EVD-1). */
   video?: boolean;
+  /**
+   * Evidence per attempt (EVD-1). Default: `run.evidence`, else `full` in CI
+   * (the CI variable is set) and `failures` elsewhere. See EvidenceMode.
+   */
+  evidence?: EvidenceMode;
+  /**
+   * Stops the run cleanly: no new test starts, the running one stops before its
+   * next step (its attempt is blocked `aborted`, its evidence written), and the
+   * run is recorded as blocked `aborted`.
+   */
+  signal?: AbortSignal;
+  /**
+   * The Node for JS subscription CLIs and code-step specs. Default: detected
+   * (`nodeRuntime`: this process when it is Node, else `node` on PATH, else the
+   * app's own binary in Node mode).
+   */
+  node?: string;
   trigger?: Trigger;
-  /** Every event as it is written. */
+  /** Every event as it is written, `artifact.written` included. */
   onEvent?: (event: Event) => void;
   /**
    * Called before each attempt's hooks, with the fresh session (e.g. a Bench
@@ -152,6 +181,26 @@ export interface RunTestsResult {
   recorded: { test: string; recording: string; specs: string[]; warnings: string[] }[];
   /** Heals without AI, by the fixer, and misses left needing AI, per test (for Bench). */
   heals: Record<string, { withoutAi: number; byFixer: number; needsAi: number }>;
+}
+
+/**
+ * Evidence per attempt (EVD-1). Every mode keeps the console log, the video
+ * with chapters (unless `video: false`) and a PNG of the step that failed.
+ * - full: plus the trace, the network log and a screenshot per step (JPEG,
+ *   taken in the background), for every attempt.
+ * - failures: the trace and network log are recorded for every attempt, and
+ *   kept for failed, blocked, healed and retried attempts; a clean first-try
+ *   pass drops them unread. No per-step screenshots (the trace has them).
+ * - minimal: no trace or network log, except on a retry.
+ */
+export type EvidenceMode = "full" | "failures" | "minimal";
+
+type BrowserName = "chromium" | "firefox" | "webkit";
+
+/** One entry of the run's matrix (TGT-5). */
+interface MatrixCell {
+  browser: BrowserName;
+  device: string;
 }
 
 interface TestPlan {
@@ -258,12 +307,12 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   const runId = ulid();
   const dir = runDir(dataDir, runId);
   const redactor = defaultRedactor;
-  const writer: RunWriter = createRunWriter(dir, { scrub: (text) => redactor.redact(text), runId });
-  const emit = (event: EmitInput) => {
-    const written = writer.emit(event);
-    options.onEvent?.(written);
-    return written;
-  };
+  const writer: RunWriter = createRunWriter(dir, {
+    scrub: (text) => redactor.redact(text),
+    runId,
+    ...(options.onEvent ? { onEvent: options.onEvent } : {}),
+  });
+  const emit = (event: EmitInput) => writer.emit(event);
   const config: Config = loaded.config;
   const environment = loaded.environment;
   const mode: RunMode = options.mode ?? (config.run.mode as RunMode) ?? "normal";
@@ -424,6 +473,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
           environment: environment.name,
           budgets: [budget],
           usageStore: projectUsageStore(projectDir),
+          env,
+          ...(options.node ? { node: options.node } : {}),
         }));
   const usable = (role: "planner" | "fixer") => {
     try {
@@ -474,8 +525,30 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   }
 
   const browserModule = await import("@testament/browser");
-  const device = options.device ?? browserModule.DEFAULT_DEVICE;
-  const browserName = options.browser ?? "chromium";
+  const browserNames: BrowserName[] = options.browsers?.length
+    ? [...new Set(options.browsers)]
+    : [options.browser ?? "chromium"];
+  const deviceNames: string[] = options.devices?.length
+    ? [...new Set(options.devices)]
+    : [options.device ?? browserModule.DEFAULT_DEVICE];
+  const unknownDevices = deviceNames.filter((d) => !(d in browserModule.DEVICE_PRESETS));
+  if (unknownDevices.length > 0)
+    return finishBlocked(
+      "config_error",
+      `Unknown device ${unknownDevices.join(", ")}. Choose one of: ${Object.keys(browserModule.DEVICE_PRESETS).join(", ")}.`,
+    );
+  const cells: MatrixCell[] = browserNames.flatMap((browser) =>
+    deviceNames.map((device) => ({ browser, device })),
+  );
+  /** A matrix run gives each entry its own TestResult (TGT-5): the test id plus the entry. */
+  const resultId = (plan: TestPlan, cell: MatrixCell) =>
+    cells.length > 1 ? `${plan.id}@${cell.browser}-${cell.device}` : plan.id;
+  const evidenceMode: EvidenceMode =
+    options.evidence ??
+    (settings.run?.evidence as EvidenceMode | undefined) ??
+    (config.run.evidence as EvidenceMode | undefined) ??
+    (inCi(env) ? "full" : "failures");
+  const signal = options.signal;
   const retries = Math.max(0, options.retries ?? settings.run?.retries ?? config.run.retries);
   const testsDir = resolve(projectDir, config.tests?.dir ?? "tests");
   const history = recentAiUsage(dataDir, { exclude: runId });
@@ -491,23 +564,26 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
 
   const runOne = async (
     plan: TestPlan,
+    cell: MatrixCell,
     launched: import("@testament/browser").LaunchedBrowser,
     workerIndex: number,
   ) => {
+    const { browser: browserName, device } = cell;
+    const testId = resultId(plan, cell);
     const matrix = { target: "web" as const, browser: browserName, device };
     emit({
       type: "test.started",
-      testId: plan.id,
+      testId,
       file: plan.path,
       name: plan.name,
       tags: plan.tags,
       matrix,
     });
-    const recent = history.get(plan.id) ?? null;
+    const recent = history.get(testId) ?? null;
     if (plan.problem) {
       emit({
         type: "test.finished",
-        testId: plan.id,
+        testId,
         verdict: "blocked",
         decidedBy: [{ kind: "blocked", reason: "config_error", message: plan.problem }],
         failureCause: "blocked",
@@ -521,7 +597,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       const message = `The protected preview needs ${names}, which has no value here (pull requests from forks get no secrets).`;
       emit({
         type: "test.finished",
-        testId: plan.id,
+        testId,
         verdict: "blocked",
         decidedBy: [{ kind: "blocked", reason: "missing_secret", message }],
         failureCause: "blocked",
@@ -537,7 +613,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       emit({
         type: "log",
         level: "warn",
-        testId: plan.id,
+        testId,
         message: `The recording of ${plan.path} can't be read; it will be re-recorded where possible.`,
       });
 
@@ -564,13 +640,13 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       const artifacts: ArtifactRef[] = [];
       const loadedTest = await loadTest(projectDir, plan.path, config, {
         environment: environment.name,
-        seed: `${runId}:${plan.id}:${attempt}`,
+        seed: `${runId}:${testId}:${attempt}`,
         emailDomain,
       });
       const expanded = loadedTest?.expanded;
-      emit({ type: "attempt.started", testId: plan.id, attempt });
+      emit({ type: "attempt.started", testId, attempt });
       if (!expanded) {
-        emit({ type: "attempt.finished", testId: plan.id, attempt, status: "blocked" });
+        emit({ type: "attempt.finished", testId, attempt, status: "blocked" });
         records.push({
           attempt,
           status: "blocked",
@@ -597,7 +673,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
           case "step.started":
             emit({
               type: "step.started",
-              testId: plan.id,
+              testId,
               attempt,
               index: event.index,
               key: event.key,
@@ -606,28 +682,28 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             });
             break;
           case "step.finished":
-            emit({ type: "step.finished", testId: plan.id, attempt, step: event.step });
+            emit({ type: "step.finished", testId, attempt, step: event.step });
             break;
           case "check.evaluated":
-            emit({ type: "check.evaluated", testId: plan.id, attempt, check: event.check });
+            emit({ type: "check.evaluated", testId, attempt, check: event.check });
             break;
           case "heal.proposed":
             // Under `auto` a heal is emitted when its attempt ends, accepted only if the attempt passed.
             if (policy !== "auto")
-              emit({ type: "heal.proposed", testId: plan.id, attempt, heal: event.heal });
+              emit({ type: "heal.proposed", testId, attempt, heal: event.heal });
             break;
           case "model.called":
-            emit({ type: "model.called", testId: plan.id, attempt, call: event.call });
+            emit({ type: "model.called", testId, attempt, call: event.call });
             break;
           case "log":
-            emit({ type: "log", level: event.level, testId: plan.id, message: event.message });
+            emit({ type: "log", level: event.level, testId, message: event.message });
             break;
         }
       };
 
       let result: ReplayResult;
       if (hasCode) {
-        result = await where.run({ testId: plan.id, attempt, sink }, () =>
+        result = await where.run({ testId, attempt, sink }, () =>
           runSpecTest({
             projectDir,
             testPath: plan.path,
@@ -639,10 +715,13 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             newId: ulid,
             headless: options.headless ?? true,
             browser: browserName,
+            node: options.node,
           }),
         );
       } else {
-        const evidenceDir = mkdtempSync(join(scratch, `${plan.id}-${attempt}-`));
+        const evidenceDir = mkdtempSync(join(scratch, `${portableSegment(testId)}-${attempt}-`));
+        // Minimal evidence records no trace or network log, except on a retry (after a failure).
+        const fullCapture = evidenceMode !== "minimal" || attempt > 1;
         const attemptInbox = testInbox(new Date());
         let session: import("@testament/browser").Session | undefined;
         try {
@@ -654,10 +733,12 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             secrets: { ...secrets.secrets, ...attemptInbox?.secrets },
             ...(protectedHeaders.length > 0 ? { protectedHeaders } : {}),
             allowUpload: { dir: dirname(join(projectDir, plan.path)) },
+            ...(options.locale ? { locale: options.locale } : {}),
+            ...(options.timezone ? { timezone: options.timezone } : {}),
             evidence: {
-              trace: true,
+              trace: fullCapture,
               console: true,
-              network: true,
+              network: fullCapture,
               video: options.video ?? true,
               dir: evidenceDir,
             },
@@ -665,7 +746,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
           });
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          emit({ type: "attempt.finished", testId: plan.id, attempt, status: "blocked" });
+          emit({ type: "attempt.finished", testId, attempt, status: "blocked" });
           records.push({
             attempt,
             status: "blocked",
@@ -718,7 +799,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                       config,
                       environment: environment.name,
                       profile: auth.profile,
-                      seed: `${runId}:auth:${auth.name}:${plan.id}:${attempt}`,
+                      seed: `${runId}:auth:${auth.name}:${testId}:${attempt}`,
                       emailDomain,
                       inbox: () => testInbox(new Date()),
                       openSession: (extra) =>
@@ -728,6 +809,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                           baseUrl,
                           allowedDomains: settings.allowedDomains,
                           secrets: { ...secrets.secrets, ...extra },
+                          ...(options.locale ? { locale: options.locale } : {}),
+                          ...(options.timezone ? { timezone: options.timezone } : {}),
                           evidence: { trace: false, console: false, network: false, video: false },
                           redact: (text) => redactor.redact(text),
                         }),
@@ -735,8 +818,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                         ...commonReplay,
                         policy: (settings.run?.healPolicy ?? config.run.healPolicy) as HealPolicy,
                       },
-                      onLog: (message) =>
-                        emit({ type: "log", level: "info", testId: plan.id, message }),
+                      onLog: (message) => emit({ type: "log", level: "info", testId, message }),
                       saveAuthored: (flow, previousFlow, authored, paths) => {
                         writeRecording(
                           paths.recording,
@@ -760,10 +842,11 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                     }),
                 })
             : undefined;
+        let replayed: ReplayResult | undefined;
         try {
           if (options.beforeAttempt)
-            await options.beforeAttempt({ testId: plan.id, attempt, session: open });
-          result = await where.run({ testId: plan.id, attempt, sink }, () =>
+            await options.beforeAttempt({ testId, attempt, session: open });
+          result = await where.run({ testId, attempt, sink }, () =>
             replayAttempt({
               inbox: attemptInbox,
               ...(prepare ? { prepare } : {}),
@@ -787,24 +870,36 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                 ? { checkTimeoutMs: options.checkTimeoutMs }
                 : {}),
               emit: attemptEmit,
-              saveScreenshot: (index, when, bytes) =>
+              // A screenshot per step with full evidence; else only where a step failed.
+              screenshots: evidenceMode === "full" ? true : "failures",
+              screenshotPath: (index, when, contentType) =>
+                portablePath(redactor.redact(shotPath(testId, attempt, index, when, contentType))),
+              saveScreenshot: (index, when, bytes, contentType) =>
                 writer.writeArtifact(
                   {
                     kind: "screenshot",
-                    path: runLayout.screenshot(plan.id, attempt, index, when),
-                    contentType: "image/png",
+                    path: shotPath(testId, attempt, index, when, contentType),
+                    contentType,
                     scrubbed: true,
-                    testId: plan.id,
+                    testId,
                     attempt,
                   },
                   bytes,
                 ).path,
               newId: ulid,
               redact: (text) => redactor.redact(text),
+              ...(signal ? { signal } : {}),
             }),
           );
+          replayed = result;
         } finally {
-          const closed = await open.close();
+          // `failures`: a first attempt that passed cleanly doesn't keep its trace and network log.
+          const clean =
+            evidenceMode === "failures" &&
+            attempt === 1 &&
+            replayed?.status === "passed" &&
+            replayed.heals.length === 0;
+          const closed = await open.close(clean ? { discard: ["trace", "network"] } : {});
           for (const evidence of closed.evidence) {
             try {
               const bytes = readFileSync(evidence.path);
@@ -816,10 +911,10 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                 writer.writeArtifact(
                   {
                     kind: evidence.kind,
-                    path: runLayout.attemptFile(plan.id, attempt, evidence.file),
+                    path: runLayout.attemptFile(testId, attempt, evidence.file),
                     contentType: evidence.contentType,
                     scrubbed: true,
-                    testId: plan.id,
+                    testId,
                     attempt,
                   },
                   bytes,
@@ -836,10 +931,10 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             writer.writeArtifact(
               {
                 kind: "other",
-                path: `${runLayout.attemptDir(plan.id, attempt)}/chapters.vtt`,
+                path: `${runLayout.attemptDir(testId, attempt)}/chapters.vtt`,
                 contentType: "text/vtt",
                 scrubbed: true,
-                testId: plan.id,
+                testId,
                 attempt,
               },
               chaptersVtt(result.chapters),
@@ -853,10 +948,10 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
           writer.writeArtifact(
             {
               kind: "other",
-              path: runLayout.healPatch(plan.id, attempt, patch.healId),
+              path: runLayout.healPatch(testId, attempt, patch.healId),
               contentType: "application/json",
               scrubbed: true,
-              testId: plan.id,
+              testId,
               attempt,
             },
             `${JSON.stringify(patch, null, 2)}\n`,
@@ -865,12 +960,12 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       if (policy === "auto") {
         markAutoApplied(result.heals, result.status === "passed");
         for (const heal of result.heals) {
-          emit({ type: "heal.proposed", testId: plan.id, attempt, heal });
+          emit({ type: "heal.proposed", testId, attempt, heal });
           if (heal.status === "pending" && heal.classification === "behavior_change")
             emit({
               type: "log",
               level: "warn",
-              testId: plan.id,
+              testId,
               message: `Not applied (heal policy auto): the app's behaviour may have changed at step ${heal.stepIndex + 1} of ${plan.path}. Check before accepting (${brand.cliName} heal).`,
             });
         }
@@ -885,11 +980,11 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       withoutAi += result.healedWithoutAi;
       byFixer += result.healedByFixer;
       needsAi += result.needsAi;
-      emit({ type: "attempt.finished", testId: plan.id, attempt, status: result.status });
+      emit({ type: "attempt.finished", testId, attempt, status: result.status });
       records.push({ ...result, decisions: sink, artifacts });
-      if (result.status !== "failed") break;
+      if (result.status !== "failed" || signal?.aborted) break;
     }
-    healsPerTest[plan.id] = { withoutAi, byFixer, needsAi };
+    healsPerTest[testId] = { withoutAi, byFixer, needsAi };
 
     // ── the verdict (code, not a model) and the diagnosis ─────────────────────
     const verdict = decideVerdict(records);
@@ -905,12 +1000,12 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       stepFlows[expandedForFlows.steps.length] = [
         profileFlowPath(testsDirRelative, profile.profile.flow),
       ];
-    contexts.set(plan.id, { attempts: observations, stepFlows });
+    contexts.set(testId, { attempts: observations, stepFlows });
     let failureCause: FailureCause | null = verdict.verdict === "blocked" ? "blocked" : null;
     const failureEvidence: EvidenceRef[] = [];
     if (verdict.verdict === "failed" || verdict.verdict === "flaky") {
       const provisional = provisionalResult(
-        plan,
+        { ...plan, id: testId },
         runId,
         records,
         verdict,
@@ -919,7 +1014,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       const lastAttempt = last?.attempt ?? 1;
       const sink = records.at(-1)?.decisions ?? [];
       const before = sink.length;
-      const answer = await where.run({ testId: plan.id, attempt: lastAttempt, sink }, () =>
+      const answer = await where.run({ testId, attempt: lastAttempt, sink }, () =>
         classifyFailure(provisional, { decisions, context: { attempts: observations, stepFlows } }),
       );
       const failed = records.find((r) => r.attempt === verdict.failedAttempt);
@@ -960,7 +1055,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       }
     }
     // HEAL-7: a test that keeps healing should be re-recorded.
-    const pastHeals = healHistory.get(plan.id) ?? { runs: 0, healed: 0 };
+    const pastHeals = healHistory.get(testId) ?? { runs: 0, healed: 0 };
     const healsNow = {
       runs: pastHeals.runs + 1,
       healed: pastHeals.healed + (verdict.verdict === "healed" ? 1 : 0),
@@ -969,12 +1064,12 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       emit({
         type: "log",
         level: "warn",
-        testId: plan.id,
+        testId,
         message: `${plan.path} healed ${healsNow.healed} times in its last ${healsNow.runs} runs: re-record this test (${brand.cliName} run ${plan.path} --rerecord).`,
       });
     emit({
       type: "test.finished",
-      testId: plan.id,
+      testId,
       verdict: verdict.verdict,
       decidedBy: verdict.decidedBy,
       failureCause,
@@ -998,7 +1093,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         emit({
           type: "log",
           level: "warn",
-          testId: plan.id,
+          testId,
           message: `Heal ${conflict.healId} was not applied: ${conflict.reason}.`,
         });
     }
@@ -1055,27 +1150,49 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     }
   };
 
-  // ── workers: one browser each, tests pulled from a shared queue ─────────────
-  const queue = [...plans];
+  // ── workers: tests (× matrix entries) pulled from a shared queue; each worker
+  // launches a browser per engine it needs, once ─────────────────────────────
+  const queue = plans.flatMap((plan) => cells.map((cell) => ({ plan, cell })));
+  const total = queue.length;
   const workerCount = Math.max(1, Math.min(options.workers ?? 1, queue.length || 1));
-  let setupError: string | undefined;
+  const launchErrors = new Map<BrowserName, string>();
+  const unlaunched: typeof queue = [];
+  let started = 0;
   const worker = async (index: number) => {
-    let launched: import("@testament/browser").LaunchedBrowser | undefined;
+    const launchedBrowsers = new Map<BrowserName, import("@testament/browser").LaunchedBrowser>();
     try {
-      launched = await browserModule.launchBrowser({
-        browser: browserName,
-        headless: options.headless ?? true,
-      });
-    } catch (error) {
-      const fix = error instanceof browserModule.BrowserSetupError ? ` Fix: ${error.fix}` : "";
-      setupError = `${error instanceof Error ? error.message : String(error)}${fix}`;
-      return;
-    }
-    try {
-      for (let plan = queue.shift(); plan; plan = queue.shift())
-        await runOne(plan, launched, index);
+      for (let item = queue.shift(); item; item = queue.shift()) {
+        if (signal?.aborted) {
+          queue.unshift(item);
+          break;
+        }
+        const name = item.cell.browser;
+        let launched = launchedBrowsers.get(name);
+        if (!launched && !launchErrors.has(name)) {
+          try {
+            launched = await browserModule.launchBrowser({
+              browser: name,
+              headless: options.headless ?? true,
+            });
+            launchedBrowsers.set(name, launched);
+          } catch (error) {
+            const fix =
+              error instanceof browserModule.BrowserSetupError ? ` Fix: ${error.fix}` : "";
+            launchErrors.set(
+              name,
+              `${error instanceof Error ? error.message : String(error)}${fix}`,
+            );
+          }
+        }
+        if (!launched) {
+          unlaunched.push(item);
+          continue;
+        }
+        started++;
+        await runOne(item.plan, item.cell, launched, index);
+      }
     } finally {
-      await launched.close();
+      for (const launched of launchedBrowsers.values()) await launched.close();
     }
   };
   try {
@@ -1083,8 +1200,33 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
-  if (setupError && queue.length === plans.length && plans.length > 0)
-    return finishBlocked("config_error", `The browser could not start: ${setupError}`);
+  if (unlaunched.length > 0 && started === 0 && !signal?.aborted)
+    return finishBlocked(
+      "config_error",
+      `The browser could not start: ${[...launchErrors.values()].join(" ")}`,
+    );
+  // A browser of the matrix that couldn't start: its entries are blocked, the rest ran.
+  for (const { plan, cell } of unlaunched) {
+    const testId = resultId(plan, cell);
+    const message = `The browser could not start: ${launchErrors.get(cell.browser) ?? cell.browser}`;
+    emit({
+      type: "test.started",
+      testId,
+      file: plan.path,
+      name: plan.name,
+      tags: plan.tags,
+      matrix: { target: "web", browser: cell.browser, device: cell.device },
+    });
+    emit({
+      type: "test.finished",
+      testId,
+      verdict: "blocked",
+      decidedBy: [{ kind: "blocked", reason: "config_error", message }],
+      failureCause: "blocked",
+      headline: `Blocked: ${message}`,
+    });
+  }
+  const notRun = signal?.aborted ? queue.length : 0;
 
   // ── DIA-4: group the run's failures (one broken login, many tests) ─────────
   const folded = await (async () => {
@@ -1115,13 +1257,44 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       message: `Failure group ${group.id}: ${group.testIds.length} tests share one failure (${group.signature.cause ?? "unknown cause"}): ${group.signature.headline}`,
     });
   }
-  emit({ type: "run.finished", blocked: null });
+  emit({
+    type: "run.finished",
+    blocked: signal?.aborted
+      ? {
+          reason: "aborted",
+          message: `The run was stopped before it finished${notRun > 0 ? `: ${notRun} of ${total} tests didn't run` : ""}.`,
+        }
+      : null,
+  });
   const final = writer.finish();
   return { dir, run: final.run, tests: final.tests, groups, recorded, heals: healsPerTest };
 }
 
-function matrixOf(browser: "chromium" | "firefox" | "webkit", device: string) {
+function matrixOf(browser: BrowserName, device: string) {
   return { target: "web" as const, browser, device };
+}
+
+/** CI is set (GitHub Actions, GitLab, most CI services), and not to "false" or "0". */
+function inCi(env: Readonly<Record<string, string | undefined>>): boolean {
+  const value = env.CI?.trim().toLowerCase();
+  return Boolean(value) && value !== "false" && value !== "0";
+}
+
+/** A step screenshot's place in the run folder: .png for a failed step, .jpg otherwise. */
+function shotPath(
+  testId: string,
+  attempt: number,
+  index: number,
+  when: "before" | "after",
+  contentType: StepShotType,
+): string {
+  return runLayout.screenshot(
+    testId,
+    attempt,
+    index,
+    when,
+    contentType === "image/jpeg" ? "jpg" : "png",
+  );
 }
 
 /** Every event written so far, re-read from the run folder (the writer keeps no public list). */

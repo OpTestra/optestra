@@ -97,7 +97,7 @@ describe("runTests on the shop (real browser)", () => {
     const { result, calls, byFile } = await run(
       "correct",
       ["create-project", "login", "sort-orders"],
-      { mode: "normal", video: true },
+      { mode: "normal", video: true, evidence: "full" },
     );
     expect(calls).toHaveLength(0);
     expect(result.run.cost.aiCalls).toBe(0);
@@ -110,10 +110,15 @@ describe("runTests on the shop (real browser)", () => {
         .filter((s) => s.kind === "action")
         .every((s) => s.postState?.status !== "mismatch"),
     ).toBe(true);
-    // Evidence: screenshots per step, video + chapters, trace, console, network.
+    // Evidence (full): a screenshot per step, video + chapters, trace, console, network.
     const kinds = new Set(create.attempts[0]?.artifacts.map((a) => a.kind));
     for (const kind of ["screenshot", "video", "trace", "console", "network", "other"])
       expect(kinds, kind).toContain(kind);
+    // Passing steps' screenshots are JPEG (PERF-0), one per action step.
+    const actionSteps = create.attempts[0]?.steps.filter((s) => s.kind === "action") ?? [];
+    expect(actionSteps.every((s) => s.screenshots.after?.endsWith("-after.jpg"))).toBe(true);
+    const shots = create.attempts[0]?.artifacts.filter((a) => a.kind === "screenshot") ?? [];
+    expect(shots.every((a) => a.contentType === "image/jpeg")).toBe(true);
     const read = readRun(result.dir, { verifyArtifacts: true });
     expect(read.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
     expect(read.run?.totals.passed).toBe(3);
@@ -190,7 +195,10 @@ describe("runTests on the shop (real browser)", () => {
       ["failed", "product_bug"],
       ["failed", "product_bug"],
     ]);
-    expect(result.tests[0]?.headline).toMatch(/^Step 1 \(Use: (tests\/)?flows\/login\.test\.md\)/);
+    // Numbered as in the test file, through the flow (the step list says the same).
+    expect(result.tests[0]?.headline).toMatch(/^Step 1 › Log in step \d+ /);
+    const failedStep = result.tests[0]?.attempts[0]?.steps.find((s) => s.status === "failed");
+    expect(result.tests[0]?.headline).toContain(`Step ${failedStep?.label} "`);
     expect(result.groups.filter((g) => g.testIds.length === 2)).toHaveLength(1);
   });
 
@@ -256,5 +264,105 @@ describe("runTests on the shop (real browser)", () => {
       .filter((e) => e.isFile() && /\.(json|ndjson|log|har)$/.test(e.name))
       .map((e) => readFileSync(join(e.parentPath, e.name), "utf8"));
     for (const text of texts) expect(text).not.toContain("bypass-token-123");
+  });
+});
+
+describe("PERF-0: evidence modes, abort, events, matrix (real browser)", () => {
+  const kinds = (test: { attempts: { artifacts: { kind: string }[] }[] }, attempt = 0) =>
+    new Set(test.attempts[attempt]?.artifacts.map((a) => a.kind));
+
+  it("failures (the local default): a clean pass drops trace and HAR; a failure keeps all, with a PNG", async () => {
+    const pass = await run("correct", ["login"], { video: true });
+    const clean = kinds(pass.byFile("login"));
+    expect(pass.byFile("login").verdict).toBe("passed");
+    for (const kind of ["console", "video", "other"]) expect(clean, kind).toContain(kind);
+    for (const kind of ["trace", "network", "screenshot"]) expect(clean, kind).not.toContain(kind);
+
+    const fail = await run("broken-total", ["billing-zero-due"], { retries: 0 });
+    const test = fail.byFile("billing-zero-due");
+    expect(test.verdict).toBe("failed");
+    const kept = kinds(test);
+    for (const kind of ["console", "trace", "network", "screenshot"])
+      expect(kept, kind).toContain(kind);
+    const shots = test.attempts[0]?.artifacts.filter((a) => a.kind === "screenshot") ?? [];
+    expect(shots.length).toBeGreaterThan(0);
+    expect(shots.every((a) => a.contentType === "image/png" && a.path.endsWith(".png"))).toBe(true);
+    expect(test.failureEvidence.some((e) => e.kind === "artifact" && e.path.endsWith(".png"))).toBe(
+      true,
+    );
+    const read = readRun(fail.result.dir, { verifyArtifacts: true });
+    expect(read.diagnostics.filter((d) => d.severity !== "info")).toEqual([]);
+  });
+
+  it("minimal: no trace on the first attempt, full evidence on the retry of a flaky test", async () => {
+    const { byFile } = await run("env-flaky", ["create-project"], { evidence: "minimal" });
+    const test = byFile("create-project");
+    expect(test.verdict).toBe("flaky");
+    expect(kinds(test, 0)).not.toContain("trace");
+    expect(kinds(test, 1)).toContain("trace");
+    expect(kinds(test, 1)).toContain("network");
+  });
+
+  it("stops cleanly on abort: the running test is blocked aborted with its evidence, the rest don't run", async () => {
+    const stop = new AbortController();
+    const events: string[] = [];
+    const { result } = await run("correct", ["login", "sort-orders", "create-project"], {
+      signal: stop.signal,
+      onEvent: (event) => {
+        events.push(event.type);
+        if (event.type === "step.finished" && !stop.signal.aborted) stop.abort();
+      },
+    });
+    expect(result.run.blocked).toMatchObject({ reason: "aborted" });
+    expect(result.run.blocked?.message).toMatch(/2 of 3 tests didn't run/);
+    expect(result.tests).toHaveLength(1);
+    const test = result.tests[0];
+    expect(test?.verdict).toBe("blocked");
+    expect(test?.decidedBy[0]).toMatchObject({ kind: "blocked", reason: "aborted" });
+    expect(test?.attempts).toHaveLength(1);
+    expect(test?.attempts[0]?.steps.slice(1).every((s) => s.status === "skipped")).toBe(true);
+    // Evidence flushed: the attempt's files are in the run folder.
+    expect(kinds(test as never)).toContain("console");
+    expect(kinds(test as never)).toContain("trace");
+    expect(readRun(result.dir).diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+    expect(events.at(-1)).toBe("run.finished");
+  });
+
+  it("onEvent receives artifact.written, one per artifact in the documents", async () => {
+    const written: string[] = [];
+    const { result } = await run("correct", ["login"], {
+      evidence: "full",
+      onEvent: (event) => {
+        if (event.type === "artifact.written") written.push(event.artifact.path);
+      },
+    });
+    const inResults = [
+      ...result.run.artifacts,
+      ...result.tests.flatMap((t) => t.attempts.flatMap((a) => a.artifacts)),
+    ].map((a) => a.path);
+    expect(written.length).toBeGreaterThan(3);
+    expect(written.sort()).toEqual(inResults.sort());
+  });
+
+  it("a 2-browser × 2-device matrix of 3 tests gives 12 results, one per entry", async () => {
+    const tests = ["login", "sort-orders", "create-project"];
+    const { result, calls } = await run("correct", tests, {
+      browsers: ["chromium", "webkit"],
+      devices: ["laptop", "ipad"],
+      workers: 2,
+    });
+    expect(calls).toHaveLength(0);
+    expect(result.tests).toHaveLength(12);
+    const entries = result.tests.map(
+      (t) =>
+        `${t.file} ${t.matrix.target === "web" ? `${t.matrix.browser}/${t.matrix.device}` : ""}`,
+    );
+    expect(new Set(entries).size).toBe(12);
+    expect(new Set(result.tests.map((t) => t.testId)).size).toBe(12);
+    for (const t of result.tests)
+      if (t.matrix.target === "web")
+        expect(t.testId).toBe(`${t.testId.split("@")[0]}@${t.matrix.browser}-${t.matrix.device}`);
+    expect(result.run.totals.tests).toBe(12);
+    expect(result.tests.map((t) => t.verdict)).toEqual(Array(12).fill("passed"));
   });
 });

@@ -56,12 +56,13 @@ import {
   withInbox,
 } from "../author/variables.js";
 import { evaluateCheck } from "../checks/evaluate.js";
+import { isAbsence } from "../checks/sanity.js";
 import { runFixer } from "../heal/fixer.js";
 import { type HealPatch, HEAL_PATCH_VERSION, relocatedCommand } from "../heal/patch.js";
 import { bindAction, retarget, targetOf } from "./bind.js";
 import { checkResult, evaluationText, unusableCheck } from "./checks.js";
 import { fixerProposal, healFacts, healProposal } from "./heal.js";
-import { lateMatch, type PostCheck, verifyOutcome } from "./post-state.js";
+import { checkable, lateMatch, type PostCheck, verifyOutcome } from "./post-state.js";
 import type { Chapter, ReplayOptions, ReplayResult } from "./types.js";
 import type { AttemptBlock, AttemptFailure } from "./verdict.js";
 
@@ -76,6 +77,8 @@ import type { AttemptBlock, AttemptFailure } from "./verdict.js";
 
 const LATE_EFFECT_MS = 400;
 const MAX_LEARNED_WAIT_MS = 3_000;
+/** The least time replay looks for a command's recorded effect before settling as usual. */
+const MIN_EFFECT_WAIT_MS = 1_000;
 const MAX_REFIND_CANDIDATES = 40;
 
 type Stop = { kind: "failed"; failure: AttemptFailure } | { kind: "blocked"; block: AttemptBlock };
@@ -120,15 +123,24 @@ function toObserved(outcome: ActionOutcome | undefined): ObservedRequest[] {
   }));
 }
 
-/** The line a person reads first (DIA-3), with the flow it came through. */
+/**
+ * The step as the test file numbers it (StepResult `label`): "3", or "1 › Log
+ * in step 4" for step 4 of the flow "Log in" used at step 1 (flows inside flows
+ * add a part each). Headlines, the test list and reports all show `step <label>`.
+ */
+export function stepLabelOf(step: ExpandedStep): string {
+  const own = String(step.origin.at(-1)?.number ?? step.number ?? step.index + 1);
+  const uses = step.origin.slice(0, -1);
+  if (step.flowPath.length === 0 || uses.length === 0) return own;
+  const via = uses.map(
+    (frame, i) => `${frame.number ?? "?"} › ${frame.flow ?? step.flowPath[i] ?? "flow"}`,
+  );
+  return `${via.join(" step ")} step ${own}`;
+}
+
+/** The line a person reads first (DIA-3): the step, numbered as in the test file. */
 function where(step: ExpandedStep): string {
-  const origin = step.origin[0];
-  const own = `step ${step.number ?? step.index + 1}`;
-  if (step.flowPath.length > 0 && origin) {
-    const inner = step.origin.at(-1);
-    return `Step ${origin.number ?? "?"} (Use: ${step.flowPath[0]}), ${inner?.number ? `its step ${inner.number}` : own}`;
-  }
-  return `Step ${origin?.number ?? step.number ?? step.index + 1}`;
+  return `Step ${stepLabelOf(step)}`;
 }
 
 const quoteText = (text: string | null) => (text === null ? "nothing" : JSON.stringify(text));
@@ -176,7 +188,10 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
   let stepMark: RequestMark | undefined;
   // The page before the latest action step: the sanity before-state for checks compiled now.
   let before: PageCopy | undefined;
-  let lastShot: { bytes: Uint8Array; path: string | null } | undefined;
+  // The latest screenshot's path: the next action step's "before" (checks between them only read the page).
+  let lastShot: { path: string | null } | undefined;
+  // Screenshots of passing steps are taken in the background; all land before the attempt ends.
+  const pendingShots: Promise<void>[] = [];
   // The page where the attempt stopped (for the failure classifier).
   let observationsAt: Awaited<ReturnType<typeof pageInfo>> | undefined;
   // Where a failed login stopped (it ran in its own session).
@@ -203,14 +218,39 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     options.emit({ type: "model.called", call });
   };
 
-  const shoot = async (index: number, when: "before" | "after"): Promise<string | null> => {
-    if (options.screenshots === false || !options.saveScreenshot) return null;
-    // Nothing happened since the last screenshot: the page is the same, reuse it.
-    if (when === "before" && lastShot) return options.saveScreenshot(index, when, lastShot.bytes);
-    const shot = await session.screenshot();
+  /**
+   * A step screenshot (EVD-1): PNG where a step failed, else a JPEG taken in the
+   * background (its path is known up front) so the next step doesn't wait for it.
+   */
+  const shoot = async (
+    index: number,
+    when: "before" | "after",
+    failing = false,
+  ): Promise<string | null> => {
+    const save = options.saveScreenshot;
+    if (options.screenshots === false || !save) return null;
+    if (options.screenshots === "failures" && !failing) return null;
+    // Nothing happened since the last screenshot: the page is the same, point to it.
+    if (when === "before" && lastShot) return lastShot.path;
+    const contentType = failing ? "image/png" : "image/jpeg";
+    const format = failing ? "png" : "jpeg";
+    if (!failing && options.screenshotPath) {
+      const path = options.screenshotPath(index, when, contentType);
+      pendingShots.push(
+        session.screenshot({ format }).then(
+          (shot) => {
+            if (shot.status === "ok") save(index, when, shot.bytes, contentType);
+          },
+          () => {},
+        ),
+      );
+      lastShot = { path };
+      return path;
+    }
+    const shot = await session.screenshot({ format });
     if (shot.status !== "ok") return null;
-    const path = options.saveScreenshot(index, when, shot.bytes);
-    lastShot = { bytes: shot.bytes, path };
+    const path = save(index, when, shot.bytes, contentType);
+    lastShot = { path };
     return path;
   };
 
@@ -273,6 +313,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
 
   const skipped = (step: ExpandedStep, key: string, kind: StepResult["kind"]): StepResult => ({
     index: step.index,
+    label: stepLabelOf(step),
     key,
     text: step.text,
     kind,
@@ -337,7 +378,15 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
   }
   if (!stop && test.start) {
     const url = test.start.display;
-    const outcome = await session.act({ type: "goto", url });
+    // The start page's effect is the page loading: its document answered.
+    const outcome = await session.act(
+      { type: "goto", url },
+      {
+        until: (post) =>
+          post.requests.some((r) => r.resourceType === "document" && typeof r.status === "number"),
+        ceilingMs: MIN_EFFECT_WAIT_MS,
+      },
+    );
     lastOutcome = outcome;
     if (outcome.status === "refused")
       stop = block(outcome.reason ?? "disallowed_domain", outcome.message ?? url, null);
@@ -346,10 +395,60 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
   }
 
   // ── one recorded command ────────────────────────────────────────────────────
-  const act = async (action: Parameters<typeof session.act>[0]) => {
-    const outcome = await session.act(action);
+  const act = async (
+    action: Parameters<typeof session.act>[0],
+    actOptions?: Parameters<typeof session.act>[1],
+  ) => {
+    const outcome = await session.act(action, actOptions);
     lastOutcome = outcome;
     return outcome;
+  };
+
+  /**
+   * LRN-4: act, then move on the moment the command's recorded effect shows
+   * (the learned time, doubled, is how long to look before settling as usual).
+   * A command that recorded no effect settles with the generic quiet window.
+   */
+  const learnedWait = (
+    command: Command,
+    variables: StepVariables,
+    renamedTo?: string,
+  ): Parameters<typeof session.act>[1] => {
+    if (!checkable(command.expectPost)) return undefined;
+    const self = selfOf(command, renamedTo);
+    // Writes the command made when recorded (a save, a login) must have been sent before
+    // moving on: one can start a moment after the page already changed ("Saving…"), and
+    // the next step could cut it off. Reads (the page loading its data) need no wait:
+    // the next step's element check and every Expect wait for what they need.
+    const writes = (command.expectPost.requests ?? []).filter(
+      (r) => r.method !== "GET" && r.method !== "HEAD" && r.method !== "OPTIONS",
+    );
+    return {
+      until: (post) =>
+        verifyOutcome(command.expectPost, { post } as ActionOutcome, variables.pageList, self)
+          .status === "verified" &&
+        writes.every((r) =>
+          post.requests.some((seen) => seen.method === r.method && routeOf(seen.url) === r.route),
+        ),
+      ceilingMs: Math.min(
+        MAX_LEARNED_WAIT_MS,
+        Math.max(MIN_EFFECT_WAIT_MS, 2 * command.wait.settledMs),
+      ),
+    };
+  };
+
+  /** An AbortController that also fires when the run is stopped (reported like the time limit). */
+  const stoppable = () => {
+    const controller = new AbortController();
+    options.signal?.addEventListener("abort", () => controller.abort(new Error("timeout")), {
+      once: true,
+    });
+    return controller;
+  };
+
+  /** The page as it would be after a full settle, for what needs it (authoring, copies, some checks). */
+  const settlePage = async () => {
+    if (session.unsettled) await session.settle();
   };
 
   /** VER-5 with a second look: the recorded effect now, or after the learned wait. */
@@ -359,10 +458,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     variables: StepVariables,
     renamedTo?: string,
   ) => {
-    const fp = command.fingerprint;
-    const self = fp
-      ? { role: fp.role, name: fp.name, ...(renamedTo !== undefined ? { renamedTo } : {}) }
-      : undefined;
+    const self = selfOf(command, renamedTo);
     const post = verifyOutcome(command.expectPost, outcome, variables.pageList, self);
     if (post.status !== "mismatch") return post;
     // LRN-4: wait as long as the page took when recorded (at least a moment), then look again.
@@ -459,18 +555,27 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       | null = null;
     let primarySame: SameElementAnswer | undefined;
 
-    if (target) {
+    const validate = async (): Promise<typeof missReason> => {
       const inspected = await session.inspect(target as never);
       if (inspected.status === "ok" && inspected.facts && fingerprint) {
         primarySame = await sameAs(fingerprint, inspected.facts, "primary");
-        if (primarySame.same !== true) missReason = "fingerprint_mismatch";
-      } else if (inspected.status === "multiple") missReason = "multiple_matches";
-      else if (inspected.status !== "ok") missReason = "not_found";
+        return primarySame.same !== true ? "fingerprint_mismatch" : null;
+      }
+      if (inspected.status === "multiple") return "multiple_matches";
+      return inspected.status !== "ok" ? "not_found" : null;
+    };
+    if (target) {
+      missReason = await validate();
+      // The previous command moved on at its effect: let the page finish before calling this a miss.
+      if (missReason && session.unsettled) {
+        await session.settle();
+        missReason = await validate();
+      }
     }
 
     let outcome: ActionOutcome | undefined;
     if (!missReason) {
-      outcome = await act(bound.action);
+      outcome = await act(bound.action, learnedWait(command, variables));
       if (outcome.status === "refused") {
         const reason = outcome.reason ?? "invalid_action";
         if (BLOCKING_REASONS.has(reason))
@@ -616,7 +721,10 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       facts: ElementFacts,
       how: "fallback" | "refind",
     ): Promise<CommandResult> => {
-      const healed = await act(retarget(bound.action, locator));
+      const healed = await act(
+        retarget(bound.action, locator),
+        learnedWait(command, variables, facts.name),
+      );
       if (healed.status === "refused") {
         const r = healed.reason ?? "invalid_action";
         return BLOCKING_REASONS.has(r)
@@ -785,7 +893,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     | { kind: "blocked"; reason: string; message: string; calls: ModelCall[] }
   > => {
     const models = options.models as NonNullable<typeof options.models>;
-    const controller = new AbortController();
+    await settlePage();
+    const controller = stoppable();
     const timer = setTimeout(
       () => controller.abort(new Error("timeout")),
       Math.max(1, deadline - Date.now()),
@@ -990,6 +1099,12 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       push(skipped(step, key, kind));
       continue;
     }
+    if (options.signal?.aborted) {
+      // The run was stopped (runTests({ signal })): nothing more runs, nothing is judged.
+      push(skipped(step, key, kind));
+      stop = block("aborted", "The run was stopped before this test finished.", step.index);
+      continue;
+    }
     if (Date.now() > deadline) {
       const failure: AttemptFailure = {
         decider: { kind: "step", attempt, stepIndex: step.index },
@@ -1010,8 +1125,6 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
 
     // ── Expect / Soft / exact expect: a check (VER-1…VER-3) ─────────────────
     if (isCheck) {
-      // A check may wait for the page (a late toast): the next "before" needs a fresh screenshot.
-      lastShot = undefined;
       const soft = step.kind === "soft";
       const variables = stepVariables(test, step);
       let stored = exactOp ? undefined : recordedChecks.get(step.textKey);
@@ -1030,6 +1143,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
         problem = unusableCheck(stored);
       } else if (mayCompile) {
         // Compile the line in place (LOOP-2): rules first, AI only for what rules can't map.
+        await settlePage();
         const compiled = await authorCheck(step, undefined, {
           session,
           models: options.plannerAvailable ? options.models : undefined,
@@ -1088,6 +1202,10 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       }
 
       if (!problem && !evaluation) {
+        // A check that could hold on the page before the action (or a check that
+        // isn't known to fail there) waits for a settled page: an early move-on
+        // must never let it pass on a page that hasn't caught up yet.
+        if (!discriminates(op, stored)) await settlePage();
         evaluation = await evaluateCheck(session, op, {
           values: variables.values,
           timeoutMs: checkTimeoutMs,
@@ -1116,8 +1234,11 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       checks.push(result);
       options.emit({ type: "check.evaluated", check: result });
       const status: StepResult["status"] = passed ? "passed" : soft ? "warned" : "failed";
+      // A failed check shows the page it failed on (EVD-1: the failure's screenshot).
+      const failedShot = status === "failed" ? await shoot(step.index, "after", true) : null;
       push({
         index: step.index,
+        label: stepLabelOf(step),
         key,
         text: step.text,
         kind,
@@ -1128,7 +1249,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
         startedAt,
         durationMs: Date.now() - t0,
         settledMs: null,
-        screenshots: { before: null, after: null },
+        screenshots: { before: null, after: failedShot },
         error: passed
           ? null
           : (problem ??
@@ -1168,13 +1289,17 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
 
     // ── an action step ──────────────────────────────────────────────────────
     stepMark = session.requestMark();
-    if (needsCopies) before = await session.pageCopy();
+    if (needsCopies) {
+      await settlePage();
+      before = await session.pageCopy();
+    }
     const beforeShot = await shoot(step.index, "before");
     const variables = stepVariables(test, step);
     const inbox = readsInbox(step);
     const recorded = recording ? recordedSteps.get(key) : undefined;
     const base = {
       index: step.index,
+      label: stepLabelOf(step),
       key,
       text: step.text,
       kind,
@@ -1277,7 +1402,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
           step.index,
         );
       } else {
-        const controller = new AbortController();
+        await settlePage();
+        const controller = stoppable();
         const timer = setTimeout(
           () => controller.abort(new Error("timeout")),
           Math.max(1, deadline - Date.now()),
@@ -1484,7 +1610,11 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       }
     }
 
-    result.screenshots.after = await shoot(step.index, "after");
+    result.screenshots.after = await shoot(
+      step.index,
+      "after",
+      result.status === "failed" || result.status === "blocked",
+    );
     push(result);
     chapters.push({
       index: step.index,
@@ -1505,6 +1635,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
         message: `Teardown ${report.description} ${report.status}`,
       });
   }
+
+  await Promise.all(pendingShots);
 
   if (!stop && steps.every((s) => s.status === "skipped")) {
     // Nothing ran at all (an empty test): nothing can prove a pass.
@@ -1536,6 +1668,24 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     healedByFixer,
     patches,
   };
+}
+
+/**
+ * The check fails on the page as it was before the preceding action (its sanity
+ * test), so it can't pass until the action's result shows: auto-waiting is
+ * enough. Absence checks and checks without that proof need a settled page.
+ */
+function discriminates(op: CheckOp, stored: CheckRecording | undefined): boolean {
+  if (!stored || stored.check !== op || isAbsence(op)) return false;
+  return stored.sanity?.before.result === "failed";
+}
+
+/** The element a command acts on, as recorded (and its new name after a heal). */
+function selfOf(command: Command, renamedTo?: string) {
+  const fp = command.fingerprint;
+  return fp
+    ? { role: fp.role, name: fp.name, ...(renamedTo !== undefined ? { renamedTo } : {}) }
+    : undefined;
 }
 
 /** Every recorded effect of a run of commands, as one (VER-5 for a redone step). */

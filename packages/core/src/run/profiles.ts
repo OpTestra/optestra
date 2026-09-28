@@ -99,6 +99,8 @@ function loginStep(
 ): StepResult {
   return {
     index: options.stepIndex,
+    // The login runs before step 1: step 0 (as the Bench manifest numbers it).
+    label: "0",
     key: `auth:${options.name}`,
     text: `auth: ${options.name} (logs in with ${options.profile.flow})`,
     kind: "flow",
