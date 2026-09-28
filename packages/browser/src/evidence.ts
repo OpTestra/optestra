@@ -81,24 +81,40 @@ export class Evidence {
     this.#paused = false;
   }
 
-  /** Call before the context closes: ends tracing. */
-  async stop(): Promise<void> {
+  /**
+   * Call before the context closes: ends tracing. `discardTrace`: the trace
+   * isn't wanted after all (a clean pass): its chunks are dropped unread.
+   */
+  async stop(options: { discardTrace?: boolean } = {}): Promise<void> {
     if (!this.#tracing || !this.#context) return;
     try {
       if (!this.#paused) {
-        const path = join(this.#dir, `trace-chunk-${this.#chunks.length}.zip`);
-        await this.#context.tracing.stopChunk({ path });
-        this.#chunks.push(path);
+        if (options.discardTrace) await this.#context.tracing.stopChunk();
+        else {
+          const path = join(this.#dir, `trace-chunk-${this.#chunks.length}.zip`);
+          await this.#context.tracing.stopChunk({ path });
+          this.#chunks.push(path);
+        }
       }
       await this.#context.tracing.stop();
     } catch {
       // The context is already gone (crash): keep the chunks we have.
     }
     this.#tracing = false;
+    if (options.discardTrace) {
+      for (const chunk of this.#chunks) rmSync(chunk, { force: true });
+      this.#chunks.length = 0;
+    }
   }
 
-  /** Call after the context closed: writes the scrubbed files. */
-  async finish(videoPath: string | undefined): Promise<EvidenceFile[]> {
+  /**
+   * Call after the context closed: writes the scrubbed files. `discardNetwork`:
+   * the HAR isn't wanted after all: it is deleted unread.
+   */
+  async finish(
+    videoPath: string | undefined,
+    options: { discardNetwork?: boolean } = {},
+  ): Promise<EvidenceFile[]> {
     const files: EvidenceFile[] = [];
     if (this.#options.trace && this.#chunks.length > 0) {
       const path = join(this.#dir, "trace.zip");
@@ -125,7 +141,8 @@ export class Evidence {
       });
     }
     const rawHar = join(this.#dir, "network-raw.har");
-    if (this.#options.network && existsSync(rawHar)) {
+    if (options.discardNetwork) rmSync(rawHar, { force: true });
+    else if (this.#options.network && existsSync(rawHar)) {
       const path = join(this.#dir, "network.har");
       writeFileSync(path, this.#scrubHar(readFileSync(rawHar, "utf8")));
       rmSync(rawHar, { force: true });

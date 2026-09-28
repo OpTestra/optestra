@@ -53,7 +53,7 @@ These hold by construction; each has a test that fails if it breaks
    `disallowed_domain`. Refused subresources are recorded in `post.refused` and
    `observe().refused`, and the test goes on.
 2. **Closed action set (SAF-2).** The `Session` exposes `observe`, `candidates`,
-   `act`, `screenshot`, `settle`, `refusals`, `url`, `browserName` and `close`,
+   `act`, `screenshot`, `settle`, `unsettled`, `refusals`, `url`, `browserName` and `close`,
    plus the read-only `check` and `pageCopy` (LOOP-2, below) and the
    setup-only `hookRequest`, none of which the agent can call. Nothing else.
    No Playwright object is reachable: fields are private, and a
@@ -185,6 +185,18 @@ after a settle timeout, or an image still loading).
 The DOM side comes from a small script in every frame through a binding, so
 settling doesn't flood the trace with page calls.
 
+**Learned waits** (LRN-4, PERF-0). Replay knows what each action should do, so
+it doesn't need the quiet window: `act(action, { until, ceilingMs })` looks at
+the post-state as it builds up (every 20 ms) and ends the moment `until(post)`
+holds with no document, fetch or XHR request in flight
+(`settle.endedBy: "effect"`). If it doesn't within `ceilingMs` (default 3 s),
+the page settles as usual and the outcome is built from what happened; the
+caller sees the mismatch. After an early end the session is `unsettled`; the
+next `settle()` counts its quiet window from when that action finished (never
+from before it), and clears it. An action waits for a screenshot still being
+taken (a navigation would stall the capture), so screenshots can run in the
+background while the caller reads the page.
+
 ## Observation format
 
 `observe()` uses Playwright's AI snapshot (`ariaSnapshotJSON({ mode: "ai" })`,
@@ -270,8 +282,9 @@ reordered the page.
 
 `screenshot({ forModel: true })` returns a JPEG at most 1280 px wide.
 Anything wider is scaled down in a separate offline page of the same browser.
-`screenshot()` returns a PNG at full device resolution, and
-`screenshot({ target })` crops to one element.
+`screenshot()` returns a PNG at full device resolution, `screenshot({ format:
+"jpeg" })` a full-resolution JPEG (quality 80; replay uses it for steps that
+passed), and `screenshot({ target })` crops to one element.
 
 Set `evidence` in the session options to capture:
 - `video`: Playwright `recordVideo`;
@@ -302,7 +315,9 @@ Scrubbing:
   are masked by CSS.
 
 Evidence files live in `evidence.dir` (a new temp folder by default). The caller
-moves or deletes them.
+moves or deletes them. `close({ discard: ["trace", "network"] })` drops a trace
+or HAR that turned out not to be needed (a clean pass under `run.evidence:
+failures`) without reading, scrubbing or writing it.
 
 ## Browsers and devices
 
@@ -364,8 +379,9 @@ const result = await session.check(
 //   passed, expected: "Welcome to Pro", actual: "Welcome to Pro", ms, attempts, matched: 1, seen: "…" }
 ```
 
-- **Auto-waiting**, like Playwright's assertions: it retries every 100 ms until
-  the check passes or `timeoutMs` (default 5000; 0 = one attempt) is up.
+- **Auto-waiting**, like Playwright's assertions: it retries (after 20, 30, 50,
+  then every 100 ms) until the check passes or `timeoutMs` (default 5000; 0 =
+  one attempt) is up.
   `actual` is what the final attempt saw: the text, URL, count, value or state.
   For a text that isn't there, `actual` is the closest line of the target's
   text ("$29.00 due today" for an expected "$0.00 due today").

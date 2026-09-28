@@ -178,6 +178,12 @@ export interface SettleResult {
   waitedFor: { network: number; dom: number; busy: number };
   /** Requests still in flight when settle returned. */
   inflight: number;
+  /**
+   * `effect`: the action's expected effect showed with no request in flight
+   * (`act(action, { until })`, replay), so no quiet window was waited for.
+   * Absent: an ordinary settle.
+   */
+  endedBy?: "effect";
 }
 
 export interface ActionOutcome {
@@ -290,6 +296,11 @@ export interface CandidatesResult {
 export interface ScreenshotOptions {
   /** true: JPEG, at most 1280 px wide, for a model. false (default): full-resolution PNG evidence. */
   forModel?: boolean;
+  /**
+   * Evidence format (default png). `jpeg`: full resolution at quality 80, much
+   * cheaper to take and store; replay uses it for steps that passed.
+   */
+  format?: "png" | "jpeg";
   /** Crop to one element. */
   target?: Target;
 }
@@ -340,6 +351,15 @@ export interface HookResult {
   message?: string;
 }
 
+export interface CloseOptions {
+  /**
+   * Evidence not wanted after all (a clean pass under `run.evidence: failures`):
+   * it is dropped without being scrubbed or written. Recording it still ran, so
+   * the caller could decide at the end.
+   */
+  discard?: readonly ("trace" | "network")[];
+}
+
 export interface CloseResult {
   evidence: EvidenceFile[];
   refused: Refusal[];
@@ -367,6 +387,19 @@ export interface SettleOptions {
   timeoutMs?: number;
   /** How long network and DOM must stay quiet (default 300 ms). */
   quietMs?: number;
+}
+
+/**
+ * Replay's learned wait (LRN-4): instead of the generic quiet window, the
+ * action is done as soon as `until` holds for its post-state with no request
+ * in flight. If it doesn't within `ceilingMs`, the ordinary settle decides and
+ * the outcome is built as usual (the caller then sees the mismatch).
+ */
+export interface ActOptions {
+  /** The expected effect, checked against the post-state as it builds up. */
+  until?: (post: PostState) => boolean;
+  /** How long to look for the effect before falling back to settle (default 3000 ms). */
+  ceilingMs?: number;
 }
 
 export interface SessionOptions {

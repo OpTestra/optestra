@@ -98,6 +98,11 @@ export class ActivityTracker {
     this.#busy.delete(frame);
   }
 
+  /** Document, fetch and XHR requests in flight now. */
+  get inflight(): number {
+    return this.#inflight.size;
+  }
+
   /** A position in the request log. */
   mark(): number {
     return this.#log.length;
@@ -107,10 +112,18 @@ export class ActivityTracker {
     return this.#log.slice(mark).map((tracked) => ({ ...tracked.summary }));
   }
 
-  async settle(options: { timeoutMs?: number; quietMs?: number } = {}): Promise<SettleResult> {
+  /**
+   * `since` (epoch ms, default now) is where the quiet window may start at the
+   * earliest: settling a page later, after an action that ended on its effect,
+   * counts the quiet from when that action finished, never from before it.
+   */
+  async settle(
+    options: { timeoutMs?: number; quietMs?: number; since?: number } = {},
+  ): Promise<SettleResult> {
     const timeoutMs = options.timeoutMs ?? DEFAULT_SETTLE.timeoutMs;
     const quietMs = options.quietMs ?? DEFAULT_SETTLE.quietMs;
     const start = Date.now();
+    const from = Math.min(start, options.since ?? start);
     const waitedFor = { network: 0, dom: 0, busy: 0 };
     let previous = start;
     for (;;) {
@@ -118,8 +131,8 @@ export class ActivityTracker {
       const step = now - previous;
       previous = now;
       const network =
-        this.#inflight.size === 0 && now - Math.max(this.#lastNetwork, start) >= quietMs;
-      const dom = now - Math.max(this.#lastMutation, start) >= quietMs;
+        this.#inflight.size === 0 && now - Math.max(this.#lastNetwork, from) >= quietMs;
+      const dom = now - Math.max(this.#lastMutation, from) >= quietMs;
       const busy = [...this.#busy.entries()].some(([frame, value]) => value && !frame.isDetached());
       if (!network) waitedFor.network += step;
       if (!dom) waitedFor.dom += step;

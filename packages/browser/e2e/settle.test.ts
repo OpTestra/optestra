@@ -31,6 +31,7 @@ beforeAll(async () => {
     const path = new URL(req.url ?? "/", "http://x").pathname;
     const html = (body: string) => res.writeHead(200, { "content-type": "text/html" }).end(body);
     if (path === "/late") return html(page(`fetch("/api/slow", { method: "POST", body: "x" })`));
+    if (path === "/quick") return html(page(`Promise.resolve({ status: "quick" })`));
     if (path === "/stuck") return html(page(`fetch("/api/hang")`));
     if (path === "/broken") return html(page(`fetch("/api/drop")`));
     if (path === "/api/slow") {
@@ -99,6 +100,83 @@ describe("settle after an action (FIX-1)", () => {
     const request = outcome.post.requests.find((r) => r.url === `${base}/api/drop`);
     expect(request, text).toMatchObject({ status: "failed", failure: expect.any(String) });
     expect(request?.failure, text).not.toBe("");
+    await s.close();
+  });
+});
+
+// PERF-0 (LRN-4): replay's learned wait. `act(action, { until })` moves on the
+// moment the expected effect shows with no request in flight; when it never
+// shows, the ordinary settle decides after the ceiling.
+describe("act until the expected effect (PERF-0)", () => {
+  const shows = (text: string) => (post: { added: { text?: string }[] }) =>
+    post.added.some((e) => e.text?.includes(text));
+
+  async function ready(path: string) {
+    const s = await open(base, { settle: { quietMs: QUIET_MS, timeoutMs: 10_000 } });
+    await s.act({ type: "goto", url: path });
+    const observed = await s.observe();
+    return { s, go: { ref: find(observed, "button", "Go").ref } };
+  }
+
+  it("ends as soon as the effect shows, without the quiet window", async () => {
+    const { s, go } = await ready("/quick");
+    const outcome = await s.act({ type: "click", target: go }, { until: shows("status quick") });
+    const text = JSON.stringify(outcome);
+    expect(outcome.status, text).toBe("ok");
+    expect(outcome.settle.endedBy, text).toBe("effect");
+    expect(outcome.settledMs, text).toBeLessThan(QUIET_MS);
+    expect(outcome.post.added.map((e) => e.text).join(" "), text).toContain("status quick");
+    // The page hasn't been through a quiet window yet; settling counts from the action.
+    expect(s.unsettled).toBe(true);
+    const settled = await s.settle();
+    expect(settled.timedOut).toBe(false);
+    expect(s.unsettled).toBe(false);
+    await s.close();
+  });
+
+  it("waits for the expected request to finish, not just to start", async () => {
+    const { s, go } = await ready("/late");
+    const outcome = await s.act(
+      { type: "click", target: go },
+      { until: (post) => post.requests.some((r) => r.url.endsWith("/api/slow")) },
+    );
+    const text = JSON.stringify(outcome);
+    // The request starts 50 ms after the click and answers after SLOW_MS.
+    expect(outcome.settledMs, text).toBeGreaterThanOrEqual(SLOW_MS);
+    expect(outcome.post.requests, text).toContainEqual(
+      expect.objectContaining({ method: "POST", url: `${base}/api/slow`, status: 200 }),
+    );
+    await s.close();
+  });
+
+  it("falls back to settling when the effect never shows, and reports what did happen", async () => {
+    const { s, go } = await ready("/quick");
+    const outcome = await s.act(
+      { type: "click", target: go },
+      { until: shows("something else"), ceilingMs: 400 },
+    );
+    const text = JSON.stringify(outcome);
+    expect(outcome.status, text).toBe("ok");
+    expect(outcome.settle.endedBy, text).toBeUndefined();
+    // The ceiling, then a full quiet window.
+    expect(outcome.settledMs, text).toBeGreaterThanOrEqual(400 + QUIET_MS);
+    expect(outcome.post.added.map((e) => e.text).join(" "), text).toContain("status quick");
+    expect(s.unsettled).toBe(false);
+    await s.close();
+  });
+
+  it("lets a screenshot finish before the next action (a navigation would stall it)", async () => {
+    const { s, go } = await ready("/quick");
+    const started = Date.now();
+    const shot = s.screenshot({ format: "jpeg" });
+    const outcome = await s.act({ type: "goto", url: "/late" });
+    const result = await shot;
+    expect(result.status).toBe("ok");
+    expect(result.contentType).toBe("image/jpeg");
+    expect([...result.bytes.slice(0, 2)]).toEqual([0xff, 0xd8]);
+    expect(outcome.status).toBe("ok");
+    expect(Date.now() - started).toBeLessThan(3_000);
+    expect(go.ref).toBeTruthy();
     await s.close();
   });
 });
