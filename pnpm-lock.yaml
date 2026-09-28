@@ -156,6 +156,9 @@ importers:
       '@testament/decide':
         specifier: workspace:^
         version: link:../decide
+      '@testament/mcp':
+        specifier: workspace:^
+        version: link:../mcp
       '@testament/models':
         specifier: workspace:^
         version: link:../models
@@ -274,7 +277,39 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
 
-  packages/mcp: {}
+  packages/mcp:
+    dependencies:
+      '@testament/brand':
+        specifier: workspace:^
+        version: link:../brand
+      '@testament/config':
+        specifier: workspace:^
+        version: link:../config
+      '@testament/contract':
+        specifier: workspace:^
+        version: link:../contract
+      '@testament/core':
+        specifier: workspace:^
+        version: link:../core
+      '@testament/recording':
+        specifier: workspace:^
+        version: link:../recording
+      '@testament/report':
+        specifier: workspace:^
+        version: link:../report
+      '@testament/spec':
+        specifier: workspace:^
+        version: link:../spec
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@testament/fixture-shop':
+        specifier: workspace:*
+        version: link:../../bench/fixtures/shop
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
 
   packages/models:
     dependencies:

@@ -15,6 +15,7 @@
     { "path": "../contract" },
     { "path": "../core" },
     { "path": "../decide" },
+    { "path": "../mcp" },
     { "path": "../models" },
     { "path": "../recording" },
     { "path": "../report" },

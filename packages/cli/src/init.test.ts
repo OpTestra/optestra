@@ -229,3 +229,99 @@ describe("init", { timeout: 30_000 }, () => {
     expect(out).toContain("stored as OPENROUTER_API_KEY in .env");
   });
 });
+
+describe("init: agent instructions (AGT-2) and starter tests (ONB-2)", () => {
+  const quiet = (dir: string, extra: Partial<Parameters<typeof runInitCommand>[2]> = {}) => {
+    let out = "";
+    return {
+      io: { cwd: dir, env: {}, stdout: (text: string) => (out += text), ...extra },
+      out: () => out,
+    };
+  };
+
+  it("--agents appends the snippet to AGENTS.md and CLAUDE.md once, keeping their text", async () => {
+    const dir = temp({ "AGENTS.md": "# Agents\n\nUse pnpm.\n", "CLAUDE.md": "Be brief." });
+    const { io } = quiet(dir);
+    expect(await runInitCommand(undefined, { yes: true, doctor: false, agents: true }, io)).toBe(0);
+    const agents = readFileSync(join(dir, "AGENTS.md"), "utf8");
+    expect(agents.startsWith("# Agents\n\nUse pnpm.\n\n")).toBe(true);
+    expect(agents).toContain("Never edit an `Expect:` or `Soft:` line to make a failing test pass");
+    expect(readFileSync(join(dir, "CLAUDE.md"), "utf8").startsWith("Be brief.\n\n")).toBe(true);
+    // Twice changes nothing.
+    await runInitCommand(undefined, { yes: true, doctor: false, agents: true }, quiet(dir).io);
+    expect(readFileSync(join(dir, "AGENTS.md"), "utf8")).toBe(agents);
+  });
+
+  it("asks first when interactive; no leaves the files alone; --yes never asks or writes", async () => {
+    const dir = temp({ "CLAUDE.md": "Be brief.\n" });
+    const questions: string[] = [];
+    const asker: Asker = {
+      text: async (_q, fallback) => fallback,
+      choose: async (_q, _o, fallback) => fallback,
+      secret: async () => "",
+      confirm: async (question) => {
+        questions.push(question);
+        return false;
+      },
+    };
+    await runInitCommand(undefined, { doctor: false, ai: "later" }, quiet(dir, { ask: asker }).io);
+    expect(questions).toEqual([
+      "Add to CLAUDE.md the instructions for coding agents (how to run tests; never edit expectations to make them pass)?",
+    ]);
+    expect(readFileSync(join(dir, "CLAUDE.md"), "utf8")).toBe("Be brief.\n");
+    expect(existsSync(join(dir, "AGENTS.md"))).toBe(false);
+
+    const yes = { ...asker, confirm: async () => true };
+    await runInitCommand(undefined, { doctor: false, ai: "later" }, quiet(dir, { ask: yes }).io);
+    expect(readFileSync(join(dir, "CLAUDE.md"), "utf8")).toContain("## End-to-end tests");
+
+    const plain = temp();
+    await runInitCommand(undefined, { yes: true, doctor: false }, quiet(plain).io);
+    expect(existsSync(join(plain, "AGENTS.md"))).toBe(false);
+  });
+
+  it("--suggest shows the starter drafts and saves only the ones you say yes to", async () => {
+    const dir = temp();
+    const draft = (name: string, path: string, lintClean = true) => ({
+      status: "drafted" as const,
+      name,
+      path,
+      text: `---\nname: ${name}\nstart: /\n---\n\n1. Expect: the page heading is "Acme Shop"\n`,
+      lintClean,
+      notes: [],
+    });
+    const suggest = (async () => ({
+      proposals: [],
+      drafts: [
+        draft("The home page loads", "tests/the-home-page-loads.test.md"),
+        draft("Returning user can log in", "tests/returning-user-can-log-in.test.md"),
+        draft("Vague", "tests/vague.test.md", false),
+      ],
+      notes: [],
+      modelCalls: [{}, {}],
+      environment: "local",
+    })) as never;
+    const answers = [true, false];
+    const asker: Asker = {
+      text: async (_q, fallback) => fallback,
+      choose: async (_q, _o, fallback) => fallback,
+      secret: async () => "",
+      confirm: async (question) =>
+        question.includes("Save ") ? (answers.shift() ?? false) : false,
+    };
+    const { io, out } = quiet(dir, { ask: asker, suggest });
+    await runInitCommand(undefined, { doctor: false, ai: "later", suggest: true }, io);
+    expect(existsSync(join(dir, "tests/the-home-page-loads.test.md"))).toBe(true);
+    expect(existsSync(join(dir, "tests/returning-user-can-log-in.test.md"))).toBe(false);
+    expect(existsSync(join(dir, "tests/vague.test.md"))).toBe(false);
+    expect(out()).toContain("(2 AI calls)");
+    expect(out()).toContain("Not offered for saving");
+
+    // Without a terminal nothing is saved: the drafts are only shown.
+    const ci = temp();
+    const { io: ciIo, out: ciOut } = quiet(ci, { suggest });
+    await runInitCommand(undefined, { yes: true, doctor: false, suggest: true }, ciIo);
+    expect(existsSync(join(ci, "tests/the-home-page-loads.test.md"))).toBe(false);
+    expect(ciOut()).toContain("Not saved (review first)");
+  });
+});

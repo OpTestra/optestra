@@ -1,13 +1,17 @@
 {
   "name": "@testament/mcp",
   "version": "0.1.0",
-  "description": "MCP server for coding agents (later phase).",
+  "description": "MCP server for coding agents: list, draft, save and run tests, read results, accept heals (stdio, local projects).",
   "license": "MIT",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./instructions": {
+      "types": "./dist/instructions.d.ts",
+      "default": "./dist/instructions.js"
     }
   },
   "files": [
@@ -15,7 +19,22 @@
     "!dist/**/*.test.*"
   ],
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "test:browser": "tsc -b ../../bench/fixtures/shop ../cli && vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@testament/brand": "workspace:^",
+    "@testament/config": "workspace:^",
+    "@testament/contract": "workspace:^",
+    "@testament/core": "workspace:^",
+    "@testament/recording": "workspace:^",
+    "@testament/report": "workspace:^",
+    "@testament/spec": "workspace:^",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@testament/fixture-shop": "workspace:*",
+    "ajv": "^8.20.0"
   },
   "engines": {
     "node": ">=24"

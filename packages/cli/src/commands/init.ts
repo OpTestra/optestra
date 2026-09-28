@@ -82,6 +82,10 @@ export interface InitCommandOptions {
   keyStdin?: boolean;
   /** `--no-doctor` sets this to false. */
   doctor?: boolean;
+  /** Explore the app and propose 3 starter tests (ONB-2); each is saved only when you say so. */
+  suggest?: boolean;
+  /** Append the coding-agent instructions to AGENTS.md / CLAUDE.md without asking (AGT-2). */
+  agents?: boolean;
 }
 
 /** How init asks questions. The terminal one uses node:readline; tests pass answers. */
@@ -90,6 +94,8 @@ export interface Asker {
   choose(question: string, options: readonly string[], fallback: number): Promise<number>;
   /** Input is not echoed. */
   secret(question: string): Promise<string>;
+  /** A yes/no question; the default is no. */
+  confirm?(question: string): Promise<boolean>;
 }
 
 export interface InitIo extends CommandIo {
@@ -99,6 +105,8 @@ export interface InitIo extends CommandIo {
   readStdin?: () => Promise<string>;
   /** Test hook for the closing doctor run. */
   probes?: DoctorProbes;
+  /** Test hook for --suggest: proposes drafts without a browser or AI. */
+  suggest?: typeof import("@testament/core/node").suggestStarterTests;
 }
 
 // ── detecting the repository ──────────────────────────────────────────────────
@@ -284,7 +292,99 @@ export function terminalAsker(): Asker {
     secret(question) {
       return ask(`${question}: `, true);
     },
+    async confirm(question) {
+      return /^y(es)?$/i.test(await ask(`${question} [y/N] `));
+    },
   };
+}
+
+const confirm = (ask: Asker, question: string) =>
+  ask.confirm ? ask.confirm(question) : ask.choose(question, ["No", "Yes"], 0).then((i) => i === 1);
+
+/** The files agent instructions can go in: the ones there, else a new AGENTS.md. */
+const AGENT_FILES = ["AGENTS.md", "CLAUDE.md"] as const;
+
+/**
+ * AGT-2: offers to append the coding-agent instructions to AGENTS.md / CLAUDE.md.
+ * Asked first (or --agents); append only; never twice.
+ */
+async function offerAgentInstructions(
+  dir: string,
+  options: InitCommandOptions,
+  ask: Asker | undefined,
+  io: InitIo,
+): Promise<void> {
+  if (!options.agents && !ask) return;
+  const { appendAgentsSnippet } = await import("@testament/mcp/instructions");
+  const present = AGENT_FILES.filter((name) => existsSync(join(dir, name)));
+  for (const name of present.length ? present : (["AGENTS.md"] as const)) {
+    const file = join(dir, name);
+    const existing = existsSync(file) ? readFileSync(file, "utf8") : undefined;
+    const next = appendAgentsSnippet(existing);
+    if (next === null) {
+      io.stdout(`  kept     ${name} (already has the ${brand.productName} instructions)\n`);
+      continue;
+    }
+    const yes =
+      options.agents ||
+      (ask !== undefined &&
+        (await confirm(
+          ask,
+          `${existing === undefined ? "Create" : "Add to"} ${name} the instructions for coding agents (how to run tests; never edit expectations to make them pass)?`,
+        )));
+    if (!yes) continue;
+    if (existing === undefined) writeFileSync(file, next, { flag: "wx" });
+    else appendFileSync(file, next.slice(existing.length));
+    io.stdout(
+      `  ${existing === undefined ? "created " : "updated "} ${name} (instructions for coding agents)\n`,
+    );
+  }
+}
+
+/** ONB-2: explores the app and proposes starter tests; each is saved only on a yes. */
+async function suggestStarters(dir: string, ask: Asker | undefined, io: InitIo): Promise<void> {
+  io.stdout(`\nExploring the app for starter tests…\n`);
+  const core = await import("@testament/core/node");
+  const { DraftSetupError } = core;
+  const suggestStarterTests = io.suggest ?? core.suggestStarterTests;
+  let suggestions: Awaited<ReturnType<typeof suggestStarterTests>>;
+  try {
+    suggestions = await suggestStarterTests(undefined, { project: dir, env: io.env });
+  } catch (error) {
+    const fix = error instanceof DraftSetupError ? ` Fix: ${error.fix}` : "";
+    io.stdout(
+      `  No starter tests: ${error instanceof Error ? error.message : String(error)}${fix}\n`,
+    );
+    return;
+  }
+  for (const note of suggestions.notes) io.stdout(`  ${note}\n`);
+  const calls = suggestions.modelCalls.length;
+  if (calls) io.stdout(`  (${calls} AI call${calls === 1 ? "" : "s"})\n`);
+  for (const draft of suggestions.drafts) {
+    io.stdout(`\n  ${draft.name} → ${draft.path}${draft.lintClean ? "" : " (lint problems)"}\n`);
+    io.stdout(`${draft.text.replace(/^(?=.)/gm, "      ")}`);
+    for (const note of draft.notes) io.stdout(`    - ${note}\n`);
+    const file = join(dir, ...draft.path.split("/"));
+    if (!draft.lintClean || draft.status === "impossible" || draft.status === "stopped") {
+      io.stdout("    Not offered for saving: fix it first, or draft it again with `new`.\n");
+      continue;
+    }
+    if (!ask) {
+      io.stdout(
+        "    Not saved (review first): run init --suggest in a terminal, or save it with `new --accept`.\n",
+      );
+      continue;
+    }
+    if (existsSync(file)) {
+      io.stdout(`    ${draft.path} already exists: not saved.\n`);
+      continue;
+    }
+    if (await confirm(ask, `    Save ${draft.path}?`)) {
+      mkdirSync(join(file, ".."), { recursive: true });
+      writeFileSync(file, draft.text, { flag: "wx" });
+      io.stdout(`    created  ${draft.path}\n`);
+    }
+  }
 }
 
 async function readAllStdin(): Promise<string> {
@@ -490,6 +590,8 @@ export async function runInitCommand(
   }
   io.stdout(`\n${notes.join("\n")}\n`);
 
+  await offerAgentInstructions(dir, options, ask, io);
+
   if (options.doctor !== false) {
     const { formatDoctorReport, runDoctor } = await import("./doctor.js");
     const report = await runDoctor({
@@ -499,6 +601,11 @@ export async function runInitCommand(
     });
     const { defaultRedactor } = await import("@testament/config/node");
     io.stdout(`\n${defaultRedactor.redact(formatDoctorReport(report))}\n`);
+  }
+
+  if (options.suggest) {
+    if (target === "web") await suggestStarters(dir, ask, io);
+    else io.stdout("\n--suggest drafts web tests only for now.\n");
   }
 
   io.stdout(
@@ -529,6 +636,14 @@ export function registerInitCommand(program: Command, io: () => CommandIo): void
     .option("--ai-model <model>", "for --ai openrouter or openai-compatible: the model")
     .option("--key-stdin", "read the API key for --ai from stdin (it goes to .env only)")
     .option("--no-doctor", "don't run the doctor checks at the end")
+    .option(
+      "--suggest",
+      "explore the running app and propose 3 starter tests (AI); each is saved only when you say yes",
+    )
+    .option(
+      "--agents",
+      "append the instructions for coding agents to AGENTS.md / CLAUDE.md without asking",
+    )
     .action(async (dir: string | undefined, options: InitCommandOptions) => {
       const interactive = process.stdin.isTTY && process.stdout.isTTY && !options.yes;
       process.exitCode = await runInitCommand(dir, options, {

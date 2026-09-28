@@ -11,8 +11,8 @@ the fix policies, and review and accept.
 
 | Import | Use |
 |---|---|
-| `@testament/core` | `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `PROMPT_VERSION`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `fixerProposal`, `chaptersVtt`; heals: `runFixer`, `fixerContext`, `FIXER_LIMITS`, `FIXER_PROMPT_VERSION`, `applyPatches`, `HealPatchSchema`, `describeCommand`, `markAutoApplied` |
-| `@testament/core/node` | `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `mergeRecording`, `recentAiUsage`, `recentHeals`, `runSpecTest`; heals: `listHeals`, `applyHeals` |
+| `@testament/core` | drafting: `exploreDraft`, `exploreStarters`, `finishDraft`, `DRAFT_TOOLS`, `DRAFT_LIMITS`, `DRAFT_PROMPT_VERSION`; `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `PROMPT_VERSION`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `fixerProposal`, `chaptersVtt`; heals: `runFixer`, `fixerContext`, `FIXER_LIMITS`, `FIXER_PROMPT_VERSION`, `applyPatches`, `HealPatchSchema`, `describeCommand`, `markAutoApplied` |
+| `@testament/core/node` | `draftTest`, `suggestStarterTests` (drafting against a project folder); `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `mergeRecording`, `recentAiUsage`, `recentHeals`, `runSpecTest`; heals: `listHeals`, `applyHeals` |
 
 ## How a run works (LOOP-4)
 
@@ -290,6 +290,71 @@ the failure groups, then the summary and the results folder. `--verbose`
 prints every step, heal and warning. Exit code via `exitCodeFor` (CLI-5): 0
 passed, 1 failed/flaky (and healed unless the heal policy is `auto`), 2
 blocked or config error. `testament results <runDir>` reads the same folder.
+
+## Drafting a test from a sentence (AGT-0)
+
+"Describe it" (AUT-7): one sentence in, a `.test.md` draft out. Nothing is
+saved here; the CLI (`new`, `init --suggest`), the MCP server (`draft_test`)
+and the apps decide, and only on an explicit accept.
+
+```ts
+import { draftTest, suggestStarterTests } from "@testament/core/node";
+
+const draft = await draftTest("a returning user can log in and see the dashboard", {
+  project: projectDir,   // the project folder: settings, environment, secrets, models
+  environment,           // default: the project's defaultEnvironment
+  start: "/login",       // where exploring (and the test) starts; default "/"
+});
+// draft.status: drafted | incomplete | impossible | stopped; draft.text, draft.path
+// (a free name in the tests folder), draft.lintClean, draft.findings, draft.notes,
+// draft.totals (AI calls, tokens, cost, billing)
+
+const starters = await suggestStarterTests(undefined /* or a URL */, { project: projectDir });
+// starters.proposals, starters.drafts (3: the home page, sign-up, login, ...), starters.notes
+```
+
+How it works (`exploreDraft`, `src/draft/`):
+1. Opens `start` in a fresh session with no trace, video or HAR.
+2. The `planner` role is called with the goal, the context (the project's
+   secrets by name and description, never values; the default params of its
+   flows, e.g. the login's email), the draft so far, what happened so far and
+   the page (untrusted content, SAF-3). The prompt is data:
+   `src/draft/drafter-prompt.json` (`drafter-v1`).
+3. Its tools are the author's closed action set (SAF-2) without `read_inbox`,
+   plus `look`, `expect { text }`, `draft_done { name }` and
+   `draft_impossible { reason }`. No HTTP, no code, no files.
+4. Every action goes through the harness (the allowlist, secrets typed by the
+   harness) and the guards **in production mode**: exploring never does a
+   destructive action (delete, pay, send, invite, cancel); a refusal is told to
+   the model and noted on the draft.
+5. **Steps are written by code**, from the element the action used, the way
+   the shop's tests read: `Fill "Email" with ada@example.com`, `Click "Log in"`,
+   `Go to /settings`. The model can't write a vague step. Scrolls and waits
+   are not written. `{{unique.email}}` / `{{faker.name}}` typed by the model
+   become `data:` entries (`email: "{{unique.email}}"`) and `{{data.email}}` in
+   the step; secrets stay `{{secret.NAME}}`.
+6. **Every expectation is checked before it is kept**: compiled by the rules
+   only (`compileCheck` with no model), evaluated on the live page, and
+   sanity-tested against an empty page and the page before the last action
+   (VER-6). A line no rule maps, one that doesn't hold now, or one that proves
+   nothing is refused with the reason (what was seen), so the model can
+   correct it. Kept lines quote visible text and compile by rules when the
+   test is authored.
+7. `draft_done` is refused once while the draft has no expectation, and once
+   while its last step is an unchecked action.
+8. The draft is built as a `TestSpec` (name, `start`, `data`, numbered steps),
+   printed with `printTest`, safe lint fixes applied, and linted with
+   `checkTest`. `lintClean` means no error or warning; anything left is in
+   `findings` and `notes`.
+
+Limits (`DRAFT_LIMITS`): 16 actions, 24 model calls, 3 invalid/refused/failed
+calls in a row, 180 s, 8 expectations. Hitting one gives an `incomplete`
+draft with the reason; nothing is reported as finished that isn't.
+
+Starters (`exploreStarters`, ONB-2): the home page test needs no AI (its
+heading, checked like any expectation); sign-up and login come from the
+page's links and buttons (starting at their pages); the planner proposes the
+rest in one call (`propose_tests`). Each is drafted from a fresh session.
 
 ## authorTest
 
