@@ -78,6 +78,11 @@ const MAX_ELEMENTS = 400;
 const TOAST_MS = 6_000;
 const DEFAULT_SETTLE = { timeoutMs: 10_000, quietMs: 300 };
 const AFTER_NETWORK_QUIET_MS = 800;
+/** Launchers and Google apps that may take the foreground on their own after a boot. */
+const FOREGROUND_THIEVES =
+  /^(?:com\.google\.android\.(?:apps\.[\w.]+|googlequicksearchbox|setupwizard|gms)|com\.android\.launcher3?)$/;
+/** How often a session brings the app back to the front before leaving it to the test. */
+const MAX_FOREGROUND_RESTORES = 3;
 /** How long to wait before looking again at an action that seemed to change nothing. */
 const SECOND_LOOK_MS = 1_000;
 const PERMISSION_PACKAGES = /permissioncontroller$/;
@@ -262,6 +267,9 @@ export class AndroidSession {
   readonly #requests: LoggedRequest[];
   readonly #refusals: AndroidRefusal[];
   readonly #timings: SessionTimings;
+  /** The test itself put another app in front (home, back out of the app, a link to another app). */
+  #sentAway = false;
+  #restores = 0;
   readonly #systemDialogs: SystemDialogGuard;
   readonly #secretFields = new Map<string, string>();
   #refs = new Map<string, RefKey>();
@@ -399,9 +407,30 @@ export class AndroidSession {
   /** A fresh screen with foreign system dialogs dismissed first (the one the guard checked). */
   async #clearScreen(): Promise<Screen | null> {
     if (this.#problem()) return null;
-    const screen = await this.#systemDialogs.clear();
+    let screen = await this.#systemDialogs.clear();
+    // A launcher or Google app that came to the front by itself (slow CI emulators, just
+    // after boot) hides the app from the test: bring the app's task back, as it was.
+    const thief = screen ? this.#stolenBy(screen) : null;
+    if (thief && this.#restores < MAX_FOREGROUND_RESTORES) {
+      this.#restores++;
+      this.#timings.notes.push(
+        `${thief} came to the front by itself; the app was brought back (${this.#restores}).`,
+      );
+      await this.#driver.call("launch", { package: this.#appPackage }, 30_000).catch(() => {});
+      await this.settle({ timeoutMs: 5_000 });
+      screen = await this.#systemDialogs.clear();
+    }
     if (screen) this.#latest = screen;
     return screen;
+  }
+
+  /** The package that took the foreground from the app, when the test didn't send the app away. */
+  #stolenBy(screen: Screen): string | null {
+    if (this.#sentAway) return null;
+    const resumed = screen.dump.activity?.split("/")[0];
+    return resumed && resumed !== this.#appPackage && FOREGROUND_THIEVES.test(resumed)
+      ? resumed
+      : null;
   }
 
   /** Moves the driver's new toasts into the log (they are reported once). Returns the new ones. */
@@ -674,6 +703,14 @@ export class AndroidSession {
         message: `${app === "crashed" ? "The app crashed" : "The app stopped responding"}${detail ? `: ${detail}` : "."}`,
       };
     }
+    // Did the test itself put another app in front? Then that is the screen it wants.
+    const front = /^android-app:\/\/([^/]+)/.exec(post.urlAfter)?.[1];
+    if (front === this.#appPackage || action.type === "launch_app") this.#sentAway = false;
+    else if (
+      ["home", "back", "open_deep_link", "goto"].includes(action.type) &&
+      result.status === "ok"
+    )
+      this.#sentAway = true;
     const outcome: AndroidActionOutcome = {
       action: this.#scrubAction(action),
       status: result.status,

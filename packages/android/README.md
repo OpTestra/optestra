@@ -243,6 +243,16 @@ Two more rules make post-states trustworthy on slow machines:
   again after a second. Apps sometimes react that late with nothing in between.
   The silent-tap trap still reports `changed: false`, one look later.
 
+## The foreground on slow machines
+
+On a slow emulator (CI, just after a cold boot) a launcher or a Google app can
+come to the front by itself, hiding the app from the test. Before it observes or
+acts, the session checks who is in front: when it is a launcher or Google app
+(`com.google.android.apps.*`, `com.android.launcher3`, …) and the test didn't
+send the app away itself (home, back out of the app, a link to another app), it
+brings the app's task back as it was (at most three times per session) and says
+so in `timings().notes`. A test that went home keeps the launcher.
+
 ## Observation format
 
 Windows play the part of frames: frame 0 is the bottom window. A dialog, the

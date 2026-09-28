@@ -576,6 +576,48 @@ describe("actions", () => {
   });
 });
 
+describe("the foreground on slow machines (mob-0-ci2)", () => {
+  // The test (not the harness) sends a HOME intent with raw adb, as the launcher
+  // coming to the front by itself after a cold boot does on a slow CI emulator.
+  const adb = (...args: string[]) =>
+    spawnSync(emulator.sdk.adb, ["-s", emulator.serial, ...args], { encoding: "utf8" }).stdout;
+
+  it("brings the app back when a launcher takes the foreground by itself, and notes it", async () => {
+    await seed({ projects: ["Website redesign"] });
+    const session = await open();
+    try {
+      adb(
+        "shell",
+        "am",
+        "start",
+        "-a",
+        "android.intent.action.MAIN",
+        "-c",
+        "android.intent.category.HOME",
+      );
+      await sleep(2_000);
+      const signedIn = await signIn(session);
+      expect(signedIn.post.urlAfter).toBe("android-app://com.acme.shop/.ProjectsActivity");
+      expect(session.timings().notes.join(" ")).toMatch(/came to the front by itself/);
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("leaves the launcher in front when the test itself went home", async () => {
+    const session = await open();
+    try {
+      const home = await session.act({ type: "home" });
+      expect(home.status).toBe("ok");
+      const seen = await session.observe();
+      expect(seen.url).not.toContain("com.acme.shop");
+      expect(session.timings().notes.join(" ")).not.toMatch(/came to the front by itself/);
+    } finally {
+      await session.close();
+    }
+  });
+});
+
 describe("locale and timezone (ENV-5)", () => {
   const adb = (...args: string[]) =>
     spawnSync(emulator.sdk.adb, ["-s", emulator.serial, ...args], { encoding: "utf8" }).stdout;
