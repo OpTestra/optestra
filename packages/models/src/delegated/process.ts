@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, statSync } from "node:fs";
 import { delimiter, isAbsolute, join, resolve } from "node:path";
+import { isNodeScript, type NodeRuntime, nodeRuntime } from "@testament/config/node";
 import type { DelegatedKind } from "../config.js";
 import { BINARY_NAME } from "./lockdown.js";
 
@@ -10,8 +11,14 @@ import { BINARY_NAME } from "./lockdown.js";
 
 export interface ResolvedBinary {
   path: string;
-  /** A .js/.mjs script (tests, or a JS install): run with this Node. */
+  /**
+   * A Node script (a .js file, or an npm install whose first line is
+   * `#!/usr/bin/env node`): run with `node`, never through PATH's `node`
+   * (the desktop app's PATH may have none).
+   */
   viaNode: boolean;
+  /** The Node that runs it (see `nodeRuntime`). */
+  node?: NodeRuntime;
 }
 
 export type BinaryLookup = { ok: true; binary: ResolvedBinary } | { ok: false; problem: string };
@@ -29,6 +36,8 @@ export function findBinary(
   kind: DelegatedKind,
   configured: string | undefined,
   env: Readonly<Record<string, string | undefined>>,
+  /** The Node for JS CLIs (default: detected, see `nodeRuntime`). */
+  node?: string,
 ): BinaryLookup {
   const name = BINARY_NAME[kind];
   const wrap = (path: string): BinaryLookup => {
@@ -38,7 +47,11 @@ export function findBinary(
         problem: `${path} is a Windows script shim; install the native ${name} binary (${name}.exe) so it can run without a shell`,
       };
     }
-    return { ok: true, binary: { path, viaNode: /\.(c|m)?js$/i.test(path) } };
+    const viaNode = isNodeScript(path);
+    return {
+      ok: true,
+      binary: { path, viaNode, ...(viaNode ? { node: nodeRuntime({ node, env }) } : {}) },
+    };
   };
   if (configured) {
     const path = isAbsolute(configured) ? configured : resolve(configured);
@@ -107,8 +120,10 @@ export function runBinary(
   args: readonly string[],
   options: RunOptions,
 ): Promise<ProcessResult> {
-  const command = binary.viaNode ? process.execPath : binary.path;
-  const argv = binary.viaNode ? [binary.path, ...args] : [...args];
+  const node = binary.viaNode ? (binary.node ?? nodeRuntime({ env: options.env })) : undefined;
+  const command = node ? node.command : binary.path;
+  const argv = node ? [binary.path, ...args] : [...args];
+  const env = node ? { ...options.env, ...node.env } : options.env;
   return new Promise((done) => {
     let stdout = "";
     let stderr = "";
@@ -119,7 +134,7 @@ export function runBinary(
     try {
       child = spawn(command, argv, {
         cwd: options.cwd,
-        env: options.env,
+        env,
         shell: false,
         windowsHide: true,
         detached: process.platform !== "win32",

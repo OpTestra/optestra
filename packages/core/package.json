@@ -34,7 +34,8 @@
   "scripts": {
     "build": "tsc -b",
     "test:browser": "tsc -b ../../bench/fixtures/shop . && vitest run --config vitest.config.ts",
-    "bench:replay": "tsc -b ../../bench/fixtures/shop ../codegen . && node bench/replay.ts --equivalence"
+    "bench:replay": "tsc -b ../../bench/fixtures/shop ../codegen . && node bench/replay.ts --equivalence",
+    "perf": "tsc -b ../../bench/fixtures/shop ../codegen . && node bench/perf.ts"
   },
   "engines": {
     "node": ">=24"

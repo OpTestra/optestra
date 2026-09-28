@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { setTimeout as sleep } from "node:timers/promises";
 import { mkdirSync, mkdtempSync, realpathSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
@@ -51,8 +52,10 @@ import { ActivityTracker, DEFAULT_SETTLE, mutationScript } from "./settle.js";
 import type {
   Action,
   ActionOutcome,
+  ActOptions,
   BrowserName,
   CandidatesResult,
+  CloseOptions,
   CloseResult,
   DialogSummary,
   ElementFacts,
@@ -83,6 +86,9 @@ const MIN_STATE_VALUE = 6;
 const NAVIGATION_TIMEOUT_MS = 30_000;
 const MODEL_MAX_WIDTH = 1280;
 const MAX_ELEMENTS = 400;
+/** How long `act(…, { until })` looks for the effect before settling as usual. */
+const DEFAULT_EFFECT_CEILING_MS = 3_000;
+const EFFECT_POLL_MS = 20;
 /** Browser-internal error pages shown when a navigation fails. Not a visit to another site. */
 const ERROR_PAGE = /^(chrome-error:|about:neterror|about:certerror)/;
 
@@ -140,6 +146,10 @@ export class Session {
   #crashed = false;
   #closed: CloseResult | undefined;
   #helper: Page | undefined;
+  /** A screenshot still being taken: the next action waits for it (a navigation would stall it). */
+  #shooting: Promise<unknown> | undefined;
+  /** Set when the last action ended on its effect (no quiet window yet): when it did. */
+  #unsettledSince: number | undefined;
 
   private constructor(init: {
     browser: LaunchedBrowser;
@@ -612,8 +622,14 @@ export class Session {
     };
   }
 
-  /** Performs one action from the closed set and reports what changed. */
-  async act(action: Action): Promise<ActionOutcome> {
+  /**
+   * Performs one action from the closed set and reports what changed. With
+   * `until` (replay's learned wait, LRN-4) the action is done the moment its
+   * expected effect shows with no request in flight; otherwise, or when the
+   * effect doesn't show within `ceilingMs`, the page settles as usual.
+   */
+  async act(action: Action, options: ActOptions = {}): Promise<ActionOutcome> {
+    if (this.#shooting) await this.#shooting;
     const urlBefore = this.url;
     const before = this.#unusable() ? [] : ((await this.#snapshotElements()) ?? []);
     const requestMark = this.#tracker.mark();
@@ -621,6 +637,7 @@ export class Session {
     const dialogMark = this.#dialogs.length;
     const popupMark = this.#popups.length;
     this.#violation = undefined;
+    this.#unsettledSince = undefined;
 
     const started = Date.now();
     let result: Result;
@@ -635,12 +652,86 @@ export class Session {
       }
     }
     const ms = Date.now() - started;
-    const settle = this.#unusable()
-      ? { settledMs: 0, timedOut: false, waitedFor: { network: 0, dom: 0, busy: 0 }, inflight: 0 }
-      : await this.#tracker.settle(this.#options.settle ?? DEFAULT_SETTLE);
-    const after = this.#unusable() ? [] : ((await this.#snapshotElements()) ?? []);
 
-    const refusedNow = this.#refusals.slice(refusalMark);
+    const postOf = (after: ObservedElement[]): PostState => {
+      const { added, removed } = diffElements(before, after);
+      // A page dialog's message: its name, else the first heading inside it.
+      const pageDialogs = added.flatMap((e, i) => {
+        if (e.role !== "dialog" && e.role !== "alertdialog") return [];
+        const heading = added.slice(i + 1).find((next) => next.role === "heading");
+        return [{ type: e.role, message: e.name || heading?.name || "" }];
+      });
+      const dialogs = [...this.#dialogs.slice(dialogMark), ...pageDialogs];
+      const requests = this.#tracker.requestsSince(requestMark);
+      const popups = this.#popups.slice(popupMark);
+      const urlAfter = this.url;
+      return {
+        urlBefore,
+        urlAfter,
+        added,
+        removed,
+        requests,
+        dialogs,
+        popups,
+        refused: this.#refusals.slice(refusalMark),
+        changed:
+          urlBefore !== urlAfter ||
+          added.length > 0 ||
+          removed.length > 0 ||
+          requests.some((r) => r.status !== "refused") ||
+          dialogs.length > 0 ||
+          popups.length > 0,
+        reordered: added.length === 0 && removed.length === 0 && reorderedElements(before, after),
+      };
+    };
+
+    let settle: SettleResult | undefined;
+    let post: PostState | undefined;
+    if (this.#unusable()) {
+      settle = {
+        settledMs: 0,
+        timedOut: false,
+        waitedFor: { network: 0, dom: 0, busy: 0 },
+        inflight: 0,
+      };
+    } else if (options.until && result.status === "ok") {
+      // LRN-4: look for the expected effect as the page builds up; move on the moment it shows.
+      const from = Date.now();
+      const ceiling = options.ceilingMs ?? DEFAULT_EFFECT_CEILING_MS;
+      const waitedFor = { network: 0, dom: 0, busy: 0 };
+      for (;;) {
+        const lap = Date.now();
+        const now = postOf((await this.#snapshotElements()) ?? []);
+        const quiet = this.#tracker.inflight === 0;
+        if (quiet && options.until(now)) {
+          post = now;
+          settle = {
+            settledMs: Date.now() - from,
+            timedOut: false,
+            waitedFor,
+            inflight: 0,
+            endedBy: "effect",
+          };
+          // The page may still be busy: a later settle counts its quiet from here.
+          this.#unsettledSince = from;
+          break;
+        }
+        if (Date.now() - from >= ceiling || this.#unusable()) break;
+        await sleep(EFFECT_POLL_MS);
+        if (!quiet) waitedFor.network += Date.now() - lap;
+      }
+    }
+    if (!settle) {
+      const since = Date.now();
+      settle = this.#unusable()
+        ? { settledMs: 0, timedOut: false, waitedFor: { network: 0, dom: 0, busy: 0 }, inflight: 0 }
+        : await this.#tracker.settle({ ...(this.#options.settle ?? DEFAULT_SETTLE) });
+      if (options.until)
+        settle = { ...settle, settledMs: settle.settledMs + (since - started - ms) };
+    }
+    if (!post) post = postOf(this.#unusable() ? [] : ((await this.#snapshotElements()) ?? []));
+
+    const refusedNow = post.refused;
     const leftAllowlist =
       this.#violation !== undefined ||
       refusedNow.some((r) => r.type === "navigation" || r.type === "scheme");
@@ -650,36 +741,6 @@ export class Session {
         `The page tried to leave the allowed domains (${refusedNow.find((r) => r.type === "navigation" || r.type === "scheme")?.url ?? this.#violation}).`,
       );
     }
-
-    const { added, removed } = diffElements(before, after);
-    // A page dialog's message: its name, else the first heading inside it.
-    const pageDialogs = added.flatMap((e, i) => {
-      if (e.role !== "dialog" && e.role !== "alertdialog") return [];
-      const heading = added.slice(i + 1).find((next) => next.role === "heading");
-      return [{ type: e.role, message: e.name || heading?.name || "" }];
-    });
-    const dialogs = [...this.#dialogs.slice(dialogMark), ...pageDialogs];
-    const requests = this.#tracker.requestsSince(requestMark);
-    const popups = this.#popups.slice(popupMark);
-    const urlAfter = this.url;
-    const post: PostState = {
-      urlBefore,
-      urlAfter,
-      added,
-      removed,
-      requests,
-      dialogs,
-      popups,
-      refused: refusedNow,
-      changed:
-        urlBefore !== urlAfter ||
-        added.length > 0 ||
-        removed.length > 0 ||
-        requests.some((r) => r.status !== "refused") ||
-        dialogs.length > 0 ||
-        popups.length > 0,
-      reordered: added.length === 0 && removed.length === 0 && reorderedElements(before, after),
-    };
     const outcome: ActionOutcome = {
       action: this.#scrubAction(action),
       status: result.status,
@@ -693,8 +754,13 @@ export class Session {
     return outcome;
   }
 
-  /** Waits until the page is quiet (see settle.ts). */
+  /**
+   * Waits until the page is quiet (see settle.ts). After an action that ended
+   * on its effect, the quiet window counts from when that action finished.
+   */
   async settle(options: SettleOptions = {}): Promise<SettleResult> {
+    const since = this.#unsettledSince;
+    this.#unsettledSince = undefined;
     if (this.#unusable()) {
       return {
         settledMs: 0,
@@ -703,13 +769,41 @@ export class Session {
         inflight: 0,
       };
     }
-    return this.#tracker.settle({ ...DEFAULT_SETTLE, ...this.#options.settle, ...options });
+    return this.#tracker.settle({
+      ...DEFAULT_SETTLE,
+      ...this.#options.settle,
+      ...options,
+      ...(since !== undefined ? { since } : {}),
+    });
   }
 
-  /** A screenshot: JPEG ≤ 1280 px wide for a model, or full-resolution PNG evidence. */
+  /** True when the last action ended on its effect and the page hasn't settled since. */
+  get unsettled(): boolean {
+    return this.#unsettledSince !== undefined;
+  }
+
+  /**
+   * A screenshot: JPEG ≤ 1280 px wide for a model, or full-resolution PNG (or
+   * JPEG) evidence. It may run while the caller reads the page (checks,
+   * inspect); the next action waits for it.
+   */
   async screenshot(options: ScreenshotOptions = {}): Promise<ScreenshotResult> {
+    const taking = this.#takeScreenshot(options);
+    const settled = taking.then(
+      () => {},
+      () => {},
+    );
+    this.#shooting = settled;
+    void settled.then(() => {
+      if (this.#shooting === settled) this.#shooting = undefined;
+    });
+    return taking;
+  }
+
+  async #takeScreenshot(options: ScreenshotOptions): Promise<ScreenshotResult> {
     const forModel = options.forModel ?? false;
-    const contentType = forModel ? "image/jpeg" : "image/png";
+    const jpeg = forModel || options.format === "jpeg";
+    const contentType = jpeg ? "image/jpeg" : "image/png";
     const fail = (status: "not_found" | "error", message: string): ScreenshotResult => ({
       status,
       bytes: new Uint8Array(),
@@ -718,8 +812,8 @@ export class Session {
     });
     if (this.#unusable()) return fail("error", "The page is closed or crashed.");
     const shot = {
-      type: forModel ? ("jpeg" as const) : ("png" as const),
-      ...(forModel ? { quality: 70 } : {}),
+      type: jpeg ? ("jpeg" as const) : ("png" as const),
+      ...(jpeg ? { quality: forModel ? 70 : 80 } : {}),
       scale: forModel ? ("css" as const) : ("device" as const),
       style: `[${this.#secretAttribute}] { color: transparent !important; text-shadow: none !important; }`,
       timeout: ACTION_TIMEOUT_MS,
@@ -808,10 +902,11 @@ export class Session {
    * Ends the session: closes the context (and the browser if this session
    * launched it) and returns the scrubbed evidence files. Safe to call twice.
    */
-  async close(): Promise<CloseResult> {
+  async close(options: CloseOptions = {}): Promise<CloseResult> {
     if (this.#closed) return this.#closed;
     this.#closed = { evidence: [], refused: [] };
-    await this.#evidence.stop();
+    const discard = new Set(options.discard ?? []);
+    await this.#evidence.stop({ discardTrace: discard.has("trace") });
     const video = this.#page.video();
     await this.#helper
       ?.context()
@@ -819,7 +914,9 @@ export class Session {
       .catch(() => {});
     await this.#context.close().catch(() => {});
     const videoPath = video ? await video.path().catch(() => undefined) : undefined;
-    const evidence = await this.#evidence.finish(videoPath);
+    const evidence = await this.#evidence.finish(videoPath, {
+      discardNetwork: discard.has("network"),
+    });
     await this.#proxy.close();
     if (this.#ownsBrowser) await this.#browser.close();
     this.#closed = { evidence, refused: this.refusals() };

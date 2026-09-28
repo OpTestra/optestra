@@ -7,9 +7,11 @@ import type { Config, Diagnostic } from "@testament/config";
 import {
   defaultRedactor,
   dotenvSource,
+  execPathIsNode,
   findProject,
   type LoadedProject,
   loadProject,
+  nodeRuntime,
   processEnvSource,
   projectFile,
   resolveSecrets,
@@ -99,12 +101,32 @@ export interface DoctorOptions {
   strict?: boolean;
   /** Test hook: replaces the real browser. */
   probes?: DoctorProbes;
+  /**
+   * Where secrets and provider keys come from (default: the environment, then
+   * the project's .env files). The desktop app passes its keychain source.
+   */
+  secretSources?: readonly SecretSource[];
+  /** The Node for JS tools (see runTests' `node`); shown in the Node.js check. */
+  node?: string;
 }
 
 const MIN_NODE = 24;
 
-function nodeCheck(): DoctorCheck {
+function nodeCheck(node?: string): DoctorCheck {
   const version = process.versions.node;
+  // Inside the desktop app this process isn't Node: say which Node runs the JS tools.
+  if (node || !execPathIsNode()) {
+    const runtime = nodeRuntime({ node });
+    return {
+      id: "node",
+      title: "Node.js",
+      status: "ok",
+      message:
+        runtime.how === "electron"
+          ? `v${version} (the app's own runtime runs JS tools; no node on PATH)`
+          : `v${version}; JS tools run with ${runtime.command}`,
+    };
+  }
   const major = Number(version.split(".")[0]);
   return major >= MIN_NODE
     ? { id: "node", title: "Node.js", status: "ok", message: `v${version}` }
@@ -742,7 +764,7 @@ export async function runDoctor(options: DoctorOptions): Promise<DoctorReport> {
   const env = options.env ?? process.env;
   const start = resolve(options.dir);
   const dir = findProject(start) ?? start;
-  const checks: DoctorCheck[] = [nodeCheck()];
+  const checks: DoctorCheck[] = [nodeCheck(options.node)];
   const done = (project: string | null, environments: string[]): DoctorReport => ({
     schema: 1,
     project,
@@ -771,7 +793,7 @@ export async function runDoctor(options: DoctorOptions): Promise<DoctorReport> {
     ? [options.environment]
     : Object.keys(loaded.config.environments ?? {});
   const environment = loaded.environment?.name;
-  const sources = [processEnvSource(env), dotenvSource(dir)];
+  const sources = options.secretSources ?? [processEnvSource(env), dotenvSource(dir)];
 
   checks.push(await testsCheck(dir, environment, env));
   checks.push(...(await browserChecks(loaded, environments, options.probes ?? harnessProbes)));

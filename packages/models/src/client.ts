@@ -68,6 +68,12 @@ export interface ModelsOptions {
   now?: () => number;
   /** Environment for finding and running subscription CLIs (PATH, HOME…). Default: process.env. */
   env?: Readonly<Record<string, string | undefined>>;
+  /**
+   * The Node that runs JS-based subscription CLIs. Default: this process when
+   * it is Node, else `node` on PATH, else the app's binary in Node mode (the
+   * packaged desktop app, where `process.execPath` is the app).
+   */
+  node?: string;
 }
 
 export interface Models {
@@ -155,11 +161,12 @@ export function createModels(options: ModelsOptions): Models {
     options.sources ?? [processEnvSource()],
     options.environment,
     parentEnv,
+    options.node,
   );
   // Delegated CLIs: probed once per client (version + lock-down flags), and capped per run.
   const probes = new Map<string, Promise<ProbeResult>>();
   const delegatedCalls = new Map<string, number>();
-  const callCap = config.models?.delegatedCallsPerRun ?? 300;
+  const callCap = config.models?.delegatedCallsPerRun ?? 60;
   const pools = resolvePools(config, providers);
   const disabled = new Set<string>();
   const warnedPrices = new Set<string>();
@@ -539,6 +546,15 @@ export function createModels(options: ModelsOptions): Models {
     const summary = attempts
       .map((a) => `${a.provider}/${a.model}: ${a.outcome}${a.message ? ` (${a.message})` : ""}`)
       .join("; ");
+    const capped = attempts.filter((a) => a.outcome === "skipped_call_cap");
+    if (pool.length > 0 && tried.length === 0 && capped.length > 0) {
+      const names = [...new Set(capped.map((a) => a.provider))].join(", ");
+      return fail(
+        "no_provider",
+        `This run has made its ${callCap} calls through your AI subscription (${names}), the most one run may make (models.delegatedCallsPerRun). The limit protects your plan's usage; the rest of this run's AI steps are blocked.`,
+        `Run again to continue, or raise models.delegatedCallsPerRun in ${brand.configFileName} (default 60), or add an API key as another provider (models.roles.${role}).`,
+      );
+    }
     if (pool.length === 0 || tried.length === 0) {
       return fail(
         "no_provider",

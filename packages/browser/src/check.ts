@@ -287,7 +287,8 @@ export interface EvaluateContext {
 }
 
 const DEFAULT_TIMEOUT_MS = 5_000;
-const RETRY_MS = 100;
+/** Retry delays, ramping up like Playwright's assertions: a check that passes a moment later isn't kept waiting. */
+const RETRY_MS = [20, 30, 50, 100];
 const MAX_ACTUAL = 300;
 const CALL_TIMEOUT_MS = 1_000;
 
@@ -687,8 +688,9 @@ export async function evaluateCheck(
       last = { passed: false, actual: null, seen: null };
       if (on === "page" && ctx.unusable()) break;
     }
-    if (last.passed || Date.now() + RETRY_MS > deadline) break;
-    await sleep(RETRY_MS);
+    const delay = RETRY_MS[Math.min(attempts, RETRY_MS.length) - 1] as number;
+    if (last.passed || Date.now() + delay > deadline) break;
+    await sleep(delay);
   }
   if (error !== undefined && !last.passed) {
     return result("error", { expected, attempts, message: ctx.redact(error) });

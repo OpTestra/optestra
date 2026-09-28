@@ -1,4 +1,4 @@
-import { formatDuration, formatUsd, summarize, type Verdict } from "@testament/contract";
+import { formatDuration, formatUsd, stepLabel, summarize, type Verdict } from "@testament/contract";
 import { buildModel, CAUSE_LABEL, costText, plural, type RunData, words } from "./model.js";
 
 // Quiet terminal output (CLI-4): one line per test, then a summary and the
@@ -76,7 +76,7 @@ export function formatRunSummary(data: RunData, options: TerminalOptions = {}): 
           : "unknown cause";
       lines.push(
         `  ${paint(options.color, COLOR[group.tests[0]?.verdict ?? "failed"], "●")} ${clean(group.headline)}`,
-        `      ${label} · ${plural(group.tests.length, "test")}: ${group.tests.map((t) => `${clean(t.name)} (${clean(t.file)}${t.failingStep ? `, step ${t.failingStep.step.index + 1}` : ""})`).join(", ")}`,
+        `      ${label} · ${plural(group.tests.length, "test")}: ${group.tests.map((t) => `${clean(t.name)} (${clean(t.file)}${t.failingStep ? `, step ${stepLabel(t.failingStep.step)}` : ""})`).join(", ")}`,
       );
     }
     lines.push("");

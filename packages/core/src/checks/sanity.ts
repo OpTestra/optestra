@@ -28,7 +28,8 @@ export interface SanityInput {
 
 const NO_SANITY = new Set(["soft_judgment", "code", "pending"]);
 
-function isAbsence(op: CheckOp): boolean {
+/** Checks that hold when their subject isn't there (hidden, unchecked, at most N). */
+export function isAbsence(op: CheckOp): boolean {
   if (op.type === "element_state") return op.state === "hidden" || op.state === "unchecked";
   if (op.type === "count") return op.n === 0 || (op.max !== undefined && op.min === undefined);
   return false;

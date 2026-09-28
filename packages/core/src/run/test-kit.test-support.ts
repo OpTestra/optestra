@@ -1,4 +1,5 @@
 import type {
+  ActOptions,
   ActionOutcome,
   CandidatesResult,
   CheckEvaluation,
@@ -183,6 +184,16 @@ export interface FakePage {
   /** Check results; default passed. */
   check?: (op: unknown) => CheckEvaluation;
   url?: string;
+  /** Called when the replay settles the page (e.g. to make a late element appear). */
+  onSettle?: () => void;
+}
+
+/** What a fake session saw of the replay's waits (PERF-0). */
+export interface FakeWaits {
+  /** The options of each act, in order (undefined: settle with the quiet window). */
+  actOptions: (ActOptions | undefined)[];
+  /** How often the replay settled the page on its own. */
+  settles: number;
 }
 
 export function passedEvaluation(fields: Partial<CheckEvaluation> = {}): CheckEvaluation {
@@ -198,8 +209,13 @@ export function passedEvaluation(fields: Partial<CheckEvaluation> = {}): CheckEv
   };
 }
 
-export function fakeSession(page: FakePage): ReplaySession & { acted: unknown[] } {
+export function fakeSession(
+  page: FakePage,
+): ReplaySession & { acted: unknown[]; waits: FakeWaits } {
   const acted: unknown[] = [];
+  const waits: FakeWaits = { actOptions: [], settles: 0 };
+  // Like the harness: an act that ended on its effect leaves the page unsettled.
+  let unsettled = false;
   const url = page.url ?? URL0;
   const observed = (page.elements ?? []).map((e, i) => ({ ...e.element, ref: `e${i + 1}` }));
   const observation: Observation = {
@@ -214,6 +230,7 @@ export function fakeSession(page: FakePage): ReplaySession & { acted: unknown[] 
   };
   return {
     acted,
+    waits,
     browserName: "chromium",
     get url() {
       return url;
@@ -239,16 +256,20 @@ export function fakeSession(page: FakePage): ReplaySession & { acted: unknown[] 
         facts: entry.facts,
       };
     },
-    act: async (action) => {
+    act: async (action, options) => {
       acted.push(action);
+      waits.actOptions.push(options);
       const result = page.effect?.(action) ?? {
         post: { changed: true, added: [{ role: "status", name: "", text: "done" }] },
       };
+      const after = post(result.post);
+      unsettled = Boolean(options?.until?.(after));
       const settle = {
         settledMs: 5,
         timedOut: false,
         waitedFor: { network: 0, dom: 5, busy: 0 },
         inflight: 0,
+        ...(unsettled ? { endedBy: "effect" as const } : {}),
       };
       return {
         action,
@@ -257,7 +278,7 @@ export function fakeSession(page: FakePage): ReplaySession & { acted: unknown[] 
         settledMs: 5,
         settle,
         ...result,
-        post: post(result.post),
+        post: after,
       } as ActionOutcome;
     },
     check: async (op) => page.check?.(op) ?? passedEvaluation(),
@@ -270,6 +291,20 @@ export function fakeSession(page: FakePage): ReplaySession & { acted: unknown[] 
     refusals: () => [],
     pageCopy: async () => ({ url, takenAt: new Date(0).toISOString() }) as unknown as PageCopy,
     requestMark: () => ({ takenAt: new Date(0).toISOString() }) as unknown as RequestMark,
+    settle: async () => {
+      waits.settles++;
+      unsettled = false;
+      page.onSettle?.();
+      return {
+        settledMs: 0,
+        timedOut: false,
+        waitedFor: { network: 0, dom: 0, busy: 0 },
+        inflight: 0,
+      };
+    },
+    get unsettled() {
+      return unsettled;
+    },
   };
 }
 

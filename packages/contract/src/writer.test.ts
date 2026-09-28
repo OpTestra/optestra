@@ -199,6 +199,35 @@ describe("run writer", () => {
     expect(read.events.map((e) => e.seq)).toEqual([...Array(15).keys()]);
   });
 
+  it("hands every written event to onEvent, artifact.written included, scrubbed", () => {
+    const seen: string[] = [];
+    const writer = createRunWriter(tempRunDir(), {
+      scrub,
+      onEvent: (event) =>
+        seen.push(`${event.seq}:${event.type}:${JSON.stringify(event).includes(S)}`),
+    });
+    writer.emit({
+      type: "run.started",
+      engineVersion: "0",
+      project: "p",
+      environment: null,
+      target: "web",
+      trigger: "cli",
+      mode: "normal",
+    });
+    writer.writeArtifact(
+      { kind: "console", path: "console.log", contentType: "text/plain", scrubbed: true },
+      `password=${S}`,
+    );
+    writer.emit({ type: "run.finished", blocked: null });
+    writer.finish();
+    expect(seen).toEqual([
+      "0:run.started:false",
+      "1:artifact.written:false",
+      "2:run.finished:false",
+    ]);
+  });
+
   it("refuses an artifact that is not declared scrubbed", () => {
     const dir = tempRunDir();
     const writer = createRunWriter(dir, { scrub });

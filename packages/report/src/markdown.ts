@@ -1,5 +1,5 @@
 import { brand } from "@testament/brand";
-import { formatDuration, formatUsd } from "@testament/contract";
+import { formatDuration, formatUsd, stepLabel } from "@testament/contract";
 import { escapeMarkdown as md, markdownCode as code } from "./escape.js";
 import {
   buildModel,
@@ -105,7 +105,7 @@ function groupBlock(parts: Parts, group: FailureGroup, withTests: boolean): stri
     const shown = group.tests.slice(0, 10);
     for (const t of shown)
       lines.push(
-        `- ${md(t.name)} (${code(t.file)}${t.failingStep ? `, step ${t.failingStep.step.index + 1}` : ""})`,
+        `- ${md(t.name)} (${code(t.file)}${t.failingStep ? `, step ${stepLabel(t.failingStep.step)}` : ""})`,
       );
     if (group.tests.length > shown.length)
       lines.push(`- and ${plural(group.tests.length - shown.length, "more test")}`);

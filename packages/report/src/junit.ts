@@ -1,3 +1,4 @@
+import { stepLabel } from "@testament/contract";
 import { escapeXml as x, escapeXmlAttr as xa } from "./escape.js";
 import {
   buildModel,
@@ -35,7 +36,7 @@ function failureText(test: TestView): string {
   }
   const step = test.failingStep;
   if (step) {
-    lines.push(`Step ${step.step.index + 1} (attempt ${step.attempt}): ${step.step.text}`);
+    lines.push(`Step ${stepLabel(step.step)} (attempt ${step.attempt}): ${step.step.text}`);
     if (step.step.error && step.step.error !== test.headline)
       lines.push(`Error: ${step.step.error}`);
   }

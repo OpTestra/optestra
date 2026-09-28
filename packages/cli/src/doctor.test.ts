@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { brand } from "@testament/brand";
 import { ENV_PREFIX } from "@testament/config";
-import { loadProject } from "@testament/config/node";
+import { loadProject, processEnvSource } from "@testament/config/node";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   type DoctorBrowser,
@@ -139,6 +139,19 @@ describe("doctor", { timeout: 30_000 }, () => {
       "Add SHOP_PASSWORD=<value> to .env.local, or set the SHOP_PASSWORD environment variable.";
     expect(secrets.fix).toBe(fix);
     expect(secrets.details).toEqual([`local: SHOP_PASSWORD is not set. Fix: ${fix}`]);
+  });
+
+  it("reads secrets from the sources it is given (the desktop app's keychain)", async () => {
+    const dir = await project();
+    const keychain = processEnvSource({ SHOP_PASSWORD });
+    const report = await runDoctor({
+      dir,
+      env: { [`${ENV_PREFIX}INBOX_PROVIDER`]: "none" },
+      probes: fakeBrowser(),
+      secretSources: [keychain],
+    });
+    expect(check(report, "secrets").status).toBe("ok");
+    expect(failed(report)).toEqual([]);
   });
 
   it("bad base URL: can't be reached, fix names the setting", async () => {

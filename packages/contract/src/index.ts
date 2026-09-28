@@ -40,7 +40,7 @@ export {
 } from "./records.js";
 export * from "./run.js";
 export { serializeDocument, serializeEvent } from "./serialize.js";
-export { type StepResult, StepResultSchema } from "./step.js";
+export { type StepResult, StepResultSchema, stepLabel } from "./step.js";
 export * from "./summary.js";
 export * from "./test-result.js";
 export { testIdFromPath } from "./test-id.js";

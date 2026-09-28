@@ -15,6 +15,8 @@ import type { TestInbox } from "../author/inbox.js";
 import type { HealPatch } from "../heal/patch.js";
 import type { AttemptRecord } from "./verdict.js";
 
+export type StepShotType = "image/png" | "image/jpeg";
+
 /** The harness calls a replay uses. A LOOP-0 Session satisfies it. */
 export type ReplaySession = Pick<
   Session,
@@ -31,6 +33,8 @@ export type ReplaySession = Pick<
   | "check"
   | "pageCopy"
   | "requestMark"
+  | "settle"
+  | "unsettled"
 >;
 
 /** What an attempt reports as it goes (the runner adds testId/attempt and writes the events). */
@@ -65,15 +69,30 @@ export interface ReplayOptions {
   timeoutMs: number;
   /** How long a check may wait for its condition (default 5000 ms). */
   checkTimeoutMs?: number;
-  /** Before/after screenshots per action step (default true). */
-  screenshots?: boolean;
+  /**
+   * Before/after screenshots per action step: every step (default true), only
+   * the step that failed (`"failures"`), or none.
+   */
+  screenshots?: boolean | "failures";
   emit: (event: ReplayEvent) => void;
-  /** Stores a step screenshot; returns its run-relative path. */
-  saveScreenshot?: (index: number, when: "before" | "after", bytes: Uint8Array) => string | null;
+  /** Stores a step screenshot (PNG for a failed step, else JPEG); returns its run-relative path. */
+  saveScreenshot?: (
+    index: number,
+    when: "before" | "after",
+    bytes: Uint8Array,
+    contentType: StepShotType,
+  ) => string | null;
+  /**
+   * Where `saveScreenshot` will store a screenshot. When given, passing steps'
+   * screenshots are taken in the background (EVD-1 without slowing replay).
+   */
+  screenshotPath?: (index: number, when: "before" | "after", contentType: StepShotType) => string;
   /** Unique ids for checks and heals. */
   newId: () => string;
   redact?: (text: string) => string;
   now?: () => Date;
+  /** Stops the attempt before its next step (blocked `aborted`); see runTests({ signal }). */
+  signal?: AbortSignal;
   /** The attempt's test inbox (AUTH-1): {{inbox.code}} / {{inbox.link}} and read_inbox. */
   inbox?: TestInbox | undefined;
   /**

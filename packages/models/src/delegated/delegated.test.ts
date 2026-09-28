@@ -463,6 +463,16 @@ describe("claude-code provider (fake CLI)", () => {
     const third = await ask();
     expect(third.ok).toBe(false);
     expect(third.attempts[0]).toMatchObject({ outcome: "skipped_call_cap" });
+    // A clear reason, not "set an API key" (PERF-0): the cap protects the plan.
+    if (!third.ok) {
+      expect(third.message).toContain("made its 2 calls through your AI subscription (cc)");
+      expect(third.fix).toContain("models.delegatedCallsPerRun");
+    }
+  });
+
+  it("defaults to 60 calls per run", () => {
+    const c = config({ roles: { planner: [], fixer: [] } });
+    expect((c.models as { delegatedCallsPerRun: number }).delegatedCallsPerRun).toBe(60);
   });
 });
 

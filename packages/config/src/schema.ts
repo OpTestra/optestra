@@ -60,6 +60,12 @@ export const runSchema = z
       .describe(
         "replay-only: never call AI; normal: AI only when a step breaks; rerecord: record again.",
       ),
+    evidence: z
+      .enum(["full", "failures", "minimal"])
+      .optional()
+      .describe(
+        "full: trace, network log and a screenshot per step for every test. failures: the same is recorded, but a clean pass keeps only its screenshots, video and console. minimal: no trace or network log, screenshots only where a step failed (a retry records full evidence). Default: full in CI, failures elsewhere.",
+      ),
     budget: z
       .strictObject({
         maxPerRunUsd: z.number().nonnegative().describe("AI spend cap for one test run, in USD."),

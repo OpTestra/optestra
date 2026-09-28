@@ -18,48 +18,24 @@
 // process. REQUIRE_MAILPIT=1 (CI) makes a missing Mailpit an error. The generated
 // specs can only read Mailpit, so without it their email tests aren't compared.
 
-import { spawn } from "node:child_process";
-import {
-  cpSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  realpathSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { rmSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
-import { parseYaml } from "@testament/config/node";
 import type { TestResult } from "@testament/contract";
-import { createInbox } from "@testament/auth";
-import { runTests } from "@testament/core/node";
-import { shopInbox, startShop, VARIANTS, type Variant } from "@testament/fixture-shop";
+import { VARIANTS, type Variant } from "@testament/fixture-shop";
 import { loadTest } from "@testament/spec/node";
+import {
+  type Expectation,
+  MAILPIT_URL,
+  mailpitRunning,
+  manifest,
+  replayShop,
+  SHOP,
+  specShop,
+} from "./shop.ts";
 
-const SHOP = fileURLToPath(new URL("../../../bench/fixtures/shop/", import.meta.url));
-const PASSWORD = "shop-demo-pass";
-const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
-const MAILPIT_SMTP = process.env.MAILPIT_SMTP ?? "127.0.0.1:1025";
 const EQUIVALENCE_VARIANTS: Variant[] = ["correct", "broken-total", "broken-silent-click"];
-
-interface Expectation {
-  verdict: string;
-  step?: number;
-  cause?: string;
-  reason?: string;
-}
-interface Manifest {
-  variants: Record<string, { also_accept?: { passed?: string[] } }>;
-  tests: Record<string, Record<string, string | Expectation>>;
-  harness: { retries: number };
-}
+/** The perf smoke (PERF-0): replay of the correct shop may take at most this many times the specs. */
+const MAX_REPLAY_RATIO = 2;
 
 const { values } = parseArgs({
   options: {
@@ -69,20 +45,6 @@ const { values } = parseArgs({
   },
 });
 
-/** Is Mailpit answering? (Checked through the inbox adapter, like a run would.) */
-async function mailpitRunning(): Promise<boolean> {
-  const created = createInbox({
-    secrets: {},
-    inbox: {
-      provider: "mailpit",
-      timeoutSeconds: 5,
-      mailpit: { url: MAILPIT_URL, domain: "example.test" },
-      mailosaur: { baseUrl: "https://mailosaur.com", keySecret: "MAILOSAUR_API_KEY" },
-      mailslurp: { baseUrl: "https://api.mailslurp.com", keySecret: "MAILSLURP_API_KEY" },
-    },
-  } as never);
-  return created.ok && (await created.inbox.check()).ok;
-}
 const useMailpit = await mailpitRunning();
 if (!useMailpit && process.env.REQUIRE_MAILPIT)
   throw new Error(`Mailpit is not running at ${MAILPIT_URL} (REQUIRE_MAILPIT is set).`);
@@ -91,22 +53,6 @@ process.stdout.write(
     ? `Email tests read Mailpit at ${MAILPIT_URL}.\n`
     : `Mailpit isn't running at ${MAILPIT_URL}: email tests read the shop's outbox in process, and their generated specs aren't compared.\n`,
 );
-const startVariant = (variant: Variant) =>
-  startShop({ variant, port: 0, ...(useMailpit ? { mailpitSmtp: MAILPIT_SMTP } : {}) });
-
-const manifest = parseYaml(readFileSync(join(SHOP, "manifest.yaml"), "utf8"), "manifest.yaml")
-  .value as Manifest;
-
-/** A private copy of the shop project (config, tests, committed recordings): runs never touch the fixture. */
-function project(): string {
-  const dir = mkdtempSync(join(tmpdir(), "bench-replay-"));
-  cpSync(join(SHOP, brand.configFileName), join(dir, brand.configFileName));
-  cpSync(join(SHOP, "tests"), join(dir, "tests"), {
-    recursive: true,
-    filter: (source) => !/\.ts$/.test(source) && !source.includes(`${brand.dataDirName}/authoring`),
-  });
-  return dir;
-}
 
 const expectation = (test: string, variant: string): Expectation => {
   const entry = manifest.tests[test]?.[variant];
@@ -181,37 +127,8 @@ function score(
 async function replayVariant(
   variant: Variant,
 ): Promise<{ rows: Row[]; ms: number; results: TestResult[] }> {
-  const dir = project();
-  const shop = await startVariant(variant);
-  const started = Date.now();
+  const { run, ms, dir } = await replayShop(variant, { useMailpit, keep: true });
   try {
-    const run = await runTests({
-      projectDir: dir,
-      env: {
-        PATH: process.env.PATH,
-        HOME: process.env.HOME,
-        ...(process.env.PLAYWRIGHT_BROWSERS_PATH
-          ? { PLAYWRIGHT_BROWSERS_PATH: process.env.PLAYWRIGHT_BROWSERS_PATH }
-          : {}),
-        [`${ENV_PREFIX}BASE_URL`]: shop.url,
-        [`${ENV_PREFIX}INBOX_MAILPIT_URL`]: MAILPIT_URL,
-        SHOP_PASSWORD: PASSWORD,
-      },
-      ...(useMailpit ? {} : { inbox: shopInbox(shop) }),
-      mode: variant === "cosmetic" ? "normal" : "replay-only",
-      retries: manifest.harness.retries,
-      models: null,
-      video: false,
-      generateSpecs: false,
-      // The manifest's harness: a fresh environment before the first attempt, a reset before a retry.
-      beforeAttempt: async ({ attempt, session }) => {
-        await session.hookRequest({
-          method: "POST",
-          target: attempt === 1 ? "/__test/reset?environment=1" : "/__test/reset",
-        });
-      },
-    });
-    const ms = Date.now() - started;
     const rows: Row[] = [];
     for (const result of run.tests) {
       const test = result.file.replace(/^tests\//, "").replace(/\.test\.md$/, "");
@@ -238,87 +155,6 @@ async function replayVariant(
     }
     return { rows, ms, results: run.tests };
   } finally {
-    await shop.stop();
-    rmSync(dir, { recursive: true, force: true });
-  }
-}
-
-// ── equivalence: the same verdict from the generated plain-Playwright spec ──
-
-function node(args: string[], cwd: string, env: Record<string, string>): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args, { cwd, env, stdio: ["ignore", "pipe", "pipe"] });
-    let out = "";
-    child.stdout.on("data", (chunk) => {
-      out += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      out += chunk;
-    });
-    child.on("error", reject);
-    child.on("close", () => resolve(out));
-  });
-}
-
-interface ReportSuite {
-  specs?: Array<{ title: string; tests: Array<{ results: Array<{ status: string }> }> }>;
-  suites?: ReportSuite[];
-}
-
-async function specVerdicts(variant: Variant): Promise<Record<string, string>> {
-  const dir = project();
-  const { generateProject } = await import("@testament/codegen/node");
-  const generated = await generateProject({ projectDir: dir, env: {} });
-  if (!generated.ok) throw new Error(generated.problems.join("\n"));
-  mkdirSync(join(dir, "node_modules", "@playwright"), { recursive: true });
-  const playwright = join(SHOP, "node_modules", "@playwright", "test");
-  symlinkSync(
-    realpathSync(playwright),
-    join(dir, "node_modules", "@playwright", "test"),
-    "junction",
-  );
-  const shop = await startVariant(variant);
-  const report = join(dir, "report.json");
-  try {
-    const output = await node(
-      [
-        join(dir, "node_modules", "@playwright", "test", "cli.js"),
-        "test",
-        "-c",
-        `tests/${brand.dataDirName}`,
-        "--project=chromium",
-        "--workers=1",
-        "--retries=0",
-        "--reporter=json",
-      ],
-      dir,
-      {
-        PATH: process.env.PATH ?? "",
-        HOME: process.env.HOME ?? "",
-        ...(process.env.PLAYWRIGHT_BROWSERS_PATH
-          ? { PLAYWRIGHT_BROWSERS_PATH: process.env.PLAYWRIGHT_BROWSERS_PATH }
-          : {}),
-        PLAYWRIGHT_JSON_OUTPUT_NAME: report,
-        [`${ENV_PREFIX}BASE_URL`]: shop.url,
-        ...(useMailpit ? { [`${ENV_PREFIX}MAILPIT_URL`]: MAILPIT_URL } : {}),
-        SHOP_PASSWORD: PASSWORD,
-      },
-    );
-    if (!existsSync(report)) throw new Error(`plain Playwright wrote no report:\n${output}`);
-    const json = JSON.parse(readFileSync(report, "utf8")) as { suites: ReportSuite[] };
-    const verdicts: Record<string, string> = {};
-    const walk = (suite: ReportSuite) => {
-      for (const spec of suite.specs ?? []) {
-        const status = spec.tests[0]?.results.at(-1)?.status ?? "none";
-        verdicts[spec.title] =
-          status === "passed" ? "passed" : status === "skipped" ? "blocked" : "failed";
-      }
-      for (const child of suite.suites ?? []) walk(child);
-    };
-    for (const suite of json.suites) walk(suite);
-    return verdicts;
-  } finally {
-    await shop.stop();
     rmSync(dir, { recursive: true, force: true });
   }
 }
@@ -368,6 +204,7 @@ for (const variant of variants) {
   }
 }
 
+let perf: { tests: number; replayMs: number; specMs: number; ratio: number } | undefined;
 if (values.equivalence) {
   process.stdout.write("\nEquivalence (replay vs the generated plain-Playwright spec)\n");
   for (const variant of EQUIVALENCE_VARIANTS) {
@@ -378,8 +215,16 @@ if (values.equivalence) {
       times[variant] = replay.ms;
     }
     const started = Date.now();
-    const spec = await specVerdicts(variant);
+    const specRun = await specShop(variant, useMailpit);
+    const spec = specRun.verdicts;
     times[`${variant} (spec)`] = Date.now() - started;
+    if (variant === "correct") {
+      // The perf smoke: the same tests, replay vs plain Playwright (each test's own time).
+      const same = results.filter((r) => spec[r.name] !== undefined && spec[r.name] !== "blocked");
+      const replayMs = same.reduce((sum, r) => sum + r.durationMs, 0);
+      const specMs = same.reduce((sum, r) => sum + (specRun.durations[r.name] ?? 0), 0);
+      perf = { tests: same.length, replayMs, specMs, ratio: specMs > 0 ? replayMs / specMs : 0 };
+    }
     for (const result of results) {
       // Retries aside: the first attempt is what a single plain run compares with.
       const first = result.attempts[0]?.status ?? "blocked";
@@ -422,6 +267,7 @@ const summary = {
     disagree: equivalence.filter((e) => !e.agree).length,
   },
   times,
+  ...(perf ? { perf } : {}),
 };
 process.stdout.write(`\n${JSON.stringify(summary, null, 2)}\n`);
 if (values.json)
@@ -430,5 +276,13 @@ if (values.json)
 const aiOnCorrect = all.filter((r) => r.variant === "correct" && r.aiCalls > 0);
 if (aiOnCorrect.length)
   process.stdout.write(`AI was used on correct: ${aiOnCorrect.map((r) => r.test).join(", ")}\n`);
+// PERF-0: a replay much slower than plain Playwright is a regression.
+const tooSlow = perf !== undefined && perf.ratio > MAX_REPLAY_RATIO;
+if (perf)
+  process.stdout.write(
+    `Replay of correct: ${(perf.replayMs / 1000).toFixed(2)}s vs ${(perf.specMs / 1000).toFixed(2)}s as plain Playwright (${perf.ratio.toFixed(2)}×, at most ${MAX_REPLAY_RATIO}×)${tooSlow ? ": TOO SLOW" : ""}\n`,
+  );
 process.exitCode =
-  summary.mismatch > 0 || summary.equivalence.disagree > 0 || aiOnCorrect.length > 0 ? 1 : 0;
+  summary.mismatch > 0 || summary.equivalence.disagree > 0 || aiOnCorrect.length > 0 || tooSlow
+    ? 1
+    : 0;

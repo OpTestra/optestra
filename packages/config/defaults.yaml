@@ -22,6 +22,11 @@ run:
   healPolicy: review
   # replay-only: never call AI | normal: AI only when a step breaks | rerecord: record again
   mode: normal
+  # Evidence per test (EVD-1). full: trace, network log and a screenshot per step
+  # for every test | failures: the same is recorded, but a clean pass keeps only
+  # its screenshots, video and console | minimal: no trace or network log,
+  # screenshots only where a step failed. Default: full in CI, failures elsewhere.
+  # evidence: failures
   budget:
     # Caps in US dollars (enforced from the models phase on).
     maxPerRunUsd: 1
@@ -86,7 +91,7 @@ models:
   # Allow claude-code / codex (the user's own subscription). the cloud sets false.
   allowDelegated: true
   # Most calls one run may make through each subscription CLI.
-  delegatedCallsPerRun: 300
+  delegatedCallsPerRun: 60
 
 # The decision layer (LRN-6..8). The decide package registers this section.
 decisions:

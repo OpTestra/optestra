@@ -27,7 +27,12 @@ const result = await runTests({
   retries,                // default run.retries (1)
   workers,                // parallel browsers (default 1)
   budgetUsd,              // default run.budget.maxPerRunUsd
-  onEvent,                // every contract event as it is written
+  browsers, devices,      // a matrix (TGT-5): one TestResult per browser × device
+  locale, timezone,       // every session's locale and timezone (ENV-5)
+  evidence,               // "full" | "failures" | "minimal" (default run.evidence, else full in CI)
+  signal,                 // an AbortSignal: stop cleanly (see "Stopping a run")
+  node,                   // the Node for JS subscription CLIs and code-step specs (the packaged app)
+  onEvent,                // every contract event as it is written, artifact.written included
 });
 // result.dir: <project>/<data dir>/runs/<runId>/ (run.json, events.ndjson, tests/…)
 // result.run, result.tests: the contract documents; result.groups: failure groups (DIA-4)
@@ -48,13 +53,32 @@ recorded command:
    **miss**, never a silent success.
 3. **Act** through the harness. A refused action blocks (`disallowed_domain`,
    `missing_secret`).
-4. **Check the post-state** (VER-5, guarantee 5): some of the recorded effect
+4. **Wait for the recorded effect** (LRN-4, PERF-0): the action is done the
+   moment its recorded effect shows with no document, fetch or XHR request in
+   flight, and every write it recorded (a POST, PUT, PATCH or DELETE) has been
+   sent. There is no fixed pause: the generic quiet window (settle, 300 ms) is
+   only a fallback, for a command that recorded no effect (an upload) or whose
+   effect doesn't show within twice its learned settle time (at least 1 s, at
+   most 3 s).
+5. **Check the post-state** (VER-5, guarantee 5): some of the recorded effect
    must show up, compared in template form: the recorded URL change, an element
    that appeared or went away, a request (method + route), or a reorder (a table
    sort). Whether it was the *right* effect is the checks' job. If none shows,
-   the runner waits the learned time (LRN-4: the recorded settle time, at least
+   the runner waits the learned time (the recorded settle time, at least
    400 ms, at most 3 s) and looks again. Still nothing is a
    **post-state mismatch**.
+
+Moving on early never makes a pass cheaper:
+- the next command's element is validated as before; if it isn't there (yet)
+  after an early move-on, the page settles and it is looked for once more
+  before it counts as a miss;
+- an Expect whose check fails on the page as it was before the action (its
+  sanity test) auto-waits for its condition; any other check (an absence
+  check, or one the action wasn't meant to change, like "the URL still
+  contains /checkout") runs only on a settled page, the quiet window counted
+  from when the action finished;
+- authoring in place, compiling a pending check, page copies and the fixer
+  all start from a settled page.
 
 **A miss goes up the DEC-3 ladder** (`missContext` → `decideMiss`):
 
@@ -160,6 +184,56 @@ checked, from the checks (EVD-3). `ai.recent` is the test's AI calls over its
 last 20 runs (LRN-5). Decisions land in their attempt as `DecisionRecord`s,
 model calls (only for authoring and compiling) as `ModelCall`s with billing.
 
+### Stopping a run
+
+`runTests({ signal })` takes an AbortSignal (the CLI wires Ctrl-C to it). Once
+it fires, no new test starts and no retry runs; the running test stops before
+its next step (the rest are skipped, the attempt is blocked `aborted`), its
+session closes and its evidence is written like any other attempt's. The run
+finishes normally with `run.blocked = { reason: "aborted", message }` ("…: 2 of
+3 tests didn't run"), so the folder reads like any other run.
+
+### Step numbers (DIA-3)
+
+A step is named as the test file numbers it: StepResult `label` is `"3"`, or
+`"1 › Log in step 4"` for step 4 of the flow "Log in" used at step 1 (one part
+per flow on the way). Headlines ("Step 1 › Log in step 4 "Click "Log in"": …"),
+the CLI's step list, the reports and the PR comment all use it
+(`stepLabel(step)` from `@testament/contract`, which falls back to the position
+for older runs). An auth profile's login is step `0`.
+
+### Speed (PERF-0)
+
+`pnpm bench:perf` (`node packages/core/bench/perf.ts [--runs 5] [--evidence
+mode] [--steps] [--json out.json]`) replays the correct shop and runs its
+generated specs as plain Playwright (one worker each, video off, email tests
+left out without Mailpit) and reports the median and p95 per test and in
+total. `bench:replay` fails if the correct shop's replay takes more than 2× the
+specs. On the development Mac (2026-09-28, 9 tests, 5 runs, medians):
+
+| | replay | specs | ratio |
+|---|---|---|---|
+| before PERF-0 (main, `d9359ce`) | 40.01 s | 4.04 s | 9.91× |
+| `failures` (local default) | 6.87 s | 4.04 s | 1.70× |
+| `full` (CI default) | 8.09 s | 4.05 s | 2.00× |
+| `minimal` | 6.71 s | 4.04 s | 1.66× |
+
+Where the time went, change by change (1–3 runs each, same machine):
+- learned waits instead of the 300 ms quiet window after every action:
+  39.5 s → 8.7 s (actions 493 → 66 ms each; `act` itself ≈ 50 ms);
+- the remaining step screenshots (≈ 33 ms each, PNG or JPEG alike: the
+  capture costs, not the encoding): taken in the background, one per step
+  instead of two, and only with `full`: about 1.3 s of the 8 s;
+- trace ≈ 0.55 s and HAR ≈ 0.3 s to record per run (a discarded trace saves
+  only its processing); check retries ramping from 20 ms: no measurable change;
+- what is left above plain Playwright is deliberate: four checks that need a
+  settled page (one after a reload of a page that loads for 600 ms), two saved
+  logins checked with a full settle (a redirect to the login page can come
+  late), one upload that recorded no effect, and ≈ 75 ms per test to open and
+  close an isolated, guarded session.
+
+The per-test numbers are in the PERF-0 handoff (`--json` writes them).
+
 ## Healing (HEAL-0)
 
 ### The ladder, with the fixer
@@ -261,18 +335,44 @@ command (`testament run <file> --rerecord`), and `heal --list`, the report JSON
 
 ### Evidence (EVD-1)
 
-Per attempt, written through the RunWriter (scrubbed): a before/after
-screenshot per action step (`steps/<i>-before.png`, `-after.png`), the video
-(`video.webm`) with a WebVTT chapters file (`chapters.vtt`, one cue per step),
-the trace, the console log and the network HAR.
+Per attempt, written through the RunWriter (scrubbed). `evidence` (or
+`run.evidence`, or `--evidence`) chooses how much:
+
+| Mode | Every attempt | Kept |
+|---|---|---|
+| `full` (default in CI) | trace, network HAR, console, video + chapters, a screenshot per action step | everything |
+| `failures` (default elsewhere) | the same, but no per-step screenshots | a first attempt that passed with no heal drops its trace and HAR unread; failed, blocked, healed and retried attempts keep everything |
+| `minimal` | console, video + chapters; a retry adds trace and HAR | what was recorded |
+
+In every mode the step that failed (an action step, or a failed hard check)
+gets a full-resolution PNG (`steps/<i>-after.png`), and the video (unless
+`video: false` / `--no-video`) has a WebVTT chapters file (`chapters.vtt`, one
+cue per step). With `full`, passing steps get a JPEG (`steps/<i>-after.jpg`)
+taken in the background while the next step runs; a step's "before" is the
+previous screenshot (checks in between only read the page).
+
+Why `failures` locally: it records exactly what `full` records, so every
+failure, heal and flaky retry has its complete trace and network log, while a
+clean pass skips the per-step screenshots (the costliest evidence, about 30 ms
+each) and doesn't keep a trace nobody opens. Per-step screenshots of a passing
+test are one flag away (`--evidence full`). CI defaults to `full`, since its
+results are the record reviewers look at.
 
 ### CLI
 
 ```bash
 testament run [tests…] [--tag t] [--grep name] [--env local] [--base-url url] [--shard i/n] \
-  [--replay-only | --rerecord] [--retries n] [--workers n] [--headed] [--budget 0.50] [--no-video] [--verbose]
+  [--replay-only | --rerecord] [--retries n] [--workers n] [--headed] [--budget 0.50] [--no-video] [--verbose] \
+  [--browser chromium --browser webkit] [--device laptop --device iphone-15] [--locale de-DE] [--timezone Europe/Berlin] \
+  [--evidence full|failures|minimal]
 testament merge-runs <shard folders…> --out <dir>
 ```
+
+`--browser` and `--device` repeat for a matrix (TGT-5): every selected test
+runs once per browser × device, each with its own TestResult (`testId`
+`<id>@<browser>-<device>`, `matrix` says which) and its own line in the output.
+Every entry replays the same recording. Ctrl-C stops the run cleanly (a second
+one quits at once).
 
 `--shard i/n` (CLI-3) runs only slice i of n: the selected test ids are sorted
 and dealt out in turn (`selectShard`), so every machine computes the same

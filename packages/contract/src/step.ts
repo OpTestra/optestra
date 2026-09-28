@@ -10,6 +10,12 @@ import { RecoveryLevelSchema, StepKindSchema, StepStatusSchema } from "./enums.j
 
 export const StepResultSchema = z.object({
   index: CountSchema,
+  /**
+   * 1.3 (PERF-0): the step as the test file numbers it, e.g. "3", or "1 › Log
+   * in 4" for step 4 of the flow used at step 1. Readers show `step <label>`;
+   * absent in older runs (use `stepLabel`, which falls back to index + 1).
+   */
+  label: z.string().optional(),
   /** Stable key the recording is stored under (REP-7 defines how it is built). */
   key: z.string(),
   text: z.string(),
@@ -47,3 +53,8 @@ export const StepResultSchema = z.object({
   healIds: z.array(IdSchema),
 });
 export type StepResult = z.infer<typeof StepResultSchema>;
+
+/** How to name a step to a person: the test file's own numbering (`label`), else its position. */
+export function stepLabel(step: Pick<StepResult, "index" | "label">): string {
+  return step.label ?? String(step.index + 1);
+}

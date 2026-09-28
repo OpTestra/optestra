@@ -46,6 +46,7 @@ describe("public API (SAF-2: the closed action set)", () => {
       "screenshot",
       "settle",
       "storageState",
+      "unsettled",
       "url",
       "useStorageState",
     ]);

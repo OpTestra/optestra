@@ -38,6 +38,8 @@ export interface RunWriterOptions {
   runId?: string;
   /** Clock for events emitted without `ts`. */
   now?: () => Date;
+  /** Every event as written (scrubbed and validated), `artifact.written` included. */
+  onEvent?: (event: Event) => void;
 }
 
 export interface RunWriter {
@@ -99,6 +101,7 @@ export function createRunWriter(dir: string, options: RunWriterOptions): RunWrit
       throw new Error(`invalid ${input.type} event:\n${z.prettifyError(parsed.error)}`);
     writeSync(fd, serializeEvent(parsed.data));
     events.push(parsed.data);
+    options.onEvent?.(parsed.data);
     return parsed.data;
   };
 
