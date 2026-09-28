@@ -1,0 +1,60 @@
+/* Maps the default theme onto tokens.css. Reads only the --t-* variables. */
+
+:root,
+.dark {
+  --vp-font-family-base: var(--t-font-body);
+  --vp-font-family-mono: var(--t-font-mono);
+
+  --vp-c-bg: var(--t-background);
+  --vp-c-bg-alt: var(--t-surface);
+  --vp-c-bg-elv: var(--t-background);
+  --vp-c-bg-soft: var(--t-surface);
+  --vp-c-text-1: var(--t-text);
+  --vp-c-text-2: var(--t-muted);
+  --vp-c-text-3: var(--t-muted);
+  --vp-c-divider: var(--t-border);
+  --vp-c-border: var(--t-border);
+  --vp-c-gutter: var(--t-border);
+
+  --vp-c-brand-1: var(--t-accent);
+  --vp-c-brand-2: var(--t-accent-hover);
+  --vp-c-brand-3: var(--t-accent);
+  --vp-c-brand-soft: var(--t-accent-soft);
+
+  --vp-c-tip-1: var(--t-passed);
+  --vp-c-tip-soft: var(--t-passed-bg);
+  --vp-c-warning-1: var(--t-warn);
+  --vp-c-warning-soft: var(--t-warn-bg);
+  --vp-c-danger-1: var(--t-failed);
+  --vp-c-danger-soft: var(--t-failed-bg);
+  --vp-c-note-1: var(--t-text);
+  --vp-c-note-soft: var(--t-surface-strong);
+  --vp-c-important-1: var(--t-accent);
+  --vp-c-important-soft: var(--t-accent-soft);
+
+  --vp-code-bg: var(--t-code);
+  --vp-code-block-bg: var(--t-surface);
+  --vp-code-color: var(--t-text);
+  --vp-code-copy-code-bg: var(--t-surface-strong);
+
+  --vp-button-brand-bg: var(--t-accent);
+  --vp-button-brand-border: var(--t-accent);
+  --vp-button-brand-text: var(--t-background);
+  --vp-button-brand-hover-bg: var(--t-accent-hover);
+  --vp-button-brand-hover-border: var(--t-accent-hover);
+  --vp-button-brand-hover-text: var(--t-background);
+  --vp-button-alt-bg: var(--t-surface-strong);
+  --vp-button-alt-text: var(--t-text);
+
+  --vp-home-hero-name-color: var(--t-text);
+}
+
+.vp-doc table {
+  display: table;
+  width: 100%;
+}
+
+.vp-doc img {
+  border: 1px solid var(--t-border);
+  border-radius: var(--t-radius);
+}

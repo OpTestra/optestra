@@ -1,0 +1,48 @@
+/*
+ * The docs site's whole look: colours, type and spacing. The brand redesign
+ * replaces this file; nothing else in the theme holds a colour, font or size.
+ * The values match the HTML report's defaults (packages/report/src/tokens.ts).
+ */
+
+:root {
+  --t-background: #ffffff;
+  --t-surface: #f6f8fa;
+  --t-surface-strong: #eaeef2;
+  --t-text: #1f2328;
+  --t-muted: #57606a;
+  --t-border: #d0d7de;
+  --t-accent: #0550ae;
+  --t-accent-hover: #0969da;
+  --t-accent-soft: #ddf4ff;
+  --t-code: #eff2f5;
+  --t-passed: #116329;
+  --t-passed-bg: #dafbe1;
+  --t-failed: #a40e26;
+  --t-failed-bg: #ffebe9;
+  --t-warn: #7d4e00;
+  --t-warn-bg: #fff8c5;
+
+  --t-font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --t-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --t-radius: 6px;
+  --t-space: 12px;
+}
+
+.dark {
+  --t-background: #0d1117;
+  --t-surface: #161b22;
+  --t-surface-strong: #262c34;
+  --t-text: #e6edf3;
+  --t-muted: #9da7b3;
+  --t-border: #30363d;
+  --t-accent: #6cb6ff;
+  --t-accent-hover: #9ccbff;
+  --t-accent-soft: #0c2d4a;
+  --t-code: #1c2128;
+  --t-passed: #7ee2a8;
+  --t-passed-bg: #0f2d1c;
+  --t-failed: #ffa198;
+  --t-failed-bg: #3d1214;
+  --t-warn: #f2cc60;
+  --t-warn-bg: #332600;
+}

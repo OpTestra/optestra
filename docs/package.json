@@ -1,0 +1,35 @@
+{
+  "name": "@testament/docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The documentation site (VitePress), built to static HTML.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "gen": "node scripts/gen-reference.ts",
+    "build": "vitepress build && node scripts/check-site.ts",
+    "preview": "vitepress preview"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@testament/action": "workspace:*",
+    "@testament/auth": "workspace:*",
+    "@testament/brand": "workspace:*",
+    "@testament/cli": "workspace:*",
+    "@testament/config": "workspace:*",
+    "@testament/contract": "workspace:*",
+    "@testament/decide": "workspace:*",
+    "@testament/models": "workspace:*",
+    "@testament/report": "workspace:*",
+    "@testament/spec": "workspace:*",
+    "@types/markdown-it": "^14.2.0",
+    "commander": "^15.0.0",
+    "markdown-it": "^14.3.2",
+    "playwright": "1.63.0",
+    "vitepress": "1.6.4",
+    "yaml": "^2.9.1"
+  }
+}
