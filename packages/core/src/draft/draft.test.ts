@@ -41,6 +41,9 @@ describe("names and paths", () => {
     expect(slugOf("Returning user can log in")).toBe("returning-user-can-log-in");
     expect(slugOf("Crème brûlée: pay & go!")).toBe("creme-brulee-pay-go");
     expect(slugOf("!!!")).toBe("draft");
+    expect(slugOf("Logged-in user can create a project and see it in the projects list")).toBe(
+      "logged-in-user-can-create-a-project",
+    );
   });
   it("names a test from the sentence when the model gave none", () => {
     expect(nameFromSentence("a returning user can log in.")).toBe("A returning user can log in");

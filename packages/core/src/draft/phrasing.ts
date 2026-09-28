@@ -60,18 +60,37 @@ export function stepText(action: DraftedAction): string {
   }
 }
 
-/** A file name for a test name: lowercase words joined by "-". */
+/** Words a cut-short file name shouldn't end on. */
+const DANGLING = new Set([
+  "a",
+  "an",
+  "and",
+  "at",
+  "for",
+  "in",
+  "is",
+  "of",
+  "on",
+  "or",
+  "the",
+  "to",
+  "with",
+]);
+
+/** A file name for a test name: its first 8 lowercase words joined by "-". */
 export function slugOf(name: string): string {
-  const slug = name
+  const words = name
     .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .split("-")
-    .slice(0, 8)
-    .join("-");
-  return slug || "draft";
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  // Cut to 8 words, then not on a dangling word ("…-a-project-and").
+  if (words.length > 8) {
+    words.length = 8;
+    while (words.length > 1 && DANGLING.has(words.at(-1) as string)) words.pop();
+  }
+  return words.join("-") || "draft";
 }
 
 /** A test name from the sentence, when the model gave none. */
