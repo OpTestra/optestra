@@ -47,6 +47,11 @@ async function askYesNo(question: string): Promise<boolean> {
   }
 }
 
+/** Commander collector for a repeatable option. */
+function collect(value: string, previous: string[]): string[] {
+  return [...previous, value];
+}
+
 export function createProgram(): Command {
   const program = new Command()
     .name(brand.cliName)
@@ -293,20 +298,49 @@ export function createProgram(): Command {
       "AI budget for this run in dollars (default: run.budget.maxPerRunUsd)",
     )
     .option("--headed", "show the browser windows")
-    .option("--browser <name>", "chromium (default), firefox or webkit")
-    .option("--device <preset>", "device preset, e.g. desktop, laptop, iphone-15")
+    .option(
+      "--browser <name>",
+      "chromium (default), firefox or webkit; repeat for a matrix (one result per browser × device)",
+      collect,
+      [],
+    )
+    .option(
+      "--device <preset>",
+      "device preset, e.g. desktop, laptop, iphone-15; repeat for a matrix",
+      collect,
+      [],
+    )
+    .option("--locale <code>", "browser locale, e.g. de-DE")
+    .option("--timezone <id>", "browser timezone, e.g. Europe/Berlin")
+    .option(
+      "--evidence <mode>",
+      "full | failures | minimal (default: run.evidence, else full in CI and failures elsewhere)",
+    )
     .option("--no-video", "don't record a video per attempt")
     .option("--verbose", "print every step, heal and warning")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (tests: string[], options: RunCommandOptions) => {
       const { shouldUseColor } = await import("@testament/report/node");
       const { runRunCommand } = await import("./commands/run.js");
-      process.exitCode = await runRunCommand(tests, options, {
-        cwd: process.cwd(),
-        env: process.env,
-        stdout: (text) => process.stdout.write(text),
-        color: shouldUseColor(process.stdout),
-      });
+      // Ctrl-C stops the run cleanly (the running test's evidence is kept); a second one quits.
+      const stop = new AbortController();
+      const onInterrupt = () => {
+        if (stop.signal.aborted) process.exit(130);
+        process.stdout.write("\nStopping after the current step (Ctrl-C again to quit now)…\n");
+        stop.abort();
+      };
+      process.on("SIGINT", onInterrupt);
+      try {
+        process.exitCode = await runRunCommand(tests, options, {
+          cwd: process.cwd(),
+          env: process.env,
+          stdout: (text) => process.stdout.write(text),
+          color: shouldUseColor(process.stdout),
+          signal: stop.signal,
+        });
+      } finally {
+        process.off("SIGINT", onInterrupt);
+      }
     });
 
   program

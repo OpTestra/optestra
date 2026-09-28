@@ -22,14 +22,22 @@ export interface RunCommandOptions {
   workers?: string;
   headed?: boolean;
   budget?: string;
-  browser?: string;
-  device?: string;
+  /** Repeatable: several make a matrix (TGT-5). A single string is accepted too. */
+  browser?: string | string[];
+  device?: string | string[];
+  locale?: string;
+  timezone?: string;
+  evidence?: string;
   video?: boolean;
   verbose?: boolean;
   dir?: string;
 }
 
 const posix = (path: string) => path.split(sep).join("/");
+const BROWSERS = ["chromium", "firefox", "webkit"] as const;
+const EVIDENCE = ["full", "failures", "minimal"] as const;
+const list = (value: string | string[] | undefined) =>
+  value === undefined ? [] : Array.isArray(value) ? value : [value];
 
 function parseCount(value: string | undefined, what: string): number | undefined | string {
   if (value === undefined) return undefined;
@@ -40,7 +48,7 @@ function parseCount(value: string | undefined, what: string): number | undefined
 export async function runRunCommand(
   tests: string[],
   options: RunCommandOptions,
-  io: CommandIo & { color?: boolean },
+  io: CommandIo & { color?: boolean; signal?: AbortSignal },
 ): Promise<number> {
   const dir = options.dir
     ? resolve(io.cwd, options.dir)
@@ -63,6 +71,17 @@ export async function runRunCommand(
       return 2;
     }
   }
+  const browsers = list(options.browser);
+  const devices = list(options.device);
+  const badBrowser = browsers.find((b) => !(BROWSERS as readonly string[]).includes(b));
+  if (badBrowser) {
+    io.stdout(`--browser must be chromium, firefox or webkit, not "${badBrowser}".\n`);
+    return 2;
+  }
+  if (options.evidence && !(EVIDENCE as readonly string[]).includes(options.evidence)) {
+    io.stdout(`--evidence must be full, failures or minimal, not "${options.evidence}".\n`);
+    return 2;
+  }
   if (budget !== undefined && !(budget >= 0)) {
     io.stdout(`--budget must be an amount in dollars, like 0.50, not "${options.budget}".\n`);
     return 2;
@@ -79,7 +98,7 @@ export async function runRunCommand(
     io.stdout(`${shard}\n`);
     return 2;
   }
-  const { exitCodeFor, formatDuration } = await import("@testament/contract");
+  const { exitCodeFor, formatDuration, stepLabel } = await import("@testament/contract");
   const { loadProject } = await import("@testament/config/node");
   const { ENV_PREFIX } = await import("@testament/config");
   // --base-url (a preview deploy, CI-1/ENV-2): the environment's baseUrl for this run.
@@ -100,7 +119,7 @@ export async function runRunCommand(
       const how =
         step.recovery === "replay" || step.recovery === "none" ? "" : ` (${step.recovery})`;
       io.stdout(
-        `    ${String(step.index + 1).padStart(2)}. ${step.text.slice(0, 64).padEnd(64)} ${step.status}${how} ${formatDuration(step.durationMs)}\n`,
+        `    ${stepLabel(step).padStart(2)}. ${step.text.slice(0, 64).padEnd(64)} ${step.status}${how} ${formatDuration(step.durationMs)}\n`,
       );
       if (step.error) io.stdout(`        ${step.error}\n`);
     }
@@ -127,9 +146,13 @@ export async function runRunCommand(
       ...(typeof workers === "number" && workers > 0 ? { workers } : {}),
       ...(budget !== undefined ? { budgetUsd: budget } : {}),
       headless: !options.headed,
-      ...(options.browser ? { browser: options.browser as "chromium" | "firefox" | "webkit" } : {}),
-      ...(options.device ? { device: options.device } : {}),
+      ...(browsers.length ? { browsers: browsers as (typeof BROWSERS)[number][] } : {}),
+      ...(devices.length ? { devices } : {}),
+      ...(options.locale ? { locale: options.locale } : {}),
+      ...(options.timezone ? { timezone: options.timezone } : {}),
+      ...(options.evidence ? { evidence: options.evidence as (typeof EVIDENCE)[number] } : {}),
       ...(options.video === false ? { video: false } : {}),
+      ...(io.signal ? { signal: io.signal } : {}),
       trigger: io.env.CI ? "ci" : "cli",
       onEvent,
     });
@@ -144,9 +167,18 @@ export async function runRunCommand(
   const { formatRunSummary, formatTestLine } = await import("@testament/report");
   const color = io.color ?? false;
   io.stdout("\n");
+  // A matrix run (TGT-5): each line names its browser and device.
+  const matrix =
+    new Set(result.tests.map((t) => JSON.stringify(t.matrix))).size > 1 ||
+    browsers.length > 1 ||
+    devices.length > 1;
   for (const test of result.tests) {
+    const where =
+      matrix && test.matrix.target === "web"
+        ? ` [${test.matrix.browser}, ${test.matrix.device ?? "default"}]`
+        : "";
     io.stdout(
-      `${formatTestLine({ ...test, aiCalls: test.ai.calls, costUsd: test.ai.costUsd }, { color })}\n`,
+      `${formatTestLine({ ...test, name: `${test.name}${where}`, aiCalls: test.ai.calls, costUsd: test.ai.costUsd }, { color })}\n`,
     );
     if (test.failureCause && test.verdict !== "blocked" && test.verdict !== "passed")
       io.stdout(`${" ".repeat(49)}cause: ${test.failureCause.replace("_", " ")}\n`);
