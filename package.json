@@ -19,6 +19,7 @@
     "bench:fixtures:install": "pnpm --filter \"./bench/fixtures/*\" exec playwright install chromium && pnpm --filter @testament/browser exec playwright install firefox webkit",
     "bench:fixtures:test": "pnpm --filter \"./bench/fixtures/*\" --workspace-concurrency=1 run test:reference && pnpm --filter @testament/browser run test:browser && pnpm --filter @testament/core run test:browser && pnpm --filter @testament/auth run test:browser && pnpm --filter @testament/codegen run test:browser && pnpm --filter @testament/cli run test:browser && pnpm --filter @testament/report run test:browser",
     "bench:replay": "pnpm --filter @testament/core run bench:replay",
+    "bench:perf": "pnpm --filter @testament/core run perf",
     "changeset": "changeset",
     "version-packages": "changeset version"
   },
