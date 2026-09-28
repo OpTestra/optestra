@@ -10,6 +10,7 @@ import {
   type ModelCall,
   type StepResult,
   needsRerecord,
+  stepLabel,
 } from "@testament/contract";
 import { encodePath, escapeHtml as h } from "../escape.js";
 import {
@@ -165,7 +166,7 @@ function groupCard(ctx: Ctx, group: FailureGroup): string {
   const tests = group.tests
     .map(
       (t) =>
-        `<li>${verdictBadge(t)} <a href="#${h(t.anchor)}">${h(t.name)}</a> ${meta([h(t.file), t.failingStep ? h(`step ${t.failingStep.step.index + 1}`) : null])}</li>`,
+        `<li>${verdictBadge(t)} <a href="#${h(t.anchor)}">${h(t.name)}</a> ${meta([h(t.file), t.failingStep ? h(`step ${stepLabel(t.failingStep.step)}`) : null])}</li>`,
     )
     .join("");
   const shot = first?.screenshot
@@ -228,7 +229,7 @@ function evidenceItem(ctx: Ctx, evidence: EvidenceView): string {
     case "check":
       return `<li>Check (attempt ${evidence.attempt}): ${h(evidence.check.generated.description)}: ${h(checkLine(evidence.check))}</li>`;
     case "step":
-      return `<li>Step ${evidence.step.index + 1} (attempt ${evidence.attempt}): ${h(evidence.step.text)}${evidence.step.error ? `: ${h(evidence.step.error)}` : ""}</li>`;
+      return `<li>Step ${h(stepLabel(evidence.step))} (attempt ${evidence.attempt}): ${h(evidence.step.text)}${evidence.step.error ? `: ${h(evidence.step.error)}` : ""}</li>`;
     case "decision":
       return `<li>Decision <code>${h(evidence.decision.task)}</code> (attempt ${evidence.attempt}): <code>${h(JSON.stringify(evidence.decision.answer))}</code> ${meta([`confidence ${Math.round(evidence.decision.confidence * 100)}%`, h(evidence.decision.source)])}</li>`;
     case "artifact":
@@ -250,7 +251,7 @@ function stepRow(ctx: Ctx, step: StepResult): string {
     .map((when) => {
       const path = step.screenshots[when];
       if (!path) return "";
-      const alt = `${when === "before" ? "Before" : "After"} step ${step.index + 1}`;
+      const alt = `${when === "before" ? "Before" : "After"} step ${stepLabel(step)}`;
       return `<a href="${h(ctx.href(path))}"><img src="${h(ctx.href(path))}" alt="${h(alt)}" loading="lazy"></a>`;
     })
     .join("");
@@ -260,7 +261,7 @@ function stepRow(ctx: Ctx, step: StepResult): string {
   const locator = step.locator
     ? `<div class="muted">${h(step.locator.used)} locator <code>${h(step.locator.value)}</code></div>`
     : "";
-  return `<tr><td>${step.index + 1}</td><td>${h(step.text)}${step.error ? `<div><strong>${h(step.error)}</strong></div>` : ""}${locator}${post}</td><td>${h(step.kind)}</td><td>${badge(step.status, step.status)}</td><td>${h(RECOVERY_LABEL[step.recovery])}</td><td>${h(formatDuration(step.durationMs))}</td><td><div class="shots">${shots}</div></td></tr>`;
+  return `<tr><td>${h(stepLabel(step))}</td><td>${h(step.text)}${step.error ? `<div><strong>${h(step.error)}</strong></div>` : ""}${locator}${post}</td><td>${h(step.kind)}</td><td>${badge(step.status, step.status)}</td><td>${h(RECOVERY_LABEL[step.recovery])}</td><td>${h(formatDuration(step.durationMs))}</td><td><div class="shots">${shots}</div></td></tr>`;
 }
 
 const HEAL_LEVEL_LABEL: Record<NonNullable<HealProposal["level"]>, string> = {

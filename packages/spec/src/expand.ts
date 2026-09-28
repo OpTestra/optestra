@@ -77,6 +77,8 @@ export interface OriginFrame {
   /** Display number of the step in that file. */
   number: number | null;
   range?: Range;
+  /** On a `Use:` step's frame: the name of the flow it includes (else its path). */
+  flow?: string;
 }
 
 export interface ExpandedStep {
@@ -521,6 +523,7 @@ class Expander {
       line: step.at?.range.start.line ?? 0,
       number: step.number,
       ...(step.at && { range: step.at.range }),
+      flow: flow.frontmatter.name?.trim() || path,
     };
     await this.body(
       flow,

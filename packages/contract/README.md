@@ -30,6 +30,14 @@ HealProposal `level` (`fallback | refind | fixer`), `appliedBy` (`auto | human`)
 `withHealReview` to overlay the decisions on a TestResult). All optional: 1.0
 and 1.1 documents parse as before.
 
+**1.3** (PERF-0): StepResult `label` (the step as the test file numbers it,
+"1 › Log in 4" inside a flow; `stepLabel` falls back to index + 1); step
+screenshots may be `.jpg` (steps that passed) next to `.png` (the step that
+failed), see `runLayout.screenshot`; a matrix run (TGT-5) has one TestResult
+per entry, its `testId` suffixed `@<browser>-<device>` (the `matrix` field says
+which); `createRunWriter({ onEvent })` sees every event as written. All
+optional: older documents parse as before.
+
 `fixtures/v1/` is frozen once released: `pnpm gen:fixtures` skips folders that
 exist. `_future-minor/` is a 1.9 run with extra fields and an unknown event, to
 prove 1.0 readers still read it.
