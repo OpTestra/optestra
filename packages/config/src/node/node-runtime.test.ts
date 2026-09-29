@@ -28,15 +28,39 @@ describe("nodeRuntime", () => {
   it("inside the desktop app: a node on PATH, else the app itself in Node mode", () => {
     expect(execPathIsNode(electron)).toBe(false);
     const bin = join(dir, "bin");
-    writeFileSync(join(dir, "node"), "");
+    // This OS's own name for it (node.exe on Windows).
+    const own = join(dir, process.platform === "win32" ? "node.exe" : "node");
+    writeFileSync(own, "");
     const onPath = nodeRuntime({ versions: electron, env: { PATH: dir } });
-    expect(onPath).toEqual({ command: join(dir, "node"), env: {}, how: "path" });
+    expect(onPath).toEqual({ command: own, env: {}, how: "path" });
     expect(nodeOnPath({ PATH: bin })).toBeNull();
     expect(nodeRuntime({ versions: electron, env: { PATH: bin } })).toEqual({
       command: process.execPath,
       env: { ELECTRON_RUN_AS_NODE: "1" },
       how: "electron",
     });
+  });
+
+  it("follows Windows rules on any OS: `;` between folders, `Path`, node.exe only, quoted folders", () => {
+    const files = new Set(["C:\\Program Files\\nodejs\\node.exe", "C:\\tools\\node.cmd"]);
+    const has = (path: string) => files.has(path);
+    const env = { Path: 'C:\\tools;"C:\\Program Files\\nodejs";C:\\Windows' };
+    expect(nodeOnPath(env, "win32", has)).toBe("C:\\Program Files\\nodejs\\node.exe");
+    // node.cmd needs a shell: not used.
+    expect(nodeOnPath({ Path: "C:\\tools" }, "win32", has)).toBeNull();
+    expect(nodeRuntime({ versions: electron, env, platform: "win32", isFileAt: has })).toEqual({
+      command: "C:\\Program Files\\nodejs\\node.exe",
+      env: {},
+      how: "path",
+    });
+  });
+
+  it("follows POSIX rules on any OS: `:` between folders, plain `node`", () => {
+    const has = (path: string) => path === "/opt/homebrew/bin/node";
+    expect(nodeOnPath({ PATH: "/usr/bin:/opt/homebrew/bin" }, "darwin", has)).toBe(
+      "/opt/homebrew/bin/node",
+    );
+    expect(nodeOnPath({ PATH: "/usr/bin" }, "linux", has)).toBeNull();
   });
 });
 
