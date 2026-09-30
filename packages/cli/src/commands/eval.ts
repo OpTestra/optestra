@@ -102,6 +102,12 @@ export async function runEvalCommand(options: EvalCommandOptions, io: CommandIo)
     };
   }
 
+  // The first --save-baseline seeds the decision baseline (there is nothing to compare with yet).
+  const seeding = Boolean(options.saveBaseline && baseline && !baseline.decisions);
+  if (seeding && baseline) {
+    baseline.decisions = decisions;
+    say("No decision eval baseline yet: seeded from this run.");
+  }
   const gate = bench.evalGate({
     decisions: { now: decisions, baseline: baseline?.decisions ?? null },
     ...(benchNow ? { bench: { now: benchNow, baseline } } : {}),

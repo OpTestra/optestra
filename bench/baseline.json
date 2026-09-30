@@ -138,5 +138,46 @@
     "otherMismatches": 0,
     "aiCalls": 0,
     "costUsd": 0
+  },
+  "decisions": {
+    "backend": "rules",
+    "tasks": [
+      {
+        "task": "failure_cause",
+        "cases": 50,
+        "decided": 45,
+        "falseLabels": 0
+      },
+      {
+        "task": "flaky_or_real",
+        "cases": 42,
+        "decided": 40,
+        "falseLabels": 0
+      },
+      {
+        "task": "duplicate_or_new",
+        "cases": 43,
+        "decided": 39,
+        "falseLabels": 0
+      },
+      {
+        "task": "heal_class",
+        "cases": 43,
+        "decided": 37,
+        "falseLabels": 0
+      },
+      {
+        "task": "same_element",
+        "cases": 67,
+        "decided": 57,
+        "falseLabels": 0
+      },
+      {
+        "task": "miss_action",
+        "cases": 41,
+        "decided": 41,
+        "falseLabels": 0
+      }
+    ]
   }
 }
