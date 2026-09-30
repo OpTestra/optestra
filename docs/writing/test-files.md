@@ -44,7 +44,7 @@ Unknown keys are a warning (`UNKNOWN_KEY`) and are kept.
 | `timeout` | `"90s"`, `"3m"`, `"1h"` | The test's time limit. A bare number is an error. Default: `run.timeoutSeconds` (300). |
 | `heal` | `strict`, `review` or `auto` | The [fix policy](../runs/healing.md#policies) for this test. Default: `run.healPolicy`. |
 | `allowDestructive` | list from `delete pay send invite cancel` | Destructive actions this test may do in a [production environment](../environments.md#production-mode). |
-| `dataset` | path to a `.csv` or `.json` file | Parsed only; data-driven runs come later. |
+| `dataset` | path to a `.csv` or `.json` file | Run the test once per row, relative to the test file. See [Datasets](#datasets). |
 | `environments` | map env name → `{ start, data, timeout }` | Per-environment overrides. `data` merges key by key. |
 
 ### Setup and teardown hooks
@@ -60,7 +60,51 @@ teardown:
 
 Each hook is one of `request: "METHOD path"` (with optional `body` and `headers`), `run: <script>` or `sql: <statement>`. Methods: GET POST PUT PATCH DELETE HEAD OPTIONS; the path starts with `/` or is an http(s) URL.
 
-Today only `request` hooks run. They go through the browser harness, so they are checked against the [allowed domains](../environments.md#allowed-domains), follow no redirects and carry the session's cookies. A `run` or `sql` hook stops the test with `hook_unsupported` (the generated Playwright spec skips it with the reason).
+`request` hooks go through the browser harness, so they are checked against the [allowed domains](../environments.md#allowed-domains), follow no redirects and carry the session's cookies.
+
+`run` and `sql` hooks are declared, scoped and safe:
+
+- **`run: <script>`** starts one command from the project folder, with no shell (pipes, redirects and `$VARS` are refused: put them in a script file). The command must be listed in the project file's `hooks.run.allow`: a program on the PATH (`node`, `pnpm`) or a project path glob (`scripts/*`); a path can't lead outside the project, not even through a link. It gets the project's secrets as environment variables, and it is stopped after `hooks.run.timeoutSeconds` (60). Its output is scrubbed, so a secret it prints shows as `[secret:NAME]`.
+- **`sql: <statement>`** runs one statement through the database's own client, `psql` or `mysql` (`hooks.sql.client`), against the connection string in the secret named by `hooks.sql.connection`. The connection goes to the client in its environment (`PGPASSWORD`, `MYSQL_PWD`), never on its command line or in output. It never runs in a [production environment](../environments.md#production-mode) unless the hook says `production: true`. The client must be installed; there is no built-in database driver.
+
+```yaml
+# the project file
+hooks:
+  run:
+    allow: ["scripts/*"]
+    timeoutSeconds: 60
+  sql:
+    connection: TEST_DATABASE_URL
+    client: psql
+```
+
+```yaml
+# frontmatter
+setup:
+  - run: scripts/seed.js --plan pro
+  - sql: DELETE FROM carts WHERE owner = 'ada@example.com'
+teardown:
+  - run: scripts/cleanup.js
+```
+
+A setup hook that fails stops the test: blocked `config_error` when it isn't allowed, `missing_secret` without its connection, `setup_failed` when it runs and fails. **Teardown hooks always run**, after a failure too; their failures are logged as warnings. The generated Playwright spec runs `request` hooks and skips `run` and `sql` ones with the reason.
+
+### Datasets
+
+```yaml
+# frontmatter
+dataset: data/projects.csv
+```
+
+```csv
+project,owner
+Q3 roadmap,ada@example.com
+"Budget, 2027",{{unique.email}}
+```
+
+The test runs once per row, each column bound as `{{data.<column>}}` (a column replaces a `data` value of the same name, and a cell may use `{{unique.email}}`). A CSV file has a header row; a JSON file is an array of flat objects (text, numbers, true/false). Each row is its own result, `<test id>#<row>` (named `<name> #<row>`); every row replays the test's one recording, so only the first run of a new test spends AI. Up to 200 rows.
+
+A dataset that can't be read blocks the test with the reason and the fix: `DATASET_NOT_FOUND`, `DATASET_EMPTY`, or `DATASET_INVALID` (a row with the wrong number of values, a column name that can't be `{{data.x}}`, a `{{data.x}}` the test uses that no column or `data` value defines).
 
 ### Per-environment overrides
 
@@ -91,6 +135,9 @@ The editors, **Format** and every file %Name% writes use one canonical text: fro
 | `REQUIRED_MISSING` | error | No `name`. |
 | `INVALID_VALUE` | error | A field has the wrong type or value (e.g. `timeout: 90`, `tags: smoke`). |
 | `HOOK_INVALID` | error | A setup/teardown hook is malformed. |
+| `DATASET_NOT_FOUND` | error | The dataset file doesn't exist (found when the test runs). |
+| `DATASET_EMPTY` | error | The dataset has no rows. |
+| `DATASET_INVALID` | error | The dataset can't be used: see [Datasets](#datasets). |
 | `PARAMS_OUTSIDE_FLOW` | error | `params:` or `{{params.x}}` in a test. |
 | `NO_STEPS` | warning | No steps (guards don't count). |
 | `TEXT_OUTSIDE_STEPS` | warning | Text that is not a step or a comment. |

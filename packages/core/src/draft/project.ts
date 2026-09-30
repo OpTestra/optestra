@@ -57,7 +57,7 @@ export interface ProjectDraft extends DraftResult {
   environment: string;
 }
 
-interface Prepared {
+export interface Prepared {
   dir: string;
   config: Config;
   environment: string;
@@ -88,7 +88,10 @@ async function projectHints(dir: string, config: Config, environment: string): P
   return hints.slice(0, 12);
 }
 
-async function prepare(options: ProjectDraftOptions, needModels: boolean): Promise<Prepared> {
+export async function prepare(
+  options: ProjectDraftOptions,
+  needModels: boolean,
+): Promise<Prepared> {
   const dir = resolve(options.project);
   if (!existsSync(projectFile(dir)))
     throw new DraftSetupError(`No project file in ${dir}.`, "Create one first (init).");
@@ -130,6 +133,7 @@ async function prepare(options: ProjectDraftOptions, needModels: boolean): Promi
       environment: environment.name,
       budgets: [budget],
       usageStore: projectUsageStore(dir),
+      env,
     });
     if (!models.pool("planner").some((entry) => entry.usable)) models = undefined;
   }
@@ -155,7 +159,7 @@ async function prepare(options: ProjectDraftOptions, needModels: boolean): Promi
   };
 }
 
-function freePath(dir: string, testsDir: string, name: string): string {
+export function freePath(dir: string, testsDir: string, name: string): string {
   const slug = slugOf(name);
   for (let n = 1; ; n++) {
     const path = `${testsDir}/${slug}${n === 1 ? "" : `-${n}`}.test.md`;
@@ -163,7 +167,7 @@ function freePath(dir: string, testsDir: string, name: string): string {
   }
 }
 
-async function withBrowser<T>(
+export async function withBrowser<T>(
   options: ProjectDraftOptions,
   run: (browser: LaunchedBrowser) => Promise<T>,
 ): Promise<T> {
@@ -178,7 +182,7 @@ async function withBrowser<T>(
   }
 }
 
-function sessionFor(prepared: Prepared, browser: LaunchedBrowser) {
+export function sessionFor(prepared: Prepared, browser: LaunchedBrowser) {
   return openSession({
     browser,
     baseUrl: prepared.baseUrl,

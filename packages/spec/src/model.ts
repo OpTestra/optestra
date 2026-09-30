@@ -75,7 +75,13 @@ export type Hook =
       at?: SourceInfo;
     }
   | { type: "run"; script: string; at?: SourceInfo }
-  | { type: "sql"; statement: string; at?: SourceInfo };
+  | {
+      type: "sql";
+      statement: string;
+      /** AUT-10: the statement may run in a production environment (default: never). */
+      production?: boolean;
+      at?: SourceInfo;
+    };
 
 export interface EnvironmentOverride {
   start?: Template;
@@ -99,7 +105,7 @@ export interface Frontmatter {
   timeout?: number;
   heal?: HealPolicy;
   allowDestructive: DestructiveAction[];
-  /** AUT-9: path to a CSV or JSON dataset (parsed only). */
+  /** AUT-9: path to a CSV or JSON dataset, relative to the test file: one run per row. */
   dataset?: string;
   setup: Hook[];
   teardown: Hook[];

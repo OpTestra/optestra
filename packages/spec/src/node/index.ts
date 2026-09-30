@@ -11,6 +11,16 @@ import { parseTest } from "../parse.js";
 import type { TestsSettings } from "../section.js";
 import "../section.js";
 import "../lint/section.js";
+import "../hooks-section.js";
+
+export {
+  type DatasetRow,
+  datasetColumnProblems,
+  type LoadedDataset,
+  loadDataset,
+  MAX_DATASET_ROWS,
+  parseCsv,
+} from "./dataset.js";
 
 export const DEFAULT_TESTS: TestsSettings = { dir: "tests", include: ["**/*.test.md"] };
 const SKIP = new Set(["node_modules", "dist"]);
@@ -71,6 +81,8 @@ export interface LoadTestsOptions {
   emailDomain?: string | undefined;
   /** For a flow loaded on its own (an auth profile's login): its params, as templates. */
   params?: Readonly<Record<string, string>> | undefined;
+  /** AUT-9: one dataset row, bound as `{{data.<column>}}` (see `loadDataset`). */
+  data?: Readonly<Record<string, string>> | undefined;
 }
 
 export interface LoadedTest {
@@ -119,6 +131,7 @@ export async function loadTest(
     generators: options.generators,
     emailDomain: options.emailDomain,
     params: options.params,
+    data: options.data,
   });
   const own =
     parsed.spec.frontmatter.kind === "flow"

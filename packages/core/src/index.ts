@@ -19,7 +19,19 @@ export function version(): string {
 export * from "./author/index.js";
 export * from "./checks/index.js";
 export * from "./draft/index.js";
+export * from "./explore/index.js";
 export * from "./heal/index.js";
+export {
+  allowedCommand,
+  clientEnv,
+  DEFAULT_HOOKS,
+  type HookContext,
+  type HookExecResult,
+  runScriptHook,
+  runSqlHook,
+  splitCommand,
+} from "./hooks/exec.js";
+export * from "./record/index.js";
 export * from "./run/index.js";
 export {
   type AndroidOnlyAction,

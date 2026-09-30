@@ -42,6 +42,10 @@ export const SPEC_DIAGNOSTIC_CODES = [
   "FLOW_PARAM_UNKNOWN",
   // Project
   "TESTS_DIR_MISSING",
+  // Datasets (AUT-9, found when a dataset is loaded)
+  "DATASET_NOT_FOUND",
+  "DATASET_INVALID",
+  "DATASET_EMPTY",
   // Lint (SPEC-1): every rule finding has code LINT and its `rule` id
   "LINT",
   "LINT_RULE_UNKNOWN",

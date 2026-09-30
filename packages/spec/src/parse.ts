@@ -99,6 +99,7 @@ export function parseTest(text: string, path: string, options: ParseOptions = {}
     {
       kind: frontmatter.kind,
       data: new Set([...Object.keys(frontmatter.data), ...envData]),
+      dataset: frontmatter.dataset !== undefined,
       params: new Set(Object.keys(frontmatter.params)),
       generators: options.generators ?? defaultGenerators,
       secrets: declaredSecrets(options.config),

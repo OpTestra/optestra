@@ -8,6 +8,8 @@ import type { Reporter } from "./text.js";
 export interface RefScope {
   kind: "test" | "flow";
   data: ReadonlySet<string>;
+  /** AUT-9: the test has a dataset, whose columns are data too (checked when it's loaded). */
+  dataset?: boolean;
   params: ReadonlySet<string>;
   generators: GeneratorRegistry;
   /** Declared secret names; undefined when no config was given (then no SECRET_UNDECLARED). */
@@ -64,7 +66,7 @@ export function checkTemplate(template: Template, scope: RefScope, where: Where,
         }
         break;
       case "data":
-        if (!scope.data.has(ref.name)) {
+        if (!scope.data.has(ref.name) && !scope.dataset) {
           report.error(
             "VAR_UNDEFINED",
             range,

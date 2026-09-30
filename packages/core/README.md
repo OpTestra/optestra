@@ -11,8 +11,8 @@ the fix policies, and review and accept.
 
 | Import | Use |
 |---|---|
-| `@testament/core` | drafting: `exploreDraft`, `exploreStarters`, `finishDraft`, `DRAFT_TOOLS`, `DRAFT_LIMITS`, `DRAFT_PROMPT_VERSION`; `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `ANDROID_TOOLS`, `toolsFor`, `PROMPT_VERSION`, `promptVersionFor`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `fixerProposal`, `chaptersVtt`; heals: `runFixer`, `fixerContext`, `FIXER_LIMITS`, `FIXER_PROMPT_VERSION`, `applyPatches`, `HealPatchSchema`, `describeCommand`, `markAutoApplied` |
-| `@testament/core/node` | `draftTest`, `suggestStarterTests` (drafting against a project folder); `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `resolveTarget` / `launchWorker` (the target layer), `mergeRecording`, `recentAiUsage`, `recentHeals`, `runSpecTest`; heals: `listHeals`, `applyHeals` |
+| `@testament/core` | record: `recordTest`; explore: `exploreApp`; hooks: `runScriptHook`, `runSqlHook`, `DEFAULT_HOOKS`; drafting: `exploreDraft`, `exploreStarters`, `finishDraft`, `DRAFT_TOOLS`, `DRAFT_LIMITS`, `DRAFT_PROMPT_VERSION`; `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `ANDROID_TOOLS`, `toolsFor`, `PROMPT_VERSION`, `promptVersionFor`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `fixerProposal`, `chaptersVtt`; heals: `runFixer`, `fixerContext`, `FIXER_LIMITS`, `FIXER_PROMPT_VERSION`, `applyPatches`, `HealPatchSchema`, `describeCommand`, `markAutoApplied` |
+| `@testament/core/node` | `recordProject`, `saveRecorded`, `exploreProject`, `explainRun`, `explainTest`, `formatExplanation`; `draftTest`, `suggestStarterTests` (drafting against a project folder); `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `resolveTarget` / `launchWorker` (the target layer), `mergeRecording`, `recentAiUsage`, `recentHeals`, `runSpecTest`; heals: `listHeals`, `applyHeals` |
 
 Types for either target: `HarnessSession`, `HarnessAction`, `HarnessObservation`,
 `HarnessOutcome`, `TargetName`, `targetOfSession`, `isScreen` (from `@testament/core`).
@@ -439,6 +439,56 @@ the failure groups, then the summary and the results folder. `--verbose`
 prints every step, heal and warning. Exit code via `exitCodeFor` (CLI-5): 0
 passed, 1 failed/flaky (and healed unless the heal policy is `auto`), 2
 blocked or config error. `testament results <runDir>` reads the same folder.
+
+## Record, explore, explain, datasets and hooks (ADV-0)
+
+**Record (AUT-8)**, `src/record/`. `recordTest({ session, start, name, meta })`
+on a (headed) harness session: `Session.record` puts a page script and a small
+overlay (aria-hidden, closed shadow root) in the page. The user's clicks and
+Enter are held and performed by the harness (`act`, so the command gets its
+post-state and settle), typing, selects and file choices are the user's own;
+every step gets the element's candidates and fingerprint, phrased like the
+drafter's. Marks (the overlay, or Alt+Shift+E) become expectations checked like
+the drafter's (rules, live, sanity). Values: a secret's value → `{{secret.NAME}}`
+(matched inside the browser package; the value never reaches core); a password
+matching no secret → `{{secret.PASSWORD}}` (and scrubbed from then on); an
+email → `{{data.email}}` (`{{unique.email}}` on a sign-up page); other text →
+a `data` value. The result: the printed test and a `Recording` (`source:
+record`) keyed from the printed file, so it replays with no AI.
+`recordProject` / `saveRecorded` (core/node) open the project's headed session
+and write both, only when asked, never over a file.
+
+**Explore (EXPL-1/2)**, `src/explore/`. `exploreApp(goal, options)` is
+`exploreDraft` with the explorer prompt (`explorer-v1`) and two hooks
+(`onObserve`, `onAction`): code watches every action and page for error pages,
+5xx/failed requests, console errors (`Session.consoleErrors`), broken
+same-site links (up to `linkChecks`, via `hookRequest`), a crash and the dead
+end, each a finding with evidence and the step after which it showed. An error
+page reached by clicking gets a proposed regression test (`the page doesn't
+show "…"`, fails until fixed); the way toward the goal is the other proposal.
+Nothing is saved or blocks anything.
+
+**Explain (DIA-6)**, `src/explain/`. `explainRun(runDir, { test?, models? })`:
+per test that didn't pass, the evidence (deciding check, failing step and
+post-state, console errors, failed requests from the HAR, the failure_cause /
+flaky decisions, screenshot, trace) cited `[E1]…`, a diagnosis and next steps
+by cause. With `models`, at most one planner call rewrites it (structured
+output; citing unknown evidence falls back to rules). Read-only: never changes a
+verdict or cause.
+
+**Datasets (AUT-9)**. The runner expands a test with `dataset:` into one plan
+per row (`loadDataset`; problems block the test with `DATASET_*` and the fix):
+result id `<id>#<row>`, name `<name> #<row>`, the row bound through
+`loadTest(…, { data })`, every row on the test's one recording.
+
+**Hooks (AUT-10)**, `src/hooks/exec.ts`. `runHook(session, hook, phase,
+hookContext)` runs `request` hooks through the harness and `run`/`sql` hooks
+through `runScriptHook` / `runSqlHook` (allowlist `hooks.run.allow`, no shell,
+project cwd, timeout, secrets in the environment, output scrubbed; SQL through
+psql/mysql with the connection secret in the client's environment, never in
+production without `production: true`). Blocked reasons: not allowed or
+production → `config_error`, no connection value → `missing_secret`, failed →
+`setup_failed`. Teardown hooks always run; their failures are warnings.
 
 ## Drafting a test from a sentence (AGT-0)
 

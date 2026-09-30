@@ -17,6 +17,8 @@ export class Evidence {
   readonly #dir: string;
   readonly #redact: (text: string) => string;
   readonly #console: string[] = [];
+  /** Console errors and uncaught exceptions, kept whether or not console evidence is on. */
+  readonly #errors: string[] = [];
   readonly #chunks: string[] = [];
   #context: BrowserContext | undefined;
   #tracing = false;
@@ -53,6 +55,14 @@ export class Evidence {
   watch(page: Page): void {
     if (this.#pages.has(page)) return;
     this.#pages.add(page);
+    page.on("console", (message: ConsoleMessage) => {
+      if (message.type() !== "error") return;
+      const { url, lineNumber } = message.location();
+      this.#errors.push(`[error] ${message.text()}${url ? ` (${url}:${lineNumber})` : ""}`);
+    });
+    page.on("pageerror", (error) => {
+      this.#errors.push(`[pageerror] ${error.message}`);
+    });
     if (!this.#options.console) return;
     page.on("console", (message: ConsoleMessage) => {
       const { url, lineNumber } = message.location();
@@ -64,6 +74,11 @@ export class Evidence {
     page.on("pageerror", (error) => {
       this.#console.push(`${new Date().toISOString()} [pageerror] ${error.message}`);
     });
+  }
+
+  /** Console errors and uncaught page exceptions so far (raw; the session scrubs them). */
+  errors(): readonly string[] {
+    return this.#errors;
   }
 
   /** Stops tracing before a secret is typed. */

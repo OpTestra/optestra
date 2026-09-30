@@ -109,13 +109,15 @@ describe("engine guards", () => {
   });
 
   // Secret values are revealed only where they are typed or sent to their own host
-  // (SEC-1): the browser driver, and the three transports' key handling.
+  // (SEC-1): the browser driver, the three transports' key handling, and the
+  // run:/sql: hook runner, which hands them to its own process (AUT-10).
   it("reveals secrets only in the allowed files", () => {
     const reveal = new RegExp(`["']${brand.npmScope}/config/reveal["']`);
     expect(offenders(source, reveal).sort()).toEqual([
       "packages/android/src/session.ts",
       "packages/auth/src/inbox/transport.ts",
       "packages/browser/src/session.ts",
+      "packages/core/src/hooks/exec.ts",
       "packages/decide/src/node/systemone/admin.ts",
       "packages/decide/src/node/systemone/client.ts",
       "packages/models/src/check.ts",
@@ -169,6 +171,8 @@ describe("engine guards", () => {
     "packages/android/src/tools.ts",
     "packages/brand/src/run.ts",
     "packages/browser/src/launch.ts",
+    // run:/sql: hooks (AUT-10): an allowlisted command or the database client, no shell.
+    "packages/core/src/hooks/exec.ts",
     // Tests with code steps run through their generated spec: Node + Playwright Test's CLI (LOOP-4).
     "packages/core/src/run/spec-run.ts",
     "packages/models/src/delegated/process.ts",
@@ -199,6 +203,11 @@ describe("engine guards", () => {
     expect([...spec.matchAll(/spawn\(/g)]).toHaveLength(1);
     expect(spec).toContain("spawn(node.command, args, {");
     expect(spec).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
+    // Hooks start one command (allowlisted, or psql/mysql), never through a shell.
+    const hooks = readFileSync(join(root, "packages/core/src/hooks/exec.ts"), "utf8");
+    expect([...hooks.matchAll(/spawn\(/g)]).toHaveLength(1);
+    expect(hooks).toContain("shell: false,");
+    expect(hooks).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
   });
 
   it("lets the Android guard connect only after the allowlist, and the driver link only to loopback", () => {

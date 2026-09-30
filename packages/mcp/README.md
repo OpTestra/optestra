@@ -44,6 +44,7 @@ do.
 | `save_test` | `path`, `text` | `saved: true`, `path`, `findings[]` |
 | `run_tests` | `tests?[] tags?[] grep? environment? mode?` (`normal` or `replay-only`) | `runDir`, `summary` (the results summary, `@testament/report`), `evidence[]` |
 | `get_results` | `runId?` | as `run_tests` |
+| `explain` | `runId?`, `test?`, `ai?` | `explainRun` (DIA-6): per test the diagnosis, next steps and cited evidence; `ai: true` makes one model call |
 | `list_heals` | `runId?` | `listHeals` (HEAL-0) |
 | `accept_heal` | `ids[]` (or `["all"]`), `runId?` | `accepted[] skipped[] recordings[] specs[] warnings[]` |
 

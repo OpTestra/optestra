@@ -237,8 +237,17 @@ export async function runAuthorCommand(
   let result: Awaited<ReturnType<typeof core.authorTest>>;
   let closed: Awaited<ReturnType<typeof session.close>> | undefined;
   try {
+    const { defaultRedactor } = await import("@testament/config/node");
     result = await core.authorTest(test.expanded, {
       session,
+      hookContext: {
+        projectDir: dir,
+        settings: config.hooks ?? core.DEFAULT_HOOKS,
+        production: settings.production ?? false,
+        secrets: secrets.secrets,
+        redact: (text) => defaultRedactor.redact(text),
+        env: io.env,
+      },
       models: client,
       budget,
       production: settings.production,

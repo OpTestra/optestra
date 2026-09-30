@@ -47,6 +47,7 @@ environment), `--headed` (show the browsers).
 | `save_test` | Saves a **new** test file. Refuses to overwrite a file, and refuses text with lint errors or warnings. | a new file only |
 | `run_tests` | Runs tests (all, files, tags, a name filter; `mode: replay-only` for no AI). Returns the results summary. | the run folder |
 | `get_results` | A run's results summary (default: the latest) and each test's evidence files. | no |
+| `explain` | Why tests of a run failed, from its evidence (the failing check, step, console errors, failed requests, screenshot), each sentence citing it. Rules only; `ai: true` makes one AI call. | no |
 | `list_heals` | A run's heals: the recording's before and after, why, confidence. | no |
 | `accept_heal` | Applies heals to the recordings. Only the healed steps' commands change; checks never do. | recordings |
 

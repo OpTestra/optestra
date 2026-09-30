@@ -20,8 +20,11 @@ Exit codes follow one rule for every command that runs or checks something: **0*
 | [`lint`](#lint) | check test files for problems and weak tests (exit 1 on errors, 2 if a file can't be parsed) |
 | [`author`](#author) | let the AI carry out a test's steps once and save the recording that later runs replay |
 | [`new`](#new) | draft a test from one sentence by exploring the app (AI); prints it, and saves it only with --accept or --out |
+| [`record`](#record) | record a test by clicking through the app in a browser window; mark expectations with the overlay. Saves it (and its recording) only when you say so |
+| [`explore`](#explore) | explore the app toward a goal (AI) and report errors, failed requests, console errors, broken links and dead ends, with proposed tests. Never fails a run |
 | [`mcp`](#mcp) | start the MCP server for coding agents (stdio) on this project: list, draft, save and run tests, read results, accept heals |
 | [`run`](#run) | run tests: replay each recording with no AI, evaluate every check, write a results folder (exit 0 passed, 1 failed, 2 blocked) |
+| [`explain`](#explain) | explain why tests failed, from the run's evidence (rules only; --ai: one AI call). Never changes a verdict |
 | [`heal`](#heal) | review a run's heals (default: the latest run): the recording diff, why, confidence; accept or reject them |
 | [`checks`](#checks) | show what each Expect line of a test was compiled into: the check, how it was made, its sanity test |
 | [`auth`](#auth) | list auth profiles and their saved login sessions per environment |
@@ -263,6 +266,47 @@ draft a test from one sentence by exploring the app (AI); prints it, and saves i
 | `--json` | print machine-readable JSON (never asks) |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
 
+## record {#record}
+
+record a test by clicking through the app in a browser window; mark expectations with the overlay. Saves it (and its recording) only when you say so
+
+```sh
+%cli% record [options]
+```
+
+| Option | | Default |
+|---|---|---|
+| `--url <url>` | where to start: a path on the app (/login) or a URL |  |
+| `--name <name>` | the test's name |  |
+| `--accept` | save it in the tests folder without asking |  |
+| `--out <file>` | save it to this file instead (never over an existing file) |  |
+| `--browser <name>` | chromium (default), firefox or webkit |  |
+| `-e, --env <name>` | environment to record on |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## explore {#explore}
+
+explore the app toward a goal (AI) and report errors, failed requests, console errors, broken links and dead ends, with proposed tests. Never fails a run
+
+```sh
+%cli% explore [options] [url]
+```
+
+| Argument | |
+|---|---|
+| `[url]` | where to start (default: the environment's baseUrl) |
+
+| Option | | Default |
+|---|---|---|
+| `--goal <goal>` | what to head for, e.g. "a visitor buys the Pro plan" |  |
+| `--start <path>` | where to start on the app (default /) |  |
+| `--links <n>` | same-site links to check for broken ones (default 25) |  |
+| `--save-drafts <folder>` | write the proposed tests there (never into your tests) |  |
+| `--headed` | show the browser window |  |
+| `--json` | print machine-readable JSON |  |
+| `-e, --env <name>` | environment to explore |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
 ## mcp {#mcp}
 
 start the MCP server for coding agents (stdio) on this project: list, draft, save and run tests, read results, accept heals
@@ -310,6 +354,26 @@ run tests: replay each recording with no AI, evaluate every check, write a resul
 | `--android <version>` | Android projects: the Android version (default: android.version); repeat for a matrix | `[]` |
 | `--no-video` | don't record a video per attempt |  |
 | `--verbose` | print every step, heal and warning |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## explain {#explain}
+
+explain why tests failed, from the run's evidence (rules only; --ai: one AI call). Never changes a verdict
+
+```sh
+%cli% explain [options] [runDir] [test]
+```
+
+| Argument | |
+|---|---|
+| `[runDir]` | the run folder (default: the project's latest run) |
+| `[test]` | a test id, file or name part (default: every test that didn't pass) |
+
+| Option | | Default |
+|---|---|---|
+| `--ai` | let the AI write the diagnosis from the same evidence (one model call) |  |
+| `--json` | print machine-readable JSON |  |
+| `-e, --env <name>` | environment (for the AI settings) |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
 
 ## heal {#heal}

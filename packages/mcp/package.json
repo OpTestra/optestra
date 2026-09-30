@@ -27,6 +27,7 @@
     "@testament/config": "workspace:^",
     "@testament/contract": "workspace:^",
     "@testament/core": "workspace:^",
+    "@testament/models": "workspace:^",
     "@testament/recording": "workspace:^",
     "@testament/report": "workspace:^",
     "@testament/spec": "workspace:^",

@@ -51,6 +51,12 @@ export interface ExpandContext extends ParseOptions {
    * defaults and are bound in the flow's own data.
    */
   params?: Readonly<Record<string, string>> | undefined;
+  /**
+   * AUT-9: one dataset row. Each column is a `{{data.<column>}}` value (as a
+   * template, so a cell may use `{{unique.email}}`); it replaces a frontmatter
+   * data value of the same name.
+   */
+  data?: Readonly<Record<string, string>> | undefined;
 }
 
 /**
@@ -556,8 +562,14 @@ export async function expandTest(spec: TestSpec, ctx: ExpandContext): Promise<Ex
   const x = new Expander(spec, ctx);
   const fm = spec.frontmatter;
   const env = ctx.environment ? fm.environments[ctx.environment] : undefined;
-  const data = { ...fm.data, ...(env?.data ?? {}) };
   const report = new Reporter(spec.path);
+  const row = Object.fromEntries(
+    Object.entries(ctx.data ?? {}).map(([name, value]) => [
+      name,
+      parseTemplate(value, undefined, report),
+    ]),
+  );
+  const data = { ...fm.data, ...(env?.data ?? {}), ...row };
   const values = x.bindData(data, "|", report);
 
   const params = new Map<string, BoundSegment[]>();

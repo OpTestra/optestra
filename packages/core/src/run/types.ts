@@ -48,6 +48,8 @@ export type ReplayEvent =
 
 export interface ReplayOptions {
   test: ExpandedTest;
+  /** What run:/sql: hooks need (AUT-10); without it they block the test (config_error). */
+  hookContext?: import("../hooks/exec.js").HookContext;
   /** The stored recording; undefined when there is none (or in rerecord mode). */
   recording: Recording | undefined;
   session: ReplaySession;

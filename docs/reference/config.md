@@ -90,6 +90,19 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `lint.rules` | map of "off" \| "info" \| "warning" \| "error" | `{}` | Rule levels by id (vague-step, expect-not-observable, no-expectations, soft-only, missing-start, compound-expect, literal-credential, fixed-email, destructive-undeclared, vague-guard, fixed-wait, duplicate-test-name, unused-flow): off, info, warning or error. |
 | `lint.strict` | boolean | `false` | Warnings count as errors for the exit code (CI). |
 
+## hooks
+
+| Key | Type | Default | |
+|---|---|---|---|
+| `hooks` | object |  | Setup and teardown hooks: what run: may start, and where sql: statements go. |
+| `hooks.run` | object |  | run: hooks. |
+| `hooks.run.allow` | list of string | `[]` | Commands run: hooks may start: a program on the PATH (node, pnpm) or a project path glob (scripts/*). |
+| `hooks.run.timeoutSeconds` | number | `60` | Seconds before a run: hook is stopped. |
+| `hooks.sql` | object |  | sql: hooks. |
+| `hooks.sql.connection` | string |  | The declared secret holding the database connection string. |
+| `hooks.sql.client` | "psql" \| "mysql" | `"psql"` | The database client that runs statements: psql (Postgres) or mysql. |
+| `hooks.sql.timeoutSeconds` | number | `30` | Seconds before a statement is stopped. |
+
 ## models
 
 | Key | Type | Default | |

@@ -47,7 +47,10 @@ function hookLines(hook: Hook): string[] {
     case "run":
       return [`  - run: ${scalar(hook.script)}`];
     case "sql":
-      return [`  - sql: ${scalar(hook.statement)}`];
+      return [
+        `  - sql: ${scalar(hook.statement)}`,
+        ...(hook.production ? ["    production: true"] : []),
+      ];
     default: {
       const lines = [`  - request: ${scalar(`${hook.method} ${hook.target}`)}`];
       if (hook.body !== undefined) {

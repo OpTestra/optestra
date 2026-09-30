@@ -73,11 +73,12 @@ import {
 } from "@testament/recording";
 import { readRecording, recordingPath, writeRecording } from "@testament/recording/node";
 import { type ExpandedTest, hasSpecErrors } from "@testament/spec";
-import { loadTest, loadTests } from "@testament/spec/node";
+import { datasetColumnProblems, loadDataset, loadTest, loadTests } from "@testament/spec/node";
 import { promptVersionFor } from "../author/agent.js";
 import { createTestInbox, type TestInbox } from "../author/inbox.js";
 import { applyPatches, type HealPatch } from "../heal/patch.js";
 import { markAutoApplied } from "../heal/policy.js";
+import { DEFAULT_HOOKS, type HookContext } from "../hooks/exec.js";
 import { chaptersVtt, consoleErrors } from "./evidence.js";
 import { recentAiUsage, recentHeals } from "./history.js";
 import { profileFlowPath, profileLogin, replayProfileFlow } from "./profiles.js";
@@ -90,8 +91,8 @@ import {
   launchWorker,
   matrixOf,
   resolveTarget,
-  TargetLaunchError,
   type TargetCell,
+  TargetLaunchError,
   type TargetWorker,
 } from "./target.js";
 import type { ReplayResult, ReplaySession, StepShotType } from "./types.js";
@@ -219,10 +220,15 @@ type BrowserName = "chromium" | "firefox" | "webkit";
 
 interface TestPlan {
   path: string;
+  /** The result id: the test id, plus `#<row>` for a dataset row (AUT-9). */
   id: string;
+  /** The test's own id: its recording (every row shares it). */
+  testId: string;
   name: string;
   tags: string[];
   problem?: string;
+  /** AUT-9: this plan is one row of the test's dataset. */
+  row?: { row: number; values: Record<string, string> };
 }
 
 const posix = (path: string) => path.split(sep).join("/");
@@ -446,26 +452,44 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         (t) => all.tests.find((l) => l.path === t.path)?.id ?? t.path,
       )
     : selected;
-  const plans: TestPlan[] = sliced.map((t) => {
+  const plans: TestPlan[] = sliced.flatMap((t): TestPlan[] => {
     const loadedTest = all.tests.find((l) => l.path === t.path);
     const problems = loadedTest?.diagnostics.filter((d) => d.severity === "error") ?? [];
     const authProblems = loadedTest ? checkTestAuth(loadedTest.spec, config.auth) : [];
-    return {
+    const id = loadedTest?.id ?? t.path;
+    // AUT-9: a dataset runs the test once per row; a broken dataset blocks the test.
+    const dataset = loadedTest?.expanded.dataset
+      ? loadDataset(projectDir, t.path, loadedTest.expanded.dataset)
+      : undefined;
+    if (dataset && loadedTest && dataset.diagnostics.length === 0)
+      dataset.diagnostics.push(...datasetColumnProblems(loadedTest.spec, dataset));
+    const allProblems = [...problems, ...authProblems, ...(dataset?.diagnostics ?? [])];
+    const base: TestPlan = {
       path: t.path,
-      id: loadedTest?.id ?? t.path,
+      id,
+      testId: id,
       name: t.name,
       tags: t.tags,
-      ...(hasSpecErrors(problems) || authProblems.length > 0
+      ...(hasSpecErrors(problems) ||
+      authProblems.length > 0 ||
+      (dataset?.diagnostics.length ?? 0) > 0
         ? {
-            problem: [...problems, ...authProblems]
+            problem: allProblems
               .map(
                 (d) =>
-                  `${d.code}: ${d.message}${d.code.startsWith("AUTH_") ? ` Fix: ${d.fix}` : ""}`,
+                  `${d.code}: ${d.message}${d.code.startsWith("AUTH_") || d.code.startsWith("DATASET_") ? ` Fix: ${d.fix}` : ""}`,
               )
               .join(" "),
           }
         : {}),
     };
+    if (!dataset || base.problem) return [base];
+    return dataset.rows.map((row) => ({
+      ...base,
+      id: `${id}#${row.row}`,
+      name: `${t.name} #${row.row}`,
+      row,
+    }));
   });
 
   const secrets = resolveSecrets(config, sources, { environment: environment.name });
@@ -540,6 +564,16 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       });
   }
 
+  // run:/sql: hooks (AUT-10): from the project folder, with its secrets, scrubbed.
+  const hookContext: HookContext = {
+    projectDir,
+    settings: config.hooks ?? DEFAULT_HOOKS,
+    production: settings.production ?? false,
+    secrets: secrets.secrets,
+    redact: (text) => redactor.redact(text),
+    env,
+    ...(options.signal ? { signal: options.signal } : {}),
+  };
   const cells: TargetCell[] = target.cells;
   /** A matrix run gives each entry its own TestResult (TGT-5): the test id plus the entry. */
   const resultId = (plan: TestPlan, cell: TargetCell) =>
@@ -610,7 +644,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       });
       return;
     }
-    const file = recordingPath(testsDir, plan.id);
+    // Every dataset row replays (and records into) the test's one recording.
+    const file = recordingPath(testsDir, plan.testId);
     const stored = readRecording(file);
     const previous = stored?.ok ? stored.recording : undefined;
     if (stored && !stored.ok)
@@ -646,6 +681,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         environment: environment.name,
         seed: `${runId}:${testId}:${attempt}`,
         emailDomain,
+        ...(plan.row ? { data: plan.row.values } : {}),
       });
       const expanded = loadedTest?.expanded;
       emit({ type: "attempt.started", testId, attempt });
@@ -862,6 +898,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             await options.beforeAttempt({ testId, attempt, session: open });
           result = await where.run({ testId, attempt, sink }, () =>
             replayAttempt({
+              hookContext,
               inbox: attemptInbox,
               ...(prepare ? { prepare } : {}),
               test: expanded,

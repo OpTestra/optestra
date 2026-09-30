@@ -25,6 +25,14 @@ export {
   type LaunchOptions,
   launchBrowser,
 } from "./launch.js";
+export type {
+  RecordedTarget,
+  RecordedUserEvent,
+  RecordingControl,
+  RecordOptions,
+  RecordReply,
+  ScriptedUser,
+} from "./recorder.js";
 export { type RenderOptions, renderForModel } from "./render.js";
 export { openSession, Session } from "./session.js";
 export * from "./types.js";
