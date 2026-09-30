@@ -212,9 +212,10 @@ export const SECTIONS: Section[] = [
         description: "The HTML report, JUnit XML, the JSON summary and the Markdown summary.",
       },
       {
-        text: "Playwright export",
+        text: "Playwright and Maestro export",
         link: "/export",
-        description: "Generated Playwright specs next to your tests, and a standalone export.",
+        description:
+          "Generated Playwright specs (Maestro flows for Android) next to your tests, and a standalone export.",
       },
     ],
   },

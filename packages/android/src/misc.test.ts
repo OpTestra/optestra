@@ -1,8 +1,9 @@
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { ENV_PREFIX } from "@testament/config";
 import { describe, expect, it } from "vitest";
-import { avdConfig } from "./emulator.js";
+import { avdConfig, avdCores } from "./emulator.js";
 import { COUNTERS_COMMAND, firewallRules, parseCounters, resetRules } from "./firewall.js";
 import * as api from "./index.js";
 import { Logcat } from "./logcat.js";
@@ -364,6 +365,19 @@ describe("data: versions and device profiles (TGT-4, TGT-6)", () => {
     expect(config).toContain("hw.lcd.width=1080\nhw.lcd.height=2400\nhw.lcd.density=420\n");
     expect(config).toContain("image.sysdir.1=system-images/android-36/google_apis/arm64-v8a/\n");
     expect(config).toContain("PlayStore.enabled=false\n");
+    expect(config).toContain("hw.cpu.ncore=2\n");
+    expect(avdConfig("x", DEVICE_PROFILES["pixel-8"] as never, image as never, 1)).toContain(
+      "hw.cpu.ncore=1\n",
+    );
+  });
+
+  it("reads the AVD's virtual CPUs from the environment (a slow device for reproducing CI)", () => {
+    expect(avdCores({})).toBe(2);
+    expect(avdCores({ [`${ENV_PREFIX}ANDROID_CORES`]: "1" })).toBe(1);
+    expect(() => avdCores({ [`${ENV_PREFIX}ANDROID_CORES`]: "0" })).toThrow(/ANDROID_CORES is "0"/);
+    expect(() => avdCores({ [`${ENV_PREFIX}ANDROID_CORES`]: "two" })).toThrow(
+      /ANDROID_CORES is "two"/,
+    );
   });
 
   it("plans the setup from what's installed, never downloading", () => {

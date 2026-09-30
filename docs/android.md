@@ -2,9 +2,7 @@
 
 Android apps use the same test format as websites. The Android harness is the counterpart of the browser harness: it boots and resets emulators, installs your APK fresh for every session, enforces the allowed domains at the network layer, observes screens through the accessibility tree, offers a closed set of actions, types secrets and captures evidence.
 
-::: info Status
-The harness, its setup commands and its safety model are built and tested on emulators. Authoring and running Android tests from `%cli% run` and the apps are being wired in now; this page will show the full flow when they land.
-:::
+Author and run them like website tests: `%cli% author` records a test once on the emulator, `%cli% run` replays the recordings with no AI, and `%cli% export` writes them as [Maestro flows](./export.md#android-maestro-flows) that run without %Name%. The apps show Android runs like any other; running Android tests from the desktop app is coming.
 
 ## Setup
 
@@ -37,7 +35,26 @@ secrets:
     domains: [com.acme.shop]      # for Android, the app packages a secret may be typed into
 ```
 
-From the emulator, `10.0.2.2` is your own machine: `--allow 10.0.2.2:4180` lets the app reach a server on port 4180 of this computer, and nothing else on it.
+From the emulator, `10.0.2.2` is your own machine: `--allow 10.0.2.2:4180` lets the app reach a server on port 4180 of this computer, and nothing else on it. `baseUrl` is optional: when set, `setup:` requests go there, from your machine.
+
+## Authoring and running
+
+```sh
+%cli% author tests/sign-in.test.md       # the AI carries out each step once, on the emulator
+%cli% run                                # replays every recording, no AI
+%cli% run --android 15 --android 16 --device pixel-8 --device small-phone   # a matrix
+%cli% run --locale de-DE --timezone Europe/Berlin
+```
+
+Tests are written the same way: "Tap", "Type … into", "Open the link acmeshop://…", "Allow camera access when Android asks", and checks like "the screen heading is", "the screen says", "a message says" (toasts count), "a dialog asks" and "the list shows". A matrix gives one result per Android version and device (`<test>@android16-pixel-8`). The locale sets the app's language (Android 13+ per-app language) and the timezone the device's, for that session only.
+
+```yaml
+android:
+  version: "16"       # default Android version
+  device: pixel-8     # default device profile
+```
+
+Environments may override both; `--android` and `--device` win. Not on Android yet: code steps (a TypeScript block) and saved logins (`auth:` profiles); such tests are blocked with the reason.
 
 ## Versions and devices
 

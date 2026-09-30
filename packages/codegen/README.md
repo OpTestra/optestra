@@ -23,6 +23,31 @@ testament generate --check              # CI: exit 1 if a spec is stale or edite
 npx playwright test -c tests/.testament # run them, Testament or not
 ```
 
+## Android: Maestro flows (MOB-6)
+
+For an Android project (`project.target: android`) `generateProject` writes a
+[Maestro](https://maestro.dev) flow per recorded test instead,
+`<tests dir>/.testament/<testId>.maestro.yaml` (`generateMaestroFlow(recording,
+{ expanded, baseUrl })`), with the same header (as `#` comments), content hash
+and hand-edit rules. The flow runs with the Maestro CLI alone. The CLI's `export`
+wraps the flows in a Maestro workspace (`config.yaml`, `README.md`, `flows/`).
+
+- `appId` from the recording's element facts; the flow starts with
+  `launchApp: { clearState: true, permissions: { all: unset } }`; `setup:`
+  requests first, through Maestro's `http` script API, to `<ENV_PREFIX>BASE_URL`.
+- Elements by resource id (not Android's generic `android:id/…`), else by text.
+  A tap whose element the recording saw go away waits until it has
+  (`extendedWaitUntil: notVisible`), so a silent tap fails at the tap.
+- Values: data → `${DATA_X}`, `{{env.X}}` → `${<ENV_PREFIX>VAR_X}` (defaults in
+  `env:`), secrets → `${NAME}` (no default, never a value).
+- Gaps are comments ("Checked by … only: …") and listed in `FileResult.gaps`:
+  toasts, counts, activity (url), network, model-judged checks, `Never:` rules.
+  An action with no faithful Maestro command (rotate, a generated or inbox value,
+  a code step) ends the flow there.
+
+The goldens are the Android fixture's committed flows
+(`bench/fixtures/android/tests/.testament/*.maestro.yaml`, `src/maestro.test.ts`).
+
 ## What is generated
 
 Everything goes to `<tests dir>/.testament/`, next to the recordings, and is

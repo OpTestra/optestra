@@ -38,7 +38,7 @@ Exit codes follow one rule for every command that runs or checks something: **0*
 | [`snapshot`](#snapshot) | debug: print what the agent sees on a page, and any refused requests |
 | [`init`](#init) | set up a project in this repository: project file, an example test, .env.example and .gitignore lines (never overwrites a file) |
 | [`doctor`](#doctor) | check the project, tests, secrets, AI setup, browsers and recordings; every problem comes with its fix |
-| [`export`](#export) | write a standalone Playwright project from the recorded tests (runs with npm install && npx playwright test) |
+| [`export`](#export) | write a standalone Playwright project from the recorded tests (npm install && npx playwright test), or for an Android project a Maestro workspace (maestro test .) |
 | [`android setup`](#android-setup) | check the Android SDK, emulator and system images; print the exact install commands and sizes |
 | [`android doctor`](#android-doctor) | check everything a local Android run needs, without changing anything |
 | [`android snapshot`](#android-snapshot) | debug: install an APK on a fresh emulator and print what the agent sees on its first screen |
@@ -612,7 +612,7 @@ check the project, tests, secrets, AI setup, browsers and recordings; every prob
 
 ## export {#export}
 
-write a standalone Playwright project from the recorded tests (runs with npm install && npx playwright test)
+write a standalone Playwright project from the recorded tests (npm install && npx playwright test), or for an Android project a Maestro workspace (maestro test .)
 
 ```sh
 %cli% export [options]

@@ -25,6 +25,13 @@ export {
   specFileName,
 } from "./spec.js";
 export {
+  generateMaestroFlow,
+  type MaestroFlow,
+  type MaestroSource,
+  maestroFileName,
+  recordedAppId,
+} from "./maestro.js";
+export {
   CONFIG_FILE,
   FIXTURES_FILE,
   generateConfig,

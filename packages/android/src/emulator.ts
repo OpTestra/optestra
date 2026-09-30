@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import { ENV_PREFIX } from "@testament/config";
 import { NetworkGuard } from "./guard.js";
 import {
   AndroidSetupError,
@@ -49,11 +50,38 @@ export interface EmulatorTimings {
   bootMs: number;
 }
 
-const avdName = (version: string, profile: DeviceProfile, image: SystemImage) =>
-  `h-${version}-${profile.name}-${image.tag}`.replace(/[^A-Za-z0-9_-]/g, "-");
+const avdName = (version: string, profile: DeviceProfile, image: SystemImage, cores: number) =>
+  `h-${version}-${profile.name}-${image.tag}${cores === DEFAULT_CORES ? "" : `-${cores}core`}`.replace(
+    /[^A-Za-z0-9_-]/g,
+    "-",
+  );
+
+const DEFAULT_CORES = 2;
+
+/**
+ * Virtual CPUs of the harness's AVDs (default 2). `<ENV_PREFIX>ANDROID_CORES=1`
+ * makes a slow device on a fast machine, to reproduce what slow CI runners see;
+ * such an AVD has its own name, so it never shares the default one's snapshot.
+ */
+export function avdCores(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env[`${ENV_PREFIX}ANDROID_CORES`];
+  if (raw === undefined || raw === "") return DEFAULT_CORES;
+  const cores = Number(raw);
+  if (!Number.isInteger(cores) || cores < 1 || cores > 8)
+    throw new AndroidSetupError(
+      `${ENV_PREFIX}ANDROID_CORES is "${raw}".`,
+      "Set it to a whole number of virtual CPUs from 1 to 8, or unset it (2).",
+    );
+  return cores;
+}
 
 /** The config.ini for an AVD: the device profile's screen on the version's system image. */
-export function avdConfig(name: string, profile: DeviceProfile, image: SystemImage): string {
+export function avdConfig(
+  name: string,
+  profile: DeviceProfile,
+  image: SystemImage,
+  cores: number = DEFAULT_CORES,
+): string {
   const arch = image.abi === "arm64-v8a" ? "arm64" : "x86_64";
   const lines: Record<string, string> = {
     "avd.ini.encoding": "UTF-8",
@@ -61,7 +89,7 @@ export function avdConfig(name: string, profile: DeviceProfile, image: SystemIma
     "avd.ini.displayname": name,
     "abi.type": image.abi,
     "hw.cpu.arch": arch,
-    "hw.cpu.ncore": "2",
+    "hw.cpu.ncore": String(cores),
     "image.sysdir.1": image.sysdir,
     "tag.id": image.tag,
     "PlayStore.enabled": "false",
@@ -117,12 +145,13 @@ export function ensureAvd(
     );
   }
   const home = avdHome(env);
-  const name = avdName(version.release, profile, image);
+  const cores = avdCores(env);
+  const name = avdName(version.release, profile, image, cores);
   const dir = join(home, `${name}.avd`);
   mkdirSync(dir, { recursive: true });
   // The emulator adds keys to config.ini when it boots, so what we wrote is
   // remembered by its hash: a changed profile rewrites it and drops the snapshot.
-  const config = avdConfig(name, profile, image);
+  const config = avdConfig(name, profile, image, cores);
   const hash = createHash("sha256").update(config).digest("hex");
   const hashPath = join(dir, "harness-config.sha256");
   if (!existsSync(hashPath) || readFileSync(hashPath, "utf8") !== hash) {

@@ -6,6 +6,7 @@ import { loadProject, parseYaml } from "@testament/config/node";
 import { DEFAULT_EMAIL_DOMAIN, parseTest, type TestSpec } from "@testament/spec";
 import { DEFAULT_TESTS, findTestFiles, loadTest, nodeFileReader } from "@testament/spec/node";
 import { fileState } from "../header.js";
+import { generateMaestroFlow } from "../maestro.js";
 import { readCodegenRecording } from "../recording.js";
 import { type GeneratedFile, generateSpec, recordingFileName } from "../spec.js";
 import { generateSupportFiles, type SupportEnvironment } from "../support.js";
@@ -56,6 +57,12 @@ export interface FileResult {
   status: FileStatus;
   /** The test it belongs to (specs only). */
   test?: string;
+  /** Android (Maestro flows): what only the product checks, one line each. */
+  gaps?: string[];
+  /** Android: env vars the flow needs at run time (secrets). */
+  secrets?: string[];
+  /** Android: the app's package. */
+  appId?: string;
 }
 
 export interface GenerateProjectResult {
@@ -167,12 +174,15 @@ export async function generateProject(
   const testsSettings = config.tests ?? DEFAULT_TESTS;
   const testsDir = testsSettings.dir;
   const specDir = options.out?.label ?? posix(join(testsDir, brand.dataDirName));
-  const environment = supportEnvironment(config, loaded.environment, specDir);
+  // Android projects (MOB-6): a Maestro flow per test, no Playwright files.
+  const android = config.project?.target === "android";
+  const environment = android ? undefined : supportEnvironment(config, loaded.environment, specDir);
   if (typeof environment === "string") {
     result.ok = false;
     result.problems.push(environment);
     return result;
   }
+  const extras = new Map<string, Pick<FileResult, "gaps" | "secrets" | "appId">>();
   const recordingsDir = join(projectDir, testsDir, brand.dataDirName);
   const outDir = options.out?.dir ?? join(projectDir, specDir);
   const readFile = nodeFileReader(projectDir);
@@ -192,6 +202,21 @@ export async function generateProject(
     const recording = readCodegenRecording(readFileSync(recordingFile, "utf8"));
     if (!recording.ok) {
       result.skipped.push({ test: path, reason: `recording can't be read: ${recording.error}` });
+      continue;
+    }
+    if (android) {
+      const flow = generateMaestroFlow(recording.recording, {
+        expanded: test.expanded,
+        ...(loaded.environment?.settings.baseUrl
+          ? { baseUrl: loaded.environment.settings.baseUrl }
+          : {}),
+      });
+      if ("error" in flow) {
+        result.skipped.push({ test: path, reason: flow.error });
+        continue;
+      }
+      extras.set(flow.name, { gaps: flow.gaps, secrets: flow.secrets, appId: flow.appId });
+      generated.push({ file: { name: flow.name, content: flow.content }, test: path });
       continue;
     }
     const specs: Record<string, TestSpec> = { [path]: test.spec };
@@ -241,13 +266,18 @@ export async function generateProject(
       test: path,
     });
   }
-  if (generated.length > 0) {
+  if (generated.length > 0 && environment) {
     for (const file of generateSupportFiles(environment)) generated.push({ file });
   }
   if (!options.check && generated.length > 0) mkdirSync(outDir, { recursive: true });
   for (const { file, test } of generated) {
     const status = place(join(outDir, file.name), file, options);
-    result.files.push({ path: `${specDir}/${file.name}`, status, ...(test ? { test } : {}) });
+    result.files.push({
+      path: `${specDir}/${file.name}`,
+      status,
+      ...(test ? { test } : {}),
+      ...extras.get(file.name),
+    });
   }
   return result;
 }
