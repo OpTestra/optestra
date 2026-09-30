@@ -1,5 +1,5 @@
 import { closeSync, existsSync, openSync, readSync, statSync } from "node:fs";
-import { delimiter, join } from "node:path";
+import { posix, win32 } from "node:path";
 
 // Which Node runs the JS programs the engine starts (a subscription CLI that is
 // a Node script, the generated Playwright specs). Usually this process's own
@@ -31,26 +31,50 @@ export function execPathIsNode(versions: NodeJS.ProcessVersions = process.versio
   return !("electron" in versions && versions.electron) && !("bun" in versions && versions.bun);
 }
 
-/** `node` (node.exe on Windows) on PATH, or null. */
-export function nodeOnPath(env: Env = process.env): string | null {
-  const names = process.platform === "win32" ? ["node.exe"] : ["node"];
-  for (const dir of (env.PATH ?? env.Path ?? "").split(delimiter)) {
-    if (!dir) continue;
-    for (const name of names) {
-      const path = join(dir, name);
-      if (isFile(path)) return path;
-    }
+/** The PATH value, whatever its case (Windows keeps it as `Path`). */
+function pathValue(env: Env): string {
+  if (env.PATH !== undefined) return env.PATH;
+  const key = Object.keys(env).find((k) => k.toUpperCase() === "PATH");
+  return (key && env[key]) || "";
+}
+
+/**
+ * `node` on PATH (`node.exe` on Windows, where PATH is `;`-separated and may be
+ * called `Path`), or null. `platform` is for tests: every OS's rules can be
+ * checked anywhere.
+ */
+export function nodeOnPath(
+  env: Env = process.env,
+  platform: NodeJS.Platform = process.platform,
+  isFileAt: (path: string) => boolean = isFile,
+): string | null {
+  const windows = platform === "win32";
+  const path = windows ? win32 : posix;
+  // Only a real executable: node.cmd / node.bat would need a shell.
+  const name = windows ? "node.exe" : "node";
+  for (const dir of pathValue(env).split(path.delimiter)) {
+    const clean = dir.trim().replace(/^"(.*)"$/, "$1");
+    if (!clean) continue;
+    const candidate = path.join(clean, name);
+    if (isFileAt(candidate)) return candidate;
   }
   return null;
 }
 
 /** How to run a Node script from this process (see the note above). */
 export function nodeRuntime(
-  options: { node?: string | undefined; env?: Env; versions?: NodeJS.ProcessVersions } = {},
+  options: {
+    node?: string | undefined;
+    env?: Env;
+    versions?: NodeJS.ProcessVersions;
+    /** For tests: the OS whose PATH rules apply (default this one). */
+    platform?: NodeJS.Platform;
+    isFileAt?: (path: string) => boolean;
+  } = {},
 ): NodeRuntime {
   if (options.node) return { command: options.node, env: {}, how: "option" };
   if (execPathIsNode(options.versions)) return { command: process.execPath, env: {}, how: "self" };
-  const found = nodeOnPath(options.env ?? process.env);
+  const found = nodeOnPath(options.env ?? process.env, options.platform, options.isFileAt);
   if (found) return { command: found, env: {}, how: "path" };
   return { command: process.execPath, env: { ELECTRON_RUN_AS_NODE: "1" }, how: "electron" };
 }

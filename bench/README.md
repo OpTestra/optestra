@@ -16,9 +16,103 @@ A **fixture** is a small, realistic app plus:
 - a **reference suite** (hand-written Playwright) proving each variant behaves
   exactly as the manifest says.
 
-The full `testament bench` scorer (models, cost, heal rates over many fixtures)
-comes with BEN. Two things are scored against the manifest today: the
-reference suite (below) and the engine's own replay, `pnpm bench:replay`.
+Three things are scored against the manifest: the reference suite (below),
+the engine's replay (`testament bench`, and `pnpm bench:replay` in CI), and AI
+models (`testament bench --models`).
+
+## `testament bench` (BEN-2)
+
+```bash
+node packages/cli/bin/cli.js bench [--fixture shop|android|all] [--reruns 10] [--variant v …] [--no-equivalence] [--save-baseline] [--json]
+```
+
+It runs from the engine repository (it needs the fixtures and a build). Every
+variant of the chosen fixtures replays from the committed recordings with no AI
+(`cosmetic` in normal mode with no model, so heals without AI happen), `correct`
+runs `--reruns` times, and the shop's replay verdicts are compared with its
+generated specs run as plain Playwright. Android runs when an emulator is
+available (`testament android setup`, APKs built); otherwise it is skipped with
+one line saying why. The report starts with how it was measured (engine version
+and commit, OS, Node, date, reruns, models, the command that reproduces it) and
+shows, per fixture and in total:
+
+| Number | Definition (pinned in `packages/core/src/bench/bench.test.ts`) |
+|---|---|
+| **False pass rate** (the headline) | tests the manifest says must not pass (failed, flaky, blocked) that passed or healed / those tests. Shown with its counts, never rounded away. |
+| False fail rate | tests that must pass that ended failed or blocked / those tests. A cosmetic miss only an AI heal could fix, in a run with no model, is **needs AI**: counted on its own line, in neither rate. |
+| Flake rate | over the reruns of `correct`: tests with any `flaky` verdict, or whose verdicts differ between reruns / tests |
+| Replay hit rate | on `correct`: action steps done exactly as recorded / action steps that ran; with the AI calls on `correct` over every rerun (must be 0) |
+| Cosmetic | steps done without AI (as recorded, or re-found) / steps; tests that passed or healed with no AI and no re-recording / tests; heals without AI |
+| Time and cost | replay: median over reruns of `correct`'s summed test times, AI calls and cost of every variant; first run (authoring): from the newest committed model eval (`bench/results/`), else "not measured" |
+| Equivalence | shop: replay vs the generated spec's plain-Playwright verdict, per test, on `correct`, `broken-total` and `broken-silent-click` (email tests are left out without Mailpit) |
+
+False pass and fail rates use each variant's first run; reruns only feed the
+flake rate and the timing. Every number is compared with the committed
+**baseline** (`bench/baseline.json`) and the deltas are printed. Exit 1 when the
+engine got worse on false passes, false fails, wrong verdicts, equivalence or AI
+calls on `correct` (flake and hit-rate changes are shown, not gated: they're
+noisy); 2 when Bench can't run. `--save-baseline` writes the run as the new
+baseline (commit it with the change that explains it). The scoring lives in
+`@testament/core/bench`; `pnpm bench:replay` uses the same code.
+
+## Model evals (`testament bench --models`, MOD-9)
+
+```bash
+node packages/cli/bin/cli.js bench --models claude-code:claude-sonnet-4-6 claude-code:claude-haiku-4-5 openrouter:z-ai/glm-4.6 --yes
+node packages/cli/bin/cli.js bench --scripted        # the same pipeline with a stand-in model (CI, no AI)
+```
+
+Each `provider:model` entry is used as both planner and fixer, on the shop:
+
+1. **authoring**: the committed recordings are removed and every test is recorded
+   by the model (checks compiled rules first, the model only where rules can't);
+2. **its recordings replayed with no AI** on every variant but `cosmetic`: the
+   model's false passes and false fails (a weak check or a wrong step shows here);
+3. **cosmetic in normal mode**, the model as fixer: what it heals that no-AI heals can't.
+
+Reported per model: steps and checks authored, tests passing after authoring,
+false passes/fails, fixer heals and cosmetic tests passing, calls (and those via
+a subscription), tokens, cost and time. Providers come from the project config
+(`anthropic`, `openai`, `google`, `claude-code`, `codex`), plus `openrouter`
+(`OPENROUTER_API_KEY`) and `opencode` (`OPENCODE_API_KEY`) as OpenAI-compatible
+routers. A per-model budget of $5 applies; subscription calls cost 0 to it.
+
+Real models spend calls: without `--yes` the command prints the estimate (about
+60–140 calls per model on the shop) and stops, so a person decides first. Each
+model runs once; nothing retries. Real results are written to
+`bench/results/<date>-shop-models.json` with the date, engine version, commit and
+model ids, to be committed. The newest real result also gives the first-run
+(authoring) numbers in `testament bench`.
+
+## The eval gate (`testament eval`, LRN-10)
+
+```bash
+node packages/cli/bin/cli.js eval [--backend rules|jev|kev|laya] [--models provider:model …] [--fixture shop] [--no-bench] [--save-baseline]
+```
+
+**The gate for changing a default**: a decision backend, a prompt, or the
+default planner/fixer model is only switched when `testament eval` passes. It
+runs the decision evals (`decisions --eval`) with the candidate backend and
+Bench's false-pass check (every variant once, no AI), and with `--models` the
+model eval, then compares with the committed baseline:
+
+- any rise in Bench false passes (or a new one), any task with more false
+  labels than the baseline's, or a candidate model with more false passes than
+  the reference model (Sonnet 4.6, in the newest committed model eval) fails;
+- no baseline is no evidence: it fails too.
+
+Exit 0 passed, 1 failed, 2 couldn't run. It only reports; it never changes a
+test result or a default. After an accepted change, `--save-baseline` stores the
+decision eval results in `bench/baseline.json`.
+
+## Success measures (`testament bench --measures`)
+
+Prints application section 10 with real numbers where there are some: the
+Bench numbers from the committed baseline (and which one), the time to a first
+passing test (`init` and the first run timed now, plus authoring per test from
+the newest model eval), decision latency from the decision evals, and the PR
+smoke duration as a labelled projection. Cloud and business measures are marked
+"not measured here".
 
 ## Fixtures
 

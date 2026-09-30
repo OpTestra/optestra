@@ -60,6 +60,26 @@ On Android:
 | Setup hooks | Sent from this machine to the environment's `baseUrl` (or an allowed host), never from the device. |
 | Not yet | Code steps (```ts) and auth profiles are blocked (`config_error`, with the reason); no portable Playwright spec is generated. |
 
+## Capabilities (BEN-0)
+
+`ENGINE_CAPABILITIES` (from `@testament/core`) says what this engine can do, as
+plain versioned data, so the apps don't sniff exports or option names:
+
+```ts
+import { ENGINE_CAPABILITIES } from "@testament/core";
+ENGINE_CAPABILITIES.capabilitiesVersion;          // 1: bumps when a field changes meaning
+ENGINE_CAPABILITIES.runTests.options;             // every runTests option (checked against RunTestsOptions at compile time)
+ENGINE_CAPABILITIES.runTests.evidenceModes;       // ["full", "failures", "minimal"]
+ENGINE_CAPABILITIES.runTests.viewport;            // { min: 200, max: 7680 }
+ENGINE_CAPABILITIES.targets;                      // ["web", "android"]
+// also: matrix, signal, artifactEvents, locale, timezone, node, browsers, heals, draftTest, mcp, doctor, bench
+```
+
+New fields and new names in lists are additive; readers ignore what they don't know.
+
+Bench (`testament bench`, model evals, the `eval` gate) is `@testament/core/bench`;
+see [bench/README.md](../../bench/README.md).
+
 ## How a run works (LOOP-4)
 
 ```ts
@@ -78,6 +98,7 @@ const result = await runTests({
   budgetUsd,              // default run.budget.maxPerRunUsd
   browsers, devices,      // a matrix (TGT-5): one TestResult per browser × device
   locale, timezone,       // every session's locale and timezone (ENV-5)
+  viewport,               // { width, height }: a custom browser size (TGT-3; websites; 200–7680 px)
   evidence,               // "full" | "failures" | "minimal" (default run.evidence, else full in CI)
   signal,                 // an AbortSignal: stop cleanly (see "Stopping a run")
   node,                   // the Node for JS subscription CLIs and code-step specs (the packaged app)
@@ -412,7 +433,7 @@ results are the record reviewers look at.
 ```bash
 testament run [tests…] [--tag t] [--grep name] [--env local] [--base-url url] [--shard i/n] \
   [--replay-only | --rerecord] [--retries n] [--workers n] [--headed] [--budget 0.50] [--no-video] [--verbose] \
-  [--browser chromium --browser webkit] [--device laptop --device iphone-15] [--locale de-DE] [--timezone Europe/Berlin] \
+  [--browser chromium --browser webkit] [--device laptop --device iphone-15] [--locale de-DE] [--timezone Europe/Berlin] [--viewport 1280x720] \
   [--evidence full|failures|minimal]
 testament merge-runs <shard folders…> --out <dir>
 ```

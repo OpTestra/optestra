@@ -84,6 +84,7 @@ import { profileFlowPath, profileLogin, replayProfileFlow } from "./profiles.js"
 import { replayAttempt } from "./replay.js";
 import { type Shard, selectShard } from "./shard.js";
 import { runSpecTest } from "./spec-run.js";
+import { parseViewport } from "./viewport.js";
 import {
   cellLabel,
   engineKey,
@@ -143,6 +144,11 @@ export interface RunTestsOptions {
   /** Browser locale and timezone for every session (ENV-5), e.g. "de-DE", "Europe/Berlin". */
   locale?: string;
   timezone?: string;
+  /**
+   * Websites (TGT-3): a custom browser size for every session, instead of the
+   * device preset's (its user agent, scale and touch stay). See `parseViewport`.
+   */
+  viewport?: { width: number; height: number };
   /** Record a video per attempt (default true, EVD-1). */
   video?: boolean;
   /**
@@ -361,6 +367,15 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   const resolvedTarget = await resolveTarget(projectDir, config, environment, options);
   if (!resolvedTarget.ok) return finishBlocked("config_error", resolvedTarget.message);
   const target = resolvedTarget.target;
+  if (options.viewport) {
+    const checked = parseViewport(options.viewport);
+    if (!checked.ok) return finishBlocked("config_error", checked.message);
+    if (target.name !== "web")
+      return finishBlocked(
+        "config_error",
+        "A custom viewport is for websites; an Android run uses its device profile's screen.",
+      );
+  }
 
   const sources = options.secretSources ?? [processEnvSource(env), dotenvSource(projectDir)];
   // The test inbox (SEC-5): {{unique.email}} lands in it (ENV-3), codes and links are read from it.
@@ -763,6 +778,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
           capture: { trace: fullCapture, network: fullCapture },
           ...(options.locale ? { locale: options.locale } : {}),
           ...(options.timezone ? { timezone: options.timezone } : {}),
+          ...(options.viewport ? { viewport: options.viewport } : {}),
           redact: (text) => redactor.redact(text),
         });
         if (!opened.ok) {
@@ -826,6 +842,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                           secrets: { ...secrets.secrets, ...extra },
                           ...(options.locale ? { locale: options.locale } : {}),
                           ...(options.timezone ? { timezone: options.timezone } : {}),
+                          ...(options.viewport ? { viewport: options.viewport } : {}),
                           redact: (text) => redactor.redact(text),
                         }),
                       replay: {

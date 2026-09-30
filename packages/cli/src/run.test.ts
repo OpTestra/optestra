@@ -40,6 +40,14 @@ describe("run flags (PERF-0)", () => {
     expect(evidence.out).toBe('--evidence must be full, failures or minimal, not "everything".\n');
   });
 
+  it("refuses a viewport that isn't a size (exit 2)", async () => {
+    const bad = await runWith({ viewport: "big" });
+    expect(bad.code).toBe(2);
+    expect(bad.out).toMatch(/^--viewport: The viewport "big" isn't a size like 1280x720/);
+    const tiny = await runWith({ viewport: "50x50" });
+    expect(tiny.code).toBe(2);
+  });
+
   it("collects repeated --browser and --device into a matrix", () => {
     const run = createProgram().commands.find((c) => c.name() === "run");
     expect(run).toBeDefined();
@@ -66,5 +74,30 @@ describe("run flags (PERF-0)", () => {
       timezone: "Europe/Berlin",
       evidence: "minimal",
     });
+  });
+});
+
+describe("bench --models (MOD-9)", () => {
+  it("prints the call estimate and spends nothing without --yes", async () => {
+    const { runBenchCommand } = await import("./commands/bench.js");
+    let out = "";
+    const code = await runBenchCommand(
+      { models: ["claude-code:claude-sonnet-4-6"] },
+      { cwd: process.cwd(), env: {}, stdout: (t) => (out += t) },
+    );
+    expect(code).toBe(2);
+    expect(out).toMatch(/makes real AI calls: about \d+–\d+ per model/);
+    expect(out).toContain("Run again with --yes");
+  });
+
+  it("refuses an entry that isn't provider:model", async () => {
+    const { runBenchCommand } = await import("./commands/bench.js");
+    let out = "";
+    const code = await runBenchCommand(
+      { models: ["sonnet"] },
+      { cwd: process.cwd(), env: {}, stdout: (t) => (out += t) },
+    );
+    expect(code).toBe(2);
+    expect(out).toMatch(/isn't a pool entry/);
   });
 });

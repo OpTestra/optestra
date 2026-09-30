@@ -180,6 +180,8 @@ export interface AttemptSessionOptions {
   /** ENV-5: the browser's, or the device's, locale and timezone. */
   locale?: string;
   timezone?: string;
+  /** Web (TGT-3): a custom size instead of the device preset's. */
+  viewport?: { width: number; height: number };
   /** Default: the harness's own (the config's default redactor). */
   redact?: (text: string) => string;
 }
@@ -201,7 +203,7 @@ export interface TargetWorker {
   openLoginSession?(
     options: Pick<
       AttemptSessionOptions,
-      "allowedDomains" | "secrets" | "locale" | "timezone" | "redact"
+      "allowedDomains" | "secrets" | "locale" | "timezone" | "viewport" | "redact"
     >,
   ): Promise<Session>;
   close(): Promise<void>;
@@ -241,9 +243,14 @@ export async function launchWorker(
         "config_error",
       );
     }
-    const place = (o: { locale?: string; timezone?: string }) => ({
+    const place = (o: {
+      locale?: string;
+      timezone?: string;
+      viewport?: { width: number; height: number };
+    }) => ({
       ...(o.locale ? { locale: o.locale } : {}),
       ...(o.timezone ? { timezone: o.timezone } : {}),
+      ...(o.viewport ? { viewport: o.viewport } : {}),
     });
     return {
       target: "web",

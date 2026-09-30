@@ -366,3 +366,27 @@ describe("PERF-0: evidence modes, abort, events, matrix (real browser)", () => {
     expect(result.tests.map((t) => t.verdict)).toEqual(Array(12).fill("passed"));
   });
 });
+
+describe("BEN-0: custom viewport (real browser)", () => {
+  it("runs at the size asked for: a failed step's PNG is exactly that size", async () => {
+    const { result, byFile } = await run("broken-total", ["billing-zero-due"], {
+      retries: 0,
+      viewport: { width: 1024, height: 700 },
+    });
+    const test = byFile("billing-zero-due");
+    expect(test.verdict).toBe("failed");
+    const png = test.attempts[0]?.artifacts.find((a) => a.contentType === "image/png");
+    expect(png).toBeDefined();
+    const bytes = readFileSync(join(result.dir, png?.path ?? ""));
+    // IHDR: width and height, big-endian, right after the signature and chunk header.
+    expect([bytes.readUInt32BE(16), bytes.readUInt32BE(20)]).toEqual([1024, 700]);
+  });
+
+  it("refuses a bad viewport before starting a browser", async () => {
+    const { result } = await run("correct", ["login"], {
+      viewport: { width: 10, height: 700 },
+    });
+    expect(result.run.blocked).toMatchObject({ reason: "config_error" });
+    expect(result.run.blocked?.message).toMatch(/viewport width/);
+  });
+});
