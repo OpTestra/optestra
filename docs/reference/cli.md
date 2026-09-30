@@ -12,6 +12,7 @@ Exit codes follow one rule for every command that runs or checks something: **0*
 | [`models`](#models) | show each AI role's provider pool, key status and usage caps |
 | [`decisions`](#decisions) | show the decision routing, thresholds and tasks; --check the backends, --bench their speed, --eval their accuracy, --stats a run's decisions |
 | [`bench`](#bench) | score the engine on the repository's Bench fixtures: false pass/fail and flake rates, replay hit rate, heals, cost, time (BEN-2); --models evaluates AI models |
+| [`eval`](#eval) | the gate for changing a default model, prompt or decision backend (LRN-10): decision evals + Bench false passes against the committed baseline; exit 1 on any rise |
 | [`decider setup`](#decider-setup) | laya: find the local Ollaya and, if you agree, download the model (never installs Ollaya); jev/kev: how to set them up |
 | [`results`](#results) | summarise a finished run folder and exit with its CI code (0 passed, 1 failed, 2 blocked) |
 | [`merge-runs`](#merge-runs) | merge shard run folders (run --shard i/n) into one run folder, then summarise it like run |
@@ -108,6 +109,26 @@ score the engine on the repository's Bench fixtures: false pass/fail and flake r
 | `--scripted` | run the model evals with a scripted stand-in (no AI; for CI) |  |
 | `--yes` | for --models: don't ask before the real-model run |  |
 | `--measures` | print the success measures (application section 10) from real data |  |
+| `--json` | print machine-readable JSON |  |
+
+## eval {#eval}
+
+the gate for changing a default model, prompt or decision backend (LRN-10): decision evals + Bench false passes against the committed baseline; exit 1 on any rise
+
+```sh
+%cli% eval [options]
+```
+
+| Option | | Default |
+|---|---|---|
+| `--backend <name>` | decision backend to evaluate: rules (default), jev, kev or laya |  |
+| `--models <entries...>` | candidate planner/fixer models (provider:model), evaluated like bench --models (real AI calls) |  |
+| `--fixture <name>` | Bench fixture for the false-pass check: shop (default), android or all |  |
+| `--no-bench` | decision evals only (skip Bench) |  |
+| `--save-baseline` | after an accepted change: store these decision eval results as the baseline |  |
+| `--yes` | for --models: don't ask before the real-model run |  |
+| `-e, --env <name>` | environment to resolve |  |
+| `-C, --dir <path>` | project folder for the decision settings (default: nearest) |  |
 | `--json` | print machine-readable JSON |  |
 
 ## decider setup {#decider-setup}

@@ -290,3 +290,17 @@ describe("baseline and gate (LRN-10)", () => {
     expect(text).toContain("reproduce: testament bench --reruns 3");
   });
 });
+
+describe("model evals (MOD-9)", () => {
+  it("reads provider:model entries (models may hold / and :)", async () => {
+    const { parseModelEntry, entryId } = await import("./models.js");
+    expect(parseModelEntry("claude-code:claude-sonnet-4-6")).toEqual({
+      provider: "claude-code",
+      model: "claude-sonnet-4-6",
+    });
+    const router = parseModelEntry("openrouter:qwen/qwen3-coder:free");
+    expect(router).toEqual({ provider: "openrouter", model: "qwen/qwen3-coder:free" });
+    expect(entryId(router as never)).toBe("openrouter:qwen/qwen3-coder:free");
+    for (const bad of ["sonnet", ":x", "x:"]) expect(parseModelEntry(bad)).toBeNull();
+  });
+});

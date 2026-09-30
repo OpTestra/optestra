@@ -60,3 +60,15 @@ export {
   stepStats,
 } from "./score.js";
 export { formatBench } from "./format.js";
+export {
+  entryId,
+  estimateCalls,
+  type ModelEntry,
+  type ModelEvalFile,
+  type ModelEvalOptions,
+  type ModelEvalResult,
+  parseModelEntry,
+  ROUTER_PROVIDERS,
+  runModelEval,
+  saveModelEval,
+} from "./models.js";

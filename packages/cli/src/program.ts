@@ -14,6 +14,7 @@ import type { ChecksCommandOptions } from "./commands/checks.js";
 import type { ConfigCommandOptions } from "./commands/config.js";
 import type { DeciderSetupOptions } from "./commands/decider.js";
 import type { BenchCommandOptions } from "./commands/bench.js";
+import type { EvalCommandOptions } from "./commands/eval.js";
 import type { DecisionsCommandOptions } from "./commands/decisions.js";
 import type { DoctorCommandOptions } from "./commands/doctor.js";
 import { registerExportCommand } from "./commands/export.js";
@@ -143,6 +144,38 @@ export function createProgram(): Command {
     .action(async (options: BenchCommandOptions) => {
       const { runBenchCommand } = await import("./commands/bench.js");
       process.exitCode = await runBenchCommand(options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("eval")
+    .description(
+      "the gate for changing a default model, prompt or decision backend (LRN-10): decision evals + Bench false passes against the committed baseline; exit 1 on any rise",
+    )
+    .option("--backend <name>", "decision backend to evaluate: rules (default), jev, kev or laya")
+    .option(
+      "--models <entries...>",
+      "candidate planner/fixer models (provider:model), evaluated like bench --models (real AI calls)",
+    )
+    .option(
+      "--fixture <name>",
+      "Bench fixture for the false-pass check: shop (default), android or all",
+    )
+    .option("--no-bench", "decision evals only (skip Bench)")
+    .option(
+      "--save-baseline",
+      "after an accepted change: store these decision eval results as the baseline",
+    )
+    .option("--yes", "for --models: don't ask before the real-model run")
+    .option("-e, --env <name>", "environment to resolve")
+    .option("-C, --dir <path>", "project folder for the decision settings (default: nearest)")
+    .option("--json", "print machine-readable JSON")
+    .action(async (options: EvalCommandOptions) => {
+      const { runEvalCommand } = await import("./commands/eval.js");
+      process.exitCode = await runEvalCommand(options, {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),

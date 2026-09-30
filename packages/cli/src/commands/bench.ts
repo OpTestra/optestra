@@ -90,14 +90,17 @@ export async function runBenchCommand(
     : null;
   const comparison = baseline ? bench.compareToBaseline(report, baseline) : null;
   if (options.saveBaseline) {
-    // The baseline keeps the numbers and how they were measured, not every row.
-    const slim = {
-      ...report,
-      fixtures: Object.fromEntries(
-        Object.entries(report.fixtures).map(([id, f]) => [id, { ...f, rows: undefined }]),
-      ),
-    };
-    writeFileSync(file, `${JSON.stringify(slim, null, 2)}\n`);
+    // Per fixture: a fixture that ran replaces its baseline entry (numbers and
+    // how they were measured, not every row); the others stay as they were.
+    const fixtures = { ...(baseline?.fixtures ?? {}) } as typeof report.fixtures;
+    for (const [id, f] of Object.entries(report.fixtures))
+      if (f?.status === "ran")
+        fixtures[id as keyof typeof fixtures] = { ...f, rows: undefined } as never;
+    const merged = bench.buildReport(report.measured, fixtures);
+    writeFileSync(
+      file,
+      `${JSON.stringify({ ...merged, ...(baseline?.decisions ? { decisions: baseline.decisions } : {}) }, null, 2)}\n`,
+    );
   }
   if (options.json) io.stdout(`${JSON.stringify({ report, baseline: comparison }, null, 2)}\n`);
   else {

@@ -9,6 +9,7 @@ import {
   rmSync,
   symlinkSync,
 } from "node:fs";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -376,6 +377,15 @@ export interface AndroidFixture {
   module: AndroidModule;
 }
 
+/** Can a server listen on this loopback port now? */
+function portFree(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = createServer();
+    server.once("error", () => resolve(false));
+    server.listen(port, "127.0.0.1", () => server.close(() => resolve(true)));
+  });
+}
+
 /** The Android fixture when it can run here, else why not (a clear line, never an error). */
 export async function androidFixture(
   env: NodeJS.ProcessEnv = process.env,
@@ -392,15 +402,24 @@ export async function androidFixture(
       reason:
         "the fixture APKs aren't built (pnpm --filter @testament/fixture-android build:apks).",
     };
-  const { androidDoctor } = await import("@testament/android");
+  const { androidDoctor, DEFAULT_ANDROID_VERSION } = await import("@testament/android");
   const doctor = await androidDoctor(env);
-  if (!doctor.ok) {
-    const failed = doctor.checks.filter((c) => !c.ok).map((c) => c.detail);
+  // Bench needs the default Android version's image, not every version's.
+  const needed = doctor.checks.filter(
+    (c) => !c.id.startsWith("image-") || c.id === `image-${DEFAULT_ANDROID_VERSION}`,
+  );
+  if (needed.some((c) => !c.ok)) {
+    const failed = needed.filter((c) => !c.ok).map((c) => c.detail);
     return {
       ok: false,
       reason: `no Android emulator here: ${failed.join("; ")} (${brand.cliName} android setup).`,
     };
   }
+  if (!(await portFree(module.SHOP_PORT)))
+    return {
+      ok: false,
+      reason: `port ${module.SHOP_PORT} (the app's backend) is in use, probably by another Android run; try again when it's done.`,
+    };
   const manifest = parseYaml(
     readFileSync(join(module.FIXTURE_DIR, "manifest.yaml"), "utf8"),
     "manifest.yaml",

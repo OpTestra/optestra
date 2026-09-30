@@ -335,22 +335,39 @@ async function runBench(options: DecisionsCommandOptions, io: CommandIo): Promis
  * eval sets. Exit 1 when any decided answer is wrong (a false label), 2 when the
  * backend can't be used.
  */
-async function runEvalCommand(options: DecisionsCommandOptions, io: CommandIo): Promise<number> {
+/**
+ * The decision evals for one backend (rules, or rules then a model): every
+ * after-run task on its committed eval set. Also the first half of `eval`.
+ * A string is a problem to print (exit 2).
+ */
+export async function decisionEvals(
+  options: Pick<DecisionsCommandOptions, "backend" | "modelOnly" | "dir" | "env">,
+  io: CommandIo,
+): Promise<
+  | {
+      ok: true;
+      choice: string;
+      reports: EvalReport[];
+      usage:
+        | ReturnType<NonNullable<ReturnType<typeof select>["after"]["backend"]>["usage"]>
+        | undefined;
+    }
+  | { ok: false; message: string }
+> {
   const project = loadDecisionsProject(options, io);
   const choice = options.backend ?? "rules";
-  if (choice !== "rules" && !(MODEL_BACKENDS as readonly string[]).includes(choice)) {
-    io.stdout(`Unknown backend "${choice}". Use rules, jev, kev or laya.\n`);
-    return 2;
-  }
+  if (choice !== "rules" && !(MODEL_BACKENDS as readonly string[]).includes(choice))
+    return { ok: false, message: `Unknown backend "${choice}". Use rules, jev, kev or laya.` };
   let backend = null;
   if (choice !== "rules") {
     const id = choice as ModelBackendId;
     const check = await checkBackend(project, id);
     backend = select(project, id).after.backend;
-    if (check.status !== "ok" || !backend) {
-      io.stdout(`${id} can't be used: ${check.message}${check.fix ? `\nFix: ${check.fix}` : ""}\n`);
-      return 2;
-    }
+    if (check.status !== "ok" || !backend)
+      return {
+        ok: false,
+        message: `${id} can't be used: ${check.message}${check.fix ? `\nFix: ${check.fix}` : ""}`,
+      };
     if (backend.warmUp) await backend.warmUp({ timeoutMs: project.settings.laya.warmUpTimeoutMs });
   }
   // Comparing models: lift the during-run limits so a slow model (Jev) is measured, not skipped.
@@ -375,7 +392,17 @@ async function runEvalCommand(options: DecisionsCommandOptions, io: CommandIo): 
   const reports: EvalReport[] = [];
   for (const task of EVAL_TASKS)
     reports.push(await runEval(decisions, task, loadEvalSet(task), { backend: choice }));
-  const usage = backend?.usage();
+  return { ok: true, choice, reports, usage: backend?.usage() };
+}
+
+async function runEvalCommand(options: DecisionsCommandOptions, io: CommandIo): Promise<number> {
+  const evaluated = await decisionEvals(options, io);
+  if (!evaluated.ok) {
+    io.stdout(`${evaluated.message}\n`);
+    return 2;
+  }
+  const { choice, reports, usage } = evaluated;
+  const backend = choice !== "rules";
   if (options.json) {
     io.stdout(
       `${defaultRedactor.redact(JSON.stringify({ backend: choice, modelOnly: Boolean(options.modelOnly && backend), reports, usage: usage ?? null }, null, 2))}\n`,

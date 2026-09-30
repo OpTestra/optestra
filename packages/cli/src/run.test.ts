@@ -76,3 +76,28 @@ describe("run flags (PERF-0)", () => {
     });
   });
 });
+
+describe("bench --models (MOD-9)", () => {
+  it("prints the call estimate and spends nothing without --yes", async () => {
+    const { runBenchCommand } = await import("./commands/bench.js");
+    let out = "";
+    const code = await runBenchCommand(
+      { models: ["claude-code:claude-sonnet-4-6"] },
+      { cwd: process.cwd(), env: {}, stdout: (t) => (out += t) },
+    );
+    expect(code).toBe(2);
+    expect(out).toMatch(/makes real AI calls: about \d+–\d+ per model/);
+    expect(out).toContain("Run again with --yes");
+  });
+
+  it("refuses an entry that isn't provider:model", async () => {
+    const { runBenchCommand } = await import("./commands/bench.js");
+    let out = "";
+    const code = await runBenchCommand(
+      { models: ["sonnet"] },
+      { cwd: process.cwd(), env: {}, stdout: (t) => (out += t) },
+    );
+    expect(code).toBe(2);
+    expect(out).toMatch(/isn't a pool entry/);
+  });
+});

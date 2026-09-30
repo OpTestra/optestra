@@ -44,6 +44,8 @@ export interface FixtureReport {
   metrics?: FixtureMetrics;
   rows?: BenchRow[];
   firstRun?: FirstRun | null;
+  /** How this fixture's numbers were measured (kept when a baseline merges fixtures). */
+  measured?: MeasuredWith;
 }
 
 /** The decision evals (`decisions --eval`) for one backend, per task. */
@@ -66,7 +68,18 @@ export function buildReport(
   fixtures: Partial<Record<FixtureId, FixtureReport>>,
 ): BenchReport {
   const ran = Object.values(fixtures).flatMap((f) => (f?.metrics ? [f.metrics] : []));
-  return { benchVersion: BENCH_REPORT_VERSION, measured, fixtures, total: totalMetrics(ran) };
+  const stamped = Object.fromEntries(
+    Object.entries(fixtures).map(([id, f]) => [
+      id,
+      f && f.status === "ran" && !f.measured ? { ...f, measured } : f,
+    ]),
+  ) as typeof fixtures;
+  return {
+    benchVersion: BENCH_REPORT_VERSION,
+    measured,
+    fixtures: stamped,
+    total: totalMetrics(ran),
+  };
 }
 
 // ── deltas against the baseline ───────────────────────────────────────────────
