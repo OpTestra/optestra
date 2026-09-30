@@ -79,6 +79,8 @@ describe("engine guards", () => {
     // Android tests' setup/teardown requests (AUT-10): only to an allowed host or the
     // environment's baseUrl, checked before sending (below).
     "packages/android/src/hooks.ts",
+    // Bench (BEN-0): is the Android fixture's backend port free? Listens on 127.0.0.1 only.
+    "packages/core/src/bench/port.ts",
   ];
   const AI_SDK_PACKAGE = "packages/models/";
 
@@ -90,6 +92,9 @@ describe("engine guards", () => {
     ).toEqual([]);
     // Each exception still exists (a rename must update this list).
     for (const file of NETWORK_EXCEPTIONS_ENGINE) expect(code.map(rel)).toContain(file);
+    const port = readFileSync(join(root, "packages/core/src/bench/port.ts"), "utf8");
+    expect(port).toContain('server.listen(port, "127.0.0.1",');
+    expect(port).not.toMatch(/connect\(|fetch|request\(/);
   });
 
   it("pins the inbox transport to its one host and never follows redirects", () => {

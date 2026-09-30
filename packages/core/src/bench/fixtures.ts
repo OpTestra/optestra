@@ -9,7 +9,6 @@ import {
   rmSync,
   symlinkSync,
 } from "node:fs";
-import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,6 +27,7 @@ import {
   scoreResult,
   stepStats,
 } from "./score.js";
+import { portFree } from "./port.js";
 
 // The Bench fixtures as the engine drives them: the shop website and the
 // Android app, each from its committed recordings in a private copy of its
@@ -375,15 +375,6 @@ export interface AndroidFixture {
   variants: string[];
   manifest: Manifest;
   module: AndroidModule;
-}
-
-/** Can a server listen on this loopback port now? */
-function portFree(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = createServer();
-    server.once("error", () => resolve(false));
-    server.listen(port, "127.0.0.1", () => server.close(() => resolve(true)));
-  });
 }
 
 /** The Android fixture when it can run here, else why not (a clear line, never an error). */
