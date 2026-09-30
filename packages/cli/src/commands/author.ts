@@ -314,26 +314,26 @@ export async function runAuthorCommand(
   });
   rmSync(evidenceDir, { recursive: true, force: true });
   const report = saved.report;
-  // Keep the portable Playwright spec in sync with the recording (never over a hand edit).
-  // Android recordings have none: the spec is Playwright.
+  // Keep the portable copy in sync with the recording (never over a hand edit): a
+  // Playwright spec, or for Android a Maestro flow (MOB-6).
   const specNotes: string[] = [];
-  if (target.name === "web")
-    try {
-      const { generateAfterRecording } = await import("@testament/codegen/node");
-      const generated = await generateAfterRecording(dir, path, {
-        environment: environment.name,
-        env: io.env,
-      });
-      for (const f of generated.files) {
-        if (f.status === "edited")
-          specNotes.push(`${f.path} was changed by hand: not regenerated (use generate --force).`);
-        else if (f.status !== "unchanged" && f.test) specNotes.push(`Spec:      ${f.path}`);
-      }
-    } catch (error) {
-      specNotes.push(
-        `The spec could not be regenerated: ${error instanceof Error ? error.message : String(error)}`,
-      );
+  try {
+    const { generateAfterRecording } = await import("@testament/codegen/node");
+    const generated = await generateAfterRecording(dir, path, {
+      environment: environment.name,
+      env: io.env,
+    });
+    for (const f of generated.files) {
+      if (f.status === "edited")
+        specNotes.push(`${f.path} was changed by hand: not regenerated (use generate --force).`);
+      else if (f.status !== "unchanged" && f.test)
+        specNotes.push(`${target.name === "android" ? "Flow:      " : "Spec:      "}${f.path}`);
     }
+  } catch (error) {
+    specNotes.push(
+      `The spec could not be regenerated: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
   for (const step of report.steps.filter((s) => s.status === "skipped")) {
     io.stdout(`  ${`${step.number ?? ""}. ${step.text}`.slice(0, 60).padEnd(60)}  skipped\n`);
   }

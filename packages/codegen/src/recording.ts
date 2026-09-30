@@ -22,6 +22,8 @@ export interface CodegenCheck {
   soft: boolean;
   check: AnyCheckOp;
   generatedBy: string;
+  /** The phrase rule that compiled the line (e.g. `message`), when rules did. */
+  rule?: string;
 }
 
 export type CodegenRecording = Omit<Recording, "checks"> & { checks: CodegenCheck[] };
@@ -85,6 +87,7 @@ export function readCodegenRecording(input: string | unknown): ParsedCodegenReco
         soft: check.soft,
         check: checkOp(check.check),
         generatedBy: check.generatedBy,
+        ...(check.rule ? { rule: check.rule } : {}),
       })),
     },
   };

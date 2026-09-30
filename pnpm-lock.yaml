@@ -260,6 +260,9 @@ importers:
       '@testament/fixture-shop':
         specifier: workspace:*
         version: link:../../bench/fixtures/shop
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
 
   packages/config:
     dependencies:

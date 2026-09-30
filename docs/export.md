@@ -1,6 +1,6 @@
-# Playwright export
+# Playwright and Maestro export
 
-Every recorded website test also exists as a plain `@playwright/test` spec, generated from the same recording and committed next to it. It runs with `npx playwright test`, with **no %Name% installed**. %Name%'s own runs replay the recording through the safe harness; the spec is the portable copy you own.
+Every recorded website test also exists as a plain `@playwright/test` spec (Android tests as a [Maestro flow](#android-maestro-flows)), generated from the same recording and committed next to it. It runs with `npx playwright test`, with **no %Name% installed**. %Name%'s own runs replay the recording through the safe harness; the spec is the portable copy you own.
 
 ```sh
 %cli% generate                          # every recorded test
@@ -126,4 +126,74 @@ No `%scope%/*` package, no secret value and no %Name% runtime: the engine's test
 | `run`/`sql` hooks | skip, with the reason | not yet either |
 | Verdicts, failure causes, flaky detection | Playwright's pass/fail | yes |
 
-Android tests will export to Maestro flows.
+## Android: Maestro flows
+
+An Android test's portable copy is a [Maestro](https://maestro.dev) flow, generated from the same recording and committed next to it as `<tests dir>/%dataDir%/<test id>.maestro.yaml`. It runs with the Maestro CLI alone, on any device or emulator with the app installed, with **no %Name% installed**. `%cli% generate`, `generate --check`, the header, the content hash and the editing policy are the same as for specs.
+
+```sh
+%cli% generate                          # the flows, next to the recordings
+%cli% export --out ../shop-maestro      # a standalone Maestro workspace
+cd ../shop-maestro
+adb install app-release.apk
+maestro test . -e SHOP_PASSWORD=…       # every flow
+```
+
+A generated flow (the fixture's `create-project` test, shortened):
+
+```yaml
+# Run: maestro test tests__create-project.maestro.yaml -e SHOP_PASSWORD=…
+# Secrets are read from Maestro env vars (SHOP_PASSWORD); no value is in this file.
+appId: com.acme.shop
+name: "A new project is saved"
+env:
+  %ENV%BASE_URL: "http://127.0.0.1:4180"
+---
+# setup: POST /__test/seed
+- evalScript: "${output.setup1 = http.post(%ENV%BASE_URL + \"/__test/seed\", { … }).status}"
+- assertTrue: "${output.setup1 >= 200 && output.setup1 < 300}"
+
+- launchApp:
+    clearState: true
+    permissions:
+      all: unset
+
+# 1. Use: flows/sign-in.test.md
+
+# 2. Type {{params.password}} into "Password"
+- tapOn:
+    id: "com.acme.shop:id/sign_in_password"
+- eraseText
+- inputText: "${SHOP_PASSWORD}"
+
+# 4. Tap "Create project"
+- tapOn:
+    id: "com.acme.shop:id/create_project_button"
+- extendedWaitUntil:
+    notVisible:
+      id: "com.acme.shop:id/create_project_button"
+    timeout: 10000
+
+# 5. Expect: a message says "Project created"
+# Checked by %Name% only: the message is a toast, and Maestro can't see toasts.
+
+# 6. Expect: the list shows "Q3 roadmap"
+- assertVisible:
+    text: ".*Q3 roadmap.*"
+```
+
+- One flow per test, flows (`Use:`) inlined, each English step as a comment above its commands.
+- It starts like a %Name% session: the app's data cleared and Android's permission prompts real (`permissions: all: unset`). `setup:` requests run first, from your machine, through Maestro's `http` script API.
+- Elements are found by their resource id when the recording has one (Android's generic `android:id/…` ids excepted), else by their text. A tap that changed the screen waits until the tapped element has gone, as the replay checks each action's effect: a tap that does nothing fails there.
+- Taps, typing (a fill clears the field first), long presses, swipes, scrolling to an element, back, home, deep links (`openLink`) and permission prompts (the system dialog's own buttons) all map to Maestro commands.
+- Checks become `assertVisible` / `assertNotVisible` on the element or its text (enabled, checked and focused too); `Soft:` checks are `optional`.
+- **Values:** data becomes `${DATA_X}` and `{{env.X}}` `${%ENV%VAR_X}`, with the test's values as defaults in the flow's `env:`; secrets are `${NAME}` with no default, passed with `-e NAME=…`. No secret value is ever in a flow.
+
+What Maestro can't do faithfully is left out with a comment, never approximated, and listed in the export's README: toasts, counts, which screen (activity) is open, the app's requests, model-judged checks and `Never:` rules. An action it can't do (a rotation, a value made fresh on every run, an email code) ends the flow there with a comment, since what follows would run on the wrong screen. Maestro also has no roles: a check on "the heading" or "the list" looks for its text on the screen.
+
+```
+shop-maestro/
+  config.yaml             the workspace: maestro test . runs flows/*
+  README.md               how to run, which variables to pass, what only %Name% checks
+  flows/
+    <test>.maestro.yaml   one per recorded test
+```

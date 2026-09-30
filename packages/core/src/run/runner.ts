@@ -1137,8 +1137,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         specs: [] as string[],
         warnings: [] as string[],
       };
-      // The portable spec is Playwright: none for Android recordings.
-      if ((options.generateSpecs ?? true) && target.name === "web") {
+      // The portable copy: a Playwright spec, or a Maestro flow for Android (MOB-6).
+      if (options.generateSpecs ?? true) {
         try {
           const { generateAfterRecording } = await import("@testament/codegen/node");
           const generated = await generateAfterRecording(projectDir, plan.path, {

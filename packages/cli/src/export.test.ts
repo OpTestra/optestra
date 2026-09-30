@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -128,5 +129,65 @@ describe("export", { timeout: 30_000 }, () => {
       rmSync(bare, { recursive: true, force: true });
     }
     expect(run(outRoot, "--out", join(outRoot, "x")).status).toBe(2);
+  });
+});
+
+describe("export of an Android project (MOB-6)", { timeout: 30_000 }, () => {
+  const fixture = fileURLToPath(new URL("../../../bench/fixtures/android/", import.meta.url));
+  const android = mkdtempSync(join(tmpdir(), "cli-export-android-"));
+  const planted = "planted-S3cret-value-9f2c";
+  afterAll(() => rmSync(android, { recursive: true, force: true }));
+  cpSync(join(fixture, brand.configFileName), join(android, brand.configFileName));
+  cpSync(join(fixture, "tests"), join(android, "tests"), { recursive: true });
+  writeFileSync(join(android, ".env"), `SHOP_PASSWORD=${planted}\n`);
+  const out = join(outRoot, "android-maestro");
+
+  it("writes a standalone Maestro workspace: flows, config and README", () => {
+    const result = spawnSync(process.execPath, [bin, "export", "--out", out], {
+      cwd: android,
+      env: { PATH: process.env.PATH ?? "", HOME: process.env.HOME ?? "", SHOP_PASSWORD: planted },
+      encoding: "utf8",
+    });
+    expect(result.status, result.stdout + result.stderr).toBe(0);
+    expect(tree(out)).toEqual([
+      "README.md",
+      "config.yaml",
+      "flows/tests__check-updates.maestro.yaml",
+      "flows/tests__create-project.maestro.yaml",
+      "flows/tests__deep-link.maestro.yaml",
+      "flows/tests__scan-badge.maestro.yaml",
+      "flows/tests__sign-in.maestro.yaml",
+      "flows/tests__sign-out.maestro.yaml",
+      "flows/tests__wrong-password.maestro.yaml",
+    ]);
+    expect(result.stdout).toContain("maestro test . -e SHOP_PASSWORD=…");
+    for (const file of tree(out)) {
+      const text = readFileSync(join(out, file), "utf8");
+      expect(text, file).not.toContain(planted);
+      expect(text, file).not.toMatch(new RegExp(`${brand.npmScope}/`));
+    }
+    // The flows are the ones generated next to the recordings (same content).
+    expect(readFileSync(join(out, "flows/tests__sign-in.maestro.yaml"), "utf8")).toBe(
+      readFileSync(
+        join(fixture, "tests", brand.dataDirName, "tests__sign-in.maestro.yaml"),
+        "utf8",
+      ),
+    );
+    const readme = readFileSync(join(out, "README.md"), "utf8");
+    expect(readme).toContain("| `SHOP_PASSWORD` | secret");
+    expect(readme).toContain("the message is a toast, and Maestro can't see toasts");
+    expect(readFileSync(join(out, "config.yaml"), "utf8")).toContain('flows:\n  - "flows/*"');
+  });
+
+  it("generates the flows next to the recordings, and --check sees none stale", () => {
+    const generate = (...args: string[]) =>
+      spawnSync(process.execPath, [bin, "generate", ...args], {
+        cwd: android,
+        env: { PATH: process.env.PATH ?? "", HOME: process.env.HOME ?? "" },
+        encoding: "utf8",
+      });
+    const check = generate("--check");
+    expect(check.status, check.stdout + check.stderr).toBe(0);
+    expect(check.stdout).not.toMatch(/stale|edited/);
   });
 });

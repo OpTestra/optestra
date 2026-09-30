@@ -131,17 +131,17 @@ const NO_WAIT_ROLES = new Set([
 
 // ── the flow tree ────────────────────────────────────────────────────────────
 
-interface FlowCall {
+export interface FlowCall {
   kind: "flow";
   use: OriginFrame;
   flowPath: string;
   items: Item[];
 }
-type Item = FlowCall | { kind: "step"; step: ExpandedStep };
+export type Item = FlowCall | { kind: "step"; step: ExpandedStep };
 
 const sameFrame = (a: OriginFrame, b: OriginFrame) => a.file === b.file && a.line === b.line;
 
-function flowTree(steps: readonly ExpandedStep[]): Item[] {
+export function flowTree(steps: readonly ExpandedStep[]): Item[] {
   const root: Item[] = [];
   const open: FlowCall[] = [];
   for (const step of steps) {
@@ -177,7 +177,7 @@ function flowTree(steps: readonly ExpandedStep[]): Item[] {
 
 const EXACT_CHECKS = new Set(["expectUrl", "expectText", "expectState", "expectCount"]);
 
-function isCheckStep(step: ExpandedStep): boolean {
+export function isCheckStep(step: ExpandedStep): boolean {
   if (step.kind === "expect" || step.kind === "soft") return true;
   return step.kind === "exact" && step.exact?.form === "op" && EXACT_CHECKS.has(step.exact.op.op);
 }
@@ -186,7 +186,7 @@ const isAction = (step: ExpandedStep | undefined) =>
   step !== undefined && step.kind !== "guard" && !isCheckStep(step);
 
 /** The line as written in the file, e.g. `3. Expect: a dialog is open`. */
-function sourceLine(step: ExpandedStep): string {
+export function sourceLine(step: ExpandedStep): string {
   const prefix = {
     action: "",
     expect: "Expect: ",

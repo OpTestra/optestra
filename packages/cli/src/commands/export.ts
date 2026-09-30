@@ -171,7 +171,8 @@ export async function runExportCommand(
     }
     return 2;
   }
-  const out = resolve(io.cwd, options.out ?? "playwright-export");
+  const android = loaded.config.project?.target === "android";
+  const out = resolve(io.cwd, options.out ?? (android ? "maestro-export" : "playwright-export"));
   const inside = relative(out, dir);
   if (inside === "" || (!inside.startsWith("..") && !isAbsolute(inside))) {
     io.stdout(`${out} contains the project itself. Choose another --out folder.\n`);
@@ -186,6 +187,11 @@ export async function runExportCommand(
       `${out} is not empty. Choose an empty or new folder with --out, or pass --force to write into it.\n`,
     );
     return 2;
+  }
+
+  if (android) {
+    const { exportMaestro } = await import("./export-maestro.js");
+    return exportMaestro({ dir, out, options, loaded, io });
   }
 
   const specsDir = join(out, SPECS);
@@ -312,7 +318,7 @@ export function registerExportCommand(program: Command, io: () => CommandIo): vo
   program
     .command("export")
     .description(
-      "write a standalone Playwright project from the recorded tests (runs with npm install && npx playwright test)",
+      "write a standalone Playwright project from the recorded tests (npm install && npx playwright test), or for an Android project a Maestro workspace (maestro test .)",
     )
     .option("-o, --out <dir>", "folder to create (default: ./playwright-export)")
     .option("-e, --env <name>", "environment whose base URL and allowed domains the tests use")
