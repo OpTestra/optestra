@@ -1,3 +1,4 @@
+import { brand } from "@testament/brand";
 import { describe, expect, it } from "vitest";
 import { formatBench } from "./format.js";
 import { evalGate } from "./gate.js";
@@ -44,7 +45,7 @@ const MEASURED = {
   node: "v24",
   reruns: 3,
   models: "none (replay only, no AI)",
-  command: "testament bench --reruns 3",
+  command: "bench --reruns 3",
 };
 
 /** A shop run: 2 tests × correct (3 runs), cosmetic, and a broken variant that must fail. */
@@ -287,7 +288,7 @@ describe("baseline and gate (LRN-10)", () => {
     expect(text).toContain("False pass rate (headline)");
     expect(text).toContain("100.0% (1/1)");
     expect(text).toContain("FALSE PASS  broken-total/login");
-    expect(text).toContain("reproduce: testament bench --reruns 3");
+    expect(text).toContain(`reproduce: ${brand.cliName} bench --reruns 3`);
   });
 });
 

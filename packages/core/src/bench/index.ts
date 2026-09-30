@@ -1,5 +1,5 @@
 /**
- * Testament Bench (BEN-1…BEN-3, LRN-10, MOD-9): scoring the engine on the
+ * Bench (BEN-1…BEN-3, LRN-10, MOD-9): scoring the engine on the
  * fixtures in the repository's bench/ folder. Node only. Bench reads results;
  * it never changes a verdict.
  */

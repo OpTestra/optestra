@@ -75,7 +75,7 @@ export async function modelEval(
   const results = await bench.runModelEval({
     entries: list,
     scripted: options.scripted ?? false,
-    command: `${brand.cliName} bench ${options.scripted ? "--scripted" : `--models ${list.map(bench.entryId).join(" ")}`}`,
+    command: `bench ${options.scripted ? "--scripted" : `--models ${list.map(bench.entryId).join(" ")}`}`,
     onProgress: options.json ? () => {} : (line) => io.stdout(`${line}\n`),
   });
   const saved = results.scripted ? null : bench.saveModelEval(shop.benchDir, results);
@@ -131,7 +131,7 @@ export function formatModelEval(file: ModelEvalFile): string {
   ]);
   return [
     `Model eval · shop · engine ${file.engineVersion}${file.commit ? ` (${file.commit})` : ""} · ${file.date.slice(0, 10)}${file.scripted ? " · SCRIPTED stand-in (no real model)" : ""}`,
-    `Reproduce: ${file.command}`,
+    `Reproduce: ${brand.cliName} ${file.command}`,
     "",
     table(rows),
     ...(cases.length ? ["", ...cases] : []),

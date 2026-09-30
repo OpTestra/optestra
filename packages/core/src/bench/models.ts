@@ -324,9 +324,7 @@ export async function runModelEval(options: ModelEvalOptions): Promise<ModelEval
     engineVersion: version(),
     commit: engineCommit(shop.benchDir),
     scripted: options.scripted ?? false,
-    command:
-      options.command ??
-      `${brand.cliName} bench --models ${options.entries.map(entryId).join(" ")}`,
+    command: options.command ?? `bench --models ${options.entries.map(entryId).join(" ")}`,
     models: results,
   };
 }

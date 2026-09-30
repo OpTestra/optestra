@@ -1,6 +1,5 @@
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
-import { brand } from "@testament/brand";
 import type { TestResult } from "@testament/contract";
 import { version } from "../index.js";
 import {
@@ -23,7 +22,7 @@ import {
 } from "./report.js";
 import type { BenchRow, FixtureId } from "./score.js";
 
-// `testament bench` (BEN-2): every variant of the chosen fixtures, N reruns of
+// The CLI's `bench` (BEN-2): every variant of the chosen fixtures, N reruns of
 // `correct` for the flake rate, replay vs spec equivalence on the shop, and the
 // numbers with how they were measured. Replay only, no AI: first-run (authoring)
 // cost comes from the latest committed model eval (bench/results).
@@ -252,7 +251,7 @@ export async function runBench(options: BenchOptions = {}): Promise<BenchReport>
     node: process.version,
     reruns,
     models: "none (replay only, no AI)",
-    command: options.command ?? `${brand.cliName} bench --fixture ${choice} --reruns ${reruns}`,
+    command: options.command ?? `bench --fixture ${choice} --reruns ${reruns}`,
   };
   return buildReport(measured, fixtures);
 }

@@ -76,7 +76,7 @@ export async function runEvalCommand(options: EvalCommandOptions, io: CommandIo)
       fixture,
       reruns: 1,
       equivalence: false,
-      command: `${brand.cliName} eval --fixture ${fixture}`,
+      command: `eval --fixture ${fixture}`,
       onProgress: say,
     });
   }

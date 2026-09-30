@@ -1,3 +1,4 @@
+import { brand } from "@testament/brand";
 import type { FixtureMetrics } from "./metrics.js";
 import {
   type BaselineComparison,
@@ -72,8 +73,8 @@ export function formatBench(report: BenchReport, comparison?: BaselineComparison
   const m = report.measured;
   const fixtures = Object.keys(report.fixtures) as FixtureId[];
   const lines = [
-    `Testament Bench · engine ${m.engineVersion}${m.commit ? ` (${m.commit})` : ""} · ${m.os} · node ${m.node} · ${m.date.slice(0, 10)}`,
-    `Models: ${m.models} · correct run ${m.reruns} time${m.reruns === 1 ? "" : "s"} · reproduce: ${m.command}`,
+    `${brand.productName} Bench · engine ${m.engineVersion}${m.commit ? ` (${m.commit})` : ""} · ${m.os} · node ${m.node} · ${m.date.slice(0, 10)}`,
+    `Models: ${m.models} · correct run ${m.reruns} time${m.reruns === 1 ? "" : "s"} · reproduce: ${brand.cliName} ${m.command}`,
     "",
   ];
   const header = ["", ...fixtures, ...(fixtures.length > 1 ? ["total"] : [])];

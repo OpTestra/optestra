@@ -81,7 +81,7 @@ export const ENGINE_CAPABILITIES = {
   mcp: true,
   /** CLI-1 / PERF-0: `runDoctor({ secretSources, node })` in @testament/cli. */
   doctor: { secretSources: true, node: true },
-  /** BEN-0: `testament bench`, model evals and the `testament eval` gate (`@testament/core/bench`). */
+  /** BEN-0: the CLI's `bench`, model evals and the `eval` gate (`@testament/core/bench`). */
   bench: { fixtures: ["shop", "android"], models: true, evalGate: true, measures: true },
 } as const;
 

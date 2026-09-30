@@ -18,7 +18,7 @@
 // process. REQUIRE_MAILPIT=1 (CI) makes a missing Mailpit an error. The generated
 // specs can only read Mailpit, so without it their email tests aren't compared.
 //
-// The scoring is Bench's (`@testament/core/bench`, the same as `testament bench`);
+// The scoring is Bench's (`@testament/core/bench`, the same as the CLI's `bench`);
 // this script keeps CI's per-row output and its gates.
 
 import { rmSync, writeFileSync } from "node:fs";

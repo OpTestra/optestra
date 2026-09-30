@@ -1,6 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
 import type { CommandIo } from "./config.js";
 
 // `bench` (BEN-2): scores the engine on the repository's Bench fixtures and
@@ -70,7 +69,7 @@ export async function runBenchCommand(
       ...(options.variant?.length ? { variants: options.variant } : {}),
       equivalence: options.equivalence ?? true,
       command: [
-        `${brand.cliName} bench --fixture ${fixture} --reruns ${reruns}`,
+        `bench --fixture ${fixture} --reruns ${reruns}`,
         ...(options.variant ?? []).map((v) => `--variant ${v}`),
         ...(options.equivalence === false ? ["--no-equivalence"] : []),
       ].join(" "),

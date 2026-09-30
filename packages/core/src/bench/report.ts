@@ -16,7 +16,7 @@ export interface MeasuredWith {
   reruns: number;
   /** "none (replay only, no AI)" or the model ids of a model eval. */
   models: string;
-  /** The command that reproduces it. */
+  /** The CLI command that reproduces it, without the CLI's name (e.g. `bench --reruns 10`). */
   command: string;
 }
 
@@ -59,7 +59,7 @@ export interface BenchReport {
   measured: MeasuredWith;
   fixtures: Partial<Record<FixtureId, FixtureReport>>;
   total: ReturnType<typeof totalMetrics>;
-  /** Set by `testament eval`: the decision evals it ran. */
+  /** Set by the CLI's `eval`: the decision evals it ran. */
   decisions?: DecisionEvalSummary;
 }
 
