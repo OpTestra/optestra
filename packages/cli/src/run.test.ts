@@ -40,6 +40,14 @@ describe("run flags (PERF-0)", () => {
     expect(evidence.out).toBe('--evidence must be full, failures or minimal, not "everything".\n');
   });
 
+  it("refuses a viewport that isn't a size (exit 2)", async () => {
+    const bad = await runWith({ viewport: "big" });
+    expect(bad.code).toBe(2);
+    expect(bad.out).toMatch(/^--viewport: The viewport "big" isn't a size like 1280x720/);
+    const tiny = await runWith({ viewport: "50x50" });
+    expect(tiny.code).toBe(2);
+  });
+
   it("collects repeated --browser and --device into a matrix", () => {
     const run = createProgram().commands.find((c) => c.name() === "run");
     expect(run).toBeDefined();

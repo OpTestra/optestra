@@ -169,6 +169,8 @@ describe("engine guards", () => {
     "packages/android/src/tools.ts",
     "packages/brand/src/run.ts",
     "packages/browser/src/launch.ts",
+    // Bench (BEN-0): the shop's generated specs through a Node + Playwright Test's CLI, no shell.
+    "packages/core/src/bench/fixtures.ts",
     // Tests with code steps run through their generated spec: Node + Playwright Test's CLI (LOOP-4).
     "packages/core/src/run/spec-run.ts",
     "packages/models/src/delegated/process.ts",
@@ -199,6 +201,11 @@ describe("engine guards", () => {
     expect([...spec.matchAll(/spawn\(/g)]).toHaveLength(1);
     expect(spec).toContain("spawn(node.command, args, {");
     expect(spec).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
+    const bench = readFileSync(join(root, "packages/core/src/bench/fixtures.ts"), "utf8");
+    expect([...bench.matchAll(/spawn\(/g)]).toHaveLength(1);
+    expect(bench).toContain("spawn(node.command, args, {");
+    expect(bench).toContain("shell: false,");
+    expect(bench).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
   });
 
   it("lets the Android guard connect only after the allowlist, and the driver link only to loopback", () => {
@@ -230,8 +237,16 @@ describe("engine guards", () => {
   });
 
   it("keeps fixtures out of engine packages (tests may use them)", () => {
-    const packageSource = source.filter((f) => rel(f).startsWith("packages/"));
+    // Bench (BEN-0) is the one exception: it loads the repository's fixtures at run
+    // time, through one dynamic import that says what to do when they're missing.
+    const BENCH = "packages/core/src/bench/fixtures.ts";
+    const packageSource = source.filter((f) => rel(f).startsWith("packages/") && rel(f) !== BENCH);
     expect(offenders(packageSource, new RegExp(`["']${brand.npmScope}/fixture-`))).toEqual([]);
+    const bench = readFileSync(join(root, BENCH), "utf8");
+    expect(bench).not.toMatch(new RegExp(`^import[^;]*${brand.npmScope}/fixture-`, "m"));
+    expect(bench).toContain("return (await import(name)) as T;");
+    const core = JSON.parse(readFileSync(join(root, "packages/core/package.json"), "utf8"));
+    expect(Object.keys(core.dependencies).filter((d) => d.includes("/fixture-"))).toEqual([]);
   });
 
   it("serves fixture pages that only talk to their own origin", () => {

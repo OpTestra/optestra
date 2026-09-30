@@ -11,6 +11,7 @@ Exit codes follow one rule for every command that runs or checks something: **0*
 | [`config`](#config) | show the resolved project settings for an environment and where each came from |
 | [`models`](#models) | show each AI role's provider pool, key status and usage caps |
 | [`decisions`](#decisions) | show the decision routing, thresholds and tasks; --check the backends, --bench their speed, --eval their accuracy, --stats a run's decisions |
+| [`bench`](#bench) | score the engine on the repository's Bench fixtures: false pass/fail and flake rates, replay hit rate, heals, cost, time (BEN-2); --models evaluates AI models |
 | [`decider setup`](#decider-setup) | laya: find the local Ollaya and, if you agree, download the model (never installs Ollaya); jev/kev: how to set them up |
 | [`results`](#results) | summarise a finished run folder and exit with its CI code (0 passed, 1 failed, 2 blocked) |
 | [`merge-runs`](#merge-runs) | merge shard run folders (run --shard i/n) into one run folder, then summarise it like run |
@@ -86,6 +87,27 @@ show the decision routing, thresholds and tasks; --check the backends, --bench t
 | `--stats <runDir>` | print per-task decision metrics from a run folder |  |
 | `-e, --env <name>` | environment to resolve |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+| `--json` | print machine-readable JSON |  |
+
+## bench {#bench}
+
+score the engine on the repository's Bench fixtures: false pass/fail and flake rates, replay hit rate, heals, cost, time (BEN-2); --models evaluates AI models
+
+```sh
+%cli% bench [options]
+```
+
+| Option | | Default |
+|---|---|---|
+| `--fixture <name>` | shop (default), android or all |  |
+| `--reruns <n>` | runs of the correct build, for the flake rate | `"10"` |
+| `--variant <name>` | only this variant (repeatable) | `[]` |
+| `--no-equivalence` | don't compare the shop's replay with its generated specs |  |
+| `--save-baseline` | write this run as the committed baseline (bench/baseline.json) |  |
+| `--models <entries...>` | evaluate these models (provider:model, e.g. claude-code:claude-sonnet-4-6, openrouter:z-ai/glm-4.6): authoring, check compile, fixer heals (real AI calls) |  |
+| `--scripted` | run the model evals with a scripted stand-in (no AI; for CI) |  |
+| `--yes` | for --models: don't ask before the real-model run |  |
+| `--measures` | print the success measures (application section 10) from real data |  |
 | `--json` | print machine-readable JSON |  |
 
 ## decider setup {#decider-setup}
@@ -306,6 +328,7 @@ run tests: replay each recording with no AI, evaluate every check, write a resul
 | `--device <preset>` | device preset, e.g. desktop, laptop, iphone-15 (Android: a device profile, e.g. pixel-8); repeat for a matrix | `[]` |
 | `--locale <code>` | browser locale, or the Android app's language, e.g. de-DE |  |
 | `--timezone <id>` | browser or device timezone, e.g. Europe/Berlin |  |
+| `--viewport <size>` | a custom browser size, e.g. 1280x720 (websites) |  |
 | `--evidence <mode>` | full \| failures \| minimal (default: run.evidence, else full in CI and failures elsewhere) |  |
 | `--android <version>` | Android projects: the Android version (default: android.version); repeat for a matrix | `[]` |
 | `--no-video` | don't record a video per attempt |  |

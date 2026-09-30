@@ -27,6 +27,8 @@ export interface RunCommandOptions {
   device?: string | string[];
   locale?: string;
   timezone?: string;
+  /** A custom browser size, like 1280x720 (TGT-3). */
+  viewport?: string;
   evidence?: string;
   /** Android projects: the Android version; repeatable (a matrix of versions × devices). */
   android?: string | string[];
@@ -84,6 +86,16 @@ export async function runRunCommand(
   if (options.evidence && !(EVIDENCE as readonly string[]).includes(options.evidence)) {
     io.stdout(`--evidence must be full, failures or minimal, not "${options.evidence}".\n`);
     return 2;
+  }
+  let viewport: { width: number; height: number } | undefined;
+  if (options.viewport !== undefined) {
+    const { parseViewport } = await import("@testament/core");
+    const checked = parseViewport(options.viewport);
+    if (!checked.ok) {
+      io.stdout(`--viewport: ${checked.message}\n`);
+      return 2;
+    }
+    viewport = checked.viewport;
   }
   if (budget !== undefined && !(budget >= 0)) {
     io.stdout(`--budget must be an amount in dollars, like 0.50, not "${options.budget}".\n`);
@@ -153,6 +165,7 @@ export async function runRunCommand(
       ...(devices.length ? { devices } : {}),
       ...(options.locale ? { locale: options.locale } : {}),
       ...(options.timezone ? { timezone: options.timezone } : {}),
+      ...(viewport ? { viewport } : {}),
       ...(options.evidence ? { evidence: options.evidence as (typeof EVIDENCE)[number] } : {}),
       ...(androidVersions.length ? { androidVersions } : {}),
       ...(options.video === false ? { video: false } : {}),

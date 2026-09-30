@@ -12,6 +12,10 @@
     "./node": {
       "types": "./dist/node.d.ts",
       "default": "./dist/node.js"
+    },
+    "./bench": {
+      "types": "./dist/bench/index.d.ts",
+      "default": "./dist/bench/index.js"
     }
   },
   "dependencies": {

@@ -13,6 +13,7 @@ import { registerBrowserCommands } from "./commands/browser.js";
 import type { ChecksCommandOptions } from "./commands/checks.js";
 import type { ConfigCommandOptions } from "./commands/config.js";
 import type { DeciderSetupOptions } from "./commands/decider.js";
+import type { BenchCommandOptions } from "./commands/bench.js";
 import type { DecisionsCommandOptions } from "./commands/decisions.js";
 import type { DoctorCommandOptions } from "./commands/doctor.js";
 import { registerExportCommand } from "./commands/export.js";
@@ -115,6 +116,33 @@ export function createProgram(): Command {
     .action(async (options: DecisionsCommandOptions) => {
       const { runDecisionsCommand } = await import("./commands/decisions.js");
       process.exitCode = await runDecisionsCommand(options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("bench")
+    .description(
+      "score the engine on the repository's Bench fixtures: false pass/fail and flake rates, replay hit rate, heals, cost, time (BEN-2); --models evaluates AI models",
+    )
+    .option("--fixture <name>", "shop (default), android or all")
+    .option("--reruns <n>", "runs of the correct build, for the flake rate", "10")
+    .option("--variant <name>", "only this variant (repeatable)", collect, [])
+    .option("--no-equivalence", "don't compare the shop's replay with its generated specs")
+    .option("--save-baseline", "write this run as the committed baseline (bench/baseline.json)")
+    .option(
+      "--models <entries...>",
+      "evaluate these models (provider:model, e.g. claude-code:claude-sonnet-4-6, openrouter:z-ai/glm-4.6): authoring, check compile, fixer heals (real AI calls)",
+    )
+    .option("--scripted", "run the model evals with a scripted stand-in (no AI; for CI)")
+    .option("--yes", "for --models: don't ask before the real-model run")
+    .option("--measures", "print the success measures (application section 10) from real data")
+    .option("--json", "print machine-readable JSON")
+    .action(async (options: BenchCommandOptions) => {
+      const { runBenchCommand } = await import("./commands/bench.js");
+      process.exitCode = await runBenchCommand(options, {
         cwd: process.cwd(),
         env: process.env,
         stdout: (text) => process.stdout.write(text),
@@ -362,6 +390,7 @@ export function createProgram(): Command {
     )
     .option("--locale <code>", "browser locale, or the Android app's language, e.g. de-DE")
     .option("--timezone <id>", "browser or device timezone, e.g. Europe/Berlin")
+    .option("--viewport <size>", "a custom browser size, e.g. 1280x720 (websites)")
     .option(
       "--evidence <mode>",
       "full | failures | minimal (default: run.evidence, else full in CI and failures elsewhere)",
