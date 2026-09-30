@@ -337,6 +337,10 @@ Versions and device profiles are data (TGT-4, TGT-6):
 - `src/devices.json`: small-phone, pixel-8 (default), pixel-9-pro-xl,
   small-tablet and pixel-tablet.
 
+`<ENV_PREFIX>ANDROID_CORES` (1–8, default 2) sets the AVDs' virtual CPUs: `1`
+makes a slow device on a fast machine, to reproduce what slow CI runners see.
+Such an AVD has its own name, so it never shares the default one's snapshot.
+
 The harness keeps its own AVDs in `~/<data dir>/android/avd` (override with
 `<ENV_PREFIX>ANDROID_HOME`), written straight from the data (no avdmanager, no
 Java at run time). A session reports `matrixEntry()` →

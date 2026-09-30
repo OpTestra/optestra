@@ -14,6 +14,7 @@ import {
 import { type RunningShop, startShop } from "@testament/fixture-shop";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
+  type AndroidActionOutcome,
   type AndroidSession,
   type LaunchedEmulator,
   launchEmulator,
@@ -57,18 +58,49 @@ async function open(
   return opened.session;
 }
 
+/**
+ * Signs in and insists it worked: each step's outcome is checked, and a failure
+ * says everything the harness saw (the screen, requests, refusals, toasts, the
+ * session's notes), so a failure on a slow CI emulator names its cause.
+ */
 async function signIn(session: AndroidSession) {
-  await session.act({
-    type: "type",
-    target: { kind: "role", role: "textbox", name: "Email" },
-    value: "ada@example.com",
+  const steps: AndroidActionOutcome[] = [];
+  const report = async (why: string) => {
+    const screen = await session.observe().catch(() => null);
+    const lines = steps.map(
+      (o) =>
+        `${o.action.type} → ${o.status}${o.message ? ` (${o.message})` : ""}; url ${o.post.urlAfter}; ` +
+        `added ${JSON.stringify(o.post.added.slice(0, 6))}; requests ${JSON.stringify(o.post.requests)}; ` +
+        `refused ${JSON.stringify(o.post.refused)}; toasts ${JSON.stringify(o.post.toasts)}; app ${o.post.app}; ` +
+        `settle ${JSON.stringify(o.settle)}`,
+    );
+    return [
+      `sign-in failed: ${why}`,
+      ...lines,
+      `screen now: ${screen?.url} ${JSON.stringify(screen?.elements.map((e) => `${e.role} ${e.name}${e.text ? `: ${e.text}` : ""}`))}`,
+      `session: ${JSON.stringify({ notes: session.timings().notes, dialogs: session.timings().systemDialogs })}`,
+    ].join("\n  ");
+  };
+  for (const [name, value] of [
+    ["Email", "ada@example.com"],
+    ["Password", { secret: "SHOP_PASSWORD" }],
+  ] as const) {
+    const typed = await session.act({
+      type: "type",
+      target: { kind: "role", role: "textbox", name },
+      value,
+    });
+    steps.push(typed);
+    if (typed.status !== "ok") throw new Error(await report(`typing into ${name}`));
+  }
+  const tapped = await session.act({
+    type: "tap",
+    target: { kind: "role", role: "button", name: "Sign in" },
   });
-  await session.act({
-    type: "type",
-    target: { kind: "role", role: "textbox", name: "Password" },
-    value: { secret: "SHOP_PASSWORD" },
-  });
-  return session.act({ type: "tap", target: { kind: "role", role: "button", name: "Sign in" } });
+  steps.push(tapped);
+  if (tapped.post.urlAfter !== "android-app://com.acme.shop/.ProjectsActivity")
+    throw new Error(await report("still not on the projects screen"));
+  return tapped;
 }
 
 const heading = (name: string) => ({ kind: "role", role: "heading", name }) as const;
@@ -598,6 +630,46 @@ describe("the foreground on slow machines (mob-0-ci2)", () => {
       await sleep(2_000);
       const signedIn = await signIn(session);
       expect(signedIn.post.urlAfter).toBe("android-app://com.acme.shop/.ProjectsActivity");
+      expect(session.timings().notes.join(" ")).toMatch(/came to the front by itself/);
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("brings the app back as it was: what the test typed is still there (MOB-2)", async () => {
+    // CI: the launcher came to the front mid sign-in; the restore then showed a
+    // fresh sign-in screen, and "Sign in" was tapped with empty fields.
+    await seed({ projects: ["Website redesign"] });
+    const session = await open();
+    try {
+      for (const [name, value] of [
+        ["Email", "ada@example.com"],
+        ["Password", { secret: "SHOP_PASSWORD" }],
+      ] as const) {
+        const typed = await session.act({
+          type: "type",
+          target: { kind: "role", role: "textbox", name },
+          value,
+        });
+        expect(typed.status, `${name}: ${typed.message ?? ""}`).toBe("ok");
+      }
+      adb(
+        "shell",
+        "am",
+        "start",
+        "-a",
+        "android.intent.action.MAIN",
+        "-c",
+        "android.intent.category.HOME",
+      );
+      await sleep(2_000);
+      const tapped = await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "Sign in" },
+      });
+      expect(tapped.post.urlAfter, tapped.message ?? "").toBe(
+        "android-app://com.acme.shop/.ProjectsActivity",
+      );
       expect(session.timings().notes.join(" ")).toMatch(/came to the front by itself/);
     } finally {
       await session.close();
