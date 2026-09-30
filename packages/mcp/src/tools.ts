@@ -25,7 +25,9 @@ export interface ToolContext {
   environment?: string | undefined;
   env: Readonly<Record<string, string | undefined>>;
   /** The engine's Node API; tests inject fakes. Default: @testament/core/node. */
-  core?: () => Promise<Pick<CoreNode, "runTests" | "draftTest" | "listHeals" | "applyHeals">>;
+  core?: () => Promise<
+    Pick<CoreNode, "runTests" | "draftTest" | "listHeals" | "applyHeals" | "explainRun">
+  >;
   /** Engine runs headless unless this is false. */
   headless?: boolean;
 }
@@ -478,6 +480,81 @@ export const TOOLS = [
     async run(args, ctx) {
       const p = project(ctx);
       return resultsOf(await runDirFor(p, args.runId));
+    },
+  }),
+
+  tool({
+    spec: {
+      name: "explain",
+      title: "Explain a failure",
+      description:
+        "Explain why tests of a run failed (default: the latest run, every test that didn't pass), from the run's evidence: the failing check (expected vs actual), the failing step, console errors, failed requests, the screenshot and trace. Every sentence cites evidence [E1]. Rules only by default (no AI); ai: true makes one model call. Never changes a verdict or cause.",
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    input: z
+      .object({
+        runId: RunId,
+        test: z.string().optional().describe("A test id, file or name part."),
+        ai: z.boolean().optional().describe("Let the AI write the diagnosis (one model call)."),
+      })
+      .strict(),
+    output: () =>
+      jsonSchema(
+        z.object({
+          runDir: z.string(),
+          runId: z.string(),
+          message: z.string().optional(),
+          explanations: z.array(
+            z
+              .object({
+                testId: z.string(),
+                file: z.string(),
+                verdict: z.string(),
+                cause: z.string().nullable(),
+                headline: z.string().nullable(),
+                diagnosis: z.string(),
+                next: z.array(z.string()),
+                evidence: z.array(
+                  z.object({
+                    id: z.string(),
+                    kind: z.string(),
+                    text: z.string(),
+                    path: z.string().optional(),
+                  }),
+                ),
+                mode: z.enum(["rules", "ai"]),
+              })
+              .loose(),
+          ),
+        }),
+      ),
+    async run(args, ctx, signal) {
+      const p = project(ctx);
+      const dir = await runDirFor(p, args.runId);
+      const core = await loadCore(ctx);
+      let models: import("@testament/models").Models | undefined;
+      if (args.ai) {
+        const m = await import("@testament/models");
+        const { dotenvSource, processEnvSource } = await import("@testament/config/node");
+        models = m.createModels({
+          config: p.config,
+          sources: [processEnvSource(ctx.env), dotenvSource(p.dir)],
+          environment: ctx.environment,
+          budgets: [m.BudgetMeter.forRun(p.config)],
+          usageStore: m.projectUsageStore(p.dir),
+          env: ctx.env,
+        });
+        if (!models.pool("planner").some((entry) => entry.usable))
+          throw new ToolError(
+            "No AI model is available for ai: true (no planner provider has a key). Call explain without ai for the rules-only explanation.",
+          );
+      }
+      const result = await core.explainRun(dir, {
+        ...(args.test ? { test: args.test } : {}),
+        ...(models ? { models, maxCalls: 1 } : {}),
+        signal,
+      });
+      return result as unknown as Record<string, unknown>;
     },
   }),
 

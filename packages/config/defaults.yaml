@@ -46,6 +46,19 @@ lint:
   # Warnings count as errors for the exit code (CI).
   strict: false
 
+# Setup and teardown hooks (AUT-10). The spec package registers this section.
+hooks:
+  run:
+    # Commands run: hooks may start: a program on the PATH or a project path glob.
+    allow: []
+    # Seconds before a run: hook is stopped.
+    timeoutSeconds: 60
+  sql:
+    # connection: TEST_DATABASE_URL  (the declared secret with the database URL; unset: sql: hooks can't run)
+    # The client that runs statements: psql (Postgres) or mysql.
+    client: psql
+    timeoutSeconds: 30
+
 # Android runs (MOB-1, TGT-4). The android package registers this section.
 android:
   # Android version, from the android package's versions.json (13 to 17).

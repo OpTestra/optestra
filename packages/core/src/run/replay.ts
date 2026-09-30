@@ -337,17 +337,20 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
 
   // ── setup hooks and the start page ──────────────────────────────────────────
   for (const hook of test.setup) {
-    const report = await runHook(session, hook, "setup");
+    const report = await runHook(session, hook, "setup", options.hookContext);
     if (report.status === "ok") continue;
     const message = `Setup ${report.description} ${report.status}${report.message ? `: ${report.message}` : ""}`;
     stop =
-      report.status === "unsupported"
-        ? block("config_error", message, null)
-        : report.status === "refused"
-          ? block("disallowed_domain", message, null)
-          : report.status === "error"
-            ? block("app_down", message, null)
-            : block("setup_failed", message, null);
+      report.reason === "missing_secret"
+        ? block("missing_secret", message, null)
+        : report.status === "unsupported" ||
+            (report.status === "refused" && report.kind !== "request")
+          ? block("config_error", message, null)
+          : report.status === "refused"
+            ? block("disallowed_domain", message, null)
+            : report.status === "error"
+              ? block("app_down", message, null)
+              : block("setup_failed", message, null);
     break;
   }
   // The test's login (auth: <profile>, SEC-3): after the setup hooks, before the start page.
@@ -1640,12 +1643,12 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
 
   // Teardown hooks run whatever happened (their failures are only logged).
   for (const hook of test.teardown) {
-    const report = await runHook(session, hook, "teardown");
+    const report = await runHook(session, hook, "teardown", options.hookContext);
     if (report.status !== "ok")
       options.emit({
         type: "log",
         level: "warn",
-        message: `Teardown ${report.description} ${report.status}`,
+        message: `Teardown ${report.description} ${report.status}${report.message ? `: ${report.message}` : ""}`,
       });
   }
 

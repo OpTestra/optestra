@@ -84,7 +84,7 @@ warning (`UNKNOWN_KEY`) and are kept when printing.
 | `timeout` | `"90s"`, `"3m"`, `"1h"` | Stored in seconds; a bare number is an error. |
 | `heal` | `strict`, `review` or `auto` | HEAL-5 fix policy for this test. |
 | `allowDestructive` | list from `delete pay send invite cancel` | SAF-4: destructive actions this test may do in production mode. |
-| `dataset` | path to a `.csv` or `.json` file | AUT-9 (parsed only). |
+| `dataset` | path to a `.csv` or `.json` file | AUT-9: one run per row (see Datasets). |
 | `environments` | map env name → `{ start, data, timeout }` | Per-environment overrides. `data` merges key by key. |
 
 ```yaml
@@ -93,6 +93,7 @@ setup:
     body: { trial: pro }
   - run: scripts/seed.sh
   - sql: DELETE FROM carts WHERE user = 'ada'
+    production: true          # sql only: may run in a production environment (default: never)
 environments:
   staging:
     start: https://staging.example.com/pricing
@@ -100,6 +101,20 @@ environments:
     data:
       email: staging-user@example.com
 ```
+
+## Datasets (AUT-9)
+
+`dataset: data/users.csv` (or `.json`), relative to the test file, runs the test
+once per row. `@testament/spec/node`'s `loadDataset(projectDir, testPath,
+dataset)` reads it (CSV with a header row, RFC 4180 quoting; or a JSON array of
+flat objects) into `{ path, columns, rows: [{ row, values }], diagnostics }`,
+at most `MAX_DATASET_ROWS` (200). `loadTest(…, { data: row.values })` binds a
+row: each column is a `{{data.<column>}}` value (a template, so a cell may use
+`{{unique.email}}`) and replaces a frontmatter data value of the same name.
+Text keys don't depend on the row, so every row shares one recording. The
+parser can't read the file, so a test with a dataset gets no `VAR_UNDEFINED`
+for `{{data.x}}`; `datasetColumnProblems(spec, dataset)` reports a `{{data.x}}`
+that no column or data value defines.
 
 ## Steps
 
@@ -655,6 +670,9 @@ when the problem is there. Codes are stable.
 | `REQUIRED_MISSING` | error | No `name`. |
 | `INVALID_VALUE` | error | A field has the wrong type or value (e.g. `timeout: 90`, `tags: smoke`). |
 | `HOOK_INVALID` | error | A setup/teardown hook is malformed. |
+| `DATASET_NOT_FOUND` | error | The dataset file doesn't exist (`loadDataset`). |
+| `DATASET_EMPTY` | error | The dataset has no rows (`loadDataset`). |
+| `DATASET_INVALID` | error | The dataset can't be used: bad CSV/JSON, a bad column, a `{{data.x}}` no column defines (`loadDataset`, `datasetColumnProblems`). |
 | `PARAMS_OUTSIDE_FLOW` | error | `params:` or `{{params.x}}` in a test. |
 | `NO_STEPS` | warning | No steps (guards don't count). |
 | `TEXT_OUTSIDE_STEPS` | warning | Text that is not a step or a comment. |

@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
-import { setTimeout as sleep } from "node:timers/promises";
 import { mkdirSync, mkdtempSync, realpathSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { brand } from "@testament/brand";
 import { defaultRedactor, Redactor } from "@testament/config/node";
 // RESTRICTED import: the browser driver types secrets into allowed domains (SEC-1).
@@ -47,6 +47,13 @@ import {
   reorderedElements,
 } from "./observe.js";
 import { basicAuthValue, HeaderScope, type ScopedHeader } from "./protected-headers.js";
+import {
+  RECORDER_SCRIPT,
+  type RecordedTarget,
+  type RecordingControl,
+  type RecordOptions,
+  type RecordReply,
+} from "./recorder.js";
 import { type RefusalProxy, startRefusalProxy } from "./refusal-proxy.js";
 import { ActivityTracker, DEFAULT_SETTLE, mutationScript } from "./settle.js";
 import type {
@@ -150,6 +157,10 @@ export class Session {
   #shooting: Promise<unknown> | undefined;
   /** Set when the last action ended on its effect (no quiet window yet): when it did. */
   #unsettledSince: number | undefined;
+  /** Record mode (AUT-8): the page flag that lets the harness's own actions through. */
+  #recordFlag: string | undefined;
+  #acting = false;
+  #lastActEnd = 0;
 
   private constructor(init: {
     browser: LaunchedBrowser;
@@ -477,6 +488,17 @@ export class Session {
     }
   }
 
+  /**
+   * Console errors and uncaught page exceptions since the session opened (or
+   * since index `from`), scrubbed. Untrusted page text, like an observation.
+   */
+  consoleErrors(from = 0): string[] {
+    return this.#evidence
+      .errors()
+      .slice(from)
+      .map((line) => this.#redact(line).slice(0, 500));
+  }
+
   /** Every refusal so far. */
   refusals(): Refusal[] {
     return [...this.#refusals];
@@ -629,6 +651,200 @@ export class Session {
    * effect doesn't show within `ceilingMs`, the page settles as usual.
    */
   async act(action: Action, options: ActOptions = {}): Promise<ActionOutcome> {
+    if (!this.#recordFlag) return this.#act(action, options);
+    // Record mode: the page lets the harness's own action through, and it isn't recorded twice.
+    this.#acting = true;
+    await this.#passthrough(1);
+    try {
+      return await this.#act(action, options);
+    } finally {
+      await this.#passthrough(-1);
+      this.#acting = false;
+      this.#lastActEnd = Date.now();
+    }
+  }
+
+  async #passthrough(delta: 1 | -1): Promise<void> {
+    const flag = this.#recordFlag;
+    if (!flag || this.#unusable()) return;
+    await this.#page
+      .evaluate(
+        ([name, by]) => {
+          const w = window as unknown as Record<string, number>;
+          w[name as string] = Math.max(0, (w[name as string] ?? 0) + (by as number));
+        },
+        [flag, delta] as const,
+      )
+      .catch(() => {});
+  }
+
+  /**
+   * Record mode (AUT-8): the user drives this (headed) page. Their clicks, typing,
+   * selects, Enter, uploads and typed addresses arrive as events, one at a time,
+   * with the element's ranked locators; secrets arrive by name only. Clicks and
+   * Enter are held: the caller performs them with `act` (so they are recorded
+   * with their post-state). An overlay marks expectations and finishes.
+   */
+  async record(options: RecordOptions): Promise<RecordingControl> {
+    if (this.#recordFlag) throw new Error("This session is already recording.");
+    const flag = `__r${randomBytes(5).toString("hex")}`;
+    const attribute = `data-r${randomBytes(4).toString("hex")}`;
+    const binding = `__rb${randomBytes(5).toString("hex")}`;
+    this.#recordFlag = flag;
+    let done!: (how: "finished" | "closed") => void;
+    const finished = new Promise<"finished" | "closed">((resolve) => {
+      done = resolve;
+    });
+    let stopped = false;
+    let queue: Promise<unknown> = Promise.resolve();
+    const inOrder = <T>(task: () => Promise<T>): Promise<T> => {
+      const next = queue.then(task, task);
+      queue = next.catch(() => {});
+      return next;
+    };
+    const secretOf = (value: string): string | undefined => {
+      if (!value) return undefined;
+      for (const [name, secret] of Object.entries(this.#options.secrets ?? {}))
+        if (revealSecret(secret) === value) return name;
+      return undefined;
+    };
+    const targetOf = async (id: unknown): Promise<RecordedTarget | undefined> => {
+      if (typeof id !== "string" || !/^r\d+$/.test(id) || this.#unusable()) return undefined;
+      const marker: LocatorSpec = { kind: "css", selector: `[${attribute}="${id}"]` };
+      const locator = this.#page.locator(marker.selector);
+      try {
+        if ((await locator.count()) !== 1) return undefined;
+        const kind = await locator.evaluate((el) => ({
+          tag: el.tagName.toLowerCase(),
+          type: el instanceof HTMLInputElement ? el.type : undefined,
+        }));
+        const raw = this.#scrubFacts(
+          await locator.evaluate(readFacts, FACT_ATTRIBUTES, { timeout: ACTION_TIMEOUT_MS }),
+        );
+        const identity = await this.#identityOf(locator);
+        const box = await locator.boundingBox({ timeout: ACTION_TIMEOUT_MS }).catch(() => null);
+        const candidates: LocatorCandidate[] = [];
+        for (const spec of candidateSpecs(identity, raw, [])) {
+          const matches = await toLocator(this.#page, spec)
+            .count()
+            .catch(() => 0);
+          candidates.push({ locator: spec, unique: matches === 1, matches });
+        }
+        const best =
+          candidates.find((c) => c.unique && c.locator.kind !== "css")?.locator ?? marker;
+        return {
+          candidates: { status: "ok", candidates, facts: toFacts(identity, raw, [], box) },
+          act: best,
+          tag: kind.tag,
+          ...(kind.type ? { inputType: kind.type } : {}),
+        };
+      } catch {
+        return undefined;
+      }
+    };
+    const handle = async (payload: Record<string, unknown>): Promise<RecordReply | undefined> => {
+      if (stopped) return undefined;
+      const type = payload.type;
+      if (type === "finish") {
+        done("finished");
+        return { ok: true, message: "Finished: the test is written in your terminal." };
+      }
+      if (type === "mark") {
+        const kind = payload.kind === "url" ? "url" : payload.kind === "text" ? "text" : "element";
+        const target = kind === "element" ? await targetOf(payload.id) : undefined;
+        const text =
+          typeof payload.text === "string" ? this.#redact(payload.text).slice(0, 200) : undefined;
+        return options.onEvent({
+          type: "mark",
+          kind,
+          ...(target ? { target } : {}),
+          ...(text ? { text } : {}),
+        });
+      }
+      const target = await targetOf(payload.id);
+      if (!target)
+        return { ok: false, message: "That element couldn't be recorded (it went away)." };
+      switch (type) {
+        case "click":
+        case "check":
+        case "uncheck":
+          return options.onEvent({ type, target });
+        case "press":
+          return options.onEvent({ type: "press", key: String(payload.key ?? "Enter"), target });
+        case "select":
+          return options.onEvent({
+            type: "select",
+            target,
+            option: this.#redact(String(payload.option ?? "")),
+          });
+        case "upload":
+          return options.onEvent({
+            type: "upload",
+            target,
+            files: (Array.isArray(payload.files) ? payload.files : []).map((f) => String(f)),
+          });
+        case "fill": {
+          const value = String(payload.value ?? "");
+          const secret = secretOf(value);
+          const sensitive = target.inputType === "password";
+          if (secret) return options.onEvent({ type: "fill", target, secret });
+          if (sensitive) {
+            // Scrubbed from here on: observations show a field's text, a password's too.
+            if (value) this.#secretRedactor.register(value, "[password]");
+            return options.onEvent({ type: "fill", target, sensitive: true });
+          }
+          return options.onEvent({ type: "fill", target, value });
+        }
+        default:
+          return undefined;
+      }
+    };
+    await this.#context.exposeBinding(binding, (_source, payload: unknown) =>
+      inOrder(() =>
+        typeof payload === "object" && payload !== null
+          ? handle(payload as Record<string, unknown>)
+          : Promise.resolve(undefined),
+      ),
+    );
+    const script = RECORDER_SCRIPT.replaceAll("__BINDING__", binding)
+      .replaceAll("__ATTR__", attribute)
+      .replaceAll("__FLAG__", flag)
+      .replaceAll("__OVERLAY__", options.overlay === false ? "false" : "true");
+    await this.#context.addInitScript({ content: script });
+    await this.#page.evaluate(script).catch(() => {});
+    // An address the user typed: a main-frame navigation the harness didn't cause.
+    const onNavigate = (frame: Frame) => {
+      if (stopped || frame !== this.#page.mainFrame() || this.#acting) return;
+      if (Date.now() - this.#lastActEnd < 1500) return;
+      const url = frame.url();
+      if (isBlank(url) || !this.#allowlist.allowsUrl(url)) return;
+      void inOrder(() => options.onEvent({ type: "goto", url: this.#redact(url) }));
+    };
+    this.#page.on("framenavigated", onNavigate);
+    this.#page.once("close", () => done("closed"));
+    if (options.user) {
+      const page = this.#page;
+      options.user({
+        fill: (label, value) => page.getByLabel(label, { exact: true }).fill(value),
+        click: (role, name) =>
+          page.getByRole(role as Parameters<typeof page.getByRole>[0], { name }).click(),
+        clickHeading: () => page.getByRole("heading", { level: 1 }).first().click(),
+        press: (keys) => page.keyboard.press(keys),
+        waitForUrl: (pattern) => page.waitForURL(pattern),
+      });
+    }
+    return {
+      finished,
+      stop: async () => {
+        stopped = true;
+        this.#page.off("framenavigated", onNavigate);
+        await queue;
+        this.#recordFlag = undefined;
+      },
+    };
+  }
+
+  async #act(action: Action, options: ActOptions = {}): Promise<ActionOutcome> {
     if (this.#shooting) await this.#shooting;
     const urlBefore = this.url;
     const before = this.#unusable() ? [] : ((await this.#snapshotElements()) ?? []);

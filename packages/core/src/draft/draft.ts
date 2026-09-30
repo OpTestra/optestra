@@ -43,6 +43,15 @@ import { DRAFT_TOOLS, type DraftToolCall, parseDraftCall } from "./tools.js";
 
 export const DRAFT_PROMPT_VERSION: string = prompt.version;
 
+/** A drafting prompt: data with the drafter's placeholders ({sentence} {context} {draft} {history} {page}). */
+export interface DraftPrompt {
+  version: string;
+  system: string;
+  turn: string;
+  nudge_no_expect: string;
+  nudge_last_action: string;
+}
+
 export interface DraftLimits {
   /** Actions on the page (default 16). */
   actions: number;
@@ -100,6 +109,18 @@ export interface DraftOptions {
   tags?: Record<string, string> | undefined;
   onEvent?: ((event: DraftEvent) => void) | undefined;
   now?: () => number;
+  /** Another prompt with the same placeholders (explore's findings prompt, EXPL-1). */
+  prompt?: DraftPrompt | undefined;
+  /** After every observation: extra context lines for the next model call (e.g. findings so far). */
+  onObserve?: ((observation: Observation) => Promise<string[] | undefined>) | undefined;
+  /** After every action the harness ran (explore watches its outcome for errors). */
+  onAction?:
+    | ((info: {
+        outcome: ActionOutcome;
+        description: string;
+        items: readonly DraftItem[];
+      }) => Promise<void>)
+    | undefined;
 }
 
 /** One line of the draft, in order. */
@@ -449,6 +470,8 @@ export async function finishDraft(input: {
   start: string;
   items: readonly DraftItem[];
   data: Readonly<Record<string, string>>;
+  /** More data values, as written (literal text, or templates such as `{{unique.email}}`). */
+  values?: Readonly<Record<string, string>> | undefined;
   path: string;
   config?: Config | undefined;
   readFile?: FileReader | undefined;
@@ -466,9 +489,10 @@ export async function finishDraft(input: {
       kind: "test",
       tags: [],
       start: template(input.start),
-      data: Object.fromEntries(
-        Object.entries(input.data).map(([key, ref]) => [key, template(`{{${ref}}}`)]),
-      ),
+      data: Object.fromEntries([
+        ...Object.entries(input.data).map(([key, ref]) => [key, template(`{{${ref}}}`)]),
+        ...Object.entries(input.values ?? {}).map(([key, raw]) => [key, template(raw)]),
+      ]),
       params: {},
       allowDestructive: [],
       setup: [],
@@ -500,6 +524,7 @@ export async function exploreDraft(sentence: string, options: DraftOptions): Pro
   const now = options.now ?? Date.now;
   const began = now();
   const limits = { ...DRAFT_LIMITS, ...options.limits };
+  const P: DraftPrompt = options.prompt ?? prompt;
   const session = options.session;
   const secrets = new Set(Object.keys(options.secrets ?? {}));
   const data = new DraftData(
@@ -558,12 +583,16 @@ export async function exploreDraft(sentence: string, options: DraftOptions): Pro
         return;
       }
       const observation = await session.observe();
+      const extra = (await options.onObserve?.(observation)) ?? [];
       const content: Array<TextPart | ImagePart> = [
         {
           type: "text",
-          text: prompt.turn
+          text: P.turn
             .replace("{sentence}", sentence)
-            .replace("{context}", describeContext(options, data))
+            .replace(
+              "{context}",
+              [describeContext(options, data), ...extra.map((line) => `- ${line}`)].join("\n"),
+            )
             .replace("{draft}", describeDraft(items))
             .replace("{history}", history.length ? history.slice(-20).join("\n") : "(nothing yet)")
             .replace("{page}", renderForModel(observation)),
@@ -576,7 +605,7 @@ export async function exploreDraft(sentence: string, options: DraftOptions): Pro
       }
       wantShot = false;
       const reply = await options.models.complete("planner", {
-        system: prompt.system,
+        system: P.system,
         messages: [{ role: "user", content }],
         tools: DRAFT_TOOLS,
         maxOutputTokens: 600,
@@ -638,7 +667,7 @@ export async function exploreDraft(sentence: string, options: DraftOptions): Pro
                 : undefined;
           if (nudge && !nudged.has(nudge)) {
             nudged.add(nudge);
-            note(prompt[nudge]);
+            note(P[nudge]);
             break;
           }
           name = call.input.name.replace(/\s+/g, " ").trim().slice(0, 100);
@@ -731,6 +760,11 @@ export async function exploreDraft(sentence: string, options: DraftOptions): Pro
           `${planned.description} → ${summarize(outcome)}${planned.drafted ? "" : " (not written as a step)"}`,
         );
         if (outcome.status !== "ok") {
+          await options.onAction?.({
+            outcome,
+            description: planned.description,
+            items: [...items],
+          });
           if (++failures >= limits.consecutiveFailures) {
             reason = "limit_reached";
             message = `${limits.consecutiveFailures} failed actions in a row. Last: ${outcome.message ?? outcome.status}`;
@@ -740,6 +774,7 @@ export async function exploreDraft(sentence: string, options: DraftOptions): Pro
         }
         failures = 0;
         if (planned.drafted) add({ kind: "action", text: stepText(planned.drafted) });
+        await options.onAction?.({ outcome, description: planned.description, items: [...items] });
         // The page moved on: the rest of this reply's refs may be stale.
         if (outcome.post.urlAfter !== outcome.post.urlBefore) break;
       }
@@ -771,6 +806,7 @@ export async function exploreDraft(sentence: string, options: DraftOptions): Pro
     durationMs: now() - began,
     config: options.config,
     readFile: options.readFile,
+    promptVersion: P.version,
   });
 }
 
@@ -792,6 +828,7 @@ export async function assembleDraft(input: {
   durationMs: number;
   config?: Config | undefined;
   readFile?: FileReader | undefined;
+  promptVersion?: string | undefined;
 }): Promise<DraftResult> {
   const { modelCalls, notes } = input;
   const finished = await finishDraft(input);
@@ -824,7 +861,7 @@ export async function assembleDraft(input: {
       unknownCostCalls: modelCalls.filter((c) => c.costUsd === null).length,
       billing: billingOf(modelCalls),
     },
-    promptVersion: DRAFT_PROMPT_VERSION,
+    promptVersion: input.promptVersion ?? DRAFT_PROMPT_VERSION,
     actions: input.actions,
     durationMs: input.durationMs,
   };

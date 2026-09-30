@@ -17,6 +17,8 @@ import type { BenchCommandOptions } from "./commands/bench.js";
 import type { EvalCommandOptions } from "./commands/eval.js";
 import type { DecisionsCommandOptions } from "./commands/decisions.js";
 import type { DoctorCommandOptions } from "./commands/doctor.js";
+import type { ExplainCommandOptions } from "./commands/explain.js";
+import type { ExploreCommandOptions } from "./commands/explore.js";
 import { registerExportCommand } from "./commands/export.js";
 import type { GenerateCommandOptions } from "./commands/generate.js";
 import type { HealCommandOptions } from "./commands/heal.js";
@@ -26,6 +28,7 @@ import type { McpCommandOptions } from "./commands/mcp.js";
 import type { MergeRunsCommandOptions } from "./commands/merge-runs.js";
 import type { ModelsCommandOptions } from "./commands/models.js";
 import type { NewCommandOptions } from "./commands/new.js";
+import type { RecordCommandOptions } from "./commands/record.js";
 import type { ReportCommandOptions } from "./commands/report.js";
 import type { ResultsCommandOptions } from "./commands/results.js";
 import type { RunCommandOptions } from "./commands/run.js";
@@ -373,6 +376,59 @@ export function createProgram(): Command {
     });
 
   program
+    .command("record")
+    .description(
+      "record a test by clicking through the app in a browser window; mark expectations with the overlay. Saves it (and its recording) only when you say so",
+    )
+    .option("--url <url>", "where to start: a path on the app (/login) or a URL")
+    .option("--name <name>", "the test's name")
+    .option("--accept", "save it in the tests folder without asking")
+    .option("--out <file>", "save it to this file instead (never over an existing file)")
+    .option("--browser <name>", "chromium (default), firefox or webkit")
+    .option("-e, --env <name>", "environment to record on")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (options: RecordCommandOptions) => {
+      const { runRecordCommand } = await import("./commands/record.js");
+      const controller = new AbortController();
+      const stop = () => controller.abort();
+      process.once("SIGINT", stop);
+      try {
+        process.exitCode = await runRecordCommand(options, {
+          cwd: process.cwd(),
+          env: process.env,
+          stdout: (text) => process.stdout.write(text),
+          signal: controller.signal,
+          ...(process.stdin.isTTY && process.stdout.isTTY ? { confirm: askYesNo } : {}),
+        });
+      } finally {
+        process.off("SIGINT", stop);
+      }
+    });
+
+  program
+    .command("explore")
+    .description(
+      "explore the app toward a goal (AI) and report errors, failed requests, console errors, broken links and dead ends, with proposed tests. Never fails a run",
+    )
+    .argument("[url]", "where to start (default: the environment's baseUrl)")
+    .requiredOption("--goal <goal>", 'what to head for, e.g. "a visitor buys the Pro plan"')
+    .option("--start <path>", "where to start on the app (default /)")
+    .option("--links <n>", "same-site links to check for broken ones (default 25)")
+    .option("--save-drafts <folder>", "write the proposed tests there (never into your tests)")
+    .option("--headed", "show the browser window")
+    .option("--json", "print machine-readable JSON")
+    .option("-e, --env <name>", "environment to explore")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (url: string | undefined, options: ExploreCommandOptions) => {
+      const { runExploreCommand } = await import("./commands/explore.js");
+      process.exitCode = await runExploreCommand(url, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
     .command("mcp")
     .description(
       "start the MCP server for coding agents (stdio) on this project: list, draft, save and run tests, read results, accept heals",
@@ -460,6 +516,32 @@ export function createProgram(): Command {
         process.off("SIGINT", onInterrupt);
       }
     });
+
+  program
+    .command("explain")
+    .description(
+      "explain why tests failed, from the run's evidence (rules only; --ai: one AI call). Never changes a verdict",
+    )
+    .argument("[runDir]", "the run folder (default: the project's latest run)")
+    .argument("[test]", "a test id, file or name part (default: every test that didn't pass)")
+    .option("--ai", "let the AI write the diagnosis from the same evidence (one model call)")
+    .option("--json", "print machine-readable JSON")
+    .option("-e, --env <name>", "environment (for the AI settings)")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(
+      async (
+        runDir: string | undefined,
+        test: string | undefined,
+        options: ExplainCommandOptions,
+      ) => {
+        const { runExplainCommand } = await import("./commands/explain.js");
+        process.exitCode = await runExplainCommand(
+          [runDir, test].filter((a): a is string => a !== undefined),
+          options,
+          { cwd: process.cwd(), env: process.env, stdout: (text) => process.stdout.write(text) },
+        );
+      },
+    );
 
   program
     .command("heal")

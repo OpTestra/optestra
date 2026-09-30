@@ -67,8 +67,10 @@ export interface AuthorOptions {
   limits?: Partial<AuthorLimits>;
   /** Whole-test limit in ms (the test's timeout, else run.timeoutSeconds). */
   timeoutMs: number;
-  /** Run `setup`/`teardown` request hooks through the session (default true). */
+  /** Run `setup`/`teardown` hooks (default true). */
   hooks?: boolean;
+  /** What run:/sql: hooks need (AUT-10); without it they stop the test (hook_unsupported). */
+  hookContext?: import("../hooks/exec.js").HookContext;
   /** Open the test's `start` before the first step (default true). */
   openStart?: boolean;
   /** The previous recording, so steps not re-recorded keep their commands. */
@@ -114,8 +116,13 @@ export interface HookReport {
   kind: "request" | "run" | "sql";
   description: string;
   status: "ok" | "failed" | "refused" | "unsupported" | "error";
+  /** run/sql (AUT-10): why it was refused or couldn't run. */
+  reason?: "not_allowed" | "missing_secret" | "production" | "no_client";
   httpStatus?: number;
   message?: string;
+  /** run/sql: the process's output, scrubbed (the last 2000 characters). */
+  output?: string;
+  ms?: number;
 }
 
 export interface ActionReport {

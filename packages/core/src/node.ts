@@ -6,6 +6,8 @@ export {
   type ProjectDraftOptions,
   suggestStarterTests,
 } from "./draft/project.js";
+export * from "./explain/index.js";
+export { exploreProject } from "./explore/project.js";
 export {
   type ApplyHealsOptions,
   type ApplyHealsResult,
@@ -17,6 +19,12 @@ export {
   listHeals,
   type RerecordFlag,
 } from "./heal/review.js";
+export {
+  type ProjectRecording,
+  type RecordProjectOptions,
+  recordProject,
+  saveRecorded,
+} from "./record/project.js";
 export { type AuthoringLoginOptions, authoringLogin } from "./run/author-login.js";
 export { RECENT_RUNS, type RecentAi, recentAiUsage, recentHeals } from "./run/history.js";
 export {

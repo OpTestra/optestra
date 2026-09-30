@@ -354,6 +354,9 @@ importers:
       '@testament/core':
         specifier: workspace:^
         version: link:../core
+      '@testament/models':
+        specifier: workspace:^
+        version: link:../models
       '@testament/recording':
         specifier: workspace:^
         version: link:../recording

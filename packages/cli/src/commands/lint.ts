@@ -114,11 +114,19 @@ export async function runLintCommand(
     const text = readFileSync(resolve(project.dir, path), "utf8");
     const result = await check(text, path);
     checked.push({ path, spec: result.spec, expanded: result.expanded });
-    if (selected.has(path))
-      reports.set(path, {
-        path,
-        findings: result.findings.filter((f) => f.file === path || f.file === undefined),
-      });
+    if (selected.has(path)) {
+      const findings = result.findings.filter((f) => f.file === path || f.file === undefined);
+      // AUT-9: a dataset is read here (the parser reads no files).
+      if (result.spec.frontmatter.dataset) {
+        const { datasetColumnProblems, loadDataset } = await import("@testament/spec/node");
+        const dataset = loadDataset(project.dir, path, result.spec.frontmatter.dataset);
+        const problems = dataset.diagnostics.length
+          ? dataset.diagnostics
+          : datasetColumnProblems(result.spec, dataset);
+        findings.push(...problems.map((d) => ({ ...d, fixes: [] })));
+      }
+      reports.set(path, { path, findings });
+    }
   }
   for (const f of lintProject(checked, project.config)) {
     const report = f.file ? reports.get(f.file) : undefined;
@@ -130,7 +138,10 @@ export async function runLintCommand(
   const errors = count("error");
   const warnings = count("warning");
   const infos = count("info");
-  const unparseable = findings.some((f) => f.rule === undefined && f.severity === "error");
+  // A dataset problem is an error in a file that parsed (exit 1), not an unreadable file.
+  const unparseable = findings.some(
+    (f) => f.rule === undefined && f.severity === "error" && !f.code.startsWith("DATASET_"),
+  );
   const exitCode =
     missing || configBroken || unparseable ? 2 : errors > 0 || (strict && warnings > 0) ? 1 : 0;
 

@@ -155,6 +155,7 @@ describe("the mcp command over stdio (a real process)", () => {
       "save_test",
       "run_tests",
       "get_results",
+      "explain",
       "list_heals",
       "accept_heal",
     ]);
@@ -315,6 +316,26 @@ start: /pricing
     expect((await client.call("get_results", { runId: "../x" })).isError).toBe(true);
   });
 
+  it("explain: a rules-only diagnosis citing the run's evidence, no AI", async () => {
+    const result = await client.call("explain", { runId: "01M3EG7AG0M0AHEMTHAS09ZS7Y" });
+    expect(result.isError).toBeUndefined();
+    expect(valid("explain", result.structuredContent)).toBe(true);
+    const out = result.structuredContent as {
+      explanations: {
+        mode: string;
+        diagnosis: string;
+        cause: string;
+        evidence: { id: string }[];
+      }[];
+    };
+    expect(out.explanations[0]).toMatchObject({ mode: "rules", cause: "product_bug" });
+    expect(out.explanations[0]?.diagnosis).toMatch(/failed \[E1\]/);
+    // No model is set up in this process: ai: true says so, it doesn't guess.
+    const ai = await client.call("explain", { ai: true });
+    expect(ai.isError).toBe(true);
+    expect(ai.content?.[0]?.text).toMatch(/No AI model is available/);
+  });
+
   it("list_heals: the heals of a run", async () => {
     const result = await client.call("list_heals", { runId: "01M3EFN0J0FQBKEWDYW4JQ19PW" });
     expect(result.isError).toBeUndefined();
@@ -370,6 +391,7 @@ describe("the engine tools over stdio (injected engine)", () => {
         };
       }) as never,
       listHeals: (() => ({ runDir, runId: "x", heals: [], rerecord: [] })) as never,
+      explainRun: (async () => ({ runDir, runId: "x", explanations: [] })) as never,
       applyHeals: (async (_p: string, _d: string, ids: unknown) => {
         calls.push({ tool: "applyHeals", args: ids });
         return {

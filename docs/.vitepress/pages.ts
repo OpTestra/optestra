@@ -64,6 +64,17 @@ export const SECTIONS: Section[] = [
         description: "Reusable steps included with Use:, with params.",
       },
       {
+        text: "Describe a test",
+        link: "/writing/describe",
+        description: "new: draft a test from one sentence; init --suggest for starter tests.",
+      },
+      {
+        text: "Record by clicking",
+        link: "/writing/record",
+        description:
+          "record: click through the app, mark expectations, get a test that replays with no AI.",
+      },
+      {
         text: "Lint rules",
         link: "/writing/lint",
         description: "Every lint rule with a bad and a good example (generated).",
@@ -98,6 +109,11 @@ export const SECTIONS: Section[] = [
         text: "Healing",
         link: "/runs/healing",
         description: "The healing ladder, fix policies, and reviewing and accepting fixes.",
+      },
+      {
+        text: "Explain a failure",
+        link: "/runs/explain",
+        description: "explain: a diagnosis from the run's evidence, rules only or one AI call.",
       },
       {
         text: "Recordings",
@@ -178,6 +194,12 @@ export const SECTIONS: Section[] = [
         text: "Coding agents",
         link: "/coding-agents",
         description: "Machine-readable results for agents; the MCP server and AGENTS.md.",
+      },
+      {
+        text: "Explore",
+        link: "/explore",
+        description:
+          "explore: roam toward a goal; errors, broken links and dead ends as proposals.",
       },
       {
         text: "Android",

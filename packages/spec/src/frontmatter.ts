@@ -271,7 +271,12 @@ class Validator {
         return;
       }
       const kind = kinds[0] as "request" | "run" | "sql";
-      const known = kind === "request" ? ["request", "body", "headers"] : [kind];
+      const known =
+        kind === "request"
+          ? ["request", "body", "headers"]
+          : kind === "sql"
+            ? ["sql", "production"]
+            : [kind];
       this.unknownKeys(item, known, itemPath);
       const text = item[kind as string];
       const textPath = joinPath(itemPath, kind as string);
@@ -284,8 +289,19 @@ class Validator {
         return;
       }
       if (kind === "run") hooks.push({ type: "run", script: text.trim(), at });
-      else if (kind === "sql") hooks.push({ type: "sql", statement: text.trim(), at });
-      else {
+      else if (kind === "sql") {
+        const hook: Extract<Hook, { type: "sql" }> = { type: "sql", statement: text.trim(), at };
+        if ("production" in item) {
+          if (typeof item.production !== "boolean")
+            bad(
+              `${joinPath(itemPath, "production")} must be true or false.`,
+              "Write production: true to allow this statement in production environments.",
+              joinPath(itemPath, "production"),
+            );
+          else if (item.production) hook.production = true;
+        }
+        hooks.push(hook);
+      } else {
         const match = /^([A-Za-z]+)\s+(\S+)$/.exec(text.trim());
         const method = match?.[1]?.toUpperCase();
         const target = match?.[2] ?? "";

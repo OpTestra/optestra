@@ -24,6 +24,7 @@ import type {
   Locator as SpecLocator,
 } from "@testament/spec";
 import { type CompiledCheck, compileCheck, verifyCheck } from "../checks/index.js";
+import { type HookContext, runScriptHook, runSqlHook } from "../hooks/exec.js";
 import type { Action, LocatorSpec, PageCopy } from "../target/harness.js";
 import { targetOfSession } from "../target/harness.js";
 import { type ActionStepResult, promptVersionFor, runActionStep } from "./agent.js";
@@ -128,10 +129,17 @@ export async function authorTest(
     // Setup hooks (AUT-10): requests only for now.
     if (options.hooks ?? true) {
       for (const hook of test.setup) {
-        const report = await runHook(session, hook, "setup");
+        const report = await runHook(session, hook, "setup", options.hookContext);
         hooks.push(report);
         emit({ type: "hook", hook: report });
-        if (report.status === "unsupported") {
+        if (report.reason === "missing_secret") {
+          stop = { reason: "missing_secret", message: report.message ?? "" };
+          break;
+        }
+        if (
+          report.status === "unsupported" ||
+          (report.status === "refused" && report.kind !== "request")
+        ) {
           stop = { reason: "hook_unsupported", message: report.message ?? "" };
           break;
         }
@@ -346,7 +354,7 @@ export async function authorTest(
 
     if (options.hooks ?? true) {
       for (const hook of test.teardown) {
-        const report = await runHook(session, hook, "teardown");
+        const report = await runHook(session, hook, "teardown", options.hookContext);
         hooks.push(report);
         emit({ type: "hook", hook: report });
       }
@@ -542,19 +550,39 @@ export async function authorCheck(
   };
 }
 
-/** Runs one setup/teardown hook through the harness (request hooks only for now). */
+/**
+ * Runs one setup/teardown hook: a request through the harness (allowlisted),
+ * or a run:/sql: hook through `hooks/exec` when there is a hook context (AUT-10).
+ */
 export async function runHook(
   session: AuthorOptions["session"],
   hook: ExpandedTest["setup"][number],
   phase: "setup" | "teardown",
+  context?: HookContext,
 ): Promise<HookReport> {
   if (hook.type !== "request") {
+    const description = hook.type === "run" ? `run ${hook.script}` : `sql ${hook.statement}`;
+    if (!context)
+      return {
+        phase,
+        kind: hook.type,
+        description,
+        status: "unsupported",
+        message: `\`${hook.type}\` hooks need the project (they run from the CLI and the apps).`,
+      };
+    const result =
+      hook.type === "run"
+        ? await runScriptHook(hook.script, context)
+        : await runSqlHook(hook.statement, hook.production, context);
     return {
       phase,
       kind: hook.type,
-      description: hook.type === "run" ? `run ${hook.script}` : `sql ${hook.statement}`,
-      status: "unsupported",
-      message: `\`${hook.type}\` hooks are not supported yet; only \`request\` hooks run.`,
+      description: context.redact(description),
+      status: result.status,
+      ...(result.reason ? { reason: result.reason } : {}),
+      ...(result.message ? { message: context.redact(result.message) } : {}),
+      ...(result.output ? { output: result.output } : {}),
+      ms: result.ms,
     };
   }
   const description = `${hook.method} ${hook.target}`;

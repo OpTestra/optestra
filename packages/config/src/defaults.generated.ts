@@ -25,6 +25,16 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
     rules: {},
     strict: false,
   },
+  hooks: {
+    run: {
+      allow: [],
+      timeoutSeconds: 60,
+    },
+    sql: {
+      client: "psql",
+      timeoutSeconds: 30,
+    },
+  },
   android: {
     version: "16",
     device: "pixel-8",
