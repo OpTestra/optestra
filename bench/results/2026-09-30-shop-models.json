@@ -1,0 +1,146 @@
+{
+  "benchVersion": 1,
+  "kind": "model-eval",
+  "fixture": "shop",
+  "date": "2026-09-30T06:26:57.019Z",
+  "engineVersion": "0.1.0",
+  "commit": "b4542a6",
+  "scripted": false,
+  "command": "bench --models claude-code:claude-sonnet-4-6 claude-code:claude-haiku-4-5",
+  "models": [
+    {
+      "model": "claude-code:claude-sonnet-4-6",
+      "scripted": false,
+      "authoring": {
+        "tests": 11,
+        "passed": 8,
+        "stepsAuthored": 57,
+        "checksCompiled": 31,
+        "durationMs": 612887,
+        "aiCalls": 124,
+        "costUsd": 0,
+        "subscriptionCalls": 124,
+        "tokens": {
+          "input": 488601,
+          "output": 22976
+        }
+      },
+      "replay": {
+        "falsePass": {
+          "count": 0,
+          "of": 15,
+          "rate": 0,
+          "cases": []
+        },
+        "falseFail": {
+          "count": 14,
+          "of": 62,
+          "rate": 0.22580645161290322,
+          "cases": [
+            "correct/avatar-upload",
+            "correct/checkout-trial",
+            "correct/create-project",
+            "broken-signup/avatar-upload",
+            "broken-signup/create-project",
+            "broken-total/avatar-upload",
+            "broken-total/create-project",
+            "broken-login-redirect/checkout-trial",
+            "broken-silent-click/avatar-upload",
+            "broken-silent-click/checkout-trial",
+            "broken-not-saved/avatar-upload",
+            "broken-not-saved/checkout-trial",
+            "env-flaky/avatar-upload",
+            "env-flaky/checkout-trial"
+          ]
+        },
+        "other": [
+          "broken-signup/checkout-trial: got blocked (blocked): Blocked: Step 2 \"Sign up with {{data.email}} and password {{secret.SHOP_PASSWORD}}\": No email to test-sh05gz2jc4@example.test arrived in time: No email to test-sh05gz2jc4@example.test arrived in time.",
+          "env-flaky/create-project: got failed (product_bug): Step 7 \"the projects list shows \"Q3 roadmap\"\": \"the projects list shows \"Q3 roadmap\"\" has no check yet: replay-only runs never compile one, so it can't prove anything. Run once without --replay-only."
+        ]
+      },
+      "falsePasses": 0,
+      "fixer": {
+        "tests": 11,
+        "passedOrHealed": 9,
+        "healedByFixer": 4,
+        "healsWithoutAi": 21,
+        "aiCalls": 6,
+        "costUsd": 0
+      },
+      "problem": null
+    },
+    {
+      "model": "claude-code:claude-haiku-4-5",
+      "scripted": false,
+      "authoring": {
+        "tests": 11,
+        "passed": 6,
+        "stepsAuthored": 54,
+        "checksCompiled": 27,
+        "durationMs": 701396,
+        "aiCalls": 121,
+        "costUsd": 0,
+        "subscriptionCalls": 121,
+        "tokens": {
+          "input": 504455,
+          "output": 55616
+        }
+      },
+      "replay": {
+        "falsePass": {
+          "count": 0,
+          "of": 15,
+          "rate": 0,
+          "cases": []
+        },
+        "falseFail": {
+          "count": 26,
+          "of": 62,
+          "rate": 0.41935483870967744,
+          "cases": [
+            "correct/avatar-upload",
+            "correct/checkout-trial",
+            "correct/create-project",
+            "correct/settings-profile",
+            "correct/sort-orders",
+            "broken-signup/avatar-upload",
+            "broken-signup/create-project",
+            "broken-signup/settings-profile",
+            "broken-signup/sort-orders",
+            "broken-total/avatar-upload",
+            "broken-total/create-project",
+            "broken-total/settings-profile",
+            "broken-total/sort-orders",
+            "broken-login-redirect/checkout-trial",
+            "broken-silent-click/avatar-upload",
+            "broken-silent-click/checkout-trial",
+            "broken-silent-click/settings-profile",
+            "broken-silent-click/sort-orders",
+            "broken-not-saved/avatar-upload",
+            "broken-not-saved/checkout-trial",
+            "broken-not-saved/settings-profile",
+            "broken-not-saved/sort-orders",
+            "env-flaky/avatar-upload",
+            "env-flaky/checkout-trial",
+            "env-flaky/settings-profile",
+            "env-flaky/sort-orders"
+          ]
+        },
+        "other": [
+          "broken-signup/checkout-trial: got blocked (blocked): Blocked: Step 2 \"Sign up with {{data.email}} and password {{secret.SHOP_PASSWORD}}\": No email to test-11qdr3ecp4@example.test arrived in time: No email to test-11qdr3ecp4@example.test arrived in time.",
+          "env-flaky/create-project: got failed (product_bug): Step 7 \"the projects list shows \"Q3 roadmap\"\": \"the projects list shows \"Q3 roadmap\"\" has no check yet: replay-only runs never compile one, so it can't prove anything. Run once without --replay-only."
+        ]
+      },
+      "falsePasses": 0,
+      "fixer": {
+        "tests": 11,
+        "passedOrHealed": 8,
+        "healedByFixer": 4,
+        "healsWithoutAi": 20,
+        "aiCalls": 28,
+        "costUsd": 0
+      },
+      "problem": null
+    }
+  ]
+}
