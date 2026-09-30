@@ -26,17 +26,17 @@ export interface Measure {
 
 const s = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
 
-async function timeInit(url: string, io: CommandIo): Promise<number> {
+async function timeInit(url: string, io: CommandIo): Promise<number | null> {
   const { runInitCommand } = await import("./init.js");
   const dir = mkdtempSync(join(tmpdir(), "measure-init-"));
   const started = Date.now();
   try {
-    await runInitCommand(
+    const code = await runInitCommand(
       dir,
-      { yes: true, name: "Measure", url, ai: "none", doctor: false },
+      { yes: true, name: "Measure", url, ai: "later", doctor: false },
       { cwd: dir, env: io.env, stdout: () => {} },
     );
-    return Date.now() - started;
+    return code === 0 ? Date.now() - started : null;
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -50,14 +50,15 @@ export async function collectMeasures(io: CommandIo): Promise<Measure[]> {
     ? (JSON.parse(readFileSync(file, "utf8")) as BenchReport)
     : null;
   const m = baseline?.fixtures.shop?.metrics;
-  const from = baseline
-    ? `bench/baseline.json (${baseline.measured.date.slice(0, 10)}, ${baseline.measured.commit ?? "?"}, correct ×${baseline.measured.reruns})`
+  const shopMeasured = baseline?.fixtures.shop?.measured ?? baseline?.measured;
+  const from = shopMeasured
+    ? `bench/baseline.json, shop (${shopMeasured.date.slice(0, 10)}, ${shopMeasured.commit ?? "?"}, correct ×${shopMeasured.reruns})`
     : `no baseline: run ${brand.cliName} bench --save-baseline`;
 
   // Time to a first passing test: init + authoring one test + its first replay.
   const useMailpit = await bench.mailpitRunning();
   const running = await shop.module.startShop({ variant: "correct", port: 0 });
-  let initMs: number;
+  let initMs: number | null;
   try {
     initMs = await timeInit(running.url, io);
   } finally {
@@ -65,13 +66,16 @@ export async function collectMeasures(io: CommandIo): Promise<Measure[]> {
   }
   const { run } = await bench.runShopVariant(shop, "correct", {
     useMailpit,
-    tests: [join(shop.dir, "tests", "login.test.md")],
+    tests: ["tests/login.test.md"],
   });
-  const firstRunMs = run.tests[0]?.durationMs ?? 0;
+  const login = run.tests[0];
+  const firstRunMs = login?.verdict === "passed" ? login.durationMs : null;
   const firstRun = bench.latestFirstRun(shop.benchDir, "shop");
   const authoringPerTest =
     firstRun && firstRun.tests > 0 ? firstRun.durationMs / firstRun.tests : null;
-  const firstTest = initMs + firstRunMs + (authoringPerTest ?? 0);
+  const measured = initMs !== null && firstRunMs !== null && authoringPerTest !== null;
+  const firstTest = (initMs ?? 0) + (firstRunMs ?? 0) + (authoringPerTest ?? 0);
+  const time = (ms: number | null) => (ms === null ? "?" : s(ms));
 
   // Decision latency: the rules path on the committed eval sets (a run's during-run tasks).
   const { decisionEvals } = await import("./decisions.js");
@@ -94,9 +98,9 @@ export async function collectMeasures(io: CommandIo): Promise<Measure[]> {
     {
       measure: "Time from sign-up or download to first passing test",
       target: "Under 5 minutes",
-      value: `${s(firstTest)}${authoringPerTest === null ? " + authoring (not measured)" : ""}`,
-      met: authoringPerTest === null ? null : firstTest < 5 * 60_000,
-      source: `init ${s(initMs)} + authoring ${authoringPerTest === null ? "?" : `${s(authoringPerTest)} (per test, ${firstRun?.model} in ${firstRun?.source})`} + first run of login ${s(firstRunMs)}; installing the CLI and signing in to the AI aren't timed`,
+      value: measured ? s(firstTest) : `${s(firstTest)} + parts not measured`,
+      met: measured ? firstTest < 5 * 60_000 : null,
+      source: `init ${time(initMs)} + authoring ${authoringPerTest === null ? "? (no model eval)" : `${s(authoringPerTest)} (per test, ${firstRun?.model} in ${firstRun?.source})`} + first run of login ${time(firstRunMs)}; installing the CLI and signing in to the AI aren't timed`,
     },
     { measure: "Cloud browser ready", target: "Under 5 seconds", ...notHere("cloud only (CLOUD)") },
     {
@@ -154,7 +158,7 @@ export async function collectMeasures(io: CommandIo): Promise<Measure[]> {
     {
       measure: "Decision latency during a run",
       target: "Under 100 ms (rules or local Laya)",
-      value: p50 === null ? null : `${p50} ms (worst task p50, rules)`,
+      value: p50 === null ? null : `${p50 < 1 ? "under 1" : p50} ms (worst task p50, rules)`,
       met: p50 === null ? null : p50 < 100,
       source: `${brand.cliName} decisions --eval on the committed eval sets, now (decisions --bench measures a model backend)`,
     },
