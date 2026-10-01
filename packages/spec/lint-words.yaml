@@ -89,6 +89,7 @@ elementNouns:
   - title
   - button
   - message
+  - msg
   - dialog
   - modal
   - popup

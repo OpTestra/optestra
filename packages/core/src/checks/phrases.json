@@ -7,7 +7,10 @@
       "build": "url",
       "patterns": [
         "^the (?:page )?(?:url|address|location) (?<match>contains|includes|is|equals|matches|ends with|starts with) (?:Q(?<value>[^\"“”]+)Q|(?<bare>\\S+))$",
-        "^(?:we are|I am|you are|the user is) (?:on|at) (?:the page )?(?<bare>/\\S*)$"
+        "^(?:we are|I am|you are|the user is) (?:on|at) (?:the page )?(?<bare>/\\S*)$",
+        "^url (?<match>contains|includes|is|equals|matches|ends with|starts with) (?:Q(?<value>[^\"“”]+)Q|(?<bare>\\S+))$",
+        "^url (?<bare>/\\S*)$",
+        "^(?:still )?on (?:the page )?(?<bare>/\\S*)$"
       ]
     },
     {
@@ -15,7 +18,8 @@
       "build": "heading",
       "patterns": [
         "^the (?:page |screen |main |top )?heading (?:is|says|reads|shows) Q(?<text>.+)Q$",
-        "^the (?:page|screen) is titled Q(?<text>.+)Q$"
+        "^the (?:page|screen) is titled Q(?<text>.+)Q$",
+        "^(?:the )?(?:page |screen |main |top )?heading (?:is |says |reads |shows )?(?:still )?Q(?<text>.+)Q$"
       ]
     },
     {
@@ -32,7 +36,9 @@
       "build": "message",
       "patterns": [
         "^an? (?:success |confirmation |status )?(?:message|notification|toast|confirmation|banner|notice) (?:says|shows|reads|appears saying|is shown saying) Q(?<text>.+)Q$",
-        "^(?:the|a) (?:success |confirmation )?(?:message|notification|toast|banner|notice) Q(?<text>.+)Q (?:is shown|is displayed|appears|is visible)$"
+        "^(?:the|a) (?:success |confirmation )?(?:message|notification|toast|banner|notice) Q(?<text>.+)Q (?:is shown|is displayed|appears|is visible)$",
+        "^(?:an? |the )?(?:success |confirmation |status )?(?:message|notification|toast|banner|notice)(?: says| shows| reads)? Q(?<text>.+)Q$",
+        "^Q(?<text>.+)Q (?:message|toast|notification|banner)(?: (?:is shown|is displayed|appears|is visible))?$"
       ]
     },
     {
@@ -40,7 +46,8 @@
       "build": "error",
       "patterns": [
         "^an? (?:error|error message|validation error|validation message|warning) (?:says|shows|reads|appears saying|is shown saying) Q(?<text>.+)Q$",
-        "^the (?:error|error message|warning) Q(?<text>.+)Q (?:is shown|is displayed|appears|is visible)$"
+        "^the (?:error|error message|warning) Q(?<text>.+)Q (?:is shown|is displayed|appears|is visible)$",
+        "^(?:an? |the )?(?:error|error message|validation error|warning)(?: says| shows| reads)? Q(?<text>.+)Q$"
       ]
     },
     {
@@ -49,7 +56,8 @@
       "patterns": [
         "^(?:an?|the) Q(?<name>.+)Q (?<role>button|link|checkbox|check box|radio button|radio|tab|text field|text box|field|heading|image|picture|photo|logo|icon|menu item|switch|toggle|option) is (?<state>shown|showing|visible|displayed|present|hidden|not shown|not visible|gone|disabled|enabled|checked|ticked|unchecked|not checked|unticked|selected|focused|editable|empty)$",
         "^(?:an?|the) (?<role>button|link|checkbox|check box|radio button|radio|tab|text field|text box|field|heading|image|picture|photo|logo|icon|menu item|switch|toggle|option) (?:called |named |labelled |labeled |titled )?Q(?<name>.+)Q is (?<state>shown|showing|visible|displayed|present|hidden|not shown|not visible|gone|disabled|enabled|checked|ticked|unchecked|not checked|unticked|selected|focused|editable|empty)$",
-        "^there is an? Q(?<name>.+)Q (?<role>button|link|checkbox|tab|heading|image|switch)(?<state>)$"
+        "^there is an? Q(?<name>.+)Q (?<role>button|link|checkbox|tab|heading|image|switch)(?<state>)$",
+        "^(?:an? |the )?(?<role>button|link|checkbox|tab|heading|image|picture|photo|logo|icon|switch) Q(?<name>.+)Q (?:is )?(?<state>shown|showing|visible|displayed|present|hidden|disabled|enabled|checked|selected)$"
       ]
     },
     {
@@ -74,7 +82,8 @@
       "patterns": [
         "^the (?<noun>[\\w -]+?) (?<kind>list|table|grid|panel|section|sidebar|menu|navigation|card|form|box|area) (?:shows|says|contains|includes|lists|displays|reads) Q(?<text>.+)Q$",
         "^Q(?<text>.+)Q (?:is|appears) (?:shown |listed |visible |displayed )?in the (?<noun>[\\w -]+?) (?<kind>list|table|grid|panel|section|sidebar|menu|navigation|card|form|box|area)$",
-        "^the (?<kind>list|table|grid) (?:shows|says|contains|includes|lists|displays|reads) Q(?<text>.+)Q$"
+        "^the (?<kind>list|table|grid) (?:shows|says|contains|includes|lists|displays|reads) Q(?<text>.+)Q$",
+        "^(?<kind>list|table|grid) (?:shows|says|contains|includes|lists|displays|has) Q(?<text>.+)Q$"
       ]
     },
     {
@@ -101,7 +110,9 @@
         "^the text Q(?<text>.+)Q is (?:shown|visible|displayed|on the page|present)$",
         "^the (?:page|screen) (?:shows|displays|says|contains|reads|mentions) Q(?<text>.+)Q$",
         "^Q(?<text>.+)Q is (?:shown|visible|displayed|on the page|present)$",
-        "^(?:I|you|we|the user) (?:see|sees|can see) Q(?<text>.+)Q$"
+        "^(?:I|you|we|the user) (?:see|sees|can see) Q(?<text>.+)Q$",
+        "^(?:page|screen) (?:shows|displays|says|contains|reads|mentions) Q(?<text>.+)Q$",
+        "^Q(?<text>[^\"“”]+)Q$"
       ]
     }
   ],

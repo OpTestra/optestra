@@ -85,6 +85,7 @@ export const BUILT_IN_WORDS: LintWords = {
     "title",
     "button",
     "message",
+    "msg",
     "dialog",
     "modal",
     "popup",

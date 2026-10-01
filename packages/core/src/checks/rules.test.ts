@@ -305,3 +305,50 @@ describe("Android app screens (MOB-1)", () => {
     expect(first('the list shows "Q3 roadmap"')).toBe("container-text");
   });
 });
+
+describe("terse and pasted phrasings (COST-0 corpus)", () => {
+  const first = (line: string) => matchRules(line)[0]?.rule.id;
+
+  it("reads a developer's shorthand", () => {
+    expect(first('page shows "$0.00 due today"')).toBe("visible-text");
+    expect(first('"$0.00 due today"')).toBe("visible-text");
+    expect(first('heading "Welcome to Pro"')).toBe("heading");
+    expect(first('heading still "Create your account"')).toBe("heading");
+    expect(first("url contains /dashboard")).toBe("url");
+    expect(first("url /dashboard")).toBe("url");
+    expect(first("still on /checkout")).toBe("url");
+    expect(first('toast "Project created"')).toBe("message");
+    expect(first('"Project created" message')).toBe("message");
+    expect(first('error "Your card was declined."')).toBe("error");
+    expect(first('image "Your avatar" visible')).toBe("element");
+    expect(first('list has "Website redesign"')).toBe("container-text");
+  });
+
+  it("ignores a bracketed remark after the quoted value", () => {
+    expect(first('the page shows "$0.00 due today" (a trial must not charge anything)')).toBe(
+      "visible-text",
+    );
+    expect(
+      matchRules('the page shows "$0.00 due today" (a trial must not charge anything)')[0]?.groups
+        .text,
+    ).toBe("$0.00 due today");
+  });
+
+  it("keeps the new shapes narrow", () => {
+    // A bare quoted line is only one quoted value, never a field and its value.
+    expect(first('"Full name" contains "Ada King"')).toBe("field-value");
+    expect(matchRules('"Full name" contains "Ada King"').map((m) => m.rule.id)).not.toContain(
+      "visible-text",
+    );
+    expect(matchRules("heading check your email")).toEqual([]);
+    expect(matchRules("still in the list")).toEqual([]);
+  });
+
+  it("compiles the shorthand to the same check as the tidy line", async () => {
+    const seen: Probe = async () => ({ passed: true, matched: 1 });
+    const tidy = await compile('the page shows "Nothing to see"', seen);
+    const terse = await compile('"Nothing to see"', seen);
+    expect(terse).toMatchObject({ ok: true, rule: "visible-text" });
+    expect(terse.ok && tidy.ok ? terse.op : null).toEqual(tidy.ok ? tidy.op : undefined);
+  });
+});
