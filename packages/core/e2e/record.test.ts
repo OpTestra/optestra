@@ -16,7 +16,7 @@ import { checkTest, mapReader } from "@optestra/spec";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { scriptedModels } from "../src/author/test-kit.test-support.js";
 import { saveRecorded } from "../src/record/project.js";
-import { type RecordProgress, recordTest } from "../src/record/record.js";
+import { type RecordControl, type RecordProgress, recordTest } from "../src/record/record.js";
 import { runTests } from "../src/run/runner.js";
 
 // Record mode (AUT-8) on the real shop: a scripted user (Playwright driving
@@ -51,7 +51,7 @@ async function until(check: () => boolean, what: string, ms = 15_000) {
 
 async function record(
   start: string,
-  user: (person: ScriptedUser, seen: RecordProgress[]) => Promise<void>,
+  user: (person: ScriptedUser, seen: RecordProgress[], control: RecordControl) => Promise<void>,
 ) {
   const session = await openSession({
     browser,
@@ -64,6 +64,7 @@ async function record(
   });
   const seen: RecordProgress[] = [];
   let person: ScriptedUser | undefined;
+  let control: RecordControl | undefined;
   const stop = new AbortController();
   try {
     const recording = recordTest({
@@ -76,9 +77,12 @@ async function record(
       user: (p) => {
         person = p;
       },
+      control: (c) => {
+        control = c;
+      },
     });
-    await until(() => person !== undefined, "the page");
-    await user(person as ScriptedUser, seen);
+    await until(() => person !== undefined && control !== undefined, "the page");
+    await user(person as ScriptedUser, seen, control as RecordControl);
     stop.abort();
     return { result: await recording, seen };
   } finally {
@@ -87,6 +91,24 @@ async function record(
 }
 
 describe("record mode on the shop (scripted user)", () => {
+  it("keeps an expectation typed outside the page only when it holds (DESK-5)", async () => {
+    const { result } = await record("/login", async (person, seen, control) => {
+      await person.fill("Email", "ada@example.com");
+      await person.fill("Password", PASSWORD);
+      await person.click("button", "Log in");
+      await person.waitForUrl(/\/dashboard/);
+      await until(() => seen.filter((s) => s.type === "step").length === 3, "three steps");
+      const kept = await control.expect('Expect: the page heading is "Dashboard"');
+      expect(kept).toMatchObject({ ok: true });
+      const refused = await control.expect('the page heading is "Nope"');
+      expect(refused.ok).toBe(false);
+      expect(refused.message).toMatch(/^Not added: /);
+    });
+    expect(result.text).toContain('4. Expect: the page heading is "Dashboard"');
+    expect(result.text).not.toContain("Nope");
+    expect(result.recording.checks.map((c) => c.text)).toEqual(['the page heading is "Dashboard"']);
+  });
+
   it("records a login: steps, secrets by name, marked expectations; it replays with 0 AI", async () => {
     const { result, seen } = await record("/login", async (person, seen) => {
       const steps = () => seen.filter((s) => s.type === "step").length;

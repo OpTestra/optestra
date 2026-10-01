@@ -69,7 +69,18 @@ export interface RecordTestOptions {
   onProgress?: ((line: RecordProgress) => void) | undefined;
   /** Test hook: a scripted person using the page (see Session.record). */
   user?: ((user: import("@optestra/browser").ScriptedUser) => void) | undefined;
+  /**
+   * Gets the recording's controls once it has started, for an app that shows
+   * the recording: `expect(text)` adds an expectation typed outside the page
+   * (e.g. `the page heading is "Dashboard"`), checked on the page like a marked one.
+   */
+  control?: ((control: RecordControl) => void) | undefined;
   now?: () => Date;
+}
+
+export interface RecordControl {
+  /** Checks `text` on the page now and keeps it as an Expect line if it holds. */
+  expect(text: string): Promise<{ ok: boolean; message: string }>;
 }
 
 export type RecordProgress =
@@ -218,6 +229,55 @@ export async function recordTest(options: RecordTestOptions): Promise<RecordedTe
     throw new Error(
       `The start page ${start} could not be opened: ${opened.message ?? opened.status}`,
     );
+
+  /** Keeps the first candidate that holds on the page now (a marked or typed expectation). */
+  const expectFirst = async (candidates: string[]): Promise<{ ok: boolean; message: string }> => {
+    let why = "";
+    for (const text of candidates) {
+      const check = await compileCheck(
+        { text, soft: false },
+        {
+          session,
+          values: Object.fromEntries(
+            variables()
+              .filter((v) => v.value !== undefined)
+              .map((v) => [v.ref, v.value as string]),
+          ),
+          before,
+          timeoutMs: 2_000,
+        },
+      );
+      if (check.op.type === "pending") {
+        why = check.problem ?? "no check can be made from it";
+        continue;
+      }
+      if (check.problem || check.evaluation?.passed !== true) {
+        why =
+          check.problem ??
+          `it doesn't hold now (saw ${JSON.stringify(check.evaluation?.actual ?? null)})`;
+        continue;
+      }
+      items.push({
+        kind: "expect",
+        text,
+        check: { summary: check.summary, ...(check.rule ? { rule: check.rule } : {}) },
+      });
+      compiled.push({
+        text,
+        soft: false,
+        check: check.op,
+        generatedBy: "rules",
+        summary: check.summary,
+        ...(check.rule ? { rule: check.rule } : {}),
+        ...(check.sanity ? { sanity: check.sanity } : {}),
+        recordedAt: now().toISOString(),
+      });
+      progress({ type: "expect", text, summary: check.summary });
+      return { ok: true, message: `Added: Expect: ${text}` };
+    }
+    progress({ type: "refused", text: candidates[0] as string, message: why });
+    return { ok: false, message: `Not added: ${why}` };
+  };
 
   const onEvent = async (event: RecordedUserEvent): Promise<RecordReply | undefined> => {
     const route = routeOf(session.url);
@@ -396,61 +456,28 @@ export async function recordTest(options: RecordTestOptions): Promise<RecordedTe
             ok: false,
             message: "Select some text, or click an element with text, to expect it.",
           };
-        let why = "";
-        for (const text of candidates) {
-          const check = await compileCheck(
-            { text, soft: false },
-            {
-              session,
-              values: Object.fromEntries(
-                variables()
-                  .filter((v) => v.value !== undefined)
-                  .map((v) => [v.ref, v.value as string]),
-              ),
-              before,
-              timeoutMs: 2_000,
-            },
-          );
-          if (check.op.type === "pending") {
-            why = check.problem ?? "no check can be made from it";
-            continue;
-          }
-          if (check.problem || check.evaluation?.passed !== true) {
-            why =
-              check.problem ??
-              `it doesn't hold now (saw ${JSON.stringify(check.evaluation?.actual ?? null)})`;
-            continue;
-          }
-          items.push({
-            kind: "expect",
-            text,
-            check: { summary: check.summary, ...(check.rule ? { rule: check.rule } : {}) },
-          });
-          compiled.push({
-            text,
-            soft: false,
-            check: check.op,
-            generatedBy: "rules",
-            summary: check.summary,
-            ...(check.rule ? { rule: check.rule } : {}),
-            ...(check.sanity ? { sanity: check.sanity } : {}),
-            recordedAt: now().toISOString(),
-          });
-          progress({ type: "expect", text, summary: check.summary });
-          return { ok: true, message: `Added: Expect: ${text}` };
-        }
-        progress({ type: "refused", text: candidates[0] as string, message: why });
-        return { ok: false, message: `Not added: ${why}` };
+        return expectFirst(candidates);
       }
       default:
         return undefined;
     }
   };
 
+  // Typed expectations run one at a time, after anything the page is already doing.
+  let typed: Promise<unknown> = Promise.resolve();
   const control = await session.record({
     onEvent,
     ...(options.overlay !== undefined ? { overlay: options.overlay } : {}),
     ...(options.user ? { user: options.user } : {}),
+  });
+  options.control?.({
+    expect: (text) => {
+      const line = text.trim().replace(/^(\d+[.)]\s*)?expect:\s*/i, "");
+      if (!line) return Promise.resolve({ ok: false, message: "Type what the page should show." });
+      const next = typed.then(() => expectFirst([line]));
+      typed = next.catch(() => {});
+      return next;
+    },
   });
   const stopped = new Promise<"stopped">((resolve) => {
     if (options.signal?.aborted) resolve("stopped");

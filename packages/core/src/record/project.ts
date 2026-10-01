@@ -5,7 +5,12 @@ import { testIdFromPath } from "@optestra/contract";
 import { recordingPath, writeRecording } from "@optestra/recording/node";
 import { nodeFileReader } from "@optestra/spec/node";
 import { freePath, type ProjectDraftOptions, prepare } from "../draft/project.js";
-import { type RecordedTest, type RecordProgress, recordTest } from "./record.js";
+import {
+  type RecordedTest,
+  type RecordProgress,
+  type RecordTestOptions,
+  recordTest,
+} from "./record.js";
 
 // Recording against a project (AUT-8): a headed browser on the environment's
 // baseUrl with the project's secrets (typed values that match one are
@@ -20,6 +25,8 @@ export interface RecordProjectOptions
   user?: ((user: import("@optestra/browser").ScriptedUser) => void) | undefined;
   /** Default true: the overlay to mark expectations and finish. */
   overlay?: boolean | undefined;
+  /** The recording's controls (typed expectations), once it has started. */
+  control?: RecordTestOptions["control"];
 }
 
 export interface ProjectRecording extends RecordedTest {
@@ -55,6 +62,7 @@ export async function recordProject(options: RecordProjectOptions): Promise<Proj
       onProgress: options.onProgress,
       ...(options.user ? { user: options.user } : {}),
       ...(options.overlay !== undefined ? { overlay: options.overlay } : {}),
+      ...(options.control ? { control: options.control } : {}),
     });
     return {
       ...recorded,
