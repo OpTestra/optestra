@@ -1,4 +1,10 @@
-import type { ExactOp, Locator, Template } from "./model.js";
+import {
+  type ExactOp,
+  HTTP_METHODS,
+  type HttpMethod,
+  type Locator,
+  type Template,
+} from "./model.js";
 import { parseTemplate } from "./template.js";
 import { type Reporter, SourceMap } from "./text.js";
 
@@ -258,6 +264,86 @@ function parseOp(c: Cursor): ExactOp {
   }
 }
 
+const MOCK_EXAMPLES =
+  "e.g. Mock: GET /api/orders returns 500, Mock: GET /api/orders returns files/orders.json, Mock: POST /api/pay returns 402 files/declined.json";
+
+function parseMock(c: Cursor): ExactOp {
+  c.skipSpace();
+  const methodStart = c.pos;
+  const method = c.word().toUpperCase();
+  if (!(HTTP_METHODS as readonly string[]).includes(method))
+    c.failAt(
+      methodStart,
+      c.pos,
+      `"${method}" is not an HTTP method.`,
+      `Start with one of ${HTTP_METHODS.join(", ")}, ${MOCK_EXAMPLES}.`,
+    );
+  c.skipSpace();
+  const urlStart = c.pos;
+  const url = c.value("the path or URL to mock", / returns\b/);
+  if (!url.raw.startsWith("/") && !/^https?:\/\//.test(url.raw) && !url.raw.startsWith("{{"))
+    c.failAt(
+      urlStart,
+      c.pos,
+      `"${url.raw}" must be a path starting with / or an http(s) URL.`,
+      `Write e.g. Mock: ${method} /api/orders returns 500.`,
+    );
+  if (/\s/.test(url.raw))
+    c.failAt(
+      urlStart,
+      c.pos,
+      'Expected "returns" after the path (a path can\'t contain spaces).',
+      `Write e.g. Mock: ${method} /api/orders returns 500 (encode a space in a path as %20).`,
+    );
+  c.keyword("returns");
+  c.skipSpace();
+  let status = 200;
+  let body: string | undefined;
+  const first = c.peekWord();
+  if (/^\d{3}$/.test(first)) {
+    c.word();
+    status = Number(first);
+    if (status < 100 || status > 599)
+      c.fail(`${status} is not an HTTP status.`, "Use a status from 100 to 599.");
+  }
+  if (!c.atEnd()) {
+    const fileStart = c.pos;
+    body = c.word();
+    if (body.startsWith("/") || body.includes(".."))
+      c.failAt(
+        fileStart,
+        c.pos,
+        `The body file "${body}" must be relative to the test, inside the project.`,
+        "Put it next to the test, e.g. files/orders.json.",
+      );
+  } else if (!/^\d{3}$/.test(first))
+    c.fail("Say what it returns: a status, a body file, or both.", `Write ${MOCK_EXAMPLES}.`);
+  return { op: "mock", method: method as HttpMethod, url, status, ...(body ? { body } : {}) };
+}
+
+/** Parses the text after `Mock:` (ENV-4). Invalid syntax is a MOCK_SYNTAX error at the exact spot. */
+export function parseMockOp(text: string, map?: SourceMap, report?: Reporter): ExactOp | undefined {
+  const cursor = new Cursor(text, map, report);
+  try {
+    const op = parseMock(cursor);
+    if (!cursor.atEnd())
+      cursor.fail(
+        `Unexpected text "${text.slice(cursor.pos)}" at the end of the Mock: step.`,
+        `Write ${MOCK_EXAMPLES}.`,
+      );
+    return op;
+  } catch (error) {
+    if (!(error instanceof SyntaxProblem)) throw error;
+    const start = Math.min(error.offset, text.length);
+    const end = Math.max(
+      Math.min(error.end, text.length),
+      start === text.length ? start : start + 1,
+    );
+    report?.error("MOCK_SYNTAX", map?.range(start, end), error.message, error.fix);
+    return undefined;
+  }
+}
+
 /** Parses the text after `Exact:`. Invalid syntax is an EXACT_SYNTAX error at the exact spot. */
 export function parseExactOp(
   text: string,
@@ -319,6 +405,9 @@ export function printExactOp<V>(op: ExactOp<V>, show: (value: V) => string): str
       return `expect ${printLocator(op.target)} ${op.state}`;
     case "expectCount":
       return `expect ${printLocator(op.target)} count ${op.count}`;
+    case "mock":
+      // Printed with its own prefix: a mock is written `Mock: …`, not `Exact: …`.
+      return `Mock: ${op.method} ${show(op.url)} returns ${op.body ? (op.status === 200 ? op.body : `${op.status} ${op.body}`) : op.status}`;
   }
 }
 
@@ -333,6 +422,8 @@ export function opTemplates(op: ExactOp): Template[] {
       return [op.value];
     case "select":
       return [op.option];
+    case "mock":
+      return [op.url];
     default:
       return [];
   }

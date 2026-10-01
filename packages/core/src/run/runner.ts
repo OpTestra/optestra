@@ -37,11 +37,13 @@ import {
   CONTRACT_VERSION,
   type DecisionRecord,
   type Event,
+  type AccessibilityReport,
   type EvidenceRef,
   type FailureCause,
   type HealPolicy,
   type HealProposal,
   type MatrixEntry,
+  type MockUse,
   type ModelCall,
   needsRerecord,
   portablePath,
@@ -151,6 +153,12 @@ export interface RunTestsOptions {
    * device preset's (its user agent, scale and touch stay). See `parseViewport`.
    */
   viewport?: { width: number; height: number };
+  /**
+   * ENV-4: recorded network traffic. `record`: keep each test's fetch/XHR answers
+   * (scrubbed) in `<tests>/<data dir>/<test id>.network.har`. Default: answer from
+   * that file when it exists (`replay`); `live`: never.
+   */
+  network?: "record" | "replay" | "live";
   /** Record a video per attempt (default true, EVD-1). */
   video?: boolean;
   /**
@@ -710,6 +718,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
 
     for (let attempt = 1; attempt <= retries + 1; attempt++) {
       const sink: DecisionRecord[] = [];
+      // 1.5: what the attempt's attempt.finished carries besides its status.
+      const attemptExtras: { mocks?: MockUse[]; accessibility?: AccessibilityReport } = {};
       const artifacts: ArtifactRef[] = [];
       const loadedTest = await loadTest(projectDir, plan.path, config, {
         environment: environment.name,
@@ -823,7 +833,26 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         // Minimal evidence records no trace or network log, except on a retry (after a failure).
         const fullCapture = evidenceMode !== "minimal" || attempt > 1;
         const attemptInbox = testInbox(new Date());
+        // ENV-4: the test's recorded traffic (web), recorded or answered from.
+        const trafficFile = join(testsDir, brand.dataDirName, `${plan.testId}.network.har`);
+        const networkMode =
+          target.name !== "web" || options.network === "live"
+            ? undefined
+            : options.network === "record"
+              ? "record"
+              : existsSync(trafficFile)
+                ? "replay"
+                : undefined;
         const opened = await worker.openAttempt({
+          ...(networkMode
+            ? {
+                network: {
+                  mode: networkMode,
+                  file: trafficFile,
+                  label: posix(relative(projectDir, trafficFile)),
+                },
+              }
+            : {}),
           allowedDomains: settings.allowedDomains,
           secrets: { ...secrets.secrets, ...attemptInbox?.secrets },
           protectedHeaders,
@@ -934,6 +963,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             await options.beforeAttempt({ testId, attempt, session: open });
           result = await where.run({ testId, attempt, sink }, () =>
             replayAttempt({
+              projectDir,
               hookContext,
               inbox: attemptInbox,
               ...(prepare ? { prepare } : {}),
@@ -986,6 +1016,17 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             attempt === 1 &&
             replayed?.status === "passed" &&
             replayed.heals.length === 0;
+          // ENV-4: what mocks and recorded traffic answered (shown apart in reports).
+          const uses = opened.web?.mockUses();
+          if (uses?.length) attemptExtras.mocks = uses;
+          const traffic = opened.web?.traffic();
+          if (traffic?.mode === "record")
+            emit({
+              type: "log",
+              level: "info",
+              testId,
+              message: `Recorded ${traffic.recorded} network answers of ${plan.path} to ${posix(relative(projectDir, trafficFile))} (scrubbed). Later runs answer those requests from it; --live-network turns that off.`,
+            });
           const closed = await open.close(clean ? { discard: ["trace", "network"] } : {});
           for (const evidence of closed.evidence) {
             try {
@@ -1067,7 +1108,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       withoutAi += result.healedWithoutAi;
       byFixer += result.healedByFixer;
       needsAi += result.needsAi;
-      emit({ type: "attempt.finished", testId, attempt, status: result.status });
+      emit({ type: "attempt.finished", testId, attempt, status: result.status, ...attemptExtras });
       records.push({ ...result, decisions: sink, artifacts });
       if (result.status !== "failed" || signal?.aborted) break;
     }

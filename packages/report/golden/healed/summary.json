@@ -97,6 +97,7 @@
         }
       },
       "result": "tests/tests__cart__add-to-cart/result.json",
+      "mocks": [],
       "muted": null,
       "muteExpired": null,
       "muteSuggested": null

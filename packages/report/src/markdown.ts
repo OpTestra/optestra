@@ -207,7 +207,7 @@ function testsBlock(parts: Parts, limit: number): string {
     .slice(0, limit)
     .map(
       (t) =>
-        `| ${VERDICT_LABEL[t.verdict]}${t.muted ? " (muted)" : ""} | ${cell(t.name)} | ${formatDuration(t.ref.durationMs)} | ${t.ref.aiCalls} | ${md(formatUsd(t.ref.costUsd))} |`,
+        `| ${VERDICT_LABEL[t.verdict]}${t.muted ? " (muted)" : ""}${t.mocks.length ? " (mocked)" : ""} | ${cell(t.name)} | ${formatDuration(t.ref.durationMs)} | ${t.ref.aiCalls} | ${md(formatUsd(t.ref.costUsd))} |`,
     );
   if (tests.length > limit)
     rows.push(`| | and ${plural(tests.length - limit, "more test")} | | | |`);

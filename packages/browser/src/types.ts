@@ -435,4 +435,10 @@ export interface SessionOptions {
   nativeDialogs?: "accept" | "dismiss";
   /** Maximum elements in one observation (default 400). */
   maxElements?: number;
+  /**
+   * ENV-4: recorded traffic. `record`: keep every fetch/XHR answer (scrubbed) and
+   * write it to this HAR file on close. `replay`: answer those requests from it.
+   * `label` is how the report names the file (project-relative).
+   */
+  network?: { mode: "record" | "replay"; file: string; label?: string };
 }

@@ -38,8 +38,9 @@ const NETWORK_EXCEPTIONS: Record<string, RegExp> = {
   // never connects anywhere (checked below). Playwright drives the browser itself.
   "packages/browser/src/refusal-proxy.ts": /from "node:(http|net)";/g,
   // Setup/teardown request hooks (AUT-10) go through Playwright's request context,
-  // allowlist-checked first (checked below). Not an agent action.
-  "packages/browser/src/session.ts": /this\.#context\.request\.fetch\(/g,
+  // allowlist-checked first (checked below). Not an agent action. Recording traffic
+  // (ENV-4) passes an allowed request on with route.fetch, like route.continue would.
+  "packages/browser/src/session.ts": /this\.#context\.request\.fetch\(|await route\s*\.fetch\(/g,
   // Serves the demo shop. Binding to 127.0.0.1 is checked below.
   "bench/fixtures/shop/src/server.ts": /from "node:http";/g,
   // Optional delivery to a local Mailpit inbox; refuses non-loopback hosts.

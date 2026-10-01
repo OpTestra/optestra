@@ -13,6 +13,7 @@ import {
   type TestResult,
   VERDICTS,
   type Verdict,
+  type MockUse,
   type Mute,
   type MuteSuggestion,
 } from "@optestra/contract";
@@ -69,6 +70,8 @@ export interface TestView {
   evidence: EvidenceView[];
   /** Soft checks that did not pass in the final attempt: warnings, never failures (VER-3). */
   softWarnings: FailingCheck[];
+  /** ENV-4: responses of the final attempt that came from mocks or recorded traffic. */
+  mocks: MockUse[];
   /** DIA-5: muted (its verdict doesn't count), the mute that ended, a suggestion to mute. */
   muted: Mute | null;
   muteExpired: Mute | null;
@@ -263,6 +266,7 @@ function viewOf(ref: RunTestRef, result: TestResult | null, anchor: string): Tes
       .map((check) => ({ attempt: last?.attempt ?? 1, check })),
     heals: last?.heals ?? [],
     modelCalls: result?.attempts.flatMap((a) => a.modelCalls) ?? [],
+    mocks: last?.mocks ?? [],
     muted: result?.muted ?? (ref.muted ? { reason: "muted", until: "", source: "" } : null),
     muteExpired: result?.muteExpired ?? null,
     muteSuggested: result?.muteSuggested ?? null,

@@ -747,3 +747,31 @@ describe("trace scrubbing", async () => {
     expect(scrub.scrubTrace(file, [{ name: "PIN", value: "12" }], () => {})).toBe("deleted");
   });
 });
+
+describe("Mock: steps (ENV-4)", () => {
+  it("become a mock() call that answers the matching requests from that step on", async () => {
+    const spec = await specFor(
+      {
+        "tests/t.test.md": [
+          "---",
+          "name: t",
+          "start: /",
+          "---",
+          "",
+          "1. Mock: POST /api/projects returns 500 files/error.json",
+          "2. Mock: GET /api/orders returns 204",
+          '3. Expect: the page shows "x"',
+        ].join("\n"),
+      },
+      [],
+      [{ text: /page shows/, check: { type: "url", match: "contains", value: "/" } }],
+    );
+    expect(spec).toContain(
+      'await mock(page, "POST", "/api/projects", 500, "../files/error.json", "application/json");',
+    );
+    expect(spec).toContain(
+      'await mock(page, "GET", "/api/orders", 204, null, "application/json");',
+    );
+    expect(spec).toMatch(/import \{[^}]*\bmock\b[^}]*\} from/);
+  });
+});

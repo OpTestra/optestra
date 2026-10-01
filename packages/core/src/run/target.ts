@@ -184,6 +184,8 @@ export interface AttemptSessionOptions {
   viewport?: { width: number; height: number };
   /** Default: the harness's own (the config's default redactor). */
   redact?: (text: string) => string;
+  /** ENV-4 (web only): record the test's fetch/XHR traffic to a HAR file, or answer from it. */
+  network?: { mode: "record" | "replay"; file: string; label: string };
 }
 
 export type OpenedAttempt =
@@ -275,6 +277,7 @@ export async function launchWorker(
               dir: o.evidenceDir,
             },
             ...(o.redact ? { redact: o.redact } : {}),
+            ...(o.network ? { network: o.network } : {}),
           });
           return { ok: true, session, web: session };
         } catch (error) {

@@ -400,6 +400,8 @@ run tests: replay each recording with no AI, evaluate every check, write a resul
 | `--evidence <mode>` | full \| failures \| minimal (default: run.evidence, else full in CI and failures elsewhere) |  |
 | `--android <version>` | Android projects: the Android version (default: android.version); repeat for a matrix | `[]` |
 | `--no-video` | don't record a video per attempt |  |
+| `--record-network` | keep each test's API answers (fetch/XHR, scrubbed) so later runs replay them for determinism |  |
+| `--live-network` | don't answer from recorded network traffic: every request goes to the app |  |
 | `--verbose` | print every step, heal and warning |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
 

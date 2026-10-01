@@ -38,6 +38,7 @@ import {
 import type { BoundText, ExactOp, ExpandedStep } from "@optestra/spec";
 import { runActionStep } from "../author/agent.js";
 import { authorCheck, exactCheck, runExactOp, runHook } from "../author/author.js";
+import { applyMock, isMockOp, type MockOp, type MockSession } from "../mock/mock.js";
 import { parseGuard } from "../author/guards.js";
 import { inboxMemberOfAction, prepareInbox } from "../author/inbox.js";
 import { DEFAULT_LIMITS } from "../author/types.js";
@@ -1299,6 +1300,29 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
           level: "warn",
           message: `Soft check failed (warning only): ${step.text}`,
         });
+      continue;
+    }
+
+    // ── a Mock: step (ENV-4): the app's matching requests get its response from here on ──
+    if (
+      step.kind === "exact" &&
+      step.exact?.form === "op" &&
+      isMockOp(step.exact.op as ExactOp<BoundText>)
+    ) {
+      const t0 = Date.now();
+      const applied = applyMock(session as MockSession, step.exact.op as MockOp, {
+        projectDir: options.projectDir ?? options.hookContext?.projectDir ?? process.cwd(),
+        testPath: options.testPath ?? test.path,
+        stepIndex: step.index,
+      });
+      push({
+        ...skipped(step, key, kind),
+        status: applied.ok ? "passed" : "blocked",
+        durationMs: Date.now() - t0,
+        error: applied.ok ? null : applied.message,
+      });
+      if (!applied.ok)
+        stop = block("config_error", `${where(step)}: ${applied.message}`, step.index);
       continue;
     }
 

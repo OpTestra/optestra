@@ -431,6 +431,16 @@ function testBody(ctx: Ctx, test: TestView): string {
     out.push(
       `<h4>What was checked</h4><ul>${result.checkedSummary.map((line) => `<li>${h(line)}</li>`).join("")}</ul>`,
     );
+  if (test.mocks.length > 0)
+    out.push(
+      `<h4>Mocked responses</h4><p class="muted">These requests were answered by the test, not the app.</p><ul>${test.mocks
+        .map((m) =>
+          m.source === "recorded"
+            ? `<li>${badge("mocked", "Recorded")} ${m.hits} answers from recorded traffic${m.file ? ` (<code>${h(m.file)}</code>)` : ""}</li>`
+            : `<li>${badge("mocked", "Mocked")} <code>${h(`${m.method} ${m.url}`)}</code> → ${m.status ?? "?"}${m.file ? ` with <code>${h(m.file)}</code>` : ""} ${meta([`${m.hits} request${m.hits === 1 ? "" : "s"}`])}</li>`,
+        )
+        .join("")}</ul>`,
+    );
   if (test.softWarnings.length > 0)
     out.push(
       `<h4>Soft-check warnings</h4><ul>${test.softWarnings.map((w) => `<li>${h(w.check.generated.description)}: ${h(checkLine(w.check))}</li>`).join("")}</ul>`,

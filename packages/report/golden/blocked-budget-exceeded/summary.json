@@ -73,6 +73,7 @@
         "recent": null
       },
       "result": "tests/tests__account__sign-up/result.json",
+      "mocks": [],
       "muted": null,
       "muteExpired": null,
       "muteSuggested": null

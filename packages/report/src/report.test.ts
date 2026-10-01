@@ -454,3 +454,43 @@ describe("a muted failing test (DIA-5)", () => {
     expect(out.terminal).toMatch(/1 passed, 1 failed, 1 muted/);
   });
 });
+
+describe("mocked responses (ENV-4)", () => {
+  const base = load(join(FIXTURES, "all-passed"));
+  const mocks = [
+    {
+      source: "step" as const,
+      method: "POST",
+      url: "/api/projects",
+      status: 500,
+      hits: 1,
+      stepIndex: 2,
+      file: "tests/files/error.json",
+    },
+  ];
+  const data: RunData = {
+    ...base,
+    tests: base.tests.map((t, i) =>
+      i === 0 ? { ...t, attempts: t.attempts.map((a) => ({ ...a, mocks })) } : t,
+    ),
+  };
+  const out = outputs(data);
+
+  it("marks the mocked answers in every format", () => {
+    const summary = JSON.parse(out.json);
+    expect(summary.tests[0].mocks).toEqual([
+      {
+        source: "step",
+        method: "POST",
+        url: "/api/projects",
+        status: 500,
+        hits: 1,
+        file: "tests/files/error.json",
+      },
+    ]);
+    expect(out.html).toContain("Mocked responses");
+    expect(out.html).toContain("POST /api/projects");
+    expect(out.junit).toContain('name="mocked.responses" value="1"');
+    expect(out.markdown).toContain("(mocked)");
+  });
+});

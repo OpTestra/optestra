@@ -33,6 +33,8 @@ export interface RunCommandOptions {
   /** Android projects: the Android version; repeatable (a matrix of versions × devices). */
   android?: string | string[];
   video?: boolean;
+  recordNetwork?: boolean;
+  liveNetwork?: boolean;
   verbose?: boolean;
   dir?: string;
 }
@@ -59,6 +61,10 @@ export async function runRunCommand(
     : (findProject(tests[0] ? resolve(io.cwd, tests[0]) : io.cwd) ?? io.cwd);
   if (!existsSync(projectFile(dir))) {
     io.stdout(`No project file found in ${dir}. Create one first (${brand.cliName} init).\n`);
+    return 2;
+  }
+  if (options.recordNetwork && options.liveNetwork) {
+    io.stdout("Choose one of --record-network and --live-network.\n");
     return 2;
   }
   if (options.replayOnly && options.rerecord) {
@@ -169,6 +175,11 @@ export async function runRunCommand(
       ...(options.evidence ? { evidence: options.evidence as (typeof EVIDENCE)[number] } : {}),
       ...(androidVersions.length ? { androidVersions } : {}),
       ...(options.video === false ? { video: false } : {}),
+      ...(options.recordNetwork
+        ? { network: "record" as const }
+        : options.liveNetwork
+          ? { network: "live" as const }
+          : {}),
       ...(io.signal ? { signal: io.signal } : {}),
       trigger: io.env.CI ? "ci" : "cli",
       onEvent,

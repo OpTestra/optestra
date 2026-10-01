@@ -83,6 +83,15 @@ export interface SummaryTest {
   ai: { calls: number; costUsd: number; recent: { runs: number; calls: number } | null };
   /** The test's result document, relative to the run folder. */
   result: string;
+  /** 1.2 (ENV-4): responses that came from a mock or recorded traffic, not the app. */
+  mocks: {
+    source: string;
+    method: string;
+    url: string;
+    status: number | null;
+    hits: number;
+    file: string | null;
+  }[];
   /** 1.2 (DIA-5): muted until a date: the verdict doesn't count toward exitCode. */
   muted: { reason: string; until: string } | null;
   /** 1.2: its mute ended before this run (it counts again). */
@@ -187,6 +196,14 @@ function testOf(test: TestView, cliName: string): SummaryTest {
       recent: test.result?.ai.recent ?? null,
     },
     result: test.ref.result,
+    mocks: test.mocks.map((m) => ({
+      source: m.source,
+      method: m.method,
+      url: m.url,
+      status: m.status,
+      hits: m.hits,
+      file: m.file,
+    })),
     muted: test.muted ? { reason: test.muted.reason, until: test.muted.until } : null,
     muteExpired: test.muteExpired
       ? { reason: test.muteExpired.reason, until: test.muteExpired.until }
@@ -391,6 +408,18 @@ export function resultsSummaryJsonSchema(): Record<string, unknown> {
           result: {
             ...str,
             description: "The test's result document, relative to the run folder.",
+          },
+          mocks: {
+            description: "1.2 (ENV-4): responses from Mock: steps or recorded traffic.",
+            type: "array",
+            items: obj({
+              source: { enum: ["step", "recorded"] },
+              method: str,
+              url: str,
+              status: { type: ["integer", "null"] },
+              hits: count,
+              file: nullableStr,
+            }),
           },
           muted: {
             description: "1.2 (DIA-5): muted until a date; its verdict doesn't count.",

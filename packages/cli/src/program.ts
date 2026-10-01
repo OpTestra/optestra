@@ -496,6 +496,14 @@ export function createProgram(): Command {
       [],
     )
     .option("--no-video", "don't record a video per attempt")
+    .option(
+      "--record-network",
+      "keep each test's API answers (fetch/XHR, scrubbed) so later runs replay them for determinism",
+    )
+    .option(
+      "--live-network",
+      "don't answer from recorded network traffic: every request goes to the app",
+    )
     .option("--verbose", "print every step, heal and warning")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (tests: string[], options: RunCommandOptions) => {

@@ -115,6 +115,13 @@ Machine-readable summary of one run, version 1.2. Additive changes bump the mino
 | `tests[].ai.recent.runs` | integer | yes |  |
 | `tests[].ai.recent.calls` | integer | yes |  |
 | `tests[].result` | string | yes | The test's result document, relative to the run folder. |
+| `tests[].mocks` | list of object | yes | 1.2 (ENV-4): responses from Mock: steps or recorded traffic. |
+| `tests[].mocks[].source` | "step" \| "recorded" | yes |  |
+| `tests[].mocks[].method` | string | yes |  |
+| `tests[].mocks[].url` | string | yes |  |
+| `tests[].mocks[].status` | integer \| null | yes |  |
+| `tests[].mocks[].hits` | integer | yes |  |
+| `tests[].mocks[].file` | string \| null | yes |  |
 | `tests[].muted` | null \| object | yes | 1.2 (DIA-5): muted until a date; its verdict doesn't count. |
 | `tests[].muted.reason` | string | yes |  |
 | `tests[].muted.until` | string | yes |  |

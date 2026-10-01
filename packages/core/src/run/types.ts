@@ -48,6 +48,8 @@ export type ReplayEvent =
 
 export interface ReplayOptions {
   test: ExpandedTest;
+  /** The project folder: `Mock:` body files are read from it (ENV-4). */
+  projectDir?: string;
   /** What run:/sql: hooks need (AUT-10); without it they block the test (config_error). */
   hookContext?: import("../hooks/exec.js").HookContext;
   /** The stored recording; undefined when there is none (or in rerecord mode). */

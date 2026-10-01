@@ -69,6 +69,8 @@ function testcase(test: TestView, name: string): string {
     props.push(property("healed", true), property("healed.fixes", test.heals.length));
   }
 
+  const mocked = test.mocks.reduce((n, m) => n + m.hits, 0);
+  if (test.mocks.length > 0) props.push(property("mocked.responses", mocked));
   let outcome = "";
   if (test.muted) {
     props.push(property("muted", true));

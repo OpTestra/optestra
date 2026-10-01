@@ -670,6 +670,34 @@ class SpecWriter {
     } else if (step.kind === "exact" && step.exact?.form === "code") {
       this.fixture("page");
       body.push({ t: "verbatim", code: step.exact.code.replace(/\s+$/, "") });
+    } else if (step.kind === "exact" && step.exact?.form === "op" && step.exact.op.op === "mock") {
+      // ENV-4: a Mock: step answers the app's matching requests from here on.
+      const op = step.exact.op;
+      const file = op.body ? `../${op.body.replace(/^\.\//, "")}` : null;
+      const types: Record<string, string> = {
+        json: "application/json",
+        html: "text/html",
+        txt: "text/plain",
+        xml: "application/xml",
+        csv: "text/csv",
+      };
+      const ext = op.body?.split(".").pop()?.toLowerCase() ?? "";
+      this.fixture("page");
+      body.push(
+        stmt(
+          awaited(
+            call(
+              this.helper("mock"),
+              id("page"),
+              str(op.method),
+              str(op.url.display),
+              num(op.status),
+              file === null ? id("null") : str(file),
+              str(op.body ? (types[ext] ?? "application/octet-stream") : "application/json"),
+            ),
+          ),
+        ),
+      );
     } else {
       const recorded = this.recorded.get(step.textKey);
       let commands = recorded?.commands;

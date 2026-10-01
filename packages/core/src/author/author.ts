@@ -25,6 +25,7 @@ import type {
 } from "@optestra/spec";
 import { type CompiledCheck, compileCheck, verifyCheck } from "../checks/index.js";
 import { type HookContext, runScriptHook, runSqlHook } from "../hooks/exec.js";
+import { applyMock, isMockOp, type MockOp, type MockSession } from "../mock/mock.js";
 import type { Action, LocatorSpec, PageCopy } from "../target/harness.js";
 import { targetOfSession } from "../target/harness.js";
 import { type ActionStepResult, promptVersionFor, runActionStep } from "./agent.js";
@@ -262,6 +263,29 @@ export async function authorTest(
         continue;
       }
 
+      // ENV-4: a Mock: step changes what the app's requests get from here on; nothing to record.
+      if (
+        step.kind === "exact" &&
+        step.exact?.form === "op" &&
+        isMockOp(step.exact.op as ExactOp<BoundValue>)
+      ) {
+        emit({ type: "step.started", index: step.index, number: step.number, text: step.text });
+        const applied = applyMock(session as MockSession, step.exact.op as MockOp, {
+          projectDir: options.hookContext?.projectDir ?? process.cwd(),
+          testPath: options.meta.testPath,
+          stepIndex: step.index,
+        });
+        const report: StepReport = {
+          ...base,
+          status: applied.ok ? "recorded" : "stopped",
+          actions: [{ tool: "mock", description: step.text, status: applied.ok ? "ok" : "error" }],
+          ...(applied.ok ? {} : { reason: "setup_failed" as const, message: applied.message }),
+        };
+        steps.push(report);
+        emit({ type: "step.finished", step: report });
+        if (!applied.ok) stop = { reason: "setup_failed", message: applied.message };
+        continue;
+      }
       const route = routeOf(session.url);
       const key = stepKey(step.textKey, route);
       emit({ type: "step.started", index: step.index, number: step.number, text: step.text });
