@@ -70,9 +70,12 @@ export function frameScope(root: Expr, frames: readonly FrameLocator[] | undefin
   return scope;
 }
 
-/** A Playwright locator for a recorded locator, optionally inside a container (`scope`). */
-export function locatorExpr(target: Locator, container?: Locator): Expr {
-  const page = id("page");
+/**
+ * A Playwright locator for a recorded locator, optionally inside a container
+ * (`scope`), from `page` (or `root`: `this.page` in a page object, EXP-4).
+ */
+export function locatorExpr(target: Locator, container?: Locator, root: Expr = id("page")): Expr {
+  const page = root;
   if (container) {
     const outer = pick(within(frameScope(page, container.frame), container), container.nth);
     return pick(within(frameScope(outer, target.frame), target), target.nth);

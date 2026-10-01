@@ -667,6 +667,7 @@ write a standalone Playwright project from the recorded tests (npm install && np
 | `-o, --out <dir>` | folder to create (default: ./playwright-export) |  |
 | `-e, --env <name>` | environment whose base URL and allowed domains the tests use |  |
 | `--force` | write into a folder that isn't empty |  |
+| `--page-objects` | group locators into a class per page (pages/) and flows into shared helpers (flows/) |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
 
 ## android setup {#android-setup}
