@@ -76,3 +76,49 @@ Upgrading the engine doesn't throw recordings away. Only a change in what a reco
 ## The portable copy
 
 The same recording also generates a plain Playwright spec, `tests/%dataDir%/<test id>.spec.ts`: see [Playwright export](../export.md). Replay runs the recording through the safe harness (allowed domains, secrets, evidence, healing); the spec is the copy you own.
+
+## Per-branch recordings
+
+In a GitHub project (a `github.com` remote, or running in the GitHub Action), recordings written on a feature branch don't replace main's: authoring, healing and accepted fixes on `feature/discounts` write to `tests/%dataDir%/branches/feature--discounts/`. Runs on the branch replay the branch's recording of a test when it has one, and main's otherwise. Main's runs, and every other branch's, keep replaying main's until the branch merges.
+
+The branch comes from `%ENV%BRANCH` when set, else the GitHub Action's variables (a pull request's head branch, else the pushed branch), else `.git`'s HEAD (git itself isn't run). With no git, or on the main branch (`main` or `master`), everything is as before.
+
+```yaml
+# the project file
+recordings:
+  branches: auto        # auto (GitHub projects), on (any git project), off
+  mainBranch: develop   # not set: main or master
+```
+
+After the merge, the branch's recordings are in main's tree, still in its folder. Promote them into place, then commit:
+
+```sh
+%cli% recordings branches                       # which branches have recordings waiting
+%cli% recordings promote --branch feature/discounts
+%cli% recordings promote --dry-run --all
+```
+
+In the GitHub Action, a workflow on the merged pull request promotes the head branch (it is detected, so `--branch` isn't needed):
+
+```yaml
+on:
+  pull_request:
+    types: [closed]
+jobs:
+  promote:
+    if: github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+      - run: npm install -g %scope%/cli@0.4.2 && %cli% recordings promote
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A tests && git commit -m "chore: promote recordings" && git push || true
+```
+
+A test that only exists on the branch is fine either way: its recording is used from the branch's folder until it is promoted. Recorded network traffic (`--record-network`) isn't per branch yet.

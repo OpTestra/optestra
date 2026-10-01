@@ -14,7 +14,12 @@ import {
 import { readHealReview, readRun, writeHealReview } from "@optestra/contract/node";
 import { healClass, missAction, sameElement } from "@optestra/decide";
 import { createLabelStore } from "@optestra/decide/node";
-import { readRecording, recordingPath, writeRecording } from "@optestra/recording/node";
+import {
+  readRecording,
+  recordingBranch,
+  recordingFiles,
+  writeRecording,
+} from "@optestra/recording/node";
 import { applyPatches, describeCommand, type HealPatch, HealPatchSchema } from "./patch.js";
 
 // Review and accept (HEAL-4). A run's heals are proposals; a person (or an
@@ -286,6 +291,12 @@ export async function applyHeals(
     ...(options.env ? { env: options.env } : {}),
   });
   const testsDir = resolve(project, loaded.config.tests?.dir ?? "tests");
+  // REP-8: on a feature branch, an accepted fix goes to the branch's recording.
+  const branch = recordingBranch(
+    loaded.config.recordings ?? { branches: "auto" },
+    options.env ?? process.env,
+    project,
+  );
   const reviewedAt = now().toISOString();
   const decisions: HealDecision[] = [];
   const patches = new Map<string, HealPatch>();
@@ -298,8 +309,9 @@ export async function applyHeals(
   const byTest = new Map<string, HealItem[]>();
   for (const heal of toAccept) byTest.set(heal.testId, [...(byTest.get(heal.testId) ?? []), heal]);
   for (const [testId, heals] of byTest) {
-    const file = recordingPath(testsDir, testId);
-    const stored = readRecording(file);
+    const files = recordingFiles(testsDir, testId, branch);
+    const file = files.write;
+    const stored = readRecording(files.read);
     const recordingRel = posix(relative(project, file));
     if (!stored?.ok) {
       for (const heal of heals)

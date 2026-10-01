@@ -13,6 +13,8 @@ export interface SaveOptions {
   /** The harness's evidence files (already scrubbed). */
   evidence?: readonly Pick<EvidenceFile, "path">[];
   redact?: (text: string) => string;
+  /** Where the recording goes (REP-8: a feature branch's own); default main's place. */
+  recordingFile?: string;
 }
 
 export interface SavedAuthoring {
@@ -31,7 +33,7 @@ const posix = (path: string) => path.split(sep).join("/");
 export function saveAuthoring(options: SaveOptions): SavedAuthoring {
   const redact = options.redact ?? ((text: string) => defaultRedactor.redact(text));
   const { result } = options;
-  const file = recordingPath(options.testsDir, result.recording.testId);
+  const file = options.recordingFile ?? recordingPath(options.testsDir, result.recording.testId);
   writeRecording(file, result.recording);
 
   const reportDir = join(options.projectDir, brand.dataDirName, "authoring", result.report.runId);

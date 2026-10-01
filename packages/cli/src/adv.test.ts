@@ -1,4 +1,12 @@
-import { cpSync, existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { brand } from "@optestra/brand";
@@ -246,5 +254,57 @@ describe("mute", { timeout: 30_000 }, () => {
     expect(readFileSync(join(dir, brand.configFileName), "utf8")).not.toContain(
       "tests/login.test.md",
     );
+  });
+});
+
+describe("recordings promote (REP-8)", { timeout: 30_000 }, () => {
+  it("lists the waiting branches, needs to know which, and moves the merged branch's recordings", async () => {
+    const { runRecordingsCommand } = await import("./commands/recordings.js");
+    const dir = project();
+    const data = join(dir, "tests", brand.dataDirName);
+    const own = join(data, "branches", "feature--discounts");
+    mkdirSync(own, { recursive: true });
+    writeFileSync(join(own, "tests__login.steps.json"), "branch login");
+
+    const listed = io(dir);
+    expect(await runRecordingsCommand("branches", {}, listed.io)).toBe(0);
+    expect(listed.out()).toContain("feature--discounts  1 recording");
+
+    // On main (no branch to detect) it must be told which branch merged.
+    const which = io(dir);
+    expect(await runRecordingsCommand("promote", {}, which.io)).toBe(2);
+    expect(which.out()).toMatch(/Which branch\? .*Waiting: feature--discounts\./);
+
+    const dry = io(dir);
+    expect(
+      await runRecordingsCommand("promote", { branch: "feature/discounts", dryRun: true }, dry.io),
+    ).toBe(0);
+    expect(dry.out()).toContain("Would promote 1 recording:");
+    expect(existsSync(join(own, "tests__login.steps.json"))).toBe(true);
+
+    // In the Action on the merged PR, the head branch is the one to promote.
+    const hadMain = existsSync(join(data, "tests__login.steps.json"));
+    const merged = io(dir);
+    expect(
+      await runRecordingsCommand(
+        "promote",
+        { json: true },
+        { ...merged.io, env: { GITHUB_HEAD_REF: "feature/discounts" } },
+      ),
+    ).toBe(0);
+    expect(JSON.parse(merged.out())).toEqual({
+      dryRun: false,
+      promoted: [
+        {
+          branch: "feature--discounts",
+          test: "tests__login",
+          from: `tests/${brand.dataDirName}/branches/feature--discounts/tests__login.steps.json`,
+          to: `tests/${brand.dataDirName}/tests__login.steps.json`,
+          replaced: hadMain,
+        },
+      ],
+    });
+    expect(readFileSync(join(data, "tests__login.steps.json"), "utf8")).toBe("branch login");
+    expect(existsSync(own)).toBe(false);
   });
 });

@@ -7,9 +7,10 @@ import { DEFAULT_EMAIL_DOMAIN, parseTest, type TestSpec } from "@optestra/spec";
 import { DEFAULT_TESTS, findTestFiles, loadTest, nodeFileReader } from "@optestra/spec/node";
 import { fileState } from "../header.js";
 import { generateMaestroFlow } from "../maestro.js";
+import { recordingBranch, recordingFiles } from "@optestra/recording/node";
 import { PageObjects } from "../page-objects.js";
 import { readCodegenRecording } from "../recording.js";
-import { type GeneratedFile, generateSpec, recordingFileName } from "../spec.js";
+import { type GeneratedFile, generateSpec } from "../spec.js";
 import { generateSupportFiles, type SupportEnvironment } from "../support.js";
 
 // Generating a project's specs: find the tests that have recordings, generate
@@ -190,7 +191,13 @@ export async function generateProject(
     return result;
   }
   const extras = new Map<string, Pick<FileResult, "gaps" | "secrets" | "appId">>();
-  const recordingsDir = join(projectDir, testsDir, brand.dataDirName);
+  // REP-8: on a feature branch, its own recordings come first.
+  const branch = recordingBranch(
+    config.recordings ?? { branches: "auto" },
+    options.env ?? process.env,
+    projectDir,
+  );
+  const recordingOf = (id: string) => recordingFiles(join(projectDir, testsDir), id, branch).read;
   const outDir = options.out?.dir ?? join(projectDir, specDir);
   const readFile = nodeFileReader(projectDir);
   const files = selected(projectDir, findTestFiles(projectDir, testsSettings), options.tests, cwd);
@@ -202,7 +209,7 @@ export async function generateProject(
       seed: "codegen",
     });
     if (test?.expanded.kind !== "test") continue;
-    const recordingFile = join(recordingsDir, recordingFileName(test.id));
+    const recordingFile = recordingOf(test.id);
     if (!existsSync(recordingFile)) {
       result.skipped.push({ test: path, reason: "not recorded yet" });
       continue;
@@ -245,7 +252,7 @@ export async function generateProject(
         seed: "codegen",
         params: settings.params,
       });
-      const flowFile = flow ? join(recordingsDir, recordingFileName(flow.id)) : undefined;
+      const flowFile = flow ? recordingOf(flow.id) : undefined;
       const flowRecording =
         flowFile && existsSync(flowFile)
           ? readCodegenRecording(readFileSync(flowFile, "utf8"))

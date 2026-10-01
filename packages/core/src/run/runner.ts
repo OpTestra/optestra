@@ -41,7 +41,6 @@ import {
   type EvidenceRef,
   type FailureCause,
   type HealPolicy,
-  type HealProposal,
   type MatrixEntry,
   type MockUse,
   type ModelCall,
@@ -73,7 +72,13 @@ import {
   type Recording,
   type StepRecording,
 } from "@optestra/recording";
-import { readRecording, recordingPath, writeRecording } from "@optestra/recording/node";
+import {
+  detectBranch,
+  readRecording,
+  recordingBranch,
+  recordingFiles,
+  writeRecording,
+} from "@optestra/recording/node";
 import { type ExpandedTest, hasSpecErrors } from "@optestra/spec";
 import { datasetColumnProblems, loadDataset, loadTest, loadTests } from "@optestra/spec/node";
 import { promptVersionFor } from "../author/agent.js";
@@ -361,6 +366,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     target: config.project?.target ?? "web",
     trigger: options.trigger ?? "cli",
     mode,
+    // The branch, when there is one (REP-8): git's HEAD or the GitHub Action's variables.
+    ...gitInfo(env, projectDir),
   });
   const empty: Omit<RunTestsResult, "run" | "tests"> = { dir, groups: [], recorded: [], heals: {} };
   const finishBlocked = (reason: BlockedReason, message: string): RunTestsResult => {
@@ -612,6 +619,14 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   const signal = options.signal;
   const retries = Math.max(0, options.retries ?? settings.run?.retries ?? config.run.retries);
   const testsDir = resolve(projectDir, config.tests?.dir ?? "tests");
+  // REP-8: on a feature branch, recordings are read from and written to the branch's own.
+  const branch = recordingBranch(config.recordings ?? { branches: "auto" }, env, projectDir);
+  if (branch)
+    emit({
+      type: "log",
+      level: "info",
+      message: `Branch ${branch.name}: recordings are written to the branch's own (main's are used where it has none). Promote them after the merge: ${brand.cliName} recordings promote.`,
+    });
   const history = recentAiUsage(dataDir, { exclude: runId });
   const healHistory = recentHeals(dataDir, { exclude: runId, limit: REPEATED_HEALS.runs - 1 });
   // DIA-5: today's mutes, and each test's recent verdicts (for mute suggestions).
@@ -689,8 +704,9 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       return;
     }
     // Every dataset row replays (and records into) the test's one recording.
-    const file = recordingPath(testsDir, plan.testId);
-    const stored = readRecording(file);
+    const files = recordingFiles(testsDir, plan.testId, branch);
+    const file = files.write;
+    const stored = readRecording(files.read);
     const previous = stored?.ok ? stored.recording : undefined;
     if (stored && !stored.ok)
       emit({
@@ -917,6 +933,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                     replayProfileFlow({
                       projectDir,
                       config,
+                      branch,
                       environment: environment.name,
                       profile: auth.profile,
                       seed: `${runId}:auth:${auth.name}:${testId}:${attempt}`,
@@ -1551,5 +1568,18 @@ function provisionalResult(
       recent: null,
     },
     attempts,
+  };
+}
+
+/** Run.git from the branch detection (git isn't run); omitted outside a repository. */
+function gitInfo(
+  env: Readonly<Record<string, string | undefined>>,
+  projectDir: string,
+): { git?: { branch: string; commit: string | null; pr: number | null } } {
+  const branch = detectBranch(env, projectDir);
+  if (!branch) return {};
+  const pr = /^refs\/pull\/(\d+)\//.exec(env.GITHUB_REF ?? "")?.[1];
+  return {
+    git: { branch: branch.name, commit: env.GITHUB_SHA ?? null, pr: pr ? Number(pr) : null },
   };
 }

@@ -25,6 +25,9 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
     rules: {},
     strict: false,
   },
+  recordings: {
+    branches: "auto",
+  },
   accessibility: "off",
   quarantine: [],
   hooks: {

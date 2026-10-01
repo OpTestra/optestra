@@ -111,7 +111,9 @@ export async function runAuthorCommand(
   const sources = [processEnvSource(io.env), dotenvSource(dir)];
   const secrets = resolveSecrets(config, sources, { environment: environment.name });
   const core = await import("@optestra/core");
-  const { readRecording, recordingPath } = await import("@optestra/recording/node");
+  const { readRecording, recordingBranch, recordingFiles } = await import(
+    "@optestra/recording/node"
+  );
 
   const budget = models.BudgetMeter.forRun(config);
   const client = models.createModels({
@@ -228,7 +230,10 @@ export async function runAuthorCommand(
       : undefined;
 
   const testsDir = resolve(dir, config.tests?.dir ?? "tests");
-  const previous = readRecording(recordingPath(testsDir, test.id));
+  // REP-8: on a feature branch the recording is the branch's own (main's until it has one).
+  const branch = recordingBranch(config.recordings ?? { branches: "auto" }, io.env, dir);
+  const files = recordingFiles(testsDir, test.id, branch);
+  const previous = readRecording(files.read);
   const where =
     target.name === "web"
       ? target.baseUrl
@@ -320,6 +325,7 @@ export async function runAuthorCommand(
     testsDir,
     result,
     evidence: closed.evidence,
+    recordingFile: files.write,
   });
   rmSync(evidenceDir, { recursive: true, force: true });
   const report = saved.report;

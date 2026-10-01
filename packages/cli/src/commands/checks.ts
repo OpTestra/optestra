@@ -4,7 +4,7 @@ import { hasErrors } from "@optestra/config";
 import { findProject, loadProject, projectFile } from "@optestra/config/node";
 import { testIdFromPath } from "@optestra/contract";
 import { type CheckRecording, describeCheck, type Sanity } from "@optestra/recording";
-import { readRecording, recordingPath } from "@optestra/recording/node";
+import { readRecording, recordingBranch, recordingFiles } from "@optestra/recording/node";
 import type { CommandIo } from "./config.js";
 
 // `checks <test>`: what each Expect/Soft line of a test was compiled into
@@ -62,7 +62,8 @@ export async function runChecksCommand(
   }
   const path = posix(relative(dir, absolute));
   const testsDir = resolve(dir, loaded.config.tests?.dir ?? "tests");
-  const read = readRecording(recordingPath(testsDir, testIdFromPath(path)));
+  const branch = recordingBranch(loaded.config.recordings ?? { branches: "auto" }, io.env, dir);
+  const read = readRecording(recordingFiles(testsDir, testIdFromPath(path), branch).read);
   if (!read) {
     io.stdout(`${path} has no recording yet. Run \`author ${file}\` first.\n`);
     return 2;

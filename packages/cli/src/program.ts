@@ -21,6 +21,7 @@ import type { ExplainCommandOptions } from "./commands/explain.js";
 import type { MuteCommandOptions } from "./commands/mute.js";
 import type { ExploreCommandOptions } from "./commands/explore.js";
 import { registerExportCommand } from "./commands/export.js";
+import { registerRecordingsCommand } from "./commands/recordings.js";
 import type { GenerateCommandOptions } from "./commands/generate.js";
 import type { HealCommandOptions } from "./commands/heal.js";
 import { registerInitCommand } from "./commands/init.js";
@@ -704,6 +705,7 @@ export function createProgram(): Command {
       process.exitCode = await runDoctorCommand(options, io());
     });
   registerExportCommand(program, io);
+  registerRecordingsCommand(program, io);
   registerAndroidCommands(program, () => ({
     cwd: process.cwd(),
     env: process.env,

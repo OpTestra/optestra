@@ -41,6 +41,8 @@ Exit codes follow one rule for every command that runs or checks something: **0*
 | [`init`](#init) | set up a project in this repository: project file, an example test, .env.example and .gitignore lines (never overwrites a file) |
 | [`doctor`](#doctor) | check the project, tests, secrets, AI setup, browsers and recordings; every problem comes with its fix |
 | [`export`](#export) | write a standalone Playwright project from the recorded tests (npm install && npx playwright test), or for an Android project a Maestro workspace (maestro test .) |
+| [`recordings promote`](#recordings-promote) | after a merge, move a branch's recordings over main's |
+| [`recordings branches`](#recordings-branches) | list the branches with recordings waiting to be promoted |
 | [`android setup`](#android-setup) | check the Android SDK, emulator and system images; print the exact install commands and sizes |
 | [`android doctor`](#android-doctor) | check everything a local Android run needs, without changing anything |
 | [`android snapshot`](#android-snapshot) | debug: install an APK on a fresh emulator and print what the agent sees on its first screen |
@@ -668,6 +670,35 @@ write a standalone Playwright project from the recorded tests (npm install && np
 | `-e, --env <name>` | environment whose base URL and allowed domains the tests use |  |
 | `--force` | write into a folder that isn't empty |  |
 | `--page-objects` | group locators into a class per page (pages/) and flows into shared helpers (flows/) |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## recordings promote {#recordings-promote}
+
+after a merge, move a branch's recordings over main's
+
+```sh
+%cli% recordings promote [options]
+```
+
+| Option | | Default |
+|---|---|---|
+| `-b, --branch <name>` | the merged branch (default: the branch this runs on) |  |
+| `--all` | every branch with recordings waiting |  |
+| `--dry-run` | say what would move, move nothing |  |
+| `--json` | print the result as JSON |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## recordings branches {#recordings-branches}
+
+list the branches with recordings waiting to be promoted
+
+```sh
+%cli% recordings branches [options]
+```
+
+| Option | | Default |
+|---|---|---|
+| `--json` | print the list as JSON |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
 
 ## android setup {#android-setup}
