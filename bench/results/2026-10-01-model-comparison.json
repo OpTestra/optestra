@@ -1,0 +1,3287 @@
+{
+  "comparisonVersion": 1,
+  "kind": "model-comparison",
+  "date": "2026-10-01T12:35:11.774Z",
+  "engineVersion": "0.1.0",
+  "commit": "a586e11",
+  "os": "darwin arm64 (Apple M5, 10 cores)",
+  "scripted": false,
+  "command": "bench --compare claude-code:claude-sonnet-4-6 claude-code:claude-sonnet-5-5 codex:gpt-6-luna --fixture all",
+  "prices": {
+    "claude-sonnet-4-6": {
+      "input": 3,
+      "output": 15,
+      "cachedInput": 0.3,
+      "cacheWrite": 3.75
+    },
+    "claude-sonnet-5-5": {
+      "input": 2,
+      "output": 10,
+      "cachedInput": 0.2,
+      "cacheWrite": 2.5
+    },
+    "gpt-6-luna": {
+      "input": 0.1,
+      "output": 0.5,
+      "cachedInput": 0.01,
+      "cacheWrite": 0.125
+    }
+  },
+  "models": [
+    {
+      "model": "claude-code:claude-sonnet-4-6",
+      "promptVersions": {
+        "PROMPT_VERSION": "planner-v3",
+        "ANDROID_PROMPT_VERSION": "planner-android-v2",
+        "FIXER_PROMPT_VERSION": "fixer-v1",
+        "CHECK_PROMPT_VERSION": "checks-v1",
+        "DRAFT_PROMPT_VERSION": "drafter-v1"
+      },
+      "cliCheck": {
+        "ok": true,
+        "message": "claude-code/claude-sonnet-4-6 answered",
+        "calls": {
+          "calls": 1,
+          "tokens": {
+            "input": 942,
+            "output": 87,
+            "cached": 0,
+            "cacheWrite": 0
+          },
+          "listUsd": 0.004131,
+          "subscriptionCalls": 1,
+          "latencyMs": 3368
+        }
+      },
+      "fixtures": [
+        {
+          "fixture": "shop",
+          "quality": {
+            "tests": 11,
+            "passedAfterAuthoring": 7,
+            "stepsAuthored": 57,
+            "checks": {
+              "total": 31,
+              "rules": 31,
+              "ai": 0,
+              "exact": 0,
+              "other": 0
+            },
+            "falsePass": {
+              "count": 0,
+              "of": 15,
+              "rate": 0,
+              "cases": []
+            },
+            "falseFail": {
+              "count": 14,
+              "of": 62,
+              "rate": 0.22580645161290322,
+              "cases": [
+                "correct/avatar-upload",
+                "correct/checkout-trial",
+                "correct/create-project",
+                "broken-signup/avatar-upload",
+                "broken-signup/create-project",
+                "broken-total/avatar-upload",
+                "broken-total/create-project",
+                "broken-login-redirect/checkout-trial",
+                "broken-silent-click/avatar-upload",
+                "broken-silent-click/checkout-trial",
+                "broken-not-saved/avatar-upload",
+                "broken-not-saved/checkout-trial",
+                "env-flaky/avatar-upload",
+                "env-flaky/checkout-trial"
+              ]
+            },
+            "otherMismatches": [
+              "broken-signup/checkout-trial: got blocked (blocked): Blocked: Step 2 \"Sign up with {{data.email}} and password {{secret.SHOP_PASSWORD}}\": No email to test-mt4am003mb@example.test arrived in time: No email to test-mt4am003mb@example.test arrived in time.",
+              "env-flaky/create-project: got failed (product_bug): Step 7 \"the projects list shows \"Q3 roadmap\"\": \"the projects list shows \"Q3 roadmap\"\" has no check yet: replay-only runs never compile one, so it can't prove anything. Run once without --replay-only."
+            ],
+            "cosmetic": {
+              "tests": 11,
+              "passedOrHealed": 9,
+              "healedByFixer": 4,
+              "healsWithoutAi": 19
+            }
+          },
+          "authoring": {
+            "calls": 127,
+            "tokens": {
+              "input": 497965,
+              "output": 23702,
+              "cached": 354100,
+              "cacheWrite": 143483
+            },
+            "listUsd": 1.0009672500000004,
+            "subscriptionCalls": 127,
+            "latencyMs": 556350,
+            "wallMs": 624236,
+            "perTest": [
+              {
+                "test": "tests/avatar-upload.test.md",
+                "complexity": "complex",
+                "steps": 10,
+                "verdict": "failed",
+                "wallMs": 87295,
+                "calls": 17,
+                "tokens": {
+                  "input": 67283,
+                  "output": 3250,
+                  "cached": 44448,
+                  "cacheWrite": 22784
+                },
+                "listUsd": 0.1476774,
+                "subscriptionCalls": 17,
+                "latencyMs": 74850
+              },
+              {
+                "test": "tests/billing-zero-due.test.md",
+                "complexity": "medium",
+                "steps": 3,
+                "verdict": "passed",
+                "wallMs": 49189,
+                "calls": 11,
+                "tokens": {
+                  "input": 41641,
+                  "output": 1824,
+                  "cached": 30558,
+                  "cacheWrite": 11050
+                },
+                "listUsd": 0.07806389999999999,
+                "subscriptionCalls": 11,
+                "latencyMs": 44985
+              },
+              {
+                "test": "tests/checkout-trial.test.md",
+                "complexity": "complex",
+                "steps": 10,
+                "verdict": "failed",
+                "wallMs": 48771,
+                "calls": 8,
+                "tokens": {
+                  "input": 36762,
+                  "output": 1595,
+                  "cached": 26296,
+                  "cacheWrite": 10441
+                },
+                "listUsd": 0.07104255,
+                "subscriptionCalls": 8,
+                "latencyMs": 40767
+              },
+              {
+                "test": "tests/create-project.test.md",
+                "complexity": "complex",
+                "steps": 13,
+                "verdict": "failed",
+                "wallMs": 73641,
+                "calls": 15,
+                "tokens": {
+                  "input": 56914,
+                  "output": 2665,
+                  "cached": 41670,
+                  "cacheWrite": 15199
+                },
+                "listUsd": 0.10960725000000002,
+                "subscriptionCalls": 15,
+                "latencyMs": 61855
+              },
+              {
+                "test": "tests/declined-card.test.md",
+                "complexity": "complex",
+                "steps": 11,
+                "verdict": "passed",
+                "wallMs": 82220,
+                "calls": 18,
+                "tokens": {
+                  "input": 69728,
+                  "output": 3390,
+                  "cached": 50004,
+                  "cacheWrite": 19670
+                },
+                "listUsd": 0.13977569999999997,
+                "subscriptionCalls": 18,
+                "latencyMs": 77394
+              },
+              {
+                "test": "tests/delete-account-guard.test.md",
+                "complexity": "medium",
+                "steps": 10,
+                "verdict": "failed",
+                "wallMs": 73675,
+                "calls": 15,
+                "tokens": {
+                  "input": 58197,
+                  "output": 2575,
+                  "cached": 41670,
+                  "cacheWrite": 16482
+                },
+                "listUsd": 0.1130685,
+                "subscriptionCalls": 15,
+                "latencyMs": 61961
+              },
+              {
+                "test": "tests/login.test.md",
+                "complexity": "medium",
+                "steps": 7,
+                "verdict": "passed",
+                "wallMs": 34602,
+                "calls": 8,
+                "tokens": {
+                  "input": 30188,
+                  "output": 1426,
+                  "cached": 22224,
+                  "cacheWrite": 7940
+                },
+                "listUsd": 0.05790419999999999,
+                "subscriptionCalls": 8,
+                "latencyMs": 31895
+              },
+              {
+                "test": "tests/settings-profile.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 44731,
+                "calls": 10,
+                "tokens": {
+                  "input": 39935,
+                  "output": 1666,
+                  "cached": 27780,
+                  "cacheWrite": 12125
+                },
+                "listUsd": 0.07888274999999999,
+                "subscriptionCalls": 10,
+                "latencyMs": 40983
+              },
+              {
+                "test": "tests/signup-email-code.test.md",
+                "complexity": "complex",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 48694,
+                "calls": 11,
+                "tokens": {
+                  "input": 42204,
+                  "output": 1847,
+                  "cached": 30558,
+                  "cacheWrite": 11613
+                },
+                "listUsd": 0.08052014999999998,
+                "subscriptionCalls": 11,
+                "latencyMs": 45555
+              },
+              {
+                "test": "tests/signup-validation.test.md",
+                "complexity": "medium",
+                "steps": 6,
+                "verdict": "passed",
+                "wallMs": 29771,
+                "calls": 6,
+                "tokens": {
+                  "input": 22781,
+                  "output": 1259,
+                  "cached": 16668,
+                  "cacheWrite": 6095
+                },
+                "listUsd": 0.04679565,
+                "subscriptionCalls": 6,
+                "latencyMs": 28100
+              },
+              {
+                "test": "tests/sort-orders.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 51439,
+                "calls": 8,
+                "tokens": {
+                  "input": 32332,
+                  "output": 2205,
+                  "cached": 22224,
+                  "cacheWrite": 10084
+                },
+                "listUsd": 0.07762920000000001,
+                "subscriptionCalls": 8,
+                "latencyMs": 48005
+              }
+            ],
+            "byComplexity": {
+              "simple": {
+                "tests": 0,
+                "listUsd": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "calls": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "wallMs": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                }
+              },
+              "medium": {
+                "tests": 6,
+                "listUsd": {
+                  "n": 6,
+                  "mean": 0.075391,
+                  "p50": 0.077629,
+                  "p90": 0.113069,
+                  "max": 0.113069
+                },
+                "calls": {
+                  "n": 6,
+                  "mean": 9.666667,
+                  "p50": 8,
+                  "p90": 15,
+                  "max": 15
+                },
+                "wallMs": {
+                  "n": 6,
+                  "mean": 47234.5,
+                  "p50": 44731,
+                  "p90": 73675,
+                  "max": 73675
+                }
+              },
+              "complex": {
+                "tests": 5,
+                "listUsd": {
+                  "n": 5,
+                  "mean": 0.109725,
+                  "p50": 0.109607,
+                  "p90": 0.147677,
+                  "max": 0.147677
+                },
+                "calls": {
+                  "n": 5,
+                  "mean": 13.8,
+                  "p50": 15,
+                  "p90": 18,
+                  "max": 18
+                },
+                "wallMs": {
+                  "n": 5,
+                  "mean": 68124.2,
+                  "p50": 73641,
+                  "p90": 87295,
+                  "max": 87295
+                }
+              }
+            },
+            "perStep": {
+              "steps": 54,
+              "listUsd": {
+                "n": 54,
+                "mean": 0.018536,
+                "p50": 0.015151,
+                "p90": 0.026682,
+                "max": 0.063562
+              },
+              "calls": {
+                "n": 54,
+                "mean": 2.351852,
+                "p50": 2,
+                "p90": 3,
+                "max": 9
+              },
+              "wallMs": {
+                "n": 54,
+                "mean": 10961.722222,
+                "p50": 9128,
+                "p90": 14881,
+                "max": 38661
+              }
+            }
+          },
+          "heals": {
+            "calls": 4,
+            "tokens": {
+              "input": 15885,
+              "output": 742,
+              "cached": 10611,
+              "cacheWrite": 5262
+            },
+            "listUsd": 0.0340818,
+            "subscriptionCalls": 4,
+            "latencyMs": 16824,
+            "heals": 4,
+            "perHeal": {
+              "listUsd": {
+                "n": 4,
+                "mean": 0.00852,
+                "p50": 0.008346,
+                "p90": 0.009062,
+                "max": 0.009062
+              },
+              "calls": {
+                "n": 4,
+                "mean": 1,
+                "p50": 1,
+                "p90": 1,
+                "max": 1
+              }
+            }
+          },
+          "replay": {
+            "aiCalls": 0,
+            "listUsd": 0,
+            "wallMsPerTest": {
+              "n": 11,
+              "mean": 1858.363636,
+              "p50": 869,
+              "p90": 2160,
+              "max": 10840
+            }
+          },
+          "aiShare": [
+            {
+              "run": "1 (authoring)",
+              "aiCalls": 127,
+              "listUsd": 1.0009672500000004,
+              "wallMs": 624236
+            },
+            {
+              "run": "2 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 20593
+            },
+            {
+              "run": "3 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 20719
+            },
+            {
+              "run": "4 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 20873
+            },
+            {
+              "run": "5 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 20733
+            },
+            {
+              "run": "6 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 20773
+            },
+            {
+              "run": "7 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 20759
+            },
+            {
+              "run": "8 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 20826
+            },
+            {
+              "run": "9 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 20770
+            },
+            {
+              "run": "10 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 20646
+            },
+            {
+              "run": "cosmetic 1 (heals)",
+              "aiCalls": 6,
+              "listUsd": 0.047710350000000006,
+              "wallMs": 71105
+            },
+            {
+              "run": "cosmetic 2 (heals accepted)",
+              "aiCalls": 2,
+              "listUsd": 0.016756349999999996,
+              "wallMs": 44419
+            }
+          ],
+          "realCalls": {
+            "calls": 135,
+            "tokens": {
+              "input": 529366,
+              "output": 25130,
+              "cached": 375749,
+              "cacheWrite": 153211
+            },
+            "listUsd": 1.0654339500000005,
+            "subscriptionCalls": 135,
+            "latencyMs": 588825
+          }
+        },
+        {
+          "fixture": "android",
+          "quality": {
+            "tests": 7,
+            "passedAfterAuthoring": 7,
+            "stepsAuthored": 34,
+            "checks": {
+              "total": 18,
+              "rules": 18,
+              "ai": 0,
+              "exact": 0,
+              "other": 0
+            },
+            "falsePass": {
+              "count": 0,
+              "of": 10,
+              "rate": 0,
+              "cases": []
+            },
+            "falseFail": {
+              "count": 3,
+              "of": 25,
+              "rate": 0.12,
+              "cases": [
+                "correct/scan-badge",
+                "broken-silent-tap/scan-badge",
+                "broken-not-saved/scan-badge"
+              ]
+            },
+            "otherMismatches": [
+              "broken-login/scan-badge: cause test_drift, expected product_bug",
+              "broken-crash/scan-badge: cause test_drift, expected product_bug"
+            ],
+            "cosmetic": {
+              "tests": 7,
+              "passedOrHealed": 7,
+              "healedByFixer": 4,
+              "healsWithoutAi": 26
+            }
+          },
+          "authoring": {
+            "calls": 66,
+            "tokens": {
+              "input": 251504,
+              "output": 11622,
+              "cached": 189593,
+              "cacheWrite": 61712
+            },
+            "listUsd": 0.46322489999999994,
+            "subscriptionCalls": 66,
+            "latencyMs": 305328,
+            "wallMs": 500921,
+            "perTest": [
+              {
+                "test": "tests/check-updates.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 81223,
+                "calls": 12,
+                "tokens": {
+                  "input": 45925,
+                  "output": 2099,
+                  "cached": 31460,
+                  "cacheWrite": 14429
+                },
+                "listUsd": 0.09513975,
+                "subscriptionCalls": 12,
+                "latencyMs": 67457
+              },
+              {
+                "test": "tests/create-project.test.md",
+                "complexity": "complex",
+                "steps": 11,
+                "verdict": "passed",
+                "wallMs": 85194,
+                "calls": 13,
+                "tokens": {
+                  "input": 52303,
+                  "output": 2368,
+                  "cached": 40873,
+                  "cacheWrite": 11390
+                },
+                "listUsd": 0.09061439999999998,
+                "subscriptionCalls": 13,
+                "latencyMs": 62908
+              },
+              {
+                "test": "tests/deep-link.test.md",
+                "complexity": "medium",
+                "steps": 6,
+                "verdict": "passed",
+                "wallMs": 50574,
+                "calls": 8,
+                "tokens": {
+                  "input": 29871,
+                  "output": 1329,
+                  "cached": 22880,
+                  "cacheWrite": 6967
+                },
+                "listUsd": 0.05299725000000001,
+                "subscriptionCalls": 8,
+                "latencyMs": 33939
+              },
+              {
+                "test": "tests/scan-badge.test.md",
+                "complexity": "medium",
+                "steps": 9,
+                "verdict": "passed",
+                "wallMs": 148720,
+                "calls": 12,
+                "tokens": {
+                  "input": 45041,
+                  "output": 2176,
+                  "cached": 34320,
+                  "cacheWrite": 10685
+                },
+                "listUsd": 0.08311275,
+                "subscriptionCalls": 12,
+                "latencyMs": 52725
+              },
+              {
+                "test": "tests/sign-in.test.md",
+                "complexity": "medium",
+                "steps": 5,
+                "verdict": "passed",
+                "wallMs": 39089,
+                "calls": 6,
+                "tokens": {
+                  "input": 22404,
+                  "output": 1022,
+                  "cached": 17160,
+                  "cacheWrite": 5226
+                },
+                "listUsd": 0.0401295,
+                "subscriptionCalls": 6,
+                "latencyMs": 23495
+              },
+              {
+                "test": "tests/sign-out.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 57431,
+                "calls": 9,
+                "tokens": {
+                  "input": 33653,
+                  "output": 1554,
+                  "cached": 25740,
+                  "cacheWrite": 7886
+                },
+                "listUsd": 0.060685499999999996,
+                "subscriptionCalls": 9,
+                "latencyMs": 41053
+              },
+              {
+                "test": "tests/wrong-password.test.md",
+                "complexity": "medium",
+                "steps": 5,
+                "verdict": "passed",
+                "wallMs": 38624,
+                "calls": 6,
+                "tokens": {
+                  "input": 22307,
+                  "output": 1074,
+                  "cached": 17160,
+                  "cacheWrite": 5129
+                },
+                "listUsd": 0.04054575,
+                "subscriptionCalls": 6,
+                "latencyMs": 23751
+              }
+            ],
+            "byComplexity": {
+              "simple": {
+                "tests": 0,
+                "listUsd": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "calls": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "wallMs": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                }
+              },
+              "medium": {
+                "tests": 6,
+                "listUsd": {
+                  "n": 6,
+                  "mean": 0.062102,
+                  "p50": 0.052997,
+                  "p90": 0.09514,
+                  "max": 0.09514
+                },
+                "calls": {
+                  "n": 6,
+                  "mean": 8.833333,
+                  "p50": 8,
+                  "p90": 12,
+                  "max": 12
+                },
+                "wallMs": {
+                  "n": 6,
+                  "mean": 69276.833333,
+                  "p50": 50574,
+                  "p90": 148720,
+                  "max": 148720
+                }
+              },
+              "complex": {
+                "tests": 1,
+                "listUsd": {
+                  "n": 1,
+                  "mean": 0.090614,
+                  "p50": 0.090614,
+                  "p90": 0.090614,
+                  "max": 0.090614
+                },
+                "calls": {
+                  "n": 1,
+                  "mean": 13,
+                  "p50": 13,
+                  "p90": 13,
+                  "max": 13
+                },
+                "wallMs": {
+                  "n": 1,
+                  "mean": 85194,
+                  "p50": 85194,
+                  "p90": 85194,
+                  "max": 85194
+                }
+              }
+            },
+            "perStep": {
+              "steps": 34,
+              "listUsd": {
+                "n": 34,
+                "mean": 0.013624,
+                "p50": 0.013475,
+                "p90": 0.015526,
+                "max": 0.023072
+              },
+              "calls": {
+                "n": 34,
+                "mean": 1.941176,
+                "p50": 2,
+                "p90": 2,
+                "max": 2
+              },
+              "wallMs": {
+                "n": 34,
+                "mean": 11295.617647,
+                "p50": 9527,
+                "p90": 19127,
+                "max": 20321
+              }
+            }
+          },
+          "heals": {
+            "calls": 5,
+            "tokens": {
+              "input": 18747,
+              "output": 1665,
+              "cached": 13241,
+              "cacheWrite": 5491
+            },
+            "listUsd": 0.049583550000000004,
+            "subscriptionCalls": 5,
+            "latencyMs": 34214,
+            "heals": 4,
+            "perHeal": {
+              "listUsd": {
+                "n": 4,
+                "mean": 0.012396,
+                "p50": 0.007462,
+                "p90": 0.027006,
+                "max": 0.027006
+              },
+              "calls": {
+                "n": 4,
+                "mean": 1.25,
+                "p50": 1,
+                "p90": 2,
+                "max": 2
+              }
+            }
+          },
+          "replay": {
+            "aiCalls": 0,
+            "listUsd": 0,
+            "wallMsPerTest": {
+              "n": 7,
+              "mean": 19605.857143,
+              "p50": 17836,
+              "p90": 27336,
+              "max": 27336
+            }
+          },
+          "aiShare": [
+            {
+              "run": "1 (authoring)",
+              "aiCalls": 66,
+              "listUsd": 0.46322489999999994,
+              "wallMs": 500921
+            },
+            {
+              "run": "2 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 137287
+            },
+            {
+              "run": "3 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 138337
+            },
+            {
+              "run": "4 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 132962
+            },
+            {
+              "run": "5 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 135141
+            },
+            {
+              "run": "6 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 136698
+            },
+            {
+              "run": "7 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 140263
+            },
+            {
+              "run": "8 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 141105
+            },
+            {
+              "run": "9 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 134372
+            },
+            {
+              "run": "10 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 139822
+            },
+            {
+              "run": "cosmetic 1 (heals)",
+              "aiCalls": 7,
+              "listUsd": 0.0628713,
+              "wallMs": 174196
+            },
+            {
+              "run": "cosmetic 2 (heals accepted)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 125794
+            }
+          ],
+          "realCalls": {
+            "calls": 73,
+            "tokens": {
+              "input": 277702,
+              "output": 13626,
+              "cached": 208554,
+              "cacheWrite": 68928
+            },
+            "listUsd": 0.5260961999999999,
+            "subscriptionCalls": 73,
+            "latencyMs": 347791
+          }
+        }
+      ],
+      "drafts": [
+        {
+          "sentence": "A returning user can log in and sees the dashboard",
+          "status": "impossible",
+          "lintClean": false,
+          "wallMs": 36850,
+          "calls": 4,
+          "tokens": {
+            "input": 16072,
+            "output": 1380,
+            "cached": 8361,
+            "cacheWrite": 7699
+          },
+          "listUsd": 0.05211555,
+          "subscriptionCalls": 4,
+          "latencyMs": 29520
+        },
+        {
+          "sentence": "A new project can be created and shows up in the projects list",
+          "status": "incomplete",
+          "lintClean": false,
+          "wallMs": 128325,
+          "calls": 14,
+          "tokens": {
+            "input": 62439,
+            "output": 5503,
+            "cached": 39018,
+            "cacheWrite": 23379
+          },
+          "listUsd": 0.18204765,
+          "subscriptionCalls": 14,
+          "latencyMs": 121677
+        },
+        {
+          "sentence": "The settings page lets a user change their display name",
+          "status": "incomplete",
+          "lintClean": false,
+          "wallMs": 102095,
+          "calls": 13,
+          "tokens": {
+            "input": 61488,
+            "output": 4513,
+            "cached": 40384,
+            "cacheWrite": 21064
+          },
+          "listUsd": 0.15892019999999998,
+          "subscriptionCalls": 13,
+          "latencyMs": 95418
+        }
+      ],
+      "explains": [
+        {
+          "test": "tests/avatar-upload.test.md",
+          "ok": true,
+          "wallMs": 17064,
+          "calls": 1,
+          "tokens": {
+            "input": 1537,
+            "output": 832,
+            "cached": 0,
+            "cacheWrite": 1534
+          },
+          "listUsd": 0.0182415,
+          "subscriptionCalls": 1,
+          "latencyMs": 17058
+        },
+        {
+          "test": "tests/checkout-trial.test.md",
+          "ok": true,
+          "wallMs": 20376,
+          "calls": 1,
+          "tokens": {
+            "input": 1546,
+            "output": 938,
+            "cached": 0,
+            "cacheWrite": 1543
+          },
+          "listUsd": 0.01986525,
+          "subscriptionCalls": 1,
+          "latencyMs": 20369
+        }
+      ],
+      "total": {
+        "calls": 242,
+        "tokens": {
+          "input": 951092,
+          "output": 52009,
+          "cached": 672066,
+          "cacheWrite": 277358
+        },
+        "listUsd": 2.0268513000000006,
+        "subscriptionCalls": 242,
+        "latencyMs": 1224026
+      },
+      "problem": null
+    },
+    {
+      "model": "claude-code:claude-sonnet-5-5",
+      "promptVersions": {
+        "PROMPT_VERSION": "planner-v3",
+        "ANDROID_PROMPT_VERSION": "planner-android-v2",
+        "FIXER_PROMPT_VERSION": "fixer-v1",
+        "CHECK_PROMPT_VERSION": "checks-v1",
+        "DRAFT_PROMPT_VERSION": "drafter-v1"
+      },
+      "cliCheck": {
+        "ok": true,
+        "message": "claude-code/claude-sonnet-5-5 answered",
+        "calls": {
+          "calls": 1,
+          "tokens": {
+            "input": 839,
+            "output": 52,
+            "cached": 0,
+            "cacheWrite": 837
+          },
+          "listUsd": 0.0026165,
+          "subscriptionCalls": 1,
+          "latencyMs": 2060
+        }
+      },
+      "fixtures": [
+        {
+          "fixture": "shop",
+          "quality": {
+            "tests": 11,
+            "passedAfterAuthoring": 11,
+            "stepsAuthored": 62,
+            "checks": {
+              "total": 37,
+              "rules": 37,
+              "ai": 0,
+              "exact": 0,
+              "other": 0
+            },
+            "falsePass": {
+              "count": 0,
+              "of": 15,
+              "rate": 0,
+              "cases": []
+            },
+            "falseFail": {
+              "count": 0,
+              "of": 62,
+              "rate": 0,
+              "cases": []
+            },
+            "otherMismatches": [],
+            "cosmetic": {
+              "tests": 11,
+              "passedOrHealed": 10,
+              "healedByFixer": 4,
+              "healsWithoutAi": 19
+            }
+          },
+          "authoring": {
+            "calls": 108,
+            "tokens": {
+              "input": 600263,
+              "output": 12212,
+              "cached": 482490,
+              "cacheWrite": 117517
+            },
+            "listUsd": 0.5129225000000003,
+            "subscriptionCalls": 108,
+            "latencyMs": 270480,
+            "wallMs": 313448,
+            "perTest": [
+              {
+                "test": "tests/avatar-upload.test.md",
+                "complexity": "complex",
+                "steps": 10,
+                "verdict": "passed",
+                "wallMs": 26965,
+                "calls": 11,
+                "tokens": {
+                  "input": 51743,
+                  "output": 1060,
+                  "cached": 36530,
+                  "cacheWrite": 15191
+                },
+                "listUsd": 0.055927500000000005,
+                "subscriptionCalls": 11,
+                "latencyMs": 22891
+              },
+              {
+                "test": "tests/billing-zero-due.test.md",
+                "complexity": "medium",
+                "steps": 3,
+                "verdict": "passed",
+                "wallMs": 21882,
+                "calls": 7,
+                "tokens": {
+                  "input": 36698,
+                  "output": 822,
+                  "cached": 30076,
+                  "cacheWrite": 6606
+                },
+                "listUsd": 0.030782200000000003,
+                "subscriptionCalls": 7,
+                "latencyMs": 17708
+              },
+              {
+                "test": "tests/checkout-trial.test.md",
+                "complexity": "complex",
+                "steps": 10,
+                "verdict": "passed",
+                "wallMs": 39331,
+                "calls": 13,
+                "tokens": {
+                  "input": 75935,
+                  "output": 1555,
+                  "cached": 61277,
+                  "cacheWrite": 14626
+                },
+                "listUsd": 0.0644344,
+                "subscriptionCalls": 13,
+                "latencyMs": 33708
+              },
+              {
+                "test": "tests/create-project.test.md",
+                "complexity": "complex",
+                "steps": 13,
+                "verdict": "passed",
+                "wallMs": 35651,
+                "calls": 13,
+                "tokens": {
+                  "input": 73502,
+                  "output": 1489,
+                  "cached": 61071,
+                  "cacheWrite": 12399
+                },
+                "listUsd": 0.0581657,
+                "subscriptionCalls": 13,
+                "latencyMs": 30670
+              },
+              {
+                "test": "tests/declined-card.test.md",
+                "complexity": "complex",
+                "steps": 11,
+                "verdict": "passed",
+                "wallMs": 46459,
+                "calls": 15,
+                "tokens": {
+                  "input": 98632,
+                  "output": 1985,
+                  "cached": 82323,
+                  "cacheWrite": 16267
+                },
+                "listUsd": 0.0770661,
+                "subscriptionCalls": 15,
+                "latencyMs": 41340
+              },
+              {
+                "test": "tests/delete-account-guard.test.md",
+                "complexity": "medium",
+                "steps": 10,
+                "verdict": "passed",
+                "wallMs": 31487,
+                "calls": 12,
+                "tokens": {
+                  "input": 61406,
+                  "output": 1197,
+                  "cached": 48692,
+                  "cacheWrite": 12688
+                },
+                "listUsd": 0.053480400000000004,
+                "subscriptionCalls": 12,
+                "latencyMs": 27541
+              },
+              {
+                "test": "tests/login.test.md",
+                "complexity": "medium",
+                "steps": 7,
+                "verdict": "passed",
+                "wallMs": 23903,
+                "calls": 8,
+                "tokens": {
+                  "input": 50641,
+                  "output": 981,
+                  "cached": 42820,
+                  "cacheWrite": 7799
+                },
+                "listUsd": 0.037915500000000005,
+                "subscriptionCalls": 8,
+                "latencyMs": 21124
+              },
+              {
+                "test": "tests/settings-profile.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 27884,
+                "calls": 9,
+                "tokens": {
+                  "input": 43517,
+                  "output": 809,
+                  "cached": 32877,
+                  "cacheWrite": 10622
+                },
+                "listUsd": 0.0412564,
+                "subscriptionCalls": 9,
+                "latencyMs": 24165
+              },
+              {
+                "test": "tests/signup-email-code.test.md",
+                "complexity": "complex",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 26427,
+                "calls": 8,
+                "tokens": {
+                  "input": 50998,
+                  "output": 1057,
+                  "cached": 42988,
+                  "cacheWrite": 7988
+                },
+                "listUsd": 0.039181600000000004,
+                "subscriptionCalls": 8,
+                "latencyMs": 23274
+              },
+              {
+                "test": "tests/signup-validation.test.md",
+                "complexity": "medium",
+                "steps": 6,
+                "verdict": "passed",
+                "wallMs": 11243,
+                "calls": 4,
+                "tokens": {
+                  "input": 18327,
+                  "output": 470,
+                  "cached": 14612,
+                  "cacheWrite": 3707
+                },
+                "listUsd": 0.0169059,
+                "subscriptionCalls": 4,
+                "latencyMs": 9573
+              },
+              {
+                "test": "tests/sort-orders.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 21946,
+                "calls": 8,
+                "tokens": {
+                  "input": 38864,
+                  "output": 787,
+                  "cached": 29224,
+                  "cacheWrite": 9624
+                },
+                "listUsd": 0.0378068,
+                "subscriptionCalls": 8,
+                "latencyMs": 18486
+              }
+            ],
+            "byComplexity": {
+              "simple": {
+                "tests": 0,
+                "listUsd": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "calls": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "wallMs": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                }
+              },
+              "medium": {
+                "tests": 6,
+                "listUsd": {
+                  "n": 6,
+                  "mean": 0.036358,
+                  "p50": 0.037807,
+                  "p90": 0.05348,
+                  "max": 0.05348
+                },
+                "calls": {
+                  "n": 6,
+                  "mean": 8,
+                  "p50": 8,
+                  "p90": 12,
+                  "max": 12
+                },
+                "wallMs": {
+                  "n": 6,
+                  "mean": 23057.5,
+                  "p50": 21946,
+                  "p90": 31487,
+                  "max": 31487
+                }
+              },
+              "complex": {
+                "tests": 5,
+                "listUsd": {
+                  "n": 5,
+                  "mean": 0.058955,
+                  "p50": 0.058166,
+                  "p90": 0.077066,
+                  "max": 0.077066
+                },
+                "calls": {
+                  "n": 5,
+                  "mean": 12,
+                  "p50": 13,
+                  "p90": 15,
+                  "max": 15
+                },
+                "wallMs": {
+                  "n": 5,
+                  "mean": 34966.6,
+                  "p50": 35651,
+                  "p90": 46459,
+                  "max": 46459
+                }
+              }
+            },
+            "perStep": {
+              "steps": 59,
+              "listUsd": {
+                "n": 59,
+                "mean": 0.008694,
+                "p50": 0.009097,
+                "p90": 0.011096,
+                "max": 0.022888
+              },
+              "calls": {
+                "n": 59,
+                "mean": 1.830508,
+                "p50": 2,
+                "p90": 2,
+                "max": 5
+              },
+              "wallMs": {
+                "n": 59,
+                "mean": 5252.881356,
+                "p50": 5169,
+                "p90": 7946,
+                "max": 15776
+              }
+            }
+          },
+          "heals": {
+            "calls": 4,
+            "tokens": {
+              "input": 29177,
+              "output": 452,
+              "cached": 23718,
+              "cacheWrite": 5447
+            },
+            "listUsd": 0.0229051,
+            "subscriptionCalls": 4,
+            "latencyMs": 10211,
+            "heals": 4,
+            "perHeal": {
+              "listUsd": {
+                "n": 4,
+                "mean": 0.005726,
+                "p50": 0.005476,
+                "p90": 0.006432,
+                "max": 0.006432
+              },
+              "calls": {
+                "n": 4,
+                "mean": 1,
+                "p50": 1,
+                "p90": 1,
+                "max": 1
+              }
+            }
+          },
+          "replay": {
+            "aiCalls": 0,
+            "listUsd": 0,
+            "wallMsPerTest": {
+              "n": 11,
+              "mean": 793.909091,
+              "p50": 729,
+              "p90": 1238,
+              "max": 1827
+            }
+          },
+          "aiShare": [
+            {
+              "run": "1 (authoring)",
+              "aiCalls": 108,
+              "listUsd": 0.5129225000000003,
+              "wallMs": 313448
+            },
+            {
+              "run": "2 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 8870
+            },
+            {
+              "run": "3 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 8858
+            },
+            {
+              "run": "4 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 8964
+            },
+            {
+              "run": "5 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 8958
+            },
+            {
+              "run": "6 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 8964
+            },
+            {
+              "run": "7 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 9001
+            },
+            {
+              "run": "8 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 8940
+            },
+            {
+              "run": "9 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 9060
+            },
+            {
+              "run": "10 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 8996
+            },
+            {
+              "run": "cosmetic 1 (heals)",
+              "aiCalls": 4,
+              "listUsd": 0.0229051,
+              "wallMs": 41334
+            },
+            {
+              "run": "cosmetic 2 (heals accepted)",
+              "aiCalls": 2,
+              "listUsd": 0.009693299999999998,
+              "wallMs": 28053
+            }
+          ],
+          "realCalls": {
+            "calls": 114,
+            "tokens": {
+              "input": 639179,
+              "output": 12858,
+              "cached": 513422,
+              "cacheWrite": 125485
+            },
+            "listUsd": 0.5455209000000003,
+            "subscriptionCalls": 114,
+            "latencyMs": 284782
+          }
+        },
+        {
+          "fixture": "android",
+          "quality": {
+            "tests": 7,
+            "passedAfterAuthoring": 7,
+            "stepsAuthored": 34,
+            "checks": {
+              "total": 18,
+              "rules": 18,
+              "ai": 0,
+              "exact": 0,
+              "other": 0
+            },
+            "falsePass": {
+              "count": 0,
+              "of": 10,
+              "rate": 0,
+              "cases": []
+            },
+            "falseFail": {
+              "count": 0,
+              "of": 25,
+              "rate": 0,
+              "cases": []
+            },
+            "otherMismatches": [],
+            "cosmetic": {
+              "tests": 7,
+              "passedOrHealed": 7,
+              "healedByFixer": 4,
+              "healsWithoutAi": 27
+            }
+          },
+          "authoring": {
+            "calls": 68,
+            "tokens": {
+              "input": 490499,
+              "output": 8740,
+              "cached": 428506,
+              "cacheWrite": 61779
+            },
+            "listUsd": 0.3279767,
+            "subscriptionCalls": 68,
+            "latencyMs": 195937,
+            "wallMs": 312733,
+            "perTest": [
+              {
+                "test": "tests/check-updates.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 46059,
+                "calls": 12,
+                "tokens": {
+                  "input": 89020,
+                  "output": 1493,
+                  "cached": 73832,
+                  "cacheWrite": 15150
+                },
+                "listUsd": 0.0676474,
+                "subscriptionCalls": 12,
+                "latencyMs": 33420
+              },
+              {
+                "test": "tests/create-project.test.md",
+                "complexity": "complex",
+                "steps": 11,
+                "verdict": "passed",
+                "wallMs": 58895,
+                "calls": 14,
+                "tokens": {
+                  "input": 95373,
+                  "output": 1696,
+                  "cached": 84008,
+                  "cacheWrite": 11323
+                },
+                "listUsd": 0.0621531,
+                "subscriptionCalls": 14,
+                "latencyMs": 38117
+              },
+              {
+                "test": "tests/deep-link.test.md",
+                "complexity": "medium",
+                "steps": 6,
+                "verdict": "passed",
+                "wallMs": 41377,
+                "calls": 8,
+                "tokens": {
+                  "input": 64056,
+                  "output": 1133,
+                  "cached": 57182,
+                  "cacheWrite": 6846
+                },
+                "listUsd": 0.0399374,
+                "subscriptionCalls": 8,
+                "latencyMs": 23484
+              },
+              {
+                "test": "tests/scan-badge.test.md",
+                "complexity": "medium",
+                "steps": 9,
+                "verdict": "passed",
+                "wallMs": 53697,
+                "calls": 12,
+                "tokens": {
+                  "input": 86922,
+                  "output": 1578,
+                  "cached": 76601,
+                  "cacheWrite": 10283
+                },
+                "listUsd": 0.0568837,
+                "subscriptionCalls": 12,
+                "latencyMs": 35955
+              },
+              {
+                "test": "tests/sign-in.test.md",
+                "complexity": "medium",
+                "steps": 5,
+                "verdict": "passed",
+                "wallMs": 34184,
+                "calls": 6,
+                "tokens": {
+                  "input": 45756,
+                  "output": 800,
+                  "cached": 40660,
+                  "cacheWrite": 5076
+                },
+                "listUsd": 0.028862000000000002,
+                "subscriptionCalls": 6,
+                "latencyMs": 18385
+              },
+              {
+                "test": "tests/sign-out.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 44311,
+                "calls": 10,
+                "tokens": {
+                  "input": 68681,
+                  "output": 1292,
+                  "cached": 60253,
+                  "cacheWrite": 8398
+                },
+                "listUsd": 0.0460256,
+                "subscriptionCalls": 10,
+                "latencyMs": 28260
+              },
+              {
+                "test": "tests/wrong-password.test.md",
+                "complexity": "medium",
+                "steps": 5,
+                "verdict": "passed",
+                "wallMs": 34161,
+                "calls": 6,
+                "tokens": {
+                  "input": 40691,
+                  "output": 748,
+                  "cached": 35970,
+                  "cacheWrite": 4703
+                },
+                "listUsd": 0.026467499999999998,
+                "subscriptionCalls": 6,
+                "latencyMs": 18316
+              }
+            ],
+            "byComplexity": {
+              "simple": {
+                "tests": 0,
+                "listUsd": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "calls": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "wallMs": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                }
+              },
+              "medium": {
+                "tests": 6,
+                "listUsd": {
+                  "n": 6,
+                  "mean": 0.044304,
+                  "p50": 0.039937,
+                  "p90": 0.067647,
+                  "max": 0.067647
+                },
+                "calls": {
+                  "n": 6,
+                  "mean": 9,
+                  "p50": 8,
+                  "p90": 12,
+                  "max": 12
+                },
+                "wallMs": {
+                  "n": 6,
+                  "mean": 42298.166667,
+                  "p50": 41377,
+                  "p90": 53697,
+                  "max": 53697
+                }
+              },
+              "complex": {
+                "tests": 1,
+                "listUsd": {
+                  "n": 1,
+                  "mean": 0.062153,
+                  "p50": 0.062153,
+                  "p90": 0.062153,
+                  "max": 0.062153
+                },
+                "calls": {
+                  "n": 1,
+                  "mean": 14,
+                  "p50": 14,
+                  "p90": 14,
+                  "max": 14
+                },
+                "wallMs": {
+                  "n": 1,
+                  "mean": 58895,
+                  "p50": 58895,
+                  "p90": 58895,
+                  "max": 58895
+                }
+              }
+            },
+            "perStep": {
+              "steps": 34,
+              "listUsd": {
+                "n": 34,
+                "mean": 0.009646,
+                "p50": 0.009048,
+                "p90": 0.010926,
+                "max": 0.019211
+              },
+              "calls": {
+                "n": 34,
+                "mean": 2,
+                "p50": 2,
+                "p90": 2,
+                "max": 2
+              },
+              "wallMs": {
+                "n": 34,
+                "mean": 6669.970588,
+                "p50": 6609,
+                "p90": 7556,
+                "max": 9258
+              }
+            }
+          },
+          "heals": {
+            "calls": 5,
+            "tokens": {
+              "input": 41171,
+              "output": 970,
+              "cached": 35474,
+              "cacheWrite": 5679
+            },
+            "listUsd": 0.031028300000000005,
+            "subscriptionCalls": 5,
+            "latencyMs": 19927,
+            "heals": 4,
+            "perHeal": {
+              "listUsd": {
+                "n": 4,
+                "mean": 0.007757,
+                "p50": 0.005911,
+                "p90": 0.013448,
+                "max": 0.013448
+              },
+              "calls": {
+                "n": 4,
+                "mean": 1.25,
+                "p50": 1,
+                "p90": 2,
+                "max": 2
+              }
+            }
+          },
+          "replay": {
+            "aiCalls": 0,
+            "listUsd": 0,
+            "wallMsPerTest": {
+              "n": 7,
+              "mean": 17844.428571,
+              "p50": 16680,
+              "p90": 22223,
+              "max": 22223
+            }
+          },
+          "aiShare": [
+            {
+              "run": "1 (authoring)",
+              "aiCalls": 68,
+              "listUsd": 0.3279767,
+              "wallMs": 312733
+            },
+            {
+              "run": "2 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 124958
+            },
+            {
+              "run": "3 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 132005
+            },
+            {
+              "run": "4 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 140016
+            },
+            {
+              "run": "5 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 127470
+            },
+            {
+              "run": "6 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 131428
+            },
+            {
+              "run": "7 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 127533
+            },
+            {
+              "run": "8 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 131076
+            },
+            {
+              "run": "9 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 130541
+            },
+            {
+              "run": "10 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 135427
+            },
+            {
+              "run": "cosmetic 1 (heals)",
+              "aiCalls": 5,
+              "listUsd": 0.031028300000000005,
+              "wallMs": 160624
+            },
+            {
+              "run": "cosmetic 2 (heals accepted)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 136998
+            }
+          ],
+          "realCalls": {
+            "calls": 73,
+            "tokens": {
+              "input": 531670,
+              "output": 9710,
+              "cached": 463980,
+              "cacheWrite": 67458
+            },
+            "listUsd": 0.359005,
+            "subscriptionCalls": 73,
+            "latencyMs": 215864
+          }
+        }
+      ],
+      "drafts": [
+        {
+          "sentence": "A returning user can log in and sees the dashboard",
+          "status": "impossible",
+          "lintClean": false,
+          "wallMs": 18360,
+          "calls": 4,
+          "tokens": {
+            "input": 35142,
+            "output": 1066,
+            "cached": 25525,
+            "cacheWrite": 9603
+          },
+          "listUsd": 0.0398005,
+          "subscriptionCalls": 4,
+          "latencyMs": 15525
+        },
+        {
+          "sentence": "A new project can be created and shows up in the projects list",
+          "status": "impossible",
+          "lintClean": false,
+          "wallMs": 34059,
+          "calls": 7,
+          "tokens": {
+            "input": 58011,
+            "output": 2253,
+            "cached": 45443,
+            "cacheWrite": 12546
+          },
+          "listUsd": 0.0630276,
+          "subscriptionCalls": 7,
+          "latencyMs": 28933
+        },
+        {
+          "sentence": "The settings page lets a user change their display name",
+          "status": "impossible",
+          "lintClean": false,
+          "wallMs": 18576,
+          "calls": 4,
+          "tokens": {
+            "input": 35110,
+            "output": 1089,
+            "cached": 29179,
+            "cacheWrite": 5917
+          },
+          "listUsd": 0.0315463,
+          "subscriptionCalls": 4,
+          "latencyMs": 15765
+        }
+      ],
+      "explains": [
+        {
+          "test": "tests/checkout-trial.test.md",
+          "ok": true,
+          "wallMs": 4087,
+          "calls": 1,
+          "tokens": {
+            "input": 1618,
+            "output": 350,
+            "cached": 0,
+            "cacheWrite": 1616
+          },
+          "listUsd": 0.007544,
+          "subscriptionCalls": 1,
+          "latencyMs": 4082
+        },
+        {
+          "test": "tests/signup-email-code.test.md",
+          "ok": true,
+          "wallMs": 3991,
+          "calls": 1,
+          "tokens": {
+            "input": 1615,
+            "output": 387,
+            "cached": 576,
+            "cacheWrite": 1037
+          },
+          "listUsd": 0.0065817,
+          "subscriptionCalls": 1,
+          "latencyMs": 3985
+        }
+      ],
+      "total": {
+        "calls": 205,
+        "tokens": {
+          "input": 1303184,
+          "output": 27765,
+          "cached": 1078125,
+          "cacheWrite": 224499
+        },
+        "listUsd": 1.0556425000000003,
+        "subscriptionCalls": 205,
+        "latencyMs": 570996
+      },
+      "problem": null
+    },
+    {
+      "model": "codex:gpt-6-luna",
+      "promptVersions": {
+        "PROMPT_VERSION": "planner-v3",
+        "ANDROID_PROMPT_VERSION": "planner-android-v2",
+        "FIXER_PROMPT_VERSION": "fixer-v1",
+        "CHECK_PROMPT_VERSION": "checks-v1",
+        "DRAFT_PROMPT_VERSION": "drafter-v1"
+      },
+      "cliCheck": {
+        "ok": true,
+        "message": "codex/gpt-6-luna answered",
+        "calls": {
+          "calls": 1,
+          "tokens": {
+            "input": 12816,
+            "output": 15,
+            "cached": 0,
+            "cacheWrite": 0
+          },
+          "listUsd": 0.0012891,
+          "subscriptionCalls": 1,
+          "latencyMs": 8247
+        }
+      },
+      "fixtures": [
+        {
+          "fixture": "shop",
+          "quality": {
+            "tests": 11,
+            "passedAfterAuthoring": 4,
+            "stepsAuthored": 56,
+            "checks": {
+              "total": 26,
+              "rules": 26,
+              "ai": 0,
+              "exact": 0,
+              "other": 0
+            },
+            "falsePass": {
+              "count": 0,
+              "of": 15,
+              "rate": 0,
+              "cases": []
+            },
+            "falseFail": {
+              "count": 34,
+              "of": 62,
+              "rate": 0.5483870967741935,
+              "cases": [
+                "correct/avatar-upload",
+                "correct/billing-zero-due",
+                "correct/checkout-trial",
+                "correct/login",
+                "correct/settings-profile",
+                "correct/sort-orders",
+                "broken-signup/avatar-upload",
+                "broken-signup/billing-zero-due",
+                "broken-signup/login",
+                "broken-signup/settings-profile",
+                "broken-signup/sort-orders",
+                "broken-total/avatar-upload",
+                "broken-total/login",
+                "broken-total/settings-profile",
+                "broken-total/sort-orders",
+                "broken-login-redirect/checkout-trial",
+                "broken-silent-click/avatar-upload",
+                "broken-silent-click/billing-zero-due",
+                "broken-silent-click/checkout-trial",
+                "broken-silent-click/login",
+                "broken-silent-click/settings-profile",
+                "broken-silent-click/sort-orders",
+                "broken-not-saved/avatar-upload",
+                "broken-not-saved/billing-zero-due",
+                "broken-not-saved/checkout-trial",
+                "broken-not-saved/login",
+                "broken-not-saved/settings-profile",
+                "broken-not-saved/sort-orders",
+                "env-flaky/avatar-upload",
+                "env-flaky/billing-zero-due",
+                "env-flaky/checkout-trial",
+                "env-flaky/login",
+                "env-flaky/settings-profile",
+                "env-flaky/sort-orders"
+              ]
+            },
+            "otherMismatches": [
+              "broken-signup/checkout-trial: got blocked (blocked): Blocked: Step 2 \"Sign up with {{data.email}} and password {{secret.SHOP_PASSWORD}}\": No email to test-w3vh2t4pyj@example.test arrived in time: No email to test-w3vh2t4pyj@example.test arrived in time.",
+              "broken-total/billing-zero-due: cause test_drift, expected product_bug"
+            ],
+            "cosmetic": {
+              "tests": 11,
+              "passedOrHealed": 7,
+              "healedByFixer": 4,
+              "healsWithoutAi": 22
+            }
+          },
+          "authoring": {
+            "calls": 113,
+            "tokens": {
+              "input": 2622398,
+              "output": 9332,
+              "cached": 2065152,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.08104212000000002,
+            "subscriptionCalls": 113,
+            "latencyMs": 1075650,
+            "wallMs": 1149407,
+            "perTest": [
+              {
+                "test": "tests/avatar-upload.test.md",
+                "complexity": "complex",
+                "steps": 10,
+                "verdict": "failed",
+                "wallMs": 152730,
+                "calls": 14,
+                "tokens": {
+                  "input": 360183,
+                  "output": 1165,
+                  "cached": 179968,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.020403680000000004,
+                "subscriptionCalls": 14,
+                "latencyMs": 140154
+              },
+              {
+                "test": "tests/billing-zero-due.test.md",
+                "complexity": "medium",
+                "steps": 3,
+                "verdict": "failed",
+                "wallMs": 66818,
+                "calls": 8,
+                "tokens": {
+                  "input": 132907,
+                  "output": 557,
+                  "cached": 53248,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.00877688,
+                "subscriptionCalls": 8,
+                "latencyMs": 63294
+              },
+              {
+                "test": "tests/checkout-trial.test.md",
+                "complexity": "complex",
+                "steps": 10,
+                "verdict": "failed",
+                "wallMs": 66117,
+                "calls": 6,
+                "tokens": {
+                  "input": 164601,
+                  "output": 620,
+                  "cached": 135680,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.0045589,
+                "subscriptionCalls": 6,
+                "latencyMs": 57964
+              },
+              {
+                "test": "tests/create-project.test.md",
+                "complexity": "complex",
+                "steps": 13,
+                "verdict": "passed",
+                "wallMs": 127292,
+                "calls": 13,
+                "tokens": {
+                  "input": 342636,
+                  "output": 1087,
+                  "cached": 273408,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.01020038,
+                "subscriptionCalls": 13,
+                "latencyMs": 122235
+              },
+              {
+                "test": "tests/declined-card.test.md",
+                "complexity": "complex",
+                "steps": 11,
+                "verdict": "passed",
+                "wallMs": 186147,
+                "calls": 17,
+                "tokens": {
+                  "input": 418521,
+                  "output": 1615,
+                  "cached": 351744,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.011002640000000001,
+                "subscriptionCalls": 17,
+                "latencyMs": 180129
+              },
+              {
+                "test": "tests/delete-account-guard.test.md",
+                "complexity": "medium",
+                "steps": 10,
+                "verdict": "failed",
+                "wallMs": 139454,
+                "calls": 13,
+                "tokens": {
+                  "input": 296904,
+                  "output": 1037,
+                  "cached": 255232,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.0072380199999999995,
+                "subscriptionCalls": 13,
+                "latencyMs": 127434
+              },
+              {
+                "test": "tests/login.test.md",
+                "complexity": "medium",
+                "steps": 7,
+                "verdict": "blocked",
+                "wallMs": 60257,
+                "calls": 7,
+                "tokens": {
+                  "input": 117933,
+                  "output": 463,
+                  "cached": 105472,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.0025323200000000002,
+                "subscriptionCalls": 7,
+                "latencyMs": 57345
+              },
+              {
+                "test": "tests/settings-profile.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "failed",
+                "wallMs": 133822,
+                "calls": 13,
+                "tokens": {
+                  "input": 284761,
+                  "output": 1010,
+                  "cached": 254208,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.00610238,
+                "subscriptionCalls": 13,
+                "latencyMs": 119818
+              },
+              {
+                "test": "tests/signup-email-code.test.md",
+                "complexity": "complex",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 99489,
+                "calls": 10,
+                "tokens": {
+                  "input": 251759,
+                  "output": 850,
+                  "cached": 229120,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.004980100000000001,
+                "subscriptionCalls": 10,
+                "latencyMs": 96250
+              },
+              {
+                "test": "tests/signup-validation.test.md",
+                "complexity": "medium",
+                "steps": 6,
+                "verdict": "passed",
+                "wallMs": 80276,
+                "calls": 8,
+                "tokens": {
+                  "input": 177635,
+                  "output": 645,
+                  "cached": 160768,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.00361688,
+                "subscriptionCalls": 8,
+                "latencyMs": 77659
+              },
+              {
+                "test": "tests/sort-orders.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "failed",
+                "wallMs": 36677,
+                "calls": 4,
+                "tokens": {
+                  "input": 74558,
+                  "output": 283,
+                  "cached": 66304,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.0016299400000000003,
+                "subscriptionCalls": 4,
+                "latencyMs": 33368
+              }
+            ],
+            "byComplexity": {
+              "simple": {
+                "tests": 0,
+                "listUsd": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "calls": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "wallMs": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                }
+              },
+              "medium": {
+                "tests": 6,
+                "listUsd": {
+                  "n": 6,
+                  "mean": 0.004983,
+                  "p50": 0.003617,
+                  "p90": 0.008777,
+                  "max": 0.008777
+                },
+                "calls": {
+                  "n": 6,
+                  "mean": 8.833333,
+                  "p50": 8,
+                  "p90": 13,
+                  "max": 13
+                },
+                "wallMs": {
+                  "n": 6,
+                  "mean": 86217.333333,
+                  "p50": 66818,
+                  "p90": 139454,
+                  "max": 139454
+                }
+              },
+              "complex": {
+                "tests": 5,
+                "listUsd": {
+                  "n": 5,
+                  "mean": 0.010229,
+                  "p50": 0.0102,
+                  "p90": 0.020404,
+                  "max": 0.020404
+                },
+                "calls": {
+                  "n": 5,
+                  "mean": 12,
+                  "p50": 13,
+                  "p90": 17,
+                  "max": 17
+                },
+                "wallMs": {
+                  "n": 5,
+                  "mean": 126355,
+                  "p50": 127292,
+                  "p90": 186147,
+                  "max": 186147
+                }
+              }
+            },
+            "perStep": {
+              "steps": 52,
+              "listUsd": {
+                "n": 52,
+                "mean": 0.001559,
+                "p50": 0.001129,
+                "p90": 0.002759,
+                "max": 0.008777
+              },
+              "calls": {
+                "n": 52,
+                "mean": 2.173077,
+                "p50": 2,
+                "p90": 3,
+                "max": 8
+              },
+              "wallMs": {
+                "n": 52,
+                "mean": 21464.942308,
+                "p50": 20209,
+                "p90": 33443,
+                "max": 66754
+              }
+            }
+          },
+          "heals": {
+            "calls": 6,
+            "tokens": {
+              "input": 164625,
+              "output": 446,
+              "cached": 134656,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.00456646,
+            "subscriptionCalls": 6,
+            "latencyMs": 57593,
+            "heals": 5,
+            "perHeal": {
+              "listUsd": {
+                "n": 5,
+                "mean": 0.000913,
+                "p50": 0.000595,
+                "p90": 0.001879,
+                "max": 0.001879
+              },
+              "calls": {
+                "n": 5,
+                "mean": 1.2,
+                "p50": 1,
+                "p90": 2,
+                "max": 2
+              }
+            }
+          },
+          "replay": {
+            "aiCalls": 0,
+            "listUsd": 0,
+            "wallMsPerTest": {
+              "n": 11,
+              "mean": 2651.181818,
+              "p50": 1846,
+              "p90": 3630,
+              "max": 10788
+            }
+          },
+          "aiShare": [
+            {
+              "run": "1 (authoring)",
+              "aiCalls": 113,
+              "listUsd": 0.08104212000000002,
+              "wallMs": 1149407
+            },
+            {
+              "run": "2 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 29310
+            },
+            {
+              "run": "3 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 29906
+            },
+            {
+              "run": "4 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 29780
+            },
+            {
+              "run": "5 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 29739
+            },
+            {
+              "run": "6 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 29804
+            },
+            {
+              "run": "7 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 29785
+            },
+            {
+              "run": "8 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 29827
+            },
+            {
+              "run": "9 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 29839
+            },
+            {
+              "run": "10 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 29862
+            },
+            {
+              "run": "cosmetic 1 (heals)",
+              "aiCalls": 23,
+              "listUsd": 0.013176580000000004,
+              "wallMs": 280725
+            },
+            {
+              "run": "cosmetic 2 (heals accepted)",
+              "aiCalls": 2,
+              "listUsd": 0.0024841200000000003,
+              "wallMs": 66141
+            }
+          ],
+          "realCalls": {
+            "calls": 138,
+            "tokens": {
+              "input": 3252025,
+              "output": 11496,
+              "cached": 2602752,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.09670282000000004,
+            "subscriptionCalls": 138,
+            "latencyMs": 1316067
+          }
+        },
+        {
+          "fixture": "android",
+          "quality": {
+            "tests": 7,
+            "passedAfterAuthoring": 5,
+            "stepsAuthored": 31,
+            "checks": {
+              "total": 15,
+              "rules": 15,
+              "ai": 0,
+              "exact": 0,
+              "other": 0
+            },
+            "falsePass": {
+              "count": 0,
+              "of": 10,
+              "rate": 0,
+              "cases": []
+            },
+            "falseFail": {
+              "count": 7,
+              "of": 25,
+              "rate": 0.28,
+              "cases": [
+                "correct/deep-link",
+                "correct/sign-out",
+                "broken-silent-tap/deep-link",
+                "broken-silent-tap/sign-out",
+                "broken-not-saved/deep-link",
+                "broken-not-saved/sign-out",
+                "broken-crash/sign-out"
+              ]
+            },
+            "otherMismatches": [
+              "broken-login/deep-link: cause test_drift, expected product_bug",
+              "broken-crash/deep-link: cause test_drift, expected product_bug"
+            ],
+            "cosmetic": {
+              "tests": 7,
+              "passedOrHealed": 6,
+              "healedByFixer": 4,
+              "healsWithoutAi": 31
+            }
+          },
+          "authoring": {
+            "calls": 61,
+            "tokens": {
+              "input": 1421221,
+              "output": 4469,
+              "cached": 997888,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.054546680000000014,
+            "subscriptionCalls": 61,
+            "latencyMs": 580337,
+            "wallMs": 697821,
+            "perTest": [
+              {
+                "test": "tests/check-updates.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "passed",
+                "wallMs": 98112,
+                "calls": 10,
+                "tokens": {
+                  "input": 194485,
+                  "output": 643,
+                  "cached": 81408,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.012443280000000001,
+                "subscriptionCalls": 10,
+                "latencyMs": 85414
+              },
+              {
+                "test": "tests/create-project.test.md",
+                "complexity": "complex",
+                "steps": 11,
+                "verdict": "passed",
+                "wallMs": 158571,
+                "calls": 14,
+                "tokens": {
+                  "input": 324023,
+                  "output": 1029,
+                  "cached": 217088,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.01337888,
+                "subscriptionCalls": 14,
+                "latencyMs": 136762
+              },
+              {
+                "test": "tests/deep-link.test.md",
+                "complexity": "medium",
+                "steps": 6,
+                "verdict": "failed",
+                "wallMs": 68703,
+                "calls": 6,
+                "tokens": {
+                  "input": 132666,
+                  "output": 444,
+                  "cached": 94464,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.004986839999999999,
+                "subscriptionCalls": 6,
+                "latencyMs": 54655
+              },
+              {
+                "test": "tests/scan-badge.test.md",
+                "complexity": "medium",
+                "steps": 9,
+                "verdict": "passed",
+                "wallMs": 116066,
+                "calls": 10,
+                "tokens": {
+                  "input": 268644,
+                  "output": 713,
+                  "cached": 217088,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.007682980000000001,
+                "subscriptionCalls": 10,
+                "latencyMs": 98302
+              },
+              {
+                "test": "tests/sign-in.test.md",
+                "complexity": "medium",
+                "steps": 5,
+                "verdict": "passed",
+                "wallMs": 68953,
+                "calls": 6,
+                "tokens": {
+                  "input": 132654,
+                  "output": 426,
+                  "cached": 93440,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.0050688,
+                "subscriptionCalls": 6,
+                "latencyMs": 53659
+              },
+              {
+                "test": "tests/sign-out.test.md",
+                "complexity": "medium",
+                "steps": 8,
+                "verdict": "failed",
+                "wallMs": 116067,
+                "calls": 9,
+                "tokens": {
+                  "input": 236201,
+                  "output": 746,
+                  "cached": 187904,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.007081740000000001,
+                "subscriptionCalls": 9,
+                "latencyMs": 95032
+              },
+              {
+                "test": "tests/wrong-password.test.md",
+                "complexity": "medium",
+                "steps": 5,
+                "verdict": "passed",
+                "wallMs": 71293,
+                "calls": 6,
+                "tokens": {
+                  "input": 132548,
+                  "output": 468,
+                  "cached": 106496,
+                  "cacheWrite": 0
+                },
+                "listUsd": 0.00390416,
+                "subscriptionCalls": 6,
+                "latencyMs": 56513
+              }
+            ],
+            "byComplexity": {
+              "simple": {
+                "tests": 0,
+                "listUsd": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "calls": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                },
+                "wallMs": {
+                  "n": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p90": 0,
+                  "max": 0
+                }
+              },
+              "medium": {
+                "tests": 6,
+                "listUsd": {
+                  "n": 6,
+                  "mean": 0.006861,
+                  "p50": 0.005069,
+                  "p90": 0.012443,
+                  "max": 0.012443
+                },
+                "calls": {
+                  "n": 6,
+                  "mean": 7.833333,
+                  "p50": 6,
+                  "p90": 10,
+                  "max": 10
+                },
+                "wallMs": {
+                  "n": 6,
+                  "mean": 89865.666667,
+                  "p50": 71293,
+                  "p90": 116067,
+                  "max": 116067
+                }
+              },
+              "complex": {
+                "tests": 1,
+                "listUsd": {
+                  "n": 1,
+                  "mean": 0.013379,
+                  "p50": 0.013379,
+                  "p90": 0.013379,
+                  "max": 0.013379
+                },
+                "calls": {
+                  "n": 1,
+                  "mean": 14,
+                  "p50": 14,
+                  "p90": 14,
+                  "max": 14
+                },
+                "wallMs": {
+                  "n": 1,
+                  "mean": 158571,
+                  "p50": 158571,
+                  "p90": 158571,
+                  "max": 158571
+                }
+              }
+            },
+            "perStep": {
+              "steps": 32,
+              "listUsd": {
+                "n": 32,
+                "mean": 0.001705,
+                "p50": 0.001814,
+                "p90": 0.002705,
+                "max": 0.003689
+              },
+              "calls": {
+                "n": 32,
+                "mean": 1.90625,
+                "p50": 2,
+                "p90": 2,
+                "max": 3
+              },
+              "wallMs": {
+                "n": 32,
+                "mean": 19060.40625,
+                "p50": 18647,
+                "p90": 23593,
+                "max": 35743
+              }
+            }
+          },
+          "heals": {
+            "calls": 6,
+            "tokens": {
+              "input": 118262,
+              "output": 642,
+              "cached": 101376,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.00302336,
+            "subscriptionCalls": 6,
+            "latencyMs": 54349,
+            "heals": 4,
+            "perHeal": {
+              "listUsd": {
+                "n": 4,
+                "mean": 0.000756,
+                "p50": 0.000592,
+                "p90": 0.001266,
+                "max": 0.001266
+              },
+              "calls": {
+                "n": 4,
+                "mean": 1.5,
+                "p50": 1,
+                "p90": 2,
+                "max": 2
+              }
+            }
+          },
+          "replay": {
+            "aiCalls": 0,
+            "listUsd": 0,
+            "wallMsPerTest": {
+              "n": 7,
+              "mean": 23597.857143,
+              "p50": 19630,
+              "p90": 45237,
+              "max": 45237
+            }
+          },
+          "aiShare": [
+            {
+              "run": "1 (authoring)",
+              "aiCalls": 61,
+              "listUsd": 0.054546680000000014,
+              "wallMs": 697821
+            },
+            {
+              "run": "2 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 165233
+            },
+            {
+              "run": "3 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 175890
+            },
+            {
+              "run": "4 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 172497
+            },
+            {
+              "run": "5 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 172485
+            },
+            {
+              "run": "6 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 175717
+            },
+            {
+              "run": "7 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 176712
+            },
+            {
+              "run": "8 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 181298
+            },
+            {
+              "run": "9 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 179227
+            },
+            {
+              "run": "10 (replay)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 182062
+            },
+            {
+              "run": "cosmetic 1 (heals)",
+              "aiCalls": 10,
+              "listUsd": 0.0062448,
+              "wallMs": 250665
+            },
+            {
+              "run": "cosmetic 2 (heals accepted)",
+              "aiCalls": 0,
+              "listUsd": 0,
+              "wallMs": 168690
+            }
+          ],
+          "realCalls": {
+            "calls": 71,
+            "tokens": {
+              "input": 1642718,
+              "output": 5376,
+              "cached": 1179648,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.060791480000000016,
+            "subscriptionCalls": 71,
+            "latencyMs": 670345
+          }
+        }
+      ],
+      "drafts": [
+        {
+          "sentence": "A returning user can log in and sees the dashboard",
+          "status": "impossible",
+          "lintClean": false,
+          "wallMs": 50429,
+          "calls": 3,
+          "tokens": {
+            "input": 89787,
+            "output": 635,
+            "cached": 42240,
+            "cacheWrite": 0
+          },
+          "listUsd": 0.0054946000000000005,
+          "subscriptionCalls": 3,
+          "latencyMs": 45284
+        },
+        {
+          "sentence": "A new project can be created and shows up in the projects list",
+          "status": "impossible",
+          "lintClean": false,
+          "wallMs": 40726,
+          "calls": 4,
+          "tokens": {
+            "input": 90034,
+            "output": 435,
+            "cached": 41216,
+            "cacheWrite": 0
+          },
+          "listUsd": 0.005511459999999999,
+          "subscriptionCalls": 4,
+          "latencyMs": 38202
+        },
+        {
+          "sentence": "The settings page lets a user change their display name",
+          "status": "impossible",
+          "lintClean": false,
+          "wallMs": 70276,
+          "calls": 6,
+          "tokens": {
+            "input": 168006,
+            "output": 856,
+            "cached": 110592,
+            "cacheWrite": 0
+          },
+          "listUsd": 0.00727532,
+          "subscriptionCalls": 6,
+          "latencyMs": 63886
+        }
+      ],
+      "explains": [
+        {
+          "test": "tests/avatar-upload.test.md",
+          "ok": true,
+          "wallMs": 6968,
+          "calls": 1,
+          "tokens": {
+            "input": 13301,
+            "output": 110,
+            "cached": 0,
+            "cacheWrite": 0
+          },
+          "listUsd": 0.0013851000000000002,
+          "subscriptionCalls": 1,
+          "latencyMs": 6961
+        },
+        {
+          "test": "tests/billing-zero-due.test.md",
+          "ok": true,
+          "wallMs": 16651,
+          "calls": 1,
+          "tokens": {
+            "input": 13205,
+            "output": 230,
+            "cached": 0,
+            "cacheWrite": 0
+          },
+          "listUsd": 0.0014355,
+          "subscriptionCalls": 1,
+          "latencyMs": 16633
+        }
+      ],
+      "total": {
+        "calls": 225,
+        "tokens": {
+          "input": 5281892,
+          "output": 19153,
+          "cached": 3976448,
+          "cacheWrite": 0
+        },
+        "listUsd": 0.17988538000000004,
+        "subscriptionCalls": 225,
+        "latencyMs": 2165625
+      },
+      "problem": null
+    }
+  ],
+  "facts": {
+    "replay": [
+      {
+        "fixture": "shop",
+        "tests": 11,
+        "wallMsPerTest": {
+          "n": 11,
+          "mean": 773.818182,
+          "p50": 755,
+          "p90": 1249,
+          "max": 1850
+        },
+        "runnerCpuMsPerTest": 153,
+        "machineCpuMsPerTest": 884,
+        "aiCalls": 0
+      },
+      {
+        "fixture": "android",
+        "tests": 7,
+        "wallMsPerTest": {
+          "n": 7,
+          "mean": 17989.571429,
+          "p50": 18526,
+          "p90": 22411,
+          "max": 22411
+        },
+        "runnerCpuMsPerTest": 451,
+        "machineCpuMsPerTest": 55566,
+        "aiCalls": 0
+      }
+    ],
+    "overhead": {
+      "browserLaunchMs": 155,
+      "webSessionOpenMs": 27,
+      "emulatorReadyMs": 4832,
+      "androidSessionOpenMs": 14140
+    },
+    "evidence": [
+      {
+        "fixture": "shop",
+        "mode": "full",
+        "passing": {
+          "tests": 11,
+          "mbPerTest": {
+            "video": 0.026,
+            "trace": 0.158,
+            "screenshots": 0.222,
+            "logs": 0.047,
+            "other": 0.001
+          },
+          "totalMbPerTest": 0.454
+        },
+        "failing": {
+          "tests": 2,
+          "mbPerTest": {
+            "video": 0.117,
+            "trace": 0.357,
+            "screenshots": 0.383,
+            "logs": 0.114,
+            "other": 0.001
+          },
+          "totalMbPerTest": 0.972
+        }
+      },
+      {
+        "fixture": "shop",
+        "mode": "failures",
+        "passing": {
+          "tests": 11,
+          "mbPerTest": {
+            "video": 0.024,
+            "trace": 0,
+            "screenshots": 0,
+            "logs": 0,
+            "other": 0.001
+          },
+          "totalMbPerTest": 0.025
+        },
+        "failing": {
+          "tests": 2,
+          "mbPerTest": {
+            "video": 0.115,
+            "trace": 0.294,
+            "screenshots": 0.067,
+            "logs": 0.111,
+            "other": 0.001
+          },
+          "totalMbPerTest": 0.588
+        }
+      },
+      {
+        "fixture": "shop",
+        "mode": "minimal",
+        "passing": {
+          "tests": 11,
+          "mbPerTest": {
+            "video": 0.023,
+            "trace": 0,
+            "screenshots": 0,
+            "logs": 0,
+            "other": 0.001
+          },
+          "totalMbPerTest": 0.024
+        },
+        "failing": {
+          "tests": 2,
+          "mbPerTest": {
+            "video": 0.116,
+            "trace": 0.145,
+            "screenshots": 0.067,
+            "logs": 0.056,
+            "other": 0.001
+          },
+          "totalMbPerTest": 0.384
+        }
+      },
+      {
+        "fixture": "android",
+        "mode": "full",
+        "passing": {
+          "tests": 7,
+          "mbPerTest": {
+            "video": 4.795,
+            "trace": 0,
+            "screenshots": 0.305,
+            "logs": 2.602,
+            "other": 0.001
+          },
+          "totalMbPerTest": 7.703
+        },
+        "failing": {
+          "tests": 6,
+          "mbPerTest": {
+            "video": 6.546,
+            "trace": 0,
+            "screenshots": 0.305,
+            "logs": 4.007,
+            "other": 0
+          },
+          "totalMbPerTest": 10.858
+        }
+      },
+      {
+        "fixture": "android",
+        "mode": "failures",
+        "passing": {
+          "tests": 7,
+          "mbPerTest": {
+            "video": 4.328,
+            "trace": 0,
+            "screenshots": 0,
+            "logs": 2.213,
+            "other": 0.001
+          },
+          "totalMbPerTest": 6.541
+        },
+        "failing": {
+          "tests": 6,
+          "mbPerTest": {
+            "video": 8.781,
+            "trace": 0,
+            "screenshots": 0.278,
+            "logs": 3.95,
+            "other": 0
+          },
+          "totalMbPerTest": 13.009
+        }
+      },
+      {
+        "fixture": "android",
+        "mode": "minimal",
+        "passing": {
+          "tests": 7,
+          "mbPerTest": {
+            "video": 4.308,
+            "trace": 0,
+            "screenshots": 0,
+            "logs": 2.197,
+            "other": 0.001
+          },
+          "totalMbPerTest": 6.506
+        },
+        "failing": {
+          "tests": 6,
+          "mbPerTest": {
+            "video": 8.595,
+            "trace": 0,
+            "screenshots": 0.278,
+            "logs": 3.85,
+            "other": 0
+          },
+          "totalMbPerTest": 12.724
+        }
+      }
+    ],
+    "decisions": {
+      "rules": {
+        "usdPerDecision": 0
+      },
+      "jev": {
+        "usdPerMillionInputTokens": 0.042,
+        "tokensPerDecision": 350,
+        "usdPerDecision": 0.000014700000000000002,
+        "usdPer1000Decisions": 0.014700000000000001
+      },
+      "laya": {
+        "usdPerDecision": 0,
+        "note": "runs locally through Ollaya"
+      },
+      "rulesDecide": {
+        "failure_cause": {
+          "cases": 50,
+          "decided": 45,
+          "escalated": 5,
+          "falseLabels": 0,
+          "decidedPct": 90
+        },
+        "flaky_or_real": {
+          "cases": 42,
+          "decided": 40,
+          "escalated": 2,
+          "falseLabels": 0,
+          "decidedPct": 95.2
+        },
+        "duplicate_or_new": {
+          "cases": 43,
+          "decided": 39,
+          "escalated": 4,
+          "falseLabels": 0,
+          "decidedPct": 90.7
+        },
+        "heal_class": {
+          "cases": 43,
+          "decided": 37,
+          "escalated": 6,
+          "falseLabels": 0,
+          "decidedPct": 86
+        },
+        "same_element": {
+          "cases": 67,
+          "decided": 57,
+          "escalated": 10,
+          "falseLabels": 0,
+          "decidedPct": 85.1
+        },
+        "miss_action": {
+          "cases": 41,
+          "decided": 41,
+          "escalated": 0,
+          "falseLabels": 0,
+          "decidedPct": 100
+        }
+      }
+    }
+  },
+  "factsProblem": null
+}
