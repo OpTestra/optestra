@@ -29,12 +29,16 @@ export async function startRefusalProxy(
     response.writeHead(403, { "content-type": "text/plain", connection: "close" });
     response.end("Blocked: host not in allowed domains.\n");
   });
-  // https and wss: CONNECT host:port. Refuse the tunnel.
+  // https and wss: CONNECT host:port. Refuse the tunnel. These sockets are handed
+  // over without an error listener: a browser resetting one (a full Chrome's own
+  // background connections do) must not crash the process.
   server.on("connect", (request, socket) => {
+    socket.on("error", () => socket.destroy());
     onRefused(request.url ?? "");
     socket.end(FORBIDDEN);
   });
   server.on("upgrade", (request, socket) => {
+    socket.on("error", () => socket.destroy());
     onRefused(request.url ?? "");
     socket.end(FORBIDDEN);
   });

@@ -85,6 +85,8 @@ export const ENGINE_CAPABILITIES = {
   targets: ["web", "android"],
   /** HEAL-0: heal policies, review and accept (`listHeals`, `applyHeals`). */
   heals: { policies: ["strict", "review", "auto"], review: true },
+  /** ADV-0 / DESK-5: record by clicking; `control.expect(text)` adds a typed expectation. */
+  record: { typedExpect: true },
   /** AGT-0: `draftTest` (write a test from a goal) and the MCP server. */
   draftTest: true,
   mcp: true,

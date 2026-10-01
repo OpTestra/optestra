@@ -1,5 +1,6 @@
 export {
   dataKey,
+  type RecordControl,
   type RecordedTest,
   type RecordProgress,
   type RecordSession,
