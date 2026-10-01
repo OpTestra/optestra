@@ -1,0 +1,20 @@
+# What `gcloud builds submit` uploads from the repository root (COST-0): the
+# workspace without installs, builds, local data or secrets.
+.git
+.gitignore
+**/node_modules/
+**/dist/
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+**/.DS_Store
+# The local data folder at the root (runs, sessions); tests/<data dir>/ recordings are kept.
+# brand:next /{dataDirName}/
+/.optestra/
+bench/cloud/out/
+android-vm-results/
+**/playwright-report/
+**/test-results/
+bench/fixtures/android/app/build/
+bench/fixtures/android/.gradle/

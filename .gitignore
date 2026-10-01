@@ -14,3 +14,6 @@ coverage/
 !**/tests/.optestra/
 # brand:next **/tests/{dataDirName}/authoring/
 **/tests/.optestra/authoring/
+
+# Cost runs (COST-0): results downloaded from the bucket, local stand-in output.
+bench/cloud/out/

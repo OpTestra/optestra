@@ -110,6 +110,14 @@ score the engine on the repository's Bench fixtures: false pass/fail and flake r
 | `--save-baseline` | write this run as the committed baseline (bench/baseline.json) |  |
 | `--models <entries...>` | evaluate these models (provider:model, e.g. claude-code:claude-sonnet-5-5, openrouter:z-ai/glm-4.6): authoring, check compile, fixer heals (real AI calls) |  |
 | `--compare <entries...>` | compare these models (provider:model) for pricing: quality, $ per authored test, heal, draft and explain at list prices, plus replay time, CPU and evidence size (real AI calls; --fixture all adds Android) |  |
+| `--corpus` | run the real-developer corpus (bench/corpus): per phrasing style, lint, authoring, false passes/fails, heals, calls and cost (real AI calls; --static for the free part) |  |
+| `--static` | for --corpus: only lint and the phrase rules (no browser, no model) |  |
+| `--style <name>` | for --corpus: only this style (repeatable) | `[]` |
+| `--test <name>` | for --corpus: only this gold test (repeatable) | `[]` |
+| `--route <route>` | for --corpus: file or description (default: each style's routes) |  |
+| `--no-cosmetic` | for --corpus: skip the cosmetic heal pass |  |
+| `--meter <path>` | turn cloud-run measurements (a results folder or JSON file) into the cost report, with bench/cloud/prices.yaml |  |
+| `--out <dir>` | for --meter: where to write the report (default bench/results) |  |
 | `--scripted` | run the model evals with a scripted stand-in (no AI; for CI) |  |
 | `--yes` | for --models and --compare: don't ask before the real-model run |  |
 | `--measures` | print the success measures (application section 10) from real data |  |

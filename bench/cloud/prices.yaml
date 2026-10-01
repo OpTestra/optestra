@@ -1,0 +1,71 @@
+# List prices the cost meter applies (COST-0). USD, us-east4 (Cloud Run Tier 1),
+# no discounts, before free tiers (the free tiers are listed so the report can
+# say what they would cover). Checked 2026-10-01 on the pages in `source`.
+# Monthly = 730 hours. Update `checked` and the numbers together.
+version: 1
+checked: 2026-10-01
+currency: USD
+region: us-east4
+hoursPerMonth: 730
+
+cloudRun:
+  source: https://cloud.google.com/run/pricing
+  # Jobs bill at the instance-based rate for the whole life of every task,
+  # rounded up to 100 ms, with a minimum of 1 minute per task. No request fee.
+  jobs:
+    vcpuSecond: 0.000018
+    gibSecond: 0.000002
+    roundingSeconds: 0.1
+    minimumSecondsPerTask: 60
+    requests: 0
+  freeTier: { vcpuSeconds: 240000, gibSeconds: 450000 }
+
+storage:
+  source: https://cloud.google.com/storage/pricing
+  # Standard, regional us-east4: $0.000031507 per GiB-hour.
+  standardGibMonth: 0.023
+  # Per 1,000 operations, Standard, flat namespace.
+  classAPer1000: 0.005
+  classBPer1000: 0.0004
+  # Data transfer to the internet (0–10 TiB), per GiB; same-region reads are free.
+  egressInternetGib: 0.12
+  egressSameRegionGib: 0
+  freeTier: "5 GiB-month only in us-east1, us-west1, us-central1: none in us-east4"
+
+cloudBuild:
+  source: https://cloud.google.com/build/pricing
+  e2Standard2Minute: 0.006
+  freeMinutesPerMonth: 2500
+
+artifactRegistry:
+  source: https://cloud.google.com/artifact-registry/pricing
+  # $0.000136986 per GiB-hour after the first 0.5 GiB-month; same-region pulls are free.
+  gibMonth: 0.1
+  freeGibMonth: 0.5
+
+secretManager:
+  source: https://cloud.google.com/secret-manager/pricing
+  # $0.000082192 per active version-hour after 6 versions; $0.03 per 10,000 accesses after 10,000.
+  versionMonth: 0.06
+  freeVersions: 6
+  accessPer10000: 0.03
+  freeAccesses: 10000
+
+compute:
+  source: https://cloud.google.com/spot-vms/pricing and https://cloud.google.com/compute/disks-image-pricing
+  # Spot prices move (up to once a day); this is the us-east4 price on `checked`.
+  spot:
+    n2-standard-4: { hour: 0.0576, vcpu: 4, memoryGiB: 16 }
+    n2-standard-8: { hour: 0.1152, vcpu: 8, memoryGiB: 32 }
+  # pd-balanced, us-east4: $0.000150685 per GiB-hour.
+  pdBalancedGibMonth: 0.11
+
+# Neon (Postgres) and WorkOS (sign-in): $0 at this scale. Neon's free plan and
+# WorkOS's free tier (up to 1M monthly active users) cover a cost-baseline run;
+# neither is used by the bench runner itself.
+neon: 0
+workos: 0
+
+# AI: list API prices from packages/models/prices.yaml (the same file EVAL-0 used),
+# also for calls that went through a subscription CLI.
+ai: packages/models/prices.yaml
