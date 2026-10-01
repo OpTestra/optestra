@@ -122,10 +122,10 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `models.providers.<id>.options` | map of string |  | Provider-specific settings: azure resourceName/apiVersion, bedrock region. |
 | `models.providers.<id>.binary` | string |  | claude-code / codex: path to the CLI. Default: found on PATH (claude, codex). |
 | `models.roles` | object |  | Ordered pool per role: the first healthy entry answers. |
-| `models.roles.planner` | list of object | `[{"provider":"anthropic","model":"claude-sonnet-4-6"},{"provider":"openai","model":"gpt-6-sol"},{"provider":"google","model":"gemini-3.8-flash"},{"provider":"claude-code","model":"claude-sonnet-4-6"},{"provider":"codex","model":"default"}]` | Writes and re-records tests. |
+| `models.roles.planner` | list of object | `[{"provider":"anthropic","model":"claude-sonnet-5-5"},{"provider":"openai","model":"gpt-6-sol"},{"provider":"google","model":"gemini-3.8-flash"},{"provider":"claude-code","model":"claude-sonnet-5-5"},{"provider":"codex","model":"default"}]` | Writes and re-records tests. |
 | `models.roles.planner.[].provider` | string |  | Provider id from models.providers. |
 | `models.roles.planner.[].model` | string |  | Model id at that provider. |
-| `models.roles.fixer` | list of object | `[{"provider":"anthropic","model":"claude-haiku-4-5"},{"provider":"openai","model":"gpt-6-luna"},{"provider":"google","model":"gemini-3.5-flash-lite"},{"provider":"claude-code","model":"claude-haiku-4-5"},{"provider":"codex","model":"default"}]` | Cheap, fast single-step heals. |
+| `models.roles.fixer` | list of object | `[{"provider":"anthropic","model":"claude-sonnet-5-5"},{"provider":"openai","model":"gpt-6-luna"},{"provider":"google","model":"gemini-3.5-flash-lite"},{"provider":"claude-code","model":"claude-sonnet-5-5"},{"provider":"codex","model":"default"}]` | Cheap, fast single-step heals. |
 | `models.roles.fixer.[].provider` | string |  | Provider id from models.providers. |
 | `models.roles.fixer.[].model` | string |  | Model id at that provider. |
 | `models.prices` | map of object | `{}` | Price overrides by model id, USD per million tokens. |

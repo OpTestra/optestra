@@ -12,7 +12,7 @@ import type { CommandIo } from "./config.js";
 // same pipeline with a stand-in that spends nothing (CI).
 
 /** The model the gate compares candidates with: the default planner. */
-export const REFERENCE_MODEL = "claude-sonnet-4-6";
+export const REFERENCE_MODEL = "claude-sonnet-5-5";
 
 /** The reference model's false passes in the newest real model eval, or null. */
 export function referenceFalsePasses(benchDir: string): number | null {
@@ -53,7 +53,7 @@ export async function modelEval(
   const bad = entries.find((e) => !e.entry);
   if (bad) {
     io.stdout(
-      `"${bad.text}" isn't a pool entry: use provider:model, e.g. claude-code:claude-sonnet-4-6 or openrouter:z-ai/glm-4.6.\n`,
+      `"${bad.text}" isn't a pool entry: use provider:model, e.g. claude-code:claude-sonnet-5-5 or openrouter:z-ai/glm-4.6.\n`,
     );
     return { ok: false, code: 2 };
   }

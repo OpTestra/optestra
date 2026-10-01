@@ -15,7 +15,7 @@ export async function runCompareCommand(
   const bad = entries.find((e) => !e.entry);
   if (bad) {
     io.stdout(
-      `"${bad.text}" isn't a pool entry: use provider:model, e.g. claude-code:claude-sonnet-4-6.\n`,
+      `"${bad.text}" isn't a pool entry: use provider:model, e.g. claude-code:claude-sonnet-5-5.\n`,
     );
     return 2;
   }

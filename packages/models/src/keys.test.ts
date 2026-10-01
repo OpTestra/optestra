@@ -25,20 +25,20 @@ describe("pools", () => {
         PATH: "",
       }),
     );
-    // The default Claude models are pinned: Sonnet 4.6 plans, Haiku 4.5 fixes. Nothing
-    // newer or larger by default (a user choice, 2026-09-27). Change only on purpose.
+    // The default Claude model is pinned to Sonnet 5.5 for planner and fixer (a user
+    // choice, 2026-10-01, from the EVAL-0 comparison). Change only on purpose.
     expect(pools.planner.map((e) => [e.provider, e.model, e.usable])).toEqual([
-      ["anthropic", "claude-sonnet-4-6", true],
+      ["anthropic", "claude-sonnet-5-5", true],
       ["openai", "gpt-6-sol", false],
       ["google", "gemini-3.8-flash", false],
-      ["claude-code", "claude-sonnet-4-6", false],
+      ["claude-code", "claude-sonnet-5-5", false],
       ["codex", "default", false],
     ]);
     expect(pools.fixer.map((e) => [e.provider, e.model, e.usable])).toEqual([
-      ["anthropic", "claude-haiku-4-5", true],
+      ["anthropic", "claude-sonnet-5-5", true],
       ["openai", "gpt-6-luna", false],
       ["google", "gemini-3.5-flash-lite", false],
-      ["claude-code", "claude-haiku-4-5", false],
+      ["claude-code", "claude-sonnet-5-5", false],
       ["codex", "default", false],
     ]);
   });

@@ -16,7 +16,7 @@ export interface BenchCommandOptions {
   equivalence?: boolean;
   /** Write this run as the new committed baseline. */
   saveBaseline?: boolean;
-  /** Model evals (MOD-9): pool entries like claude-code:claude-sonnet-4-6. */
+  /** Model evals (MOD-9): pool entries like claude-code:claude-sonnet-5-5. */
   models?: string[];
   /** Model evals without real models (CI). */
   scripted?: boolean;

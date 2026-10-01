@@ -108,7 +108,7 @@ score the engine on the repository's Bench fixtures: false pass/fail and flake r
 | `--variant <name>` | only this variant (repeatable) | `[]` |
 | `--no-equivalence` | don't compare the shop's replay with its generated specs |  |
 | `--save-baseline` | write this run as the committed baseline (bench/baseline.json) |  |
-| `--models <entries...>` | evaluate these models (provider:model, e.g. claude-code:claude-sonnet-4-6, openrouter:z-ai/glm-4.6): authoring, check compile, fixer heals (real AI calls) |  |
+| `--models <entries...>` | evaluate these models (provider:model, e.g. claude-code:claude-sonnet-5-5, openrouter:z-ai/glm-4.6): authoring, check compile, fixer heals (real AI calls) |  |
 | `--compare <entries...>` | compare these models (provider:model) for pricing: quality, $ per authored test, heal, draft and explain at list prices, plus replay time, CPU and evidence size (real AI calls; --fixture all adds Android) |  |
 | `--scripted` | run the model evals with a scripted stand-in (no AI; for CI) |  |
 | `--yes` | for --models and --compare: don't ask before the real-model run |  |

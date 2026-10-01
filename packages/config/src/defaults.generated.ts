@@ -64,7 +64,7 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
       planner: [
         {
           provider: "anthropic",
-          model: "claude-sonnet-4-6",
+          model: "claude-sonnet-5-5",
         },
         {
           provider: "openai",
@@ -76,7 +76,7 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
         },
         {
           provider: "claude-code",
-          model: "claude-sonnet-4-6",
+          model: "claude-sonnet-5-5",
         },
         {
           provider: "codex",
@@ -86,7 +86,7 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
       fixer: [
         {
           provider: "anthropic",
-          model: "claude-haiku-4-5",
+          model: "claude-sonnet-5-5",
         },
         {
           provider: "openai",
@@ -98,7 +98,7 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
         },
         {
           provider: "claude-code",
-          model: "claude-haiku-4-5",
+          model: "claude-sonnet-5-5",
         },
         {
           provider: "codex",

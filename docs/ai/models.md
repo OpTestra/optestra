@@ -15,13 +15,13 @@ All default model ids live in one file, the engine's `defaults.yaml`, never in c
 
 | Pool order | `planner` | `fixer` |
 |---|---|---|
-| 1. Anthropic API | `claude-sonnet-4-6` | `claude-haiku-4-5` |
+| 1. Anthropic API | `claude-sonnet-5-5` | `claude-sonnet-5-5` |
 | 2. OpenAI API | `gpt-6-sol` | `gpt-6-luna` |
 | 3. Google API | `gemini-3.8-flash` | `gemini-3.5-flash-lite` |
-| 4. Claude Code (your subscription) | `claude-sonnet-4-6` | `claude-haiku-4-5` |
+| 4. Claude Code (your subscription) | `claude-sonnet-5-5` | `claude-sonnet-5-5` |
 | 5. Codex (your subscription) | the tool's default | the tool's default |
 
-The Anthropic defaults are pinned to Sonnet 4.6 and Haiku 4.5: no newer or larger Claude model is used unless you choose it.
+The Claude defaults are pinned to Sonnet 5.5 for both roles. It authored every Bench test correctly at about half the cost of Sonnet 4.6 (the 2026-10-01 model comparison in `bench/results/`). No other Claude model is used unless you choose it.
 
 ## Providers
 
@@ -39,7 +39,7 @@ models:
   roles:
     planner:
       - { provider: openrouter, model: anthropic/claude-sonnet-4.6 }
-      - { provider: anthropic, model: claude-sonnet-4-6 }
+      - { provider: anthropic, model: claude-sonnet-5-5 }
     fixer:
       - { provider: ollama, model: qwen3:8b }
 ```

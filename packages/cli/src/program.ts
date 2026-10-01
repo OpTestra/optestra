@@ -138,7 +138,7 @@ export function createProgram(): Command {
     .option("--save-baseline", "write this run as the committed baseline (bench/baseline.json)")
     .option(
       "--models <entries...>",
-      "evaluate these models (provider:model, e.g. claude-code:claude-sonnet-4-6, openrouter:z-ai/glm-4.6): authoring, check compile, fixer heals (real AI calls)",
+      "evaluate these models (provider:model, e.g. claude-code:claude-sonnet-5-5, openrouter:z-ai/glm-4.6): authoring, check compile, fixer heals (real AI calls)",
     )
     .option(
       "--compare <entries...>",

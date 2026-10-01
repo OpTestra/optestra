@@ -58,7 +58,7 @@ baseline (commit it with the change that explains it). The scoring lives in
 ## Model evals (`optestra bench --models`, MOD-9)
 
 ```bash
-node packages/cli/bin/cli.js bench --models claude-code:claude-sonnet-4-6 claude-code:claude-haiku-4-5 openrouter:z-ai/glm-4.6 --yes
+node packages/cli/bin/cli.js bench --models claude-code:claude-sonnet-5-5 codex:gpt-6-luna openrouter:z-ai/glm-4.6 --yes
 node packages/cli/bin/cli.js bench --scripted        # the same pipeline with a stand-in model (CI, no AI)
 ```
 
@@ -98,7 +98,7 @@ model eval, then compares with the committed baseline:
 
 - any rise in Bench false passes (or a new one), any task with more false
   labels than the baseline's, or a candidate model with more false passes than
-  the reference model (Sonnet 4.6, in the newest committed model eval) fails;
+  the reference model (Sonnet 5.5, in the newest committed model eval) fails;
 - no baseline is no evidence: it fails too.
 
 Exit 0 passed, 1 failed, 2 couldn't run. It only reports; it never changes a
