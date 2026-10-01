@@ -82,6 +82,7 @@ const CASES: Record<
           "4. Expect: the orders table shows 5 orders",
           "5. Expect: the Save button is disabled",
           "6. Expect: {{data.email}} is shown",
+          "7. Expect: profile saved msg",
         ],
         ["data:", "  email: a@b.test"],
       ),

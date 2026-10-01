@@ -322,7 +322,8 @@ const builders: Record<string, Builder> = {
 
 /** The phrase rule that matches a line, and its named groups (no page needed). */
 export function matchRules(line: string): Array<{ rule: CompiledRule; groups: Groups }> {
-  const text = line.trim();
+  // A remark in brackets after the quoted value says why, not what: `… "$0.00 due today" (trials are free)`.
+  const text = line.trim().replace(/(["”])\s+\([^()"“”]*\)$/, "$1");
   const found: Array<{ rule: CompiledRule; groups: Groups }> = [];
   for (const rule of RULES) {
     for (const pattern of rule.patterns) {

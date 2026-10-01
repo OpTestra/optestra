@@ -1,4 +1,3 @@
-import { cpus } from "node:os";
 import {
   existsSync,
   mkdirSync,
@@ -8,6 +7,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
+import { cpus } from "node:os";
 import { join } from "node:path";
 import { ENV_PREFIX } from "@optestra/config";
 import type { ModelCall, TestResult } from "@optestra/contract";
@@ -381,7 +381,7 @@ const runTotals = (run: RunTestsResult, model: string) => totals(run.tests.flatM
 
 // ── one fixture, one model ────────────────────────────────────────────────────
 
-interface FixtureRunner {
+export interface FixtureRunner {
   id: "shop" | "android";
   manifest: ShopFixture["manifest"];
   variants: readonly string[];
@@ -397,7 +397,7 @@ interface FixtureRunner {
   sessionOpenMs?(): Promise<number>;
 }
 
-async function shopRunner(shop: ShopFixture, useMailpit: boolean): Promise<FixtureRunner> {
+export async function shopRunner(shop: ShopFixture, useMailpit: boolean): Promise<FixtureRunner> {
   return {
     id: "shop",
     manifest: shop.manifest,
@@ -415,7 +415,10 @@ async function shopRunner(shop: ShopFixture, useMailpit: boolean): Promise<Fixtu
   };
 }
 
-async function androidRunner(fixture: AndroidFixture, shop: ShopFixture): Promise<FixtureRunner> {
+export async function androidRunner(
+  fixture: AndroidFixture,
+  shop: ShopFixture,
+): Promise<FixtureRunner> {
   const { launchEmulator } = await import("@optestra/android");
   const backend = await shop.module.startShop({
     variant: "correct",

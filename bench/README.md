@@ -84,6 +84,28 @@ model runs once; nothing retries. Real results are written to
 model ids, to be committed. The newest real result also gives the first-run
 (authoring) numbers in `optestra bench`.
 
+## The real-developer corpus (`bench --corpus`, COST-0)
+
+```bash
+node packages/cli/bin/cli.js bench --corpus --static                        # lint + phrase rules: free
+node packages/cli/bin/cli.js bench --corpus --fixture all                   # the estimate, then stops
+node packages/cli/bin/cli.js bench --corpus --fixture all --models claude-code:claude-sonnet-5-5 --yes
+```
+
+Every gold test re-phrased the way developers write and speak tests (terse,
+ticket prose, acceptance criteria, Given/When/Then, speech-to-text, sloppy,
+mixed), with the same expected verdicts. Per style: lint, phrase-rule coverage,
+authoring, false passes and fails across the variants, heals, calls and cost.
+See [`corpus/README.md`](corpus/README.md).
+
+## Cloud cost runs (`bench --meter`, COST-0)
+
+`bench/cloud/` runs Bench slices as Cloud Run Job tasks (or locally, the same
+entry), measures wall, CPU, memory, start-up, evidence and AI per test, and
+`bench --meter <run folder>` prices them with `bench/cloud/prices.yaml` into
+`results/<date>-cloud-baseline.json` and `.md`. See
+[`cloud/README.md`](cloud/README.md) and [`cloud/RUNBOOK.md`](cloud/RUNBOOK.md).
+
 ## The eval gate (`optestra eval`, LRN-10)
 
 ```bash

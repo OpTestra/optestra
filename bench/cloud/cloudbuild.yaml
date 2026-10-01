@@ -1,0 +1,23 @@
+# Cloud Build for the cost-run image (COST-0): lint the Dockerfile, build, push.
+# Run by up.sh: gcloud builds submit --config bench/cloud/cloudbuild.yaml
+#   --ignore-file bench/cloud/.gcloudignore --substitutions _IMAGE=<region>-docker.pkg.dev/<project>/<repo>/<name>:<tag>
+# The default pool's e2-standard-2 (the free build-minutes apply to it).
+steps:
+  - id: lint
+    name: hadolint/hadolint:v2.12.0-debian
+    entrypoint: hadolint
+    args: ["--failure-threshold", "warning", "bench/cloud/Dockerfile"]
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    env: ["DOCKER_BUILDKIT=1"]
+    args: ["build", "-f", "bench/cloud/Dockerfile", "-t", "${_IMAGE}", "."]
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_IMAGE}"]
+images: ["${_IMAGE}"]
+substitutions:
+  _IMAGE: ""
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1800s
+tags: ["cost-run"]

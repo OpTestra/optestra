@@ -1,4 +1,5 @@
 import { createSecretValue } from "@optestra/config/node";
+import type { StepResult } from "@optestra/contract";
 import { describe, expect, it } from "vitest";
 import { agentScript, scriptedModels } from "../author/test-kit.test-support.js";
 import {
@@ -472,5 +473,36 @@ describe("replay (no browser)", () => {
     );
     expect(result.steps[1]?.status).toBe("skipped");
     expect(actions(session)).toHaveLength(0);
+  });
+});
+
+describe("an empty test that logs in first (COST-0)", () => {
+  it("is blocked, never passed: the auth login is not one of the test's own steps", async () => {
+    // A pasted paragraph has no numbered steps; with `auth:` the login still runs.
+    const test = await expanded('Never: click "Delete account"');
+    const login = {
+      index: 0,
+      key: "flow:auth",
+      text: "auth: ada",
+      kind: "flow",
+      status: "passed",
+      recovery: "replay",
+      locator: null,
+      postState: null,
+      startedAt: new Date(0).toISOString(),
+      durationMs: 1,
+      settledMs: null,
+      screenshots: { before: null, after: null },
+      error: null,
+      checkIds: [],
+      modelCallIds: [],
+      decisionIds: [],
+      healIds: [],
+    } as unknown as StepResult;
+    const { result } = await replay(test, undefined, fakeSession({ locators: {} }), {
+      prepare: async () => ({ status: "ready", message: "", step: login }),
+    });
+    expect(result.status).toBe("blocked");
+    expect(decideVerdict([result]).verdict).toBe("blocked");
   });
 });

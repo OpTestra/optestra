@@ -23,6 +23,7 @@
     "packages/codegen/scripts",
     "packages/cli/e2e",
     "packages/cli/vitest.config.ts",
+    "bench/cloud",
     "packages/report/e2e",
     "packages/report/vitest.config.ts",
     "packages/mcp/e2e",

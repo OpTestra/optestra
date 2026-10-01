@@ -26,6 +26,20 @@ export interface BenchCommandOptions {
   yes?: boolean;
   /** EVAL-0: compare these models (pool entries) and measure the cost facts. */
   compare?: string[];
+  /** COST-0: run the real-developer corpus (bench/corpus). */
+  corpus?: boolean;
+  /** For --corpus: only lint and the phrase rules (no browser, no model). */
+  static?: boolean;
+  /** For --corpus: only these styles / gold tests / this route. */
+  style?: string[];
+  test?: string[];
+  route?: string;
+  /** For --corpus: `--no-cosmetic` skips the cosmetic heal pass. */
+  cosmetic?: boolean;
+  /** COST-0: turn cloud measurements into the cost report. */
+  meter?: string;
+  /** For --meter: where to write the report (default bench/results). */
+  out?: string;
 }
 
 const GATED = new Set([
@@ -53,6 +67,14 @@ export async function runBenchCommand(
   if (!Number.isInteger(reruns) || reruns < 1) {
     io.stdout(`--reruns must be a whole number of 1 or more, not "${options.reruns}".\n`);
     return 2;
+  }
+  if (options.corpus) {
+    const { runCorpusCommand } = await import("./bench-corpus.js");
+    return runCorpusCommand(options, io);
+  }
+  if (options.meter) {
+    const { runMeterCommand } = await import("./bench-meter.js");
+    return runMeterCommand(options, io);
   }
   if (options.compare?.length) {
     const { runCompareCommand } = await import("./bench-compare.js");
