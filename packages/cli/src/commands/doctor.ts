@@ -32,7 +32,7 @@ import {
   resolveProviders,
   VENDOR_LABEL,
 } from "@optestra/models";
-import { recordingPath } from "@optestra/recording/node";
+import { recordingBranch, recordingFiles } from "@optestra/recording/node";
 import { DEFAULT_TESTS, loadTests } from "@optestra/spec/node";
 import type { CommandIo } from "./config.js";
 import { runLintCommand } from "./lint.js";
@@ -609,9 +609,11 @@ async function recordingsChecks(
   const config = loaded.config;
   const tests = await loadTests(dir, config, { environment });
   const testsDir = config.tests?.dir ?? DEFAULT_TESTS.dir;
-  const missing = tests.tests.filter(
-    (test) => !existsSync(join(dir, recordingPath(testsDir, test.id))),
-  );
+  // REP-8: on a feature branch, its own recording counts too.
+  const branch = recordingBranch(config.recordings ?? { branches: "auto" }, env, dir);
+  const hasRecording = (id: string) =>
+    existsSync(recordingFiles(join(dir, testsDir), id, branch).read);
+  const missing = tests.tests.filter((test) => !hasRecording(test.id));
   const checks: DoctorCheck[] = [];
   // Auth profiles (SEC-3): their login flow must exist, and should be recorded (else the first run uses AI).
   const profiles = Object.entries(config.auth?.profiles ?? {});
@@ -619,11 +621,7 @@ async function recordingsChecks(
     const rows = profiles.map(([name, profile]) => {
       const path = `${testsDir.replace(/\/+$/, "")}/${profile.flow}`;
       const flow = tests.flows.find((f) => f.path === path);
-      const status = !flow
-        ? "missing"
-        : existsSync(join(dir, recordingPath(testsDir, flow.id)))
-          ? "recorded"
-          : "not recorded";
+      const status = !flow ? "missing" : hasRecording(flow.id) ? "recorded" : "not recorded";
       return { name, path, status };
     });
     const missing = rows.filter((r) => r.status === "missing");

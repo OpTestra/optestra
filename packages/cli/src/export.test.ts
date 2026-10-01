@@ -191,3 +191,19 @@ describe("export of an Android project (MOB-6)", { timeout: 30_000 }, () => {
     expect(check.stdout).not.toMatch(/stale|edited/);
   });
 });
+
+describe("export --page-objects (EXP-4)", { timeout: 30_000 }, () => {
+  it("adds the page classes and flow helpers, and lists them", () => {
+    const out = join(outRoot, "shop-page-objects");
+    const result = run(project, "--out", out, "--page-objects");
+    expect(result.status, result.stdout).toBe(0);
+    const files = tree(out);
+    expect(files).toContain("tests/flows/login.flow.ts");
+    expect(files).toContain("tests/pages/settings.page.ts");
+    expect(result.stdout).toContain("tests/flows/login.flow.ts");
+    // Without the flag nothing changes (the first test's tree).
+    expect(files.filter((f) => !/^tests\/(pages|flows)\//.test(f))).toEqual(
+      tree(join(outRoot, "shop-playwright")),
+    );
+  });
+});

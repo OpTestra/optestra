@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { readRun } from "./node/index.js";
 import { fixture } from "./fixtures.test-support.js";
 import {
   exitCodeFor,
@@ -9,13 +8,29 @@ import {
   summarize,
   type Totals,
 } from "./index.js";
+import { readRun } from "./node/index.js";
 
 const base = readRun(fixture("all-passed")).run as Run;
-const runWith = (totals: Partial<Totals>, blocked: Run["blocked"] = null): Run => {
+const runWith = (totals: Partial<Omit<Totals, "muted">>, blocked: Run["blocked"] = null): Run => {
   const full = { passed: 0, healed: 0, failed: 0, flaky: 0, blocked: 0, ...totals };
   const tests = Object.values(full).reduce((a, b) => a + b, 0);
   return { ...base, blocked, totals: { ...full, tests } };
 };
+
+describe("exitCodeFor and muted tests (DIA-5, 1.5)", () => {
+  it("doesn't count a muted test's verdict; an unmuted failure still fails", () => {
+    const [first, ...rest] = base.tests;
+    if (!first) throw new Error("fixture has no tests");
+    const muted: Run = {
+      ...base,
+      totals: { ...base.totals, passed: base.totals.passed - 1, failed: 1, muted: 1 },
+      tests: [{ ...first, verdict: "failed", muted: true }, ...rest],
+    };
+    expect(exitCodeFor(muted, { healedCountsAsPass: false })).toBe(0);
+    const unmuted: Run = { ...muted, tests: [{ ...first, verdict: "failed" }, ...rest] };
+    expect(exitCodeFor(unmuted, { healedCountsAsPass: false })).toBe(1);
+  });
+});
 
 describe("exitCodeFor (CLI-5)", () => {
   const configError = { reason: "config_error", message: "bad config" };

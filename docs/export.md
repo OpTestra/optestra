@@ -113,6 +113,46 @@ shop-playwright/
 
 No `%scope%/*` package, no secret value and no %Name% runtime: the engine's tests check all three on every build. Tests that were never recorded are listed in the README and left out.
 
+### Page objects
+
+```sh
+%cli% export --out ../shop-playwright --page-objects
+```
+
+Off by default. With it, the export groups what repeats:
+
+- **A class per page,** in `tests/pages/<page>.page.ts`: every element the tests use on that page (by the route the recording saw) becomes a getter, so a renamed button is fixed in one place.
+
+  ```ts
+  export class SettingsPage {
+    constructor(readonly page: Page) {}
+
+    /** button "Save changes" */
+    get saveChangesButton() {
+      return this.page.getByRole("button", { name: "Save changes", exact: true });
+    }
+  }
+  ```
+
+- **A helper per flow,** in `tests/flows/<flow>.flow.ts`: a `Use:` flow, or an `auth:` profile's login, becomes one async function that every test using it calls, with its params.
+
+  ```ts
+  test("Profile changes are saved", async ({ page, secrets }) => {
+    const settingsPage = new SettingsPage(page);
+
+    const loginParams = { email: "ada@example.com" };
+    await test.step("auth: ada (tests/flows/login.test.md)", async () => {
+      await logIn({ page, secrets }, loginParams);
+    });
+    // …
+    await settingsPage.saveChangesButton.click();
+  });
+  ```
+
+  When a flow's code comes out differently in two tests (it was recorded differently, or one test gives a secret for a param), each variant gets its own helper (`logIn`, `logIn2`), so nothing changes what a test does.
+
+The specs run exactly as without page objects: the engine's tests run the exported suite with plain `npx playwright test` both ways.
+
 ## Portable vs %Name%-only
 
 | | Plain Playwright (the spec) | %Name% |
@@ -123,7 +163,9 @@ No `%scope%/*` package, no secret value and no %Name% runtime: the engine's test
 | Healing | no: a changed page fails | yes |
 | Model-judged checks, `Never:` guards, pending checks | noted only | evaluated |
 | Auth profiles | logs in with the flow each time | saved sessions, reused |
-| `run`/`sql` hooks | skip, with the reason | not yet either |
+| `run`/`sql` hooks | skip, with the reason | yes |
+| `Mock:` steps | yes (`mock()` in the fixtures) | yes |
+| Recorded network traffic, accessibility warnings, muting | no | yes |
 | Verdicts, failure causes, flaky detection | Playwright's pass/fail | yes |
 
 ## Android: Maestro flows

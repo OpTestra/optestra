@@ -44,6 +44,8 @@ const RUN_TESTS_OPTIONS = [
   "generateSpecs",
   "checkTimeoutMs",
   "inbox",
+  "network",
+  "accessibility",
 ] as const satisfies readonly (keyof RunTestsOptions)[];
 
 // Every option of RunTestsOptions is in the list above (a compile error otherwise).
@@ -72,6 +74,13 @@ export const ENGINE_CAPABILITIES = {
     /** PERF-0: the Node for JS subscription CLIs and code-step specs (the packaged app). */
     node: true,
     browsers: ["chromium", "firefox", "webkit"],
+    /** ADV-1 (ENV-4): `network: record | replay | live`, and `Mock:` steps (web). */
+    network: ["record", "replay", "live"],
+    mocks: true,
+    /** ADV-1 (DIA-5): `quarantine` mutes; TestResult `muted`. */
+    quarantine: true,
+    /** ADV-1 (EVD-6): `accessibility: off | warn`; Attempt `accessibility`. */
+    accessibility: ["off", "warn"],
   },
   targets: ["web", "android"],
   /** HEAL-0: heal policies, review and accept (`listHeals`, `applyHeals`). */

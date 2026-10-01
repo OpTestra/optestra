@@ -1,6 +1,6 @@
 {
   "kind": "results-summary",
-  "version": "1.1",
+  "version": "1.2",
   "contractVersion": "1.0",
   "runId": "01M3EF2PM04CMHWHZ9D1V41QWH",
   "project": "demo-shop",
@@ -62,7 +62,12 @@
           "calls": 0
         }
       },
-      "result": "tests/tests__checkout__guest-checkout/result.json"
+      "result": "tests/tests__checkout__guest-checkout/result.json",
+      "mocks": [],
+      "accessibility": null,
+      "muted": null,
+      "muteExpired": null,
+      "muteSuggested": null
     },
     {
       "testId": "tests__search__search-products",
@@ -92,7 +97,12 @@
           "calls": 0
         }
       },
-      "result": "tests/tests__search__search-products/result.json"
+      "result": "tests/tests__search__search-products/result.json",
+      "mocks": [],
+      "accessibility": null,
+      "muted": null,
+      "muteExpired": null,
+      "muteSuggested": null
     }
   ]
 }

@@ -36,3 +36,5 @@ export type {
 export { type RenderOptions, renderForModel } from "./render.js";
 export { openSession, Session } from "./session.js";
 export * from "./types.js";
+export type { MockRule, MockUse } from "./network.js";
+export type { AccessibilityScan, AccessibilityViolation } from "./accessibility.js";

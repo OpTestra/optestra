@@ -18,6 +18,12 @@ import {
   FailureCauseSchema,
   VerdictSchema,
 } from "./enums.js";
+import {
+  AccessibilityReportSchema,
+  MockUseSchema,
+  MuteSchema,
+  MuteSuggestionSchema,
+} from "./extras.js";
 import { HealProposalSchema } from "./heal.js";
 import { DecisionRecordSchema, ModelCallSchema } from "./records.js";
 import { StepResultSchema } from "./step.js";
@@ -71,6 +77,10 @@ export const AttemptSchema = z.object({
   decisions: z.array(DecisionRecordSchema),
   heals: z.array(HealProposalSchema),
   artifacts: z.array(ArtifactRefSchema),
+  /** 1.5 (ENV-4): responses that came from a mock or recorded traffic, not the app. */
+  mocks: z.array(MockUseSchema).optional(),
+  /** 1.5 (EVD-6): accessibility warnings (never part of the verdict). */
+  accessibility: AccessibilityReportSchema.optional(),
 });
 export type Attempt = z.infer<typeof AttemptSchema>;
 
@@ -122,6 +132,15 @@ export const TestResultSchema = z
      * included. `healed` ≥ 3 of the last 10 means "re-record this test".
      */
     recentHeals: RecentHealsSchema.optional(),
+    /**
+     * 1.5 (DIA-5): muted until a date. The verdict is still the real one; a
+     * muted test's failure doesn't fail the run (see exitCodeFor).
+     */
+    muted: MuteSchema.optional(),
+    /** 1.5: the mute ended before this run: the test counts again. */
+    muteExpired: MuteSchema.optional(),
+    /** 1.5: the run thinks the test is flaky and suggests muting it. */
+    muteSuggested: MuteSuggestionSchema.optional(),
     attempts: z.array(AttemptSchema),
   })
   .superRefine((test, ctx) => {

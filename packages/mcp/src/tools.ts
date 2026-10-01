@@ -4,7 +4,7 @@ import { brand } from "@optestra/brand";
 import { type Config, hasErrors } from "@optestra/config";
 import { loadProject } from "@optestra/config/node";
 import type { RunMode, Trigger } from "@optestra/contract";
-import { recordingPath } from "@optestra/recording/node";
+import { recordingBranch, recordingFiles } from "@optestra/recording/node";
 import { buildResultsSummary, resultsSummaryJsonSchema } from "@optestra/report";
 import { checkTest, type Finding } from "@optestra/spec";
 import { loadTests, nodeFileReader } from "@optestra/spec/node";
@@ -261,7 +261,7 @@ export const TOOLS = [
           name: t.spec.frontmatter.name,
           tags: t.spec.frontmatter.tags,
           steps: t.expanded.steps.length,
-          recorded: existsSync(recordingPath(join(p.dir, p.testsDir), t.id)),
+          recorded: isRecorded(p.dir, p.testsDir, p.config, ctx.env, t.id),
           problems: t.diagnostics.length,
         }));
       return {
@@ -319,7 +319,7 @@ export const TOOLS = [
           kind: s.kind,
           text: s.display,
         })),
-        recorded: id ? existsSync(recordingPath(join(p.dir, p.testsDir), id)) : false,
+        recorded: id ? isRecorded(p.dir, p.testsDir, p.config, ctx.env, id) : false,
         findings: checked.findings.map(findingOf),
       };
     },
@@ -677,4 +677,16 @@ export async function callTool(
         : `${name} failed: ${error instanceof Error ? `${error.message}${"fix" in error && typeof error.fix === "string" ? ` Fix: ${error.fix}` : ""}` : String(error)}`;
     return { isError: true, content: [{ type: "text", text: message }] };
   }
+}
+
+/** Whether a test has a recording (REP-8: on a feature branch, its own counts too). */
+function isRecorded(
+  dir: string,
+  testsDir: string,
+  config: Pick<Config, "recordings">,
+  env: Readonly<Record<string, string | undefined>>,
+  id: string,
+): boolean {
+  const branch = recordingBranch(config.recordings ?? { branches: "auto" }, env, dir);
+  return existsSync(recordingFiles(join(dir, testsDir), id, branch).read);
 }

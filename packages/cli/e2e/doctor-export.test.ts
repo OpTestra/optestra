@@ -104,55 +104,73 @@ describe("doctor with a real browser", () => {
   });
 });
 
+async function exportAndRun(pageObjects: boolean): Promise<string> {
+  const out = join(mkdtempSync(join(tmpdir(), "cli-e2e-export-")), "tests");
+  temps.push(join(out, ".."));
+  let printed = "";
+  const code = await runExportCommand(
+    { out, ...(pageObjects ? { pageObjects } : {}) },
+    { cwd: project, env: {}, stdout: (text) => (printed += text) },
+  );
+  expect(code, printed).toBe(0);
+
+  const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+  const npx = process.platform === "win32" ? "npx.cmd" : "npx";
+  const base = {
+    PATH: process.env.PATH ?? "",
+    HOME: process.env.HOME ?? "",
+    ...(process.env.PLAYWRIGHT_BROWSERS_PATH
+      ? { PLAYWRIGHT_BROWSERS_PATH: process.env.PLAYWRIGHT_BROWSERS_PATH }
+      : {}),
+  };
+  const install = await run(npm, ["install", "--prefer-offline", "--no-audit", "--no-fund"], {
+    cwd: out,
+    env: base,
+  });
+  expect(install.code, install.stderr).toBe(0);
+
+  const report = join(out, "report.json");
+  const tests = await run(
+    npx,
+    ["playwright", "test", "--project=chromium", "--workers=1", "--retries=0", "--reporter=json"],
+    {
+      cwd: out,
+      env: {
+        ...base,
+        PLAYWRIGHT_JSON_OUTPUT_NAME: report,
+        [`${ENV_PREFIX}BASE_URL`]: shop.url,
+        SHOP_PASSWORD,
+      },
+    },
+  );
+  const json = JSON.parse(readFileSync(report, "utf8")) as {
+    stats: { expected: number; unexpected: number; skipped: number; flaky: number };
+  };
+  expect(json.stats, `${tests.stdout}\n${tests.stderr}`).toEqual(
+    expect.objectContaining({ unexpected: 0, flaky: 0 }),
+  );
+  // Seven recorded tests: the sign-up-with-email one skips without a Mailpit inbox.
+  expect(json.stats.expected).toBe(6);
+  expect(json.stats.skipped).toBe(1);
+  expect(tests.code).toBe(0);
+  return out;
+}
+
 describe("export with plain Playwright", () => {
   it("npm install && npx playwright test runs green against the shop", async () => {
-    const out = join(mkdtempSync(join(tmpdir(), "cli-e2e-export-")), "tests");
-    temps.push(join(out, ".."));
-    let printed = "";
-    const code = await runExportCommand(
-      { out },
-      { cwd: project, env: {}, stdout: (text) => (printed += text) },
-    );
-    expect(code, printed).toBe(0);
+    await exportAndRun(false);
+  });
 
-    const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-    const npx = process.platform === "win32" ? "npx.cmd" : "npx";
-    const base = {
-      PATH: process.env.PATH ?? "",
-      HOME: process.env.HOME ?? "",
-      ...(process.env.PLAYWRIGHT_BROWSERS_PATH
-        ? { PLAYWRIGHT_BROWSERS_PATH: process.env.PLAYWRIGHT_BROWSERS_PATH }
-        : {}),
-    };
-    const install = await run(npm, ["install", "--prefer-offline", "--no-audit", "--no-fund"], {
-      cwd: out,
-      env: base,
-    });
-    expect(install.code, install.stderr).toBe(0);
-
-    const report = join(out, "report.json");
-    const tests = await run(
-      npx,
-      ["playwright", "test", "--project=chromium", "--workers=1", "--retries=0", "--reporter=json"],
-      {
-        cwd: out,
-        env: {
-          ...base,
-          PLAYWRIGHT_JSON_OUTPUT_NAME: report,
-          [`${ENV_PREFIX}BASE_URL`]: shop.url,
-          SHOP_PASSWORD,
-        },
-      },
+  it("with --page-objects (EXP-4): page classes and the login helper, still green", async () => {
+    const out = await exportAndRun(true);
+    const login = readFileSync(join(out, "tests/flows/login.flow.ts"), "utf8");
+    expect(login).toContain("export async function logIn(");
+    expect(readFileSync(join(out, "tests/pages/settings.page.ts"), "utf8")).toContain(
+      "export class SettingsPage {",
     );
-    const json = JSON.parse(readFileSync(report, "utf8")) as {
-      stats: { expected: number; unexpected: number; skipped: number; flaky: number };
-    };
-    expect(json.stats, `${tests.stdout}\n${tests.stderr}`).toEqual(
-      expect.objectContaining({ unexpected: 0, flaky: 0 }),
-    );
-    // Seven recorded tests: the sign-up-with-email one skips without a Mailpit inbox.
-    expect(json.stats.expected).toBe(6);
-    expect(json.stats.skipped).toBe(1);
-    expect(tests.code).toBe(0);
+    const spec = readFileSync(join(out, "tests/tests__settings-profile.spec.ts"), "utf8");
+    expect(spec).toContain("await settingsPage.saveChangesButton.click();");
+    // One helper per recorded variant of the login flow (logIn, logIn2, ...).
+    expect(spec).toMatch(/await logIn\d*\(\{ page, secrets \}, loginParams\);/);
   });
 });

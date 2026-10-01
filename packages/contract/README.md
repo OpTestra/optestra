@@ -44,6 +44,15 @@ and `driver_failed` (the on-device driver didn't start); an Android matrix entry
 `testId` is suffixed `@android<version>-<device>`. New open-enum values only:
 1.0–1.3 readers accept them.
 
+**1.5** (ADV-1): TestResult `muted`, `muteExpired` (`{ reason, until, source }`,
+DIA-5) and `muteSuggested` (`{ reason, confidence }`); RunTestRef `muted` and
+`totals.muted`: a muted test keeps its real verdict, and `exitCodeFor` doesn't
+count it. Attempt `mocks` (`MockUse[]`: `source step|recorded`, method, url,
+status, hits, stepIndex, file; ENV-4) and `accessibility` (`{ standard, pages,
+ms, violations }`, each violation `rule impact help helpUrl page nodes targets`;
+EVD-6), carried by `attempt.finished`; the mute fields by `test.finished`. All
+optional: 1.0–1.4 documents parse as before, and older readers ignore them.
+
 `fixtures/v1/` is frozen once released: `pnpm gen:fixtures` skips folders that
 exist. `_future-minor/` is a 1.9 run with extra fields and an unknown event, to
 prove 1.0 readers still read it.

@@ -14,6 +14,7 @@ import {
 } from "@optestra/spec";
 import { type Header, withHeader } from "./header.js";
 import { holdsValue, locatorExpr } from "./locators.js";
+import { importLine, type PageObjects } from "./page-objects.js";
 import {
   arr,
   arrow,
@@ -25,6 +26,7 @@ import {
   type Expr,
   formatNumber,
   id,
+  isIdentifier,
   member,
   method,
   newExpr,
@@ -58,6 +60,11 @@ import {
 // groups. Healing data (fallbacks, fingerprints) stays in the recording.
 
 export interface SpecSource {
+  /**
+   * EXP-4 (`export --page-objects`): locators go to page classes and flows to
+   * shared helpers, collected here across the export's specs.
+   */
+  pageObjects?: PageObjects | undefined;
   /** The expanded test (flows inlined), from `expandTest` / `loadTest`. */
   expanded: ExpandedTest;
   /** The parsed test and flow files, by project-relative path. */
@@ -261,8 +268,15 @@ function jsonExpr(value: unknown): Expr {
 // ── the generator ────────────────────────────────────────────────────────────
 
 class SpecWriter {
-  readonly needs: Needs = { fixtures: new Set(), imports: new Set(["expect", "test"]) };
-  readonly taken = new Set(RESERVED);
+  needs: Needs = { fixtures: new Set(), imports: new Set(["expect", "test"]) };
+  taken = new Set(RESERVED);
+  // EXP-4 (page objects): page class → its variable here; module → names imported from it.
+  pages = new Map<string, { name: string; module: string }>();
+  modules = new Map<string, Set<string>>();
+  /** The route the recording saw when the step began (page objects are per page). */
+  route: string | undefined;
+  /** Writing a flow helper's body: flows inside it stay inline. */
+  inHelper = false;
   // Swapped while writing a profile's login flow (its own steps and recording).
   steps: ExpandedStep[];
   checks: Map<string, CodegenCheck>;
@@ -290,7 +304,37 @@ class SpecWriter {
 
   /** `expect(...)` or `expect.soft(...)`. */
   expect(soft: boolean, subject: Expr): Expr {
+    this.needs.imports.add("expect");
     return call(soft ? member(id("expect"), "soft") : id("expect"), subject);
+  }
+
+  importFrom(module: string, name: string): Expr {
+    const names = this.modules.get(module) ?? new Set<string>();
+    names.add(name);
+    this.modules.set(module, names);
+    return id(name);
+  }
+
+  /** A locator: inline, or (page objects) a getter of the page the step is on. */
+  locate(locator: Locator, container?: Locator): Expr {
+    this.fixture("page");
+    const po = this.source.pageObjects;
+    if (!po) return locatorExpr(locator, container);
+    const { className, module, getter } = po.locator(this.route, locator, container);
+    let page = this.pages.get(className);
+    if (!page) {
+      page = { name: uniqueName(camel([className]), this.taken), module };
+      this.pages.set(className, page);
+      this.importFrom(module, className);
+    }
+    return member(id(page.name), getter);
+  }
+
+  /** `const settingsPage = new SettingsPage(page);` for each page object used. */
+  pageDeclarations(): Stmt[] {
+    return [...this.pages.entries()].map(([className, page]) =>
+      constStmt(page.name, newExpr(id(className), [id("page")])),
+    );
   }
 
   checkedElsewhere(line: string, reason: string): Stmt[] {
@@ -318,10 +362,7 @@ class SpecWriter {
   command(cmd: Command, scope: Scope, locals: StepLocals): Stmt[] {
     const action = cmd.action;
     const text = (template: string): Value => this.value(recordingParts(template), scope, locals);
-    const target = (locator: Locator) => {
-      this.fixture("page");
-      return locatorExpr(locator);
-    };
+    const target = (locator: Locator) => this.locate(locator);
     const run = (expr: Expr): Stmt[] => [stmt(awaited(expr))];
     this.fixture("page");
     switch (action.type) {
@@ -471,10 +512,7 @@ class SpecWriter {
       stmt(awaited(method(this.expect(soft, subject), matcher, ...args))),
     ];
     const text = (template: string): Value => this.value(recordingParts(template), scope, locals);
-    const target = (locator: Locator, container?: Locator) => {
-      this.fixture("page");
-      return locatorExpr(locator, container);
-    };
+    const target = (locator: Locator, container?: Locator) => this.locate(locator, container);
     const softOption = soft ? [obj([["soft", raw("true")]])] : [];
     switch (op.type) {
       case "text": {
@@ -670,6 +708,34 @@ class SpecWriter {
     } else if (step.kind === "exact" && step.exact?.form === "code") {
       this.fixture("page");
       body.push({ t: "verbatim", code: step.exact.code.replace(/\s+$/, "") });
+    } else if (step.kind === "exact" && step.exact?.form === "op" && step.exact.op.op === "mock") {
+      // ENV-4: a Mock: step answers the app's matching requests from here on.
+      const op = step.exact.op;
+      const file = op.body ? `../${op.body.replace(/^\.\//, "")}` : null;
+      const types: Record<string, string> = {
+        json: "application/json",
+        html: "text/html",
+        txt: "text/plain",
+        xml: "application/xml",
+        csv: "text/csv",
+      };
+      const ext = op.body?.split(".").pop()?.toLowerCase() ?? "";
+      this.fixture("page");
+      body.push(
+        stmt(
+          awaited(
+            call(
+              this.helper("mock"),
+              id("page"),
+              str(op.method),
+              str(op.url.display),
+              num(op.status),
+              file === null ? id("null") : str(file),
+              str(op.body ? (types[ext] ?? "application/octet-stream") : "application/json"),
+            ),
+          ),
+        ),
+      );
     } else {
       const recorded = this.recorded.get(step.textKey);
       let commands = recorded?.commands;
@@ -683,6 +749,7 @@ class SpecWriter {
           `${which} is not recorded yet: run \`${brand.cliName} author ${this.source.expanded.path}\``,
         );
       }
+      if (recorded?.route !== undefined) this.route = recorded.route;
       if (this.marksNetwork) {
         this.fixture("network");
         body.push(stmt(call("network.mark")));
@@ -698,6 +765,8 @@ class SpecWriter {
         }
         const statements = this.command(cmd, scope, locals);
         body.push(...statements);
+        if (cmd.action.type === "goto") this.route = cmd.action.url;
+        else if (cmd.expectPost.urlChange) this.route = cmd.expectPost.urlChange;
         const skipped = statements.some((statement) => this.skips.has(statement));
         const last = i === commands.length - 1;
         if (!skipped && (!last || nextIsAction)) body.push(...this.learnedWait(cmd, scope, locals));
@@ -797,6 +866,103 @@ class SpecWriter {
     return out;
   }
 
+  /**
+   * EXP-4: a flow's steps as a shared helper (written with its own names and
+   * fixtures), called here with this test's params and the flow's data.
+   */
+  hoisted(options: {
+    flowPath: string;
+    name: string;
+    title: string;
+    base: string;
+    flowData: Record<string, Part[]>;
+    params: (dataScope: Scope) => Scope["params"];
+    inner: (scope: Scope) => Stmt[];
+    note: Stmt;
+  }): Stmt[] {
+    const po = this.source.pageObjects as PageObjects;
+    const saved = {
+      needs: this.needs,
+      taken: this.taken,
+      pages: this.pages,
+      modules: this.modules,
+      inHelper: this.inHelper,
+    };
+    this.needs = { fixtures: new Set(), imports: new Set(["test"]) };
+    this.taken = new Set([...RESERVED, "params"]);
+    this.pages = new Map();
+    this.modules = new Map();
+    this.inHelper = true;
+    const dataScope = createScope("data", options.flowData);
+    const scope: Scope = { ...dataScope, paramsVar: "params", params: options.params(dataScope) };
+    let helper: { name: string; module: string };
+    let fixtures: FixtureName[];
+    let usesParams: boolean;
+    let usesData: boolean;
+    try {
+      const inner = options.inner(scope);
+      const pages = this.pageDeclarations();
+      fixtures = FIXTURE_ORDER.filter((name) => this.needs.fixtures.has(name));
+      const paramKeys = Object.keys(scope.params).filter((key) => scope.usedParams.has(key));
+      const dataKeys = Object.keys(options.flowData).filter((key) => scope.usedData.has(key));
+      usesParams = paramKeys.length > 0;
+      usesData = dataKeys.length > 0;
+      const shape = (keys: string[]) =>
+        `{ ${keys.map((key) => `${isIdentifier(key) ? key : JSON.stringify(key)}: string`).join("; ")} }`;
+      const others = fixtures.filter((name) => name !== "page");
+      const types = [
+        ...(fixtures.includes("page") ? ["{ page: Page }"] : []),
+        ...(others.length ? [`Pick<Fixtures, ${others.map((n) => `"${n}"`).join(" | ")}>`] : []),
+      ];
+      const parameters = [
+        fixtures.length ? `{ ${fixtures.join(", ")} }: ${types.join(" & ")}` : "_fixtures: object",
+        ...(usesParams ? [`params: ${shape(paramKeys)}`] : []),
+        ...(usesData ? [`data: ${shape(dataKeys)}`] : []),
+      ];
+      const imports = new Map(this.modules);
+      const fromFixtures = new Set(this.needs.imports);
+      if (others.length) fromFixtures.add("type Fixtures");
+      imports.set(FIXTURES_MODULE, fromFixtures);
+      if (fixtures.includes("page")) imports.set("@playwright/test", new Set(["type Page"]));
+      helper = po.flow({
+        flowPath: options.flowPath,
+        name: options.name,
+        title: `${options.name} (${options.flowPath})`,
+        parameters,
+        body: [...pages, ...(pages.length ? [blank] : []), ...inner],
+        imports,
+        test: this.source.expanded.path,
+      });
+    } finally {
+      Object.assign(this, saved);
+    }
+    for (const name of fixtures) this.fixture(name);
+    const fn = this.importFrom(helper.module, helper.name);
+    // This test's names for the flow's data and params objects.
+    if (Object.keys(options.flowData).length > 0) {
+      dataScope.dataVar = uniqueName(`${options.base}Data`, this.taken);
+      scope.dataVar = dataScope.dataVar;
+    }
+    if (Object.keys(scope.params).length > 0)
+      scope.paramsVar = uniqueName(`${options.base}Params`, this.taken);
+    const paramsDecl = this.declare(scope, "params");
+    const dataDecl = this.declare(scope, "data");
+    const args: Expr[] = [obj(fixtures.map((name) => [name, id(name)]))];
+    if (usesParams) args.push(paramsDecl.length ? id(scope.paramsVar) : obj([]));
+    if (usesData) args.push(dataDecl.length ? id(scope.dataVar) : obj([]));
+    // The step's title stays here: the same flow is one helper however it's used.
+    return [
+      ...dataDecl,
+      ...paramsDecl,
+      options.note,
+      stmt(
+        awaited(
+          call("test.step", str(options.title), arrow(null, [stmt(awaited(call(fn, ...args)))])),
+        ),
+      ),
+    ];
+  }
+
   flow(call_: FlowCall, caller: Scope): Stmt[] {
     const flow = this.source.specs[call_.flowPath];
     const including = this.source.specs[call_.use.file];
@@ -812,6 +978,31 @@ class SpecWriter {
         .pop()
         ?.replace(/\.test\.md$|\.md$/, "") ?? "flow",
     ]);
+    if (this.source.pageObjects && !this.inHelper) {
+      const flowData: Record<string, Part[]> = {};
+      for (const [key, template] of Object.entries(flow?.frontmatter.data ?? {}))
+        flowData[key] = templateParts(template);
+      const name = flow?.frontmatter.name || call_.flowPath;
+      const usePath = useStep?.path ?? call_.flowPath;
+      return this.hoisted({
+        flowPath: call_.flowPath,
+        name: flow?.frontmatter.name || base,
+        title: `${name} (${usePath})`,
+        base,
+        flowData,
+        params: (dataScope) => {
+          const params: Scope["params"] = {};
+          for (const [key, fallback] of Object.entries(flow?.frontmatter.params ?? {})) {
+            const given = useStep?.params[key];
+            if (given) params[key] = { parts: templateParts(given), scope: caller };
+            else if (fallback) params[key] = { parts: templateParts(fallback), scope: dataScope };
+          }
+          return params;
+        },
+        inner: (scope) => this.items(call_.items, scope),
+        note: comment(`${call_.use.number === null ? "" : `${call_.use.number}. `}Use: ${usePath}`),
+      });
+    }
     const dataVar = uniqueName(`${base}Data`, this.taken);
     const paramsVar = uniqueName(`${base}Params`, this.taken);
     const flowData: Record<string, Part[]> = {};
@@ -854,6 +1045,32 @@ class SpecWriter {
           .pop()
           ?.replace(/\.test\.md$|\.md$/, "") ?? "login",
       ]);
+      if (this.source.pageObjects && !this.inHelper) {
+        const flowData: Record<string, Part[]> = {};
+        for (const [key, template] of Object.entries(flow?.frontmatter.data ?? {}))
+          flowData[key] = templateParts(template);
+        return this.hoisted({
+          flowPath: profile.path,
+          name: flow?.frontmatter.name || base,
+          title: `auth: ${profile.name} (${profile.path})`,
+          base,
+          flowData,
+          params: (dataScope) => {
+            const params: Scope["params"] = {};
+            for (const [key, fallback] of Object.entries(flow?.frontmatter.params ?? {})) {
+              const given = profile.params[key];
+              if (given !== undefined)
+                params[key] = { parts: templateParts(parseTemplate(given)), scope: dataScope };
+              else if (fallback) params[key] = { parts: templateParts(fallback), scope: dataScope };
+            }
+            return params;
+          },
+          inner: (scope) => this.items(flowTree(profile.expanded.steps), scope),
+          note: comment(
+            `auth: ${profile.name}. ${brand.productName} reuses a saved session; this spec logs in each time.`,
+          ),
+        });
+      }
       const dataVar = uniqueName(`${base}Data`, this.taken);
       const paramsVar = uniqueName(`${base}Params`, this.taken);
       const flowData: Record<string, Part[]> = {};
@@ -940,6 +1157,7 @@ class SpecWriter {
 
   write(): { statements: Stmt[] } {
     const test = this.source.expanded;
+    this.route = test.start?.raw;
     const testScope = createScope(
       "data",
       Object.fromEntries(
@@ -977,6 +1195,8 @@ class SpecWriter {
     const steps = this.items(flowTree(this.steps), testScope);
     const data = this.declare(testScope, "data");
     body.push(...data);
+    // EXP-4: the page objects this test uses, made once.
+    body.push(...this.pageDeclarations());
     if (body.length > 0) body.push(blank);
     if (login.length > 0) body.push(...login, blank);
     if (start.length > 0) body.push(...start, blank);
@@ -1004,6 +1224,14 @@ class SpecWriter {
       statements: [
         { t: "verbatim", code: "" },
         importStatement(imports, `./${FIXTURES_MODULE}`),
+        ...[...this.modules.entries()]
+          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+          .map(
+            ([module, names]): Stmt => ({
+              t: "verbatim",
+              code: importLine([...names], module, "spec"),
+            }),
+          ),
         blank,
         ...(hooks.length > 0 ? [...hooks, blank] : []),
         stmt(testCall),

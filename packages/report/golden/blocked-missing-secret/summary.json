@@ -1,6 +1,6 @@
 {
   "kind": "results-summary",
-  "version": "1.1",
+  "version": "1.2",
   "contractVersion": "1.0",
   "runId": "01M3EHBYC0C7ENE9ZXSBRYMCYS",
   "project": "demo-shop",
@@ -69,7 +69,12 @@
         "costUsd": 0,
         "recent": null
       },
-      "result": "tests/tests__admin__refund-order/result.json"
+      "result": "tests/tests__admin__refund-order/result.json",
+      "mocks": [],
+      "accessibility": null,
+      "muted": null,
+      "muteExpired": null,
+      "muteSuggested": null
     },
     {
       "testId": "tests__search__search-products",
@@ -99,7 +104,12 @@
           "calls": 0
         }
       },
-      "result": "tests/tests__search__search-products/result.json"
+      "result": "tests/tests__search__search-products/result.json",
+      "mocks": [],
+      "accessibility": null,
+      "muted": null,
+      "muteExpired": null,
+      "muteSuggested": null
     }
   ]
 }

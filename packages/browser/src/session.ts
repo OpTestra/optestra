@@ -29,7 +29,9 @@ import {
   RequestMark,
 } from "./check.js";
 import { deviceOptions } from "./devices.js";
+import { type AccessibilityScan, type AccessibilityViolation, axeScript } from "./accessibility.js";
 import { Evidence } from "./evidence.js";
+import { type MockRule, type MockUse, Mocks, RECORDED_TYPES, Traffic } from "./network.js";
 import { BrowserSetupError, browserOf, type LaunchedBrowser, launchBrowser } from "./launch.js";
 import {
   candidateSpecs,
@@ -157,6 +159,9 @@ export class Session {
   #shooting: Promise<unknown> | undefined;
   /** Set when the last action ended on its effect (no quiet window yet): when it did. */
   #unsettledSince: number | undefined;
+  /** ENV-4: `Mock:` steps and recorded traffic, answered in the route handler. */
+  readonly #mocks = new Mocks();
+  #traffic: Traffic | undefined;
   /** Record mode (AUT-8): the page flag that lets the harness's own actions through. */
   #recordFlag: string | undefined;
   #acting = false;
@@ -283,6 +288,14 @@ export class Session {
       headers,
     });
     pending = { at: (refusal) => created.#refuse(refusal) };
+    if (options.network)
+      created.#traffic = new Traffic(
+        options.network.mode,
+        options.network.file,
+        options.network.label ?? options.network.file,
+        redact,
+        { name: brand.cliName, version: "1" },
+      );
     await created.#install();
     return created;
   }
@@ -297,6 +310,57 @@ export class Session {
     await context.route("**/*", async (route, request) => {
       if (this.#allowlist.allowsUrl(request.url())) {
         const headers = this.#headers.apply(request.url(), request.headers());
+        // ENV-4: a mock, or recorded traffic, answers instead of the app (allowed requests only).
+        const mock = this.#mocks.match(request.method(), request.url());
+        if (mock) {
+          await route
+            .fulfill({
+              status: mock.status,
+              body: typeof mock.body === "string" ? mock.body : Buffer.from(mock.body ?? ""),
+              contentType: mock.contentType ?? "application/json",
+              headers: { "x-mocked-by": brand.cliName },
+            })
+            .catch(() => {});
+          return;
+        }
+        const traffic = this.#traffic;
+        if (traffic && RECORDED_TYPES.has(request.resourceType())) {
+          if (traffic.mode === "replay") {
+            const answer = traffic.answer(
+              request.method(),
+              this.#redact(this.#appRoute(request.url()) ?? request.url()),
+            );
+            if (answer) {
+              await route
+                .fulfill({
+                  status: answer.status,
+                  body: answer.body,
+                  contentType: answer.contentType,
+                  headers: { "x-recorded-by": brand.cliName },
+                })
+                .catch(() => {});
+              return;
+            }
+          } else {
+            const response = await route
+              .fetch(headers ? { headers } : undefined)
+              .catch(() => undefined);
+            if (response) {
+              const body = await response.body().catch(() => Buffer.alloc(0));
+              traffic.keep(
+                request.method(),
+                request.url(),
+                this.#appRoute(request.url()),
+                response.status(),
+                response.statusText(),
+                response.headers()["content-type"] ?? "application/octet-stream",
+                body,
+              );
+              await route.fulfill({ response, body }).catch(() => {});
+              return;
+            }
+          }
+        }
         await route.continue(headers ? { headers } : undefined).catch(() => {});
         return;
       }
@@ -497,6 +561,85 @@ export class Session {
       .errors()
       .slice(from)
       .map((line) => this.#redact(line).slice(0, 500));
+  }
+
+  /**
+   * ENV-4: from now on, answer matching requests with this response instead of
+   * the app's. Only for URLs on the allowed domains; `url` is a path (on the
+   * base URL) or a URL, `*` matches anything.
+   */
+  mock(rule: MockRule): { ok: true } | { ok: false; message: string } {
+    let url = rule.url;
+    if (url.startsWith("/")) {
+      const base = this.#options.baseUrl ?? this.#page.url();
+      try {
+        url = `${new URL(base).origin}${url}`;
+      } catch {
+        return { ok: false, message: "A mock of a path needs a base URL." };
+      }
+    }
+    const host = /^https?:\/\/([^/]+)/.exec(url)?.[1];
+    if (!host || host.includes("*"))
+      return { ok: false, message: `Mock ${rule.url}: the host must be named exactly.` };
+    if (!this.#allowlist.allowsUrl(url.replaceAll("*", "x")))
+      return {
+        ok: false,
+        message: `Mock ${rule.url}: ${host} is not an allowed domain, so its requests never leave the browser to be mocked.`,
+      };
+    this.#mocks.add({ ...rule, url });
+    return { ok: true };
+  }
+
+  /**
+   * EVD-6: axe-core's WCAG 2 A/AA rules on the current page. Warnings only;
+   * targets and texts are scrubbed. Never throws: a page axe can't check is
+   * `status: "error"`.
+   */
+  async accessibility(options: { timeoutMs?: number } = {}): Promise<AccessibilityScan> {
+    const started = Date.now();
+    if (this.#unusable())
+      return { status: "error", ms: 0, violations: [], message: "The page is closed." };
+    try {
+      const run = this.#page.evaluate(axeScript()) as Promise<AccessibilityViolation[]>;
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("timed out")), options.timeoutMs ?? 20_000).unref(),
+      );
+      const violations = await Promise.race([run, timeout]);
+      return {
+        status: "ok",
+        ms: Date.now() - started,
+        violations: violations.map((v) => ({
+          ...v,
+          help: this.#redact(v.help),
+          targets: v.targets.map((t) => this.#redact(t).slice(0, 200)),
+        })),
+      };
+    } catch (error) {
+      return {
+        status: "error",
+        ms: Date.now() - started,
+        violations: [],
+        message: this.#redact(
+          error instanceof Error ? (error.message.split("\n")[0] ?? "") : String(error),
+        ),
+      };
+    }
+  }
+
+  /** ENV-4: what mocks and recorded traffic answered so far. */
+  mockUses(): MockUse[] {
+    const recorded = this.#traffic?.use();
+    return [...this.#mocks.uses(), ...(recorded ? [recorded] : [])];
+  }
+
+  /** ENV-4: how many answers recorded traffic keeps (record) or served/missed (replay). */
+  traffic():
+    | { mode: "record" | "replay"; recorded: number; served: number; missed: number }
+    | undefined {
+    const t = this.#traffic;
+    return t
+      ? { mode: t.mode, recorded: t.recorded, served: t.served, missed: t.missed }
+      : undefined;
   }
 
   /** Every refusal so far. */
@@ -1121,6 +1264,7 @@ export class Session {
   async close(options: CloseOptions = {}): Promise<CloseResult> {
     if (this.#closed) return this.#closed;
     this.#closed = { evidence: [], refused: [] };
+    this.#traffic?.save();
     const discard = new Set(options.discard ?? []);
     await this.#evidence.stop({ discardTrace: discard.has("trace") });
     const video = this.#page.video();
@@ -1140,6 +1284,17 @@ export class Session {
   }
 
   // ── internals ──────────────────────────────────────────────────────────────
+
+  /** Path + query of a URL on the base URL's origin (ENV-4: recordings move between hosts and ports). */
+  #appRoute(url: string): string | undefined {
+    try {
+      const base = new URL(this.#options.baseUrl ?? this.#page.url());
+      const target = new URL(url);
+      return target.origin === base.origin ? `${target.pathname}${target.search}` : undefined;
+    } catch {
+      return undefined;
+    }
+  }
 
   #unusable(): boolean {
     return this.#crashed || this.#page.isClosed() || this.#closed !== undefined;

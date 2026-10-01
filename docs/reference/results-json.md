@@ -4,7 +4,7 @@
 
 `%cli% results <runDir> --json` prints this summary of a run (`--json <file>` writes it). It is what coding agents and tools should read: the verdict, cause and headline of every test, the failing check with expected and actual, the failing step, heals and costs. Paths are relative to the run folder. The schema is published as `%scope%/report/schema/results-summary.json`.
 
-Machine-readable summary of one run, version 1.1. Additive changes bump the minor version; readers ignore unknown fields.
+Machine-readable summary of one run, version 1.2. Additive changes bump the minor version; readers ignore unknown fields.
 
 | Field | Type | Always present | |
 |---|---|---|---|
@@ -115,3 +115,29 @@ Machine-readable summary of one run, version 1.1. Additive changes bump the mino
 | `tests[].ai.recent.runs` | integer | yes |  |
 | `tests[].ai.recent.calls` | integer | yes |  |
 | `tests[].result` | string | yes | The test's result document, relative to the run folder. |
+| `tests[].mocks` | list of object | yes | 1.2 (ENV-4): responses from Mock: steps or recorded traffic. |
+| `tests[].mocks[].source` | "step" \| "recorded" | yes |  |
+| `tests[].mocks[].method` | string | yes |  |
+| `tests[].mocks[].url` | string | yes |  |
+| `tests[].mocks[].status` | integer \| null | yes |  |
+| `tests[].mocks[].hits` | integer | yes |  |
+| `tests[].mocks[].file` | string \| null | yes |  |
+| `tests[].accessibility` | null \| object | yes | 1.2 (EVD-6): axe-core warnings (WCAG 2 A/AA), one per page and rule; null when not checked. |
+| `tests[].accessibility.pages` | integer | yes |  |
+| `tests[].accessibility.ms` | number | yes |  |
+| `tests[].accessibility.violations` | list of object | yes |  |
+| `tests[].accessibility.violations[].rule` | string | yes |  |
+| `tests[].accessibility.violations[].impact` | string \| null | yes |  |
+| `tests[].accessibility.violations[].help` | string | yes |  |
+| `tests[].accessibility.violations[].helpUrl` | string | yes |  |
+| `tests[].accessibility.violations[].page` | string | yes |  |
+| `tests[].accessibility.violations[].nodes` | integer | yes |  |
+| `tests[].muted` | null \| object | yes | 1.2 (DIA-5): muted until a date; its verdict doesn't count. |
+| `tests[].muted.reason` | string | yes |  |
+| `tests[].muted.until` | string | yes |  |
+| `tests[].muteExpired` | null \| object | yes |  |
+| `tests[].muteExpired.reason` | string | yes |  |
+| `tests[].muteExpired.until` | string | yes |  |
+| `tests[].muteSuggested` | null \| object | yes |  |
+| `tests[].muteSuggested.reason` | string | yes |  |
+| `tests[].muteSuggested.confidence` | number | yes |  |

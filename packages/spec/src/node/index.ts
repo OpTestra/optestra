@@ -12,6 +12,9 @@ import type { TestsSettings } from "../section.js";
 import "../section.js";
 import "../lint/section.js";
 import "../hooks-section.js";
+import "../quarantine-section.js";
+import "../accessibility-section.js";
+import "../recordings-section.js";
 
 export {
   type DatasetRow,

@@ -1,4 +1,12 @@
-import { cpSync, existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { brand } from "@optestra/brand";
@@ -194,5 +202,109 @@ describe("lint reads datasets", { timeout: 30_000 }, () => {
     expect(column.out()).toMatch(
       /uses \{\{data\.plan\}\}, but tests\/data\/users\.csv has no "plan" column/,
     );
+  });
+});
+
+describe("mute", { timeout: 30_000 }, () => {
+  it("mutes with a reason and a date, needs --renew to change, lists and unmutes", async () => {
+    const { runMuteCommand } = await import("./commands/mute.js");
+    const dir = project();
+    const now = () => new Date("2026-10-01T12:00:00Z");
+    const first = io(dir);
+    expect(
+      await runMuteCommand(
+        "tests/login.test.md",
+        { reason: "flaky login (#12)", until: "14d" },
+        { ...first.io, now },
+      ),
+    ).toBe(0);
+    expect(first.out()).toMatch(/Muted tests\/login\.test\.md until 2026-10-15/);
+    expect(readFileSync(join(dir, brand.configFileName), "utf8")).toMatch(
+      /quarantine:\n\s+- test: tests\/login\.test\.md\n\s+reason: flaky login \(#12\)\n\s+until: "?2026-10-15"?/,
+    );
+    const again = io(dir);
+    expect(
+      await runMuteCommand(
+        "tests/login.test.md",
+        { reason: "x", until: "7d" },
+        { ...again.io, now },
+      ),
+    ).toBe(2);
+    expect(again.out()).toMatch(/pass --renew/);
+    expect(
+      await runMuteCommand(
+        "tests/login.test.md",
+        { reason: "x", until: "7d", renew: true },
+        { ...io(dir).io, now },
+      ),
+    ).toBe(0);
+    const list = io(dir);
+    await runMuteCommand(undefined, { list: true }, { ...list.io, now });
+    expect(list.out()).toMatch(/muted\s+tests\/login\.test\.md\s+until 2026-10-08\s+x/);
+    expect(
+      await runMuteCommand(
+        "tests/nope.test.md",
+        { reason: "x", until: "7d" },
+        { ...io(dir).io, now },
+      ),
+    ).toBe(2);
+    expect(
+      await runMuteCommand("tests/login.test.md", { unmute: true }, { ...io(dir).io, now }),
+    ).toBe(0);
+    expect(readFileSync(join(dir, brand.configFileName), "utf8")).not.toContain(
+      "tests/login.test.md",
+    );
+  });
+});
+
+describe("recordings promote (REP-8)", { timeout: 30_000 }, () => {
+  it("lists the waiting branches, needs to know which, and moves the merged branch's recordings", async () => {
+    const { runRecordingsCommand } = await import("./commands/recordings.js");
+    const dir = project();
+    const data = join(dir, "tests", brand.dataDirName);
+    const own = join(data, "branches", "feature--discounts");
+    mkdirSync(own, { recursive: true });
+    writeFileSync(join(own, "tests__login.steps.json"), "branch login");
+
+    const listed = io(dir);
+    expect(await runRecordingsCommand("branches", {}, listed.io)).toBe(0);
+    expect(listed.out()).toContain("feature--discounts  1 recording");
+
+    // On main (no branch to detect) it must be told which branch merged.
+    const which = io(dir);
+    expect(await runRecordingsCommand("promote", {}, which.io)).toBe(2);
+    expect(which.out()).toMatch(/Which branch\? .*Waiting: feature--discounts\./);
+
+    const dry = io(dir);
+    expect(
+      await runRecordingsCommand("promote", { branch: "feature/discounts", dryRun: true }, dry.io),
+    ).toBe(0);
+    expect(dry.out()).toContain("Would promote 1 recording:");
+    expect(existsSync(join(own, "tests__login.steps.json"))).toBe(true);
+
+    // In the Action on the merged PR, the head branch is the one to promote.
+    const hadMain = existsSync(join(data, "tests__login.steps.json"));
+    const merged = io(dir);
+    expect(
+      await runRecordingsCommand(
+        "promote",
+        { json: true },
+        { ...merged.io, env: { GITHUB_HEAD_REF: "feature/discounts" } },
+      ),
+    ).toBe(0);
+    expect(JSON.parse(merged.out())).toEqual({
+      dryRun: false,
+      promoted: [
+        {
+          branch: "feature--discounts",
+          test: "tests__login",
+          from: `tests/${brand.dataDirName}/branches/feature--discounts/tests__login.steps.json`,
+          to: `tests/${brand.dataDirName}/tests__login.steps.json`,
+          replaced: hadMain,
+        },
+      ],
+    });
+    expect(readFileSync(join(data, "tests__login.steps.json"), "utf8")).toBe("branch login");
+    expect(existsSync(own)).toBe(false);
   });
 });

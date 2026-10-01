@@ -18,8 +18,10 @@ import type { EvalCommandOptions } from "./commands/eval.js";
 import type { DecisionsCommandOptions } from "./commands/decisions.js";
 import type { DoctorCommandOptions } from "./commands/doctor.js";
 import type { ExplainCommandOptions } from "./commands/explain.js";
+import type { MuteCommandOptions } from "./commands/mute.js";
 import type { ExploreCommandOptions } from "./commands/explore.js";
 import { registerExportCommand } from "./commands/export.js";
+import { registerRecordingsCommand } from "./commands/recordings.js";
 import type { GenerateCommandOptions } from "./commands/generate.js";
 import type { HealCommandOptions } from "./commands/heal.js";
 import { registerInitCommand } from "./commands/init.js";
@@ -495,6 +497,18 @@ export function createProgram(): Command {
       [],
     )
     .option("--no-video", "don't record a video per attempt")
+    .option(
+      "--record-network",
+      "keep each test's API answers (fetch/XHR, scrubbed) so later runs replay them for determinism",
+    )
+    .option(
+      "--live-network",
+      "don't answer from recorded network traffic: every request goes to the app",
+    )
+    .option(
+      "--accessibility",
+      "check every page visited with axe-core (WCAG 2 A/AA): warnings only, apart from pass/fail",
+    )
     .option("--verbose", "print every step, heal and warning")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (tests: string[], options: RunCommandOptions) => {
@@ -519,6 +533,46 @@ export function createProgram(): Command {
       } finally {
         process.off("SIGINT", onInterrupt);
       }
+    });
+
+  program
+    .command("mute")
+    .description(
+      "mute a test until a date, with a reason: it still runs, but its failures don't fail the run (--list shows the mutes)",
+    )
+    .argument("[test]", "the test file")
+    .option("--reason <text>", "why it is muted (an issue link helps)")
+    .option("--until <date>", "the last day of the mute: YYYY-MM-DD, or 14d / 2w (at most 90 days)")
+    .option("--renew", "change a mute that already exists (renewing is a decision)")
+    .option("--list", "list the mutes and whether they still apply")
+    .option("--json", "print machine-readable JSON")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (test: string | undefined, options: MuteCommandOptions) => {
+      const { runMuteCommand } = await import("./commands/mute.js");
+      process.exitCode = await runMuteCommand(test, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("unmute")
+    .description("end a test's mute now: its failures count again")
+    .argument("<test>", "the test file")
+    .option("--json", "print machine-readable JSON")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (test: string, options: MuteCommandOptions) => {
+      const { runMuteCommand } = await import("./commands/mute.js");
+      process.exitCode = await runMuteCommand(
+        test,
+        { ...options, unmute: true },
+        {
+          cwd: process.cwd(),
+          env: process.env,
+          stdout: (text) => process.stdout.write(text),
+        },
+      );
     });
 
   program
@@ -651,6 +705,7 @@ export function createProgram(): Command {
       process.exitCode = await runDoctorCommand(options, io());
     });
   registerExportCommand(program, io);
+  registerRecordingsCommand(program, io);
   registerAndroidCommands(program, () => ({
     cwd: process.cwd(),
     env: process.env,

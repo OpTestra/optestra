@@ -13,6 +13,8 @@ export interface RunSummary {
 
 export function summarize(run: Run): RunSummary {
   const parts = VERDICTS.filter((v) => run.totals[v] > 0).map((v) => `${run.totals[v]} ${v}`);
+  // 1.5 (DIA-5): muted tests are counted under their verdict and named apart.
+  if (run.totals.muted) parts.push(`${run.totals.muted} muted`);
   return {
     totals: run.totals,
     durationMs: run.durationMs,
@@ -45,7 +47,12 @@ export interface ExitPolicy {
  * Failures outrank blocks: a run with both exits 1.
  */
 export function exitCodeFor(run: Run, policy: ExitPolicy): ExitCode {
-  const has = (verdict: Verdict) => run.totals[verdict] > 0;
+  // 1.5 (DIA-5): a muted test's verdict doesn't count (it ran, and is reported apart).
+  const counted = run.tests.filter((t) => !t.muted);
+  const has = (verdict: Verdict) =>
+    counted.length === run.tests.length
+      ? run.totals[verdict] > 0
+      : counted.some((t) => t.verdict === verdict);
   if (has("failed")) return EXIT_CODES.failed;
   if (has("flaky") && policy.flakyCountsAsFailure !== false) return EXIT_CODES.failed;
   if (has("healed") && !policy.healedCountsAsPass) return EXIT_CODES.failed;

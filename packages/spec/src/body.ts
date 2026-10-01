@@ -1,5 +1,5 @@
 import { isMap, isScalar, LineCounter, type Node, parseDocument, Scalar } from "yaml";
-import { parseExactOp } from "./exact.js";
+import { parseExactOp, parseMockOp } from "./exact.js";
 import { NAME } from "./frontmatter.js";
 import type { BodyItem, FlowStep, SourceInfo, Step } from "./model.js";
 import { parseTemplate } from "./template.js";
@@ -8,7 +8,7 @@ import { lineRange, type Reporter, SourceMap } from "./text.js";
 /*
  * Body grammar, line by line:
  *   N. text                 a step; indented lines right after it continue it
- *   N. Expect: / Soft: / Never: / Use: / Exact: …   (prefixes are case-insensitive)
+ *   N. Expect: / Soft: / Never: / Use: / Exact: / Mock: …   (prefixes are case-insensitive)
  *   Never: text             a guard may also be unnumbered, anywhere
  *   ```ts … ```             a fenced block right after a step line makes it an exact code step
  *   <!-- … -->              a comment (kept when printing)
@@ -17,7 +17,7 @@ import { lineRange, type Reporter, SourceMap } from "./text.js";
 
 const NUMBERED = /^( {0,3})(\d+)[.)](?=\s|$)[ \t]*(.*)$/;
 const GUARD = /^( {0,3})(never\s*:)/i;
-const PREFIX = /^(expect|soft|never|use|exact)\s*:[ \t]*/i;
+const PREFIX = /^(expect|soft|never|use|exact|mock)\s*:[ \t]*/i;
 const FENCE = /^(\s*)(`{3,})\s*([A-Za-z]*)\s*$/;
 const CODE_LANGS = new Set(["ts", "typescript"]);
 
@@ -27,6 +27,7 @@ const CANONICAL_PREFIX: Record<string, Step["kind"]> = {
   never: "guard",
   use: "flow",
   exact: "exact",
+  mock: "exact",
 };
 
 interface RawStep {
@@ -267,7 +268,8 @@ function toStep(raw: RawStep, report: Reporter): Step | undefined {
   }
 
   if (kind === "exact") {
-    const op = parseExactOp(text, map, report);
+    const isMock = (prefix?.[1] ?? "").toLowerCase() === "mock";
+    const op = isMock ? parseMockOp(text, map, report) : parseExactOp(text, map, report);
     if (!op) return undefined;
     return { ...base, kind: "exact", exact: { form: "op", op } };
   }

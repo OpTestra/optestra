@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import { realpathSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import {
   type APIRequestContext,
@@ -299,6 +299,35 @@ export function route(pattern: string): (url: URL) => boolean {
       )
     );
   };
+}
+
+/**
+ * A `Mock:` step (ENV-4): from here on, matching requests get this response
+ * instead of the app's. `url` is a path (on the base URL) or a URL; `*` matches
+ * anything; with no `?`, any query matches. `file` is relative to this folder.
+ */
+export async function mock(
+  page: Page,
+  method: string,
+  url: string,
+  status: number,
+  file: string | null,
+  contentType: string,
+): Promise<void> {
+  const escaped = url
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replaceAll("?", "\\?")
+    .replaceAll("*", ".*");
+  const pattern = new RegExp(`^${escaped}${url.includes("?") ? "" : "(\\?.*)?"}$`);
+  const path = url.startsWith("/");
+  const body = file ? readFileSync(resolve(dirname(base.info().file), file)) : "";
+  await page.route(
+    (target) => pattern.test(path ? `${target.pathname}${target.search}` : target.href),
+    async (route) => {
+      if (method !== "*" && route.request().method() !== method) return route.fallback();
+      await route.fulfill({ status, body, contentType });
+    },
+  );
 }
 
 /** A pattern matching text that contains `text`. */

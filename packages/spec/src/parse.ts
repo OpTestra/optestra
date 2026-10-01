@@ -9,7 +9,9 @@ import { lineRange, Reporter } from "./text.js";
 
 export interface ParseOptions {
   /** The resolved project config. When given, `{{secret.X}}` must be declared in it. */
-  config?: Pick<Config, "secrets" | "environments"> | undefined;
+  config?:
+    | (Pick<Config, "secrets" | "environments"> & Partial<Pick<Config, "project">>)
+    | undefined;
   /** Generators `{{unique.*}}` and `{{faker.*}}` may name. Default: the built-in set. */
   generators?: GeneratorRegistry | undefined;
 }
@@ -83,6 +85,21 @@ export function parseTest(text: string, path: string, options: ParseOptions = {}
       : parseFrontmatterYaml(yamlText, 2, whole, report);
   const frontmatter = validateFrontmatter(parsed.value, parsed.index, report);
   const body = parseBody(lines.slice(bodyStart), bodyStart + 1, report);
+  // ENV-4: mocking is web only for now.
+  if (options.config?.project?.target === "android")
+    for (const item of body)
+      if (
+        item.type === "step" &&
+        item.kind === "exact" &&
+        item.exact.form === "op" &&
+        item.exact.op.op === "mock"
+      )
+        report.error(
+          "MOCK_UNSUPPORTED",
+          item.at?.range,
+          "Mock: steps are not supported on Android yet: the app's requests can't be answered by the test there.",
+          "Remove the Mock: step, or move this test to a web project.",
+        );
 
   const spec: TestSpec = {
     path,

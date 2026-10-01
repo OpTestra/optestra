@@ -133,7 +133,14 @@ export type ExactOp<V = Template> =
       target: Locator;
       state: "visible" | "hidden" | "enabled" | "disabled";
     }
-  | { op: "expectCount"; target: Locator; count: number };
+  | { op: "expectCount"; target: Locator; count: number }
+  /**
+   * ENV-4: `Mock: GET /api/orders returns 500` (or `returns files/orders.json`,
+   * `returns 402 files/declined.json`). From this step on, matching requests
+   * get this response instead of the app's. `url` is a path or URL, `*` matches
+   * anything; `body` is a file relative to the test file. Web only.
+   */
+  | { op: "mock"; method: HttpMethod; url: V; status: number; body?: string };
 
 export interface ExactCode {
   lang: "ts";

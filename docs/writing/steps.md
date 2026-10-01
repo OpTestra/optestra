@@ -10,6 +10,7 @@ The body of a test is line-based. Numbered lines are steps; indented lines right
 | `Never: click "Delete account"` | guard | Numbered or not, anywhere in the file; applies to the whole test. |
 | `4. Use: flows/login.test.md { email: "{{data.admin}}" }` | flow | Includes a [flow](./flows.md). |
 | `5. Exact: click role=button[name="Save"]` | exact | The fixed syntax below: no AI needed. |
+| `6. Mock: POST /api/orders returns 500 files/error.json` | mock | Answers the app's matching requests from here on. See [Mocking the network](./mocks.md). |
 | a ` ```ts ` block right after a step line | exact | Playwright code, kept verbatim. See [Code steps](#code-steps). |
 | `<!-- … -->` | | A comment, kept when printing. |
 

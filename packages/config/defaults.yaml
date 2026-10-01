@@ -46,6 +46,21 @@ lint:
   # Warnings count as errors for the exit code (CI).
   strict: false
 
+# Branch-aware recordings (REP-8): on a feature branch, recordings the engine writes go to
+# <tests>/<data dir>/branches/<branch>/ and runs prefer them; `recordings promote` moves them
+# into place after the merge. branches: auto (GitHub projects), on, off. mainBranch (not set:
+# main or master) names the branch whose recordings are the main ones. The spec package
+# registers this section.
+recordings:
+  branches: auto
+
+# Accessibility warnings (EVD-6): off, or warn (axe-core, WCAG 2 A/AA, on every page a run visits;
+# shown apart, never a failure). The spec package registers this section.
+accessibility: off
+
+# Muted tests (DIA-5): { test, reason, until }. The spec package registers this section.
+quarantine: []
+
 # Setup and teardown hooks (AUT-10). The spec package registers this section.
 hooks:
   run:

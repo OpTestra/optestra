@@ -26,6 +26,8 @@ Exit codes follow one rule for every command that runs or checks something: **0*
 | [`explore`](#explore) | explore the app toward a goal (AI) and report errors, failed requests, console errors, broken links and dead ends, with proposed tests. Never fails a run |
 | [`mcp`](#mcp) | start the MCP server for coding agents (stdio) on this project: list, draft, save and run tests, read results, accept heals |
 | [`run`](#run) | run tests: replay each recording with no AI, evaluate every check, write a results folder (exit 0 passed, 1 failed, 2 blocked) |
+| [`mute`](#mute) | mute a test until a date, with a reason: it still runs, but its failures don't fail the run (--list shows the mutes) |
+| [`unmute`](#unmute) | end a test's mute now: its failures count again |
 | [`explain`](#explain) | explain why tests failed, from the run's evidence (rules only; --ai: one AI call). Never changes a verdict |
 | [`heal`](#heal) | review a run's heals (default: the latest run): the recording diff, why, confidence; accept or reject them |
 | [`checks`](#checks) | show what each Expect line of a test was compiled into: the check, how it was made, its sanity test |
@@ -39,6 +41,8 @@ Exit codes follow one rule for every command that runs or checks something: **0*
 | [`init`](#init) | set up a project in this repository: project file, an example test, .env.example and .gitignore lines (never overwrites a file) |
 | [`doctor`](#doctor) | check the project, tests, secrets, AI setup, browsers and recordings; every problem comes with its fix |
 | [`export`](#export) | write a standalone Playwright project from the recorded tests (npm install && npx playwright test), or for an Android project a Maestro workspace (maestro test .) |
+| [`recordings promote`](#recordings-promote) | after a merge, move a branch's recordings over main's |
+| [`recordings branches`](#recordings-branches) | list the branches with recordings waiting to be promoted |
 | [`android setup`](#android-setup) | check the Android SDK, emulator and system images; print the exact install commands and sizes |
 | [`android doctor`](#android-doctor) | check everything a local Android run needs, without changing anything |
 | [`android snapshot`](#android-snapshot) | debug: install an APK on a fresh emulator and print what the agent sees on its first screen |
@@ -398,7 +402,48 @@ run tests: replay each recording with no AI, evaluate every check, write a resul
 | `--evidence <mode>` | full \| failures \| minimal (default: run.evidence, else full in CI and failures elsewhere) |  |
 | `--android <version>` | Android projects: the Android version (default: android.version); repeat for a matrix | `[]` |
 | `--no-video` | don't record a video per attempt |  |
+| `--record-network` | keep each test's API answers (fetch/XHR, scrubbed) so later runs replay them for determinism |  |
+| `--live-network` | don't answer from recorded network traffic: every request goes to the app |  |
+| `--accessibility` | check every page visited with axe-core (WCAG 2 A/AA): warnings only, apart from pass/fail |  |
 | `--verbose` | print every step, heal and warning |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## mute {#mute}
+
+mute a test until a date, with a reason: it still runs, but its failures don't fail the run (--list shows the mutes)
+
+```sh
+%cli% mute [options] [test]
+```
+
+| Argument | |
+|---|---|
+| `[test]` | the test file |
+
+| Option | | Default |
+|---|---|---|
+| `--reason <text>` | why it is muted (an issue link helps) |  |
+| `--until <date>` | the last day of the mute: YYYY-MM-DD, or 14d / 2w (at most 90 days) |  |
+| `--renew` | change a mute that already exists (renewing is a decision) |  |
+| `--list` | list the mutes and whether they still apply |  |
+| `--json` | print machine-readable JSON |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## unmute {#unmute}
+
+end a test's mute now: its failures count again
+
+```sh
+%cli% unmute [options] <test>
+```
+
+| Argument | |
+|---|---|
+| `<test>` | the test file |
+
+| Option | | Default |
+|---|---|---|
+| `--json` | print machine-readable JSON |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
 
 ## explain {#explain}
@@ -624,6 +669,36 @@ write a standalone Playwright project from the recorded tests (npm install && np
 | `-o, --out <dir>` | folder to create (default: ./playwright-export) |  |
 | `-e, --env <name>` | environment whose base URL and allowed domains the tests use |  |
 | `--force` | write into a folder that isn't empty |  |
+| `--page-objects` | group locators into a class per page (pages/) and flows into shared helpers (flows/) |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## recordings promote {#recordings-promote}
+
+after a merge, move a branch's recordings over main's
+
+```sh
+%cli% recordings promote [options]
+```
+
+| Option | | Default |
+|---|---|---|
+| `-b, --branch <name>` | the merged branch (default: the branch this runs on) |  |
+| `--all` | every branch with recordings waiting |  |
+| `--dry-run` | say what would move, move nothing |  |
+| `--json` | print the result as JSON |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## recordings branches {#recordings-branches}
+
+list the branches with recordings waiting to be promoted
+
+```sh
+%cli% recordings branches [options]
+```
+
+| Option | | Default |
+|---|---|---|
+| `--json` | print the list as JSON |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
 
 ## android setup {#android-setup}

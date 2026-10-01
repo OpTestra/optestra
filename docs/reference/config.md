@@ -103,6 +103,26 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `hooks.sql.client` | "psql" \| "mysql" | `"psql"` | The database client that runs statements: psql (Postgres) or mysql. |
 | `hooks.sql.timeoutSeconds` | number | `30` | Seconds before a statement is stopped. |
 
+## quarantine
+
+| Key | Type | Default | |
+|---|---|---|---|
+| `quarantine` | list of object | `[]` | Muted tests: they still run, but a failure doesn't fail the run. Each mute ends on its date. |
+
+## accessibility
+
+| Key | Type | Default | |
+|---|---|---|---|
+| `accessibility` | "off" \| "warn" | `"off"` | Accessibility checks (axe-core, WCAG 2 A/AA) on every page a run visits: off, or warn (shown apart, never a failure). |
+
+## recordings
+
+| Key | Type | Default | |
+|---|---|---|---|
+| `recordings` | object |  |  |
+| `recordings.branches` | "auto" \| "on" \| "off" | `"auto"` | Per-branch recordings: auto (GitHub projects: a github.com remote, or in a GitHub Action), on, or off. |
+| `recordings.mainBranch` | string \| null |  | The branch whose recordings are the main ones (default: main or master). |
+
 ## models
 
 | Key | Type | Default | |

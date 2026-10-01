@@ -39,6 +39,8 @@ export const TotalsSchema = z.object({
   failed: CountSchema,
   flaky: CountSchema,
   blocked: CountSchema,
+  /** 1.5 (DIA-5): tests that were muted (each also counted under its verdict). */
+  muted: CountSchema.optional(),
 });
 export type Totals = z.infer<typeof TotalsSchema>;
 
@@ -64,6 +66,8 @@ export const RunTestRefSchema = z.object({
   costUsd: UsdSchema,
   /** Path of the TestResult document. */
   result: RelativePathSchema,
+  /** 1.5 (DIA-5): muted: its failure doesn't fail the run. */
+  muted: z.boolean().optional(),
 });
 export type RunTestRef = z.infer<typeof RunTestRefSchema>;
 

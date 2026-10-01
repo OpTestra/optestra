@@ -131,9 +131,11 @@ export function printStep(step: Step): string[] {
       return [`${number}${prefix}${step.path}${params}`];
     }
     case "exact":
-      return step.exact.form === "op"
-        ? [`${number}${prefix}${printExactOp(step.exact.op, (t) => t.raw)}`]
-        : [];
+      if (step.exact.form !== "op") return [];
+      // Mock: has its own prefix (printExactOp includes it).
+      return step.exact.op.op === "mock"
+        ? [`${number}${printExactOp(step.exact.op, (t) => t.raw)}`]
+        : [`${number}${prefix}${printExactOp(step.exact.op, (t) => t.raw)}`];
     default:
       return [`${number}${prefix}${step.text.raw}`];
   }

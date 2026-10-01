@@ -27,3 +27,4 @@ export function writeRecording(file: string, recording: Recording): void {
   writeFileSync(temp, serializeRecording(recording));
   renameSync(temp, file);
 }
+export * from "./branches.js";

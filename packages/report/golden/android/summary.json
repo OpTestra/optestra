@@ -1,6 +1,6 @@
 {
   "kind": "results-summary",
-  "version": "1.1",
+  "version": "1.2",
   "contractVersion": "1.0",
   "runId": "01M3EJGJ80CW0YWY81PDJ70RB6",
   "project": "demo-shop",
@@ -58,7 +58,12 @@
           "calls": 0
         }
       },
-      "result": "tests/tests__android__login/result.json"
+      "result": "tests/tests__android__login/result.json",
+      "mocks": [],
+      "accessibility": null,
+      "muted": null,
+      "muteExpired": null,
+      "muteSuggested": null
     }
   ]
 }

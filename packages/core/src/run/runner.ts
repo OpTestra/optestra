@@ -37,11 +37,12 @@ import {
   CONTRACT_VERSION,
   type DecisionRecord,
   type Event,
+  type AccessibilityReport,
   type EvidenceRef,
   type FailureCause,
   type HealPolicy,
-  type HealProposal,
   type MatrixEntry,
+  type MockUse,
   type ModelCall,
   needsRerecord,
   portablePath,
@@ -71,7 +72,13 @@ import {
   type Recording,
   type StepRecording,
 } from "@optestra/recording";
-import { readRecording, recordingPath, writeRecording } from "@optestra/recording/node";
+import {
+  detectBranch,
+  readRecording,
+  recordingBranch,
+  recordingFiles,
+  writeRecording,
+} from "@optestra/recording/node";
 import { type ExpandedTest, hasSpecErrors } from "@optestra/spec";
 import { datasetColumnProblems, loadDataset, loadTest, loadTests } from "@optestra/spec/node";
 import { promptVersionFor } from "../author/agent.js";
@@ -79,8 +86,9 @@ import { createTestInbox, type TestInbox } from "../author/inbox.js";
 import { applyPatches, type HealPatch } from "../heal/patch.js";
 import { markAutoApplied } from "../heal/policy.js";
 import { DEFAULT_HOOKS, type HookContext } from "../hooks/exec.js";
+import { muteState, muteSuggestion } from "../quarantine/quarantine.js";
 import { chaptersVtt, consoleErrors } from "./evidence.js";
-import { recentAiUsage, recentHeals } from "./history.js";
+import { recentAiUsage, recentHeals, recentVerdicts } from "./history.js";
 import { profileFlowPath, profileLogin, replayProfileFlow } from "./profiles.js";
 import { replayAttempt } from "./replay.js";
 import { type Shard, selectShard } from "./shard.js";
@@ -150,6 +158,14 @@ export interface RunTestsOptions {
    * device preset's (its user agent, scale and touch stay). See `parseViewport`.
    */
   viewport?: { width: number; height: number };
+  /**
+   * ENV-4: recorded network traffic. `record`: keep each test's fetch/XHR answers
+   * (scrubbed) in `<tests>/<data dir>/<test id>.network.har`. Default: answer from
+   * that file when it exists (`replay`); `live`: never.
+   */
+  network?: "record" | "replay" | "live";
+  /** EVD-6: `warn` scans every page visited with axe-core (default: the project's `accessibility`). */
+  accessibility?: "off" | "warn";
   /** Record a video per attempt (default true, EVD-1). */
   video?: boolean;
   /**
@@ -350,6 +366,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     target: config.project?.target ?? "web",
     trigger: options.trigger ?? "cli",
     mode,
+    // The branch, when there is one (REP-8): git's HEAD or the GitHub Action's variables.
+    ...gitInfo(env, projectDir),
   });
   const empty: Omit<RunTestsResult, "run" | "tests"> = { dir, groups: [], recorded: [], heals: {} };
   const finishBlocked = (reason: BlockedReason, message: string): RunTestsResult => {
@@ -601,8 +619,19 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   const signal = options.signal;
   const retries = Math.max(0, options.retries ?? settings.run?.retries ?? config.run.retries);
   const testsDir = resolve(projectDir, config.tests?.dir ?? "tests");
+  // REP-8: on a feature branch, recordings are read from and written to the branch's own.
+  const branch = recordingBranch(config.recordings ?? { branches: "auto" }, env, projectDir);
+  if (branch)
+    emit({
+      type: "log",
+      level: "info",
+      message: `Branch ${branch.name}: recordings are written to the branch's own (main's are used where it has none). Promote them after the merge: ${brand.cliName} recordings promote.`,
+    });
   const history = recentAiUsage(dataDir, { exclude: runId });
   const healHistory = recentHeals(dataDir, { exclude: runId, limit: REPEATED_HEALS.runs - 1 });
+  // DIA-5: today's mutes, and each test's recent verdicts (for mute suggestions).
+  const runDate = new Date();
+  const verdictHistory = recentVerdicts(dataDir, { exclude: runId });
   const results: TestResult[] = [];
   const contexts = new Map<
     string,
@@ -633,6 +662,19 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       matrix,
     });
     const recent = history.get(testId) ?? null;
+    // DIA-5: a muted test runs as usual; only its verdict doesn't count.
+    const mute = muteState(config.quarantine ?? [], { path: plan.path, id: plan.testId }, runDate);
+    const muteFields = {
+      ...(mute.muted ? { muted: mute.muted } : {}),
+      ...(mute.expired ? { muteExpired: mute.expired } : {}),
+    };
+    if (mute.expired)
+      emit({
+        type: "log",
+        level: "warn",
+        testId,
+        message: `The mute of ${plan.path} ended on ${mute.expired.until} ("${mute.expired.reason}"): it counts again. Renew it with ${brand.cliName} mute ${plan.path} --renew --until <date> --reason "…", or fix the test.`,
+      });
     if (plan.problem) {
       emit({
         type: "test.finished",
@@ -642,6 +684,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         failureCause: "blocked",
         headline: `Blocked: the test file has problems: ${plan.problem}`,
         recentAi: recent,
+        ...muteFields,
       });
       return;
     }
@@ -656,12 +699,14 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         failureCause: "blocked",
         headline: `Blocked: ${message}`,
         recentAi: recent,
+        ...muteFields,
       });
       return;
     }
     // Every dataset row replays (and records into) the test's one recording.
-    const file = recordingPath(testsDir, plan.testId);
-    const stored = readRecording(file);
+    const files = recordingFiles(testsDir, plan.testId, branch);
+    const file = files.write;
+    const stored = readRecording(files.read);
     const previous = stored?.ok ? stored.recording : undefined;
     if (stored && !stored.ok)
       emit({
@@ -691,6 +736,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
 
     for (let attempt = 1; attempt <= retries + 1; attempt++) {
       const sink: DecisionRecord[] = [];
+      // 1.5: what the attempt's attempt.finished carries besides its status.
+      const attemptExtras: { mocks?: MockUse[]; accessibility?: AccessibilityReport } = {};
       const artifacts: ArtifactRef[] = [];
       const loadedTest = await loadTest(projectDir, plan.path, config, {
         environment: environment.name,
@@ -804,7 +851,26 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         // Minimal evidence records no trace or network log, except on a retry (after a failure).
         const fullCapture = evidenceMode !== "minimal" || attempt > 1;
         const attemptInbox = testInbox(new Date());
+        // ENV-4: the test's recorded traffic (web), recorded or answered from.
+        const trafficFile = join(testsDir, brand.dataDirName, `${plan.testId}.network.har`);
+        const networkMode =
+          target.name !== "web" || options.network === "live"
+            ? undefined
+            : options.network === "record"
+              ? "record"
+              : existsSync(trafficFile)
+                ? "replay"
+                : undefined;
         const opened = await worker.openAttempt({
+          ...(networkMode
+            ? {
+                network: {
+                  mode: networkMode,
+                  file: trafficFile,
+                  label: posix(relative(projectDir, trafficFile)),
+                },
+              }
+            : {}),
           allowedDomains: settings.allowedDomains,
           secrets: { ...secrets.secrets, ...attemptInbox?.secrets },
           protectedHeaders,
@@ -867,6 +933,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
                     replayProfileFlow({
                       projectDir,
                       config,
+                      branch,
                       environment: environment.name,
                       profile: auth.profile,
                       seed: `${runId}:auth:${auth.name}:${testId}:${attempt}`,
@@ -915,6 +982,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             await options.beforeAttempt({ testId, attempt, session: open });
           result = await where.run({ testId, attempt, sink }, () =>
             replayAttempt({
+              projectDir,
+              accessibility: (options.accessibility ?? config.accessibility ?? "off") === "warn",
               hookContext,
               inbox: attemptInbox,
               ...(prepare ? { prepare } : {}),
@@ -960,6 +1029,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             }),
           );
           replayed = result;
+          if (result.accessibility) attemptExtras.accessibility = result.accessibility;
         } finally {
           // `failures`: a first attempt that passed cleanly doesn't keep its trace and network log.
           const clean =
@@ -967,6 +1037,17 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             attempt === 1 &&
             replayed?.status === "passed" &&
             replayed.heals.length === 0;
+          // ENV-4: what mocks and recorded traffic answered (shown apart in reports).
+          const uses = opened.web?.mockUses();
+          if (uses?.length) attemptExtras.mocks = uses;
+          const traffic = opened.web?.traffic();
+          if (traffic?.mode === "record")
+            emit({
+              type: "log",
+              level: "info",
+              testId,
+              message: `Recorded ${traffic.recorded} network answers of ${plan.path} to ${posix(relative(projectDir, trafficFile))} (scrubbed). Later runs answer those requests from it; --live-network turns that off.`,
+            });
           const closed = await open.close(clean ? { discard: ["trace", "network"] } : {});
           for (const evidence of closed.evidence) {
             try {
@@ -1048,7 +1129,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       withoutAi += result.healedWithoutAi;
       byFixer += result.healedByFixer;
       needsAi += result.needsAi;
-      emit({ type: "attempt.finished", testId, attempt, status: result.status });
+      emit({ type: "attempt.finished", testId, attempt, status: result.status, ...attemptExtras });
       records.push({ ...result, decisions: sink, artifacts });
       if (result.status !== "failed" || signal?.aborted) break;
     }
@@ -1122,6 +1203,35 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         if (trace) failureEvidence.push({ kind: "artifact", path: trace.path });
       }
     }
+    // DIA-5: a test that looks flaky gets a mute suggestion (never a mute).
+    let muteSuggested: Awaited<ReturnType<typeof muteSuggestion>>;
+    if (!mute.muted && (verdict.verdict === "failed" || verdict.verdict === "flaky")) {
+      const provisional = provisionalResult(
+        { ...plan, id: testId },
+        runId,
+        records,
+        verdict,
+        matrix,
+      );
+      muteSuggested = await where.run(
+        { testId, attempt: last?.attempt ?? 1, sink: records.at(-1)?.decisions ?? [] },
+        () => muteSuggestion(provisional, decisions, verdictHistory.get(testId) ?? []),
+      );
+      if (muteSuggested)
+        emit({
+          type: "log",
+          level: "info",
+          testId,
+          message: `${plan.path} looks flaky (${muteSuggested.reason}). While it's being fixed you can mute it: ${brand.cliName} mute ${plan.path} --reason "…" --until 14d`,
+        });
+    }
+    if (mute.muted && verdict.verdict !== "passed")
+      emit({
+        type: "log",
+        level: "info",
+        testId,
+        message: `${plan.path} is muted until ${mute.muted.until} ("${mute.muted.reason}"): it ran (${verdict.verdict}), and doesn't count.`,
+      });
     // HEAL-7: a test that keeps healing should be re-recorded.
     const pastHeals = healHistory.get(testId) ?? { runs: 0, healed: 0 };
     const healsNow = {
@@ -1146,6 +1256,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       checkedSummary: verdict.checkedSummary,
       recentAi: recent,
       recentHeals: healsNow,
+      ...muteFields,
+      ...(muteSuggested ? { muteSuggested } : {}),
     });
 
     // ── keep what was recorded or compiled (REP-4), heals `auto` applied, and the portable spec ──
@@ -1456,5 +1568,18 @@ function provisionalResult(
       recent: null,
     },
     attempts,
+  };
+}
+
+/** Run.git from the branch detection (git isn't run); omitted outside a repository. */
+function gitInfo(
+  env: Readonly<Record<string, string | undefined>>,
+  projectDir: string,
+): { git?: { branch: string; commit: string | null; pr: number | null } } {
+  const branch = detectBranch(env, projectDir);
+  if (!branch) return {};
+  const pr = /^refs\/pull\/(\d+)\//.exec(env.GITHUB_REF ?? "")?.[1];
+  return {
+    git: { branch: branch.name, commit: env.GITHUB_SHA ?? null, pr: pr ? Number(pr) : null },
   };
 }

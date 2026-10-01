@@ -22,6 +22,9 @@ export const SPEC_DIAGNOSTIC_CODES = [
   "USE_SYNTAX",
   "EXACT_SYNTAX",
   "EXACT_CODE_LANG",
+  // ENV-4: a Mock: line that can't be read, or a target that can't mock (Android)
+  "MOCK_SYNTAX",
+  "MOCK_UNSUPPORTED",
   "FENCE_UNCLOSED",
   // Variables
   "TEMPLATE_UNCLOSED",

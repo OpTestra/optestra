@@ -421,3 +421,139 @@ describe("no new leaks (guarantee 4)", () => {
     }
   });
 });
+
+describe("a muted failing test (DIA-5)", () => {
+  const base = load(join(FIXTURES, "failed-product-bug"));
+  const mute = { reason: "known bug #42", until: "2026-10-15", source: "project file" };
+  const data: RunData = {
+    ...base,
+    run: {
+      ...base.run,
+      totals: { ...base.run.totals, muted: 1 },
+      tests: base.run.tests.map((t) => (t.verdict === "failed" ? { ...t, muted: true } : t)),
+    },
+    tests: base.tests.map((t) => (t.verdict === "failed" ? { ...t, muted: mute } : t)),
+  };
+  const out = outputs(data);
+
+  it("keeps its verdict but doesn't count: exit 0, skipped in JUnit, shown apart everywhere", () => {
+    const summary = JSON.parse(out.json);
+    expect(summary.exitCode).toBe(0);
+    expect(summary.failureGroups).toEqual([]);
+    const failed = summary.tests.find((t: { verdict: string }) => t.verdict === "failed");
+    expect(failed.muted).toEqual({ reason: "known bug #42", until: "2026-10-15" });
+    expect(out.junit).not.toContain("<failure ");
+    expect(out.junit).toContain(
+      '<skipped message="Muted until 2026-10-15 (failed): known bug #42"/>',
+    );
+    expect(out.junit).toMatch(/failures="0"/);
+    expect(out.markdown).toContain("Muted tests (1; they ran, their results don't count)");
+    expect(out.html).toContain('<section id="muted"');
+    expect(out.terminal).toContain("MUTED");
+    expect(out.terminal).toMatch(/failed, doesn't count: muted until 2026-10-15 \(known bug #42\)/);
+    expect(out.terminal).toMatch(/1 passed, 1 failed, 1 muted/);
+  });
+});
+
+describe("mocked responses (ENV-4)", () => {
+  const base = load(join(FIXTURES, "all-passed"));
+  const mocks = [
+    {
+      source: "step" as const,
+      method: "POST",
+      url: "/api/projects",
+      status: 500,
+      hits: 1,
+      stepIndex: 2,
+      file: "tests/files/error.json",
+    },
+  ];
+  const data: RunData = {
+    ...base,
+    tests: base.tests.map((t, i) =>
+      i === 0 ? { ...t, attempts: t.attempts.map((a) => ({ ...a, mocks })) } : t,
+    ),
+  };
+  const out = outputs(data);
+
+  it("marks the mocked answers in every format", () => {
+    const summary = JSON.parse(out.json);
+    expect(summary.tests[0].mocks).toEqual([
+      {
+        source: "step",
+        method: "POST",
+        url: "/api/projects",
+        status: 500,
+        hits: 1,
+        file: "tests/files/error.json",
+      },
+    ]);
+    expect(out.html).toContain("Mocked responses");
+    expect(out.html).toContain("POST /api/projects");
+    expect(out.junit).toContain('name="mocked.responses" value="1"');
+    expect(out.markdown).toContain("(mocked)");
+  });
+});
+
+describe("accessibility warnings (EVD-6)", () => {
+  const base = load(join(FIXTURES, "all-passed"));
+  const accessibility = {
+    standard: "wcag2aa" as const,
+    pages: 3,
+    ms: 120,
+    violations: [
+      {
+        rule: "color-contrast",
+        impact: "serious" as const,
+        help: "Elements must meet minimum color contrast ratio thresholds",
+        helpUrl: "https://dequeuniversity.com/rules/axe/4.13/color-contrast",
+        page: "/settings",
+        nodes: 1,
+        targets: [".hint"],
+      },
+    ],
+  };
+  const data: RunData = {
+    ...base,
+    tests: base.tests.map((t, i) =>
+      i === 0 ? { ...t, attempts: t.attempts.map((a) => ({ ...a, accessibility })) } : t,
+    ),
+  };
+  const out = outputs(data);
+
+  it("shows the warnings apart from pass/fail in every format", () => {
+    const summary = JSON.parse(out.json);
+    expect(summary.exitCode).toBe(0);
+    expect(summary.tests[0].verdict).toBe("passed");
+    expect(summary.tests[0].accessibility).toEqual({
+      pages: 3,
+      ms: 120,
+      violations: [
+        {
+          rule: "color-contrast",
+          impact: "serious",
+          help: "Elements must meet minimum color contrast ratio thresholds",
+          helpUrl: "https://dequeuniversity.com/rules/axe/4.13/color-contrast",
+          page: "/settings",
+          nodes: 1,
+        },
+      ],
+    });
+    expect(summary.tests[1].accessibility).toBeNull();
+    expect(out.html).toContain('<section id="accessibility"');
+    expect(out.html).toContain("3 pages checked (WCAG 2 A/AA)");
+    expect(out.junit).toContain('name="accessibility.warnings" value="1"');
+    expect(out.junit).toContain("/settings color-contrast");
+    expect(out.junit).not.toContain("<failure");
+    expect(out.markdown).toContain("Accessibility warnings (1 on 3 pages checked, never failures)");
+    expect(out.terminal).toContain(
+      "1 accessibility warning on 3 pages checked (not failures): color-contrast",
+    );
+  });
+
+  it("says nothing when the run didn't check accessibility", () => {
+    const plain = outputs(base);
+    expect(plain.html).not.toContain('id="accessibility"');
+    expect(plain.terminal).not.toContain("ccessibility");
+  });
+});

@@ -29,6 +29,8 @@ export interface ExportCommandOptions {
   env?: string;
   dir?: string;
   force?: boolean;
+  /** EXP-4: page objects and flow helpers (off by default). */
+  pageObjects?: boolean;
 }
 
 /** Folder the specs go to inside the export. Uploads (`../files/…`) resolve from here. */
@@ -93,6 +95,7 @@ function readme(options: {
   tests: string[];
   skipped: Array<{ test: string; reason: string }>;
   usesInbox: boolean;
+  pageObjects: boolean;
 }): string {
   const secretLines = options.secrets.length
     ? options.secrets.map(
@@ -150,6 +153,17 @@ test), model-judged checks and \`Never:\` rules (noted as annotations), saved lo
 (\`auth:\` tests skip), verdicts, failure causes and flaky-test detection, and the
 secret vault.
 
+${
+  options.pageObjects
+    ? `
+## Page objects
+
+\`${SPECS}/pages/\` has a class per page with the elements the tests use there, and
+\`${SPECS}/flows/\` a helper per shared flow (such as logging in). When the page changes,
+fix the locator once, in its page class.
+`
+    : ""
+}
 The files are yours: edit them freely.
 `;
 }
@@ -203,6 +217,7 @@ export async function runExportCommand(
     env: io.env,
     force: true,
     out: { dir: specsDir, label: SPECS },
+    pageObjects: options.pageObjects === true,
   });
   if (!result.ok) {
     for (const problem of result.problems) io.stdout(`error ${problem}\n`);
@@ -295,6 +310,7 @@ export async function runExportCommand(
       tests: specs.map((spec) => spec.path.slice(SPECS.length + 1)),
       skipped: result.skipped,
       usesInbox,
+      pageObjects: options.pageObjects === true,
     }),
   };
   for (const [name, content] of Object.entries(files)) writeFileSync(join(out, name), content);
@@ -323,6 +339,10 @@ export function registerExportCommand(program: Command, io: () => CommandIo): vo
     .option("-o, --out <dir>", "folder to create (default: ./playwright-export)")
     .option("-e, --env <name>", "environment whose base URL and allowed domains the tests use")
     .option("--force", "write into a folder that isn't empty")
+    .option(
+      "--page-objects",
+      "group locators into a class per page (pages/) and flows into shared helpers (flows/)",
+    )
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (options: ExportCommandOptions) => {
       process.exitCode = await runExportCommand(options, io());

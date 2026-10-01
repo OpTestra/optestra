@@ -1,14 +1,16 @@
-import { spawn } from "node:child_process";
-import { existsSync, realpathSync } from "node:fs";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import { type ChildProcess, spawn } from "node:child_process";
+import { closeSync, existsSync, openSync, readSync, realpathSync } from "node:fs";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { SecretValue } from "@optestra/config/node";
 import { revealSecret } from "@optestra/config/reveal";
 import { type HooksSettings, matchGlob } from "@optestra/spec";
+import { type LaunchEnv, type LaunchPlan, launchPlan, windowsLookup } from "./launch.js";
 
 // `run:` and `sql:` hooks (AUT-10). Declared, scoped and safe:
 // - run: only a command listed in `hooks.run.allow` (a program on the PATH, or
-//   a project path glob), started with no shell from the project folder, with
-//   a timeout. The project's secrets are in its environment (a seed script
+//   a project path glob), started from the project folder with a timeout, by
+//   its own interpreter (see launch.ts: no shell, except cmd.exe for a batch
+//   file on Windows). The project's secrets are in its environment (a seed script
 //   needs its database); its output is scrubbed before anyone sees it.
 // - sql: only through the database's own client (psql, mysql), against the
 //   connection string of a declared secret, never in a production environment
@@ -114,21 +116,60 @@ export function allowedCommand(
   return { ok: true, file };
 }
 
+/** This machine, for launchPlan. */
+export function launchEnv(env: Readonly<Record<string, string | undefined>>): LaunchEnv {
+  return {
+    platform: process.platform,
+    execPath: process.execPath,
+    comSpec: env.ComSpec ?? env.COMSPEC,
+    findOnPath: windowsLookup(env, existsSync, join),
+    firstLine: (file) => {
+      try {
+        const fd = openSync(file, "r");
+        try {
+          const buffer = Buffer.alloc(200);
+          const read = readSync(fd, buffer, 0, 200, 0);
+          return buffer.subarray(0, read).toString("utf8").split(/\r?\n/)[0];
+        } finally {
+          closeSync(fd);
+        }
+      } catch {
+        return undefined;
+      }
+    },
+  };
+}
+
+/** Stops the process and, on Windows, everything it started (cmd.exe runs the batch file in a child). */
+function stop(child: ChildProcess): void {
+  if (process.platform === "win32" && child.pid !== undefined) {
+    spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"], {
+      stdio: "ignore",
+      windowsHide: true,
+      shell: false,
+    }).on("error", () => child.kill("SIGKILL"));
+    return;
+  }
+  child.kill("SIGKILL");
+}
+
 function execute(
-  file: string,
-  args: string[],
+  plan: Extract<LaunchPlan, { ok: true }>,
   env: Record<string, string>,
   ctx: HookContext,
   timeoutSeconds: number,
 ): Promise<HookExecResult> {
   const started = Date.now();
+  const file =
+    plan.via === "direct" ? plan.command : (plan.args[plan.via === "cmd" ? 3 : 0] ?? plan.command);
   return new Promise((done) => {
     let output = "";
     let finished = false;
-    const child = spawn(file, args, {
+    const child = spawn(plan.command, plan.args, {
       cwd: ctx.projectDir,
       env,
       shell: false,
+      ...(plan.windowsVerbatimArguments ? { windowsVerbatimArguments: true } : {}),
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,
     });
@@ -146,7 +187,7 @@ function execute(
       done({ ...result, ms: Date.now() - started });
     };
     const timer = setTimeout(() => {
-      child.kill("SIGKILL");
+      stop(child);
       end({
         status: "failed",
         message: `timed out after ${timeoutSeconds} s`,
@@ -155,7 +196,7 @@ function execute(
       });
     }, timeoutSeconds * 1000);
     const abort = () => {
-      child.kill("SIGKILL");
+      stop(child);
       end({ status: "error", message: "stopped", output: clean(), exitCode: null });
     };
     ctx.signal?.addEventListener("abort", abort, { once: true });
@@ -207,9 +248,16 @@ export async function runScriptHook(script: string, ctx: HookContext): Promise<H
   const allowed = allowedCommand(command, ctx);
   if (!allowed.ok)
     return { status: "refused", reason: "not_allowed", message: allowed.message, ms: 0 };
+  const plan = launchPlan(
+    allowed.file,
+    args,
+    launchEnv(ctx.env ?? process.env),
+    isAbsolute(allowed.file),
+  );
+  if (!plan.ok) return { status: "refused", reason: "not_allowed", message: plan.message, ms: 0 };
   const env = baseEnv(ctx);
   for (const [name, secret] of Object.entries(ctx.secrets)) env[name] = revealSecret(secret);
-  return execute(allowed.file, args, env, ctx, ctx.settings.run.timeoutSeconds);
+  return execute(plan, env, ctx, ctx.settings.run.timeoutSeconds);
 }
 
 /** The client's environment for a connection string: the password never goes on the command line. */
@@ -287,9 +335,15 @@ export async function runSqlHook(
       message: `sql: ${settings.connection} is not a ${settings.client === "psql" ? "postgres://" : "mysql://"} URL.`,
       ms: 0,
     };
-  const result = await execute(
+  const plan = launchPlan(
     settings.client,
     [...client.args, statement],
+    launchEnv(ctx.env ?? process.env),
+    false,
+  );
+  if (!plan.ok) return { status: "refused", reason: "no_client", message: plan.message, ms: 0 };
+  const result = await execute(
+    plan,
     { ...baseEnv(ctx), ...client.env },
     ctx,
     settings.timeoutSeconds,

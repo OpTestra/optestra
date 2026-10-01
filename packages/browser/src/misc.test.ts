@@ -30,6 +30,7 @@ describe("public API (SAF-2: the closed action set)", () => {
   it("offers exactly these session methods, and no Playwright object", () => {
     const methods = Object.getOwnPropertyNames(Session.prototype).sort();
     expect(methods).toEqual([
+      "accessibility",
       "act",
       "browserName",
       "candidates",
@@ -40,6 +41,8 @@ describe("public API (SAF-2: the closed action set)", () => {
       "factsOf",
       "hookRequest",
       "inspect",
+      "mock",
+      "mockUses",
       "observe",
       "pageCopy",
       "record",
@@ -48,6 +51,7 @@ describe("public API (SAF-2: the closed action set)", () => {
       "screenshot",
       "settle",
       "storageState",
+      "traffic",
       "unsettled",
       "url",
       "useStorageState",

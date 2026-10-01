@@ -86,16 +86,75 @@ describe("run: hooks", () => {
     });
     expect(allowedCommand("../outside.js", ctx)).toMatchObject({ ok: false });
     expect(allowedCommand("scripts/missing.js", ctx)).toMatchObject({ ok: false });
-    symlinkSync("/bin/sh", join(dir, "scripts", "sh.js"));
-    expect(allowedCommand("scripts/sh.js", ctx)).toMatchObject({
-      ok: false,
-      message: expect.stringContaining("outside the project"),
-    });
+    // A link to a file outside the project. (Windows needs a privilege for links: if
+    // it can't make one, there's nothing to check here.)
+    const outside = join(mkdtempSync(join(tmpdir(), "hooks-out-")), "evil.js");
+    dirs.push(join(outside, ".."));
+    writeFileSync(outside, "console.log('outside')");
+    let linked = true;
+    try {
+      symlinkSync(outside, join(dir, "scripts", "link.js"));
+    } catch (error) {
+      if (process.platform !== "win32") throw error;
+      linked = false;
+    }
+    if (linked)
+      expect(allowedCommand("scripts/link.js", ctx)).toMatchObject({
+        ok: false,
+        message: expect.stringContaining("points outside the project"),
+      });
     expect(await runScriptHook("scripts/seed.js | cat", ctx)).toMatchObject({ status: "refused" });
     // Nothing is allowed by default.
     expect(await runScriptHook("node -v", context(dir, { settings: DEFAULT_HOOKS }))).toMatchObject(
       { status: "refused" },
     );
+  });
+
+  it("runs a script in a folder with spaces, passing quoted arguments as they are", async () => {
+    const dir = project();
+    mkdirSync(join(dir, "my scripts"));
+    writeFileSync(
+      join(dir, "my scripts", "seed data.js"),
+      "console.log(JSON.stringify(process.argv.slice(2)))",
+    );
+    const ctx = context(dir);
+    ctx.settings = { ...ctx.settings, run: { ...ctx.settings.run, allow: ["my scripts/*.js"] } };
+    const result = await runScriptHook(
+      `"my scripts/seed data.js" --name "Ada Lovelace" 'a "quoted" word'`,
+      ctx,
+    );
+    expect(result).toMatchObject({ status: "ok", exitCode: 0 });
+    expect(JSON.parse(result.output ?? "")).toEqual(["--name", "Ada Lovelace", 'a "quoted" word']);
+  });
+
+  it("runs the platform's own scripts, and says plainly when one can't run here", async () => {
+    const dir = project();
+    writeFileSync(join(dir, "scripts", "seed.cmd"), "@echo off\r\necho seeded %1 %2\r\n");
+    writeFileSync(join(dir, "scripts", "seed.sh"), 'echo "seeded $1 $2"\n');
+    const ctx = context(dir);
+    ctx.settings = {
+      ...ctx.settings,
+      run: { ...ctx.settings.run, allow: ["scripts/*.cmd", "scripts/*.sh"] },
+    };
+    const cmd = await runScriptHook('scripts/seed.cmd "pro plan" 3', ctx);
+    const sh = await runScriptHook('scripts/seed.sh "pro plan" 3', ctx);
+    if (process.platform === "win32") {
+      // cmd keeps a quoted %1 quoted.
+      expect(cmd).toMatchObject({ status: "ok", output: 'seeded "pro plan" 3' });
+      expect(sh).toMatchObject({
+        status: "refused",
+        message: expect.stringContaining("Windows has no /bin/sh"),
+      });
+    } else {
+      expect(sh).toMatchObject({ status: "ok", output: "seeded pro plan 3" });
+      expect(cmd).toMatchObject({
+        status: "refused",
+        message: expect.stringContaining("Windows batch file"),
+      });
+    }
+    // cmd.exe would expand %VARS%: refused before anything starts, on every platform.
+    const expanded = await runScriptHook("scripts/seed.cmd %PATH%", ctx);
+    expect(expanded.status).toBe("refused");
   });
 
   it("stops a script at the timeout", async () => {

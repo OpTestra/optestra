@@ -12,7 +12,7 @@ import type { Config } from "@optestra/config";
 import type { SecretValue } from "@optestra/config/node";
 import type { StepResult } from "@optestra/contract";
 import { type Recording, routeOf } from "@optestra/recording";
-import { readRecording, recordingPath } from "@optestra/recording/node";
+import { type RecordingBranch, readRecording, recordingFiles } from "@optestra/recording/node";
 import type { ExpandedTest } from "@optestra/spec";
 import { loadTest } from "@optestra/spec/node";
 import type { TestInbox } from "../author/inbox.js";
@@ -210,6 +210,8 @@ export type ProfileFlowResult =
 export interface ProfileFlowOptions {
   projectDir: string;
   config: Config;
+  /** REP-8: the feature branch whose recordings come first (none: main's). */
+  branch?: RecordingBranch | null | undefined;
   environment: string;
   profile: AuthProfile;
   /** Seed for the flow's generated values. */
@@ -257,8 +259,11 @@ export async function replayProfileFlow(options: ProfileFlowOptions): Promise<Pr
       message: `The login flow ${path} has problems: ${problems.map((d) => `${d.code}: ${d.message}`).join(" ")}`,
     };
   const flow = loaded.expanded;
-  const file = recordingPath(resolve(options.projectDir, testsDirRelative), flow.id);
-  const stored = readRecording(file);
+  // REP-8: a feature branch's own recording of the flow first, then main's.
+  const where = () =>
+    recordingFiles(resolve(options.projectDir, testsDirRelative), flow.id, options.branch);
+  const file = where().write;
+  const stored = readRecording(where().read);
   const recording = stored?.ok ? stored.recording : undefined;
   const inbox = options.inbox?.();
   let login: Session;
@@ -292,7 +297,7 @@ export async function replayProfileFlow(options: ProfileFlowOptions): Promise<Pr
     await login.close();
   }
   if (result.authored.steps.length > 0 || result.authored.checks.length > 0) {
-    const now = readRecording(file);
+    const now = readRecording(where().read);
     options.saveAuthored(flow, now?.ok ? now.recording : undefined, result.authored, {
       test: path,
       recording: file,

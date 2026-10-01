@@ -17,6 +17,12 @@ import {
   TriggerSchema,
   VerdictSchema,
 } from "./enums.js";
+import {
+  AccessibilityReportSchema,
+  MockUseSchema,
+  MuteSchema,
+  MuteSuggestionSchema,
+} from "./extras.js";
 import { HealProposalSchema } from "./heal.js";
 import { DecisionRecordSchema, ModelCallSchema } from "./records.js";
 import { GitInfoSchema, RunBlockSchema } from "./run.js";
@@ -149,6 +155,10 @@ export const AttemptFinishedEventSchema = z.object({
   type: z.literal("attempt.finished"),
   ...inAttempt,
   status: AttemptStatusSchema,
+  /** 1.5 (ENV-4): mocked or recorded responses the attempt used. */
+  mocks: z.array(MockUseSchema).optional(),
+  /** 1.5 (EVD-6): accessibility warnings of the pages visited (when turned on). */
+  accessibility: AccessibilityReportSchema.optional(),
 });
 
 export const TestFinishedEventSchema = z.object({
@@ -164,6 +174,12 @@ export const TestFinishedEventSchema = z.object({
   recentAi: AiUsageSchema.shape.recent.default(null),
   /** 1.2 (HEAL-7). */
   recentHeals: RecentHealsSchema.optional(),
+  /** 1.5 (DIA-5): the test was muted: its failure doesn't count. */
+  muted: MuteSchema.optional(),
+  /** 1.5 (DIA-5): its mute ended; it counts again. */
+  muteExpired: MuteSchema.optional(),
+  /** 1.5 (DIA-5): flaky: muting is suggested (never done automatically). */
+  muteSuggested: MuteSuggestionSchema.optional(),
 });
 
 export const RunFinishedEventSchema = z.object({

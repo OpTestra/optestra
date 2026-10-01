@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { brand } from "@optestra/brand";
 import { type Config, hasErrors } from "@optestra/config";
 import { loadProject, parseYaml } from "@optestra/config/node";
@@ -7,8 +7,10 @@ import { DEFAULT_EMAIL_DOMAIN, parseTest, type TestSpec } from "@optestra/spec";
 import { DEFAULT_TESTS, findTestFiles, loadTest, nodeFileReader } from "@optestra/spec/node";
 import { fileState } from "../header.js";
 import { generateMaestroFlow } from "../maestro.js";
+import { recordingBranch, recordingFiles } from "@optestra/recording/node";
+import { PageObjects } from "../page-objects.js";
 import { readCodegenRecording } from "../recording.js";
-import { type GeneratedFile, generateSpec, recordingFileName } from "../spec.js";
+import { type GeneratedFile, generateSpec } from "../spec.js";
 import { generateSupportFiles, type SupportEnvironment } from "../support.js";
 
 // Generating a project's specs: find the tests that have recordings, generate
@@ -35,6 +37,11 @@ export interface GenerateProjectOptions {
    * comment. Upload paths stay relative to the folder's parent.
    */
   out?: { dir: string; label: string } | undefined;
+  /**
+   * EXP-4: page objects. Locators go to a class per page (`pages/`), flows and
+   * auth logins to shared helpers (`flows/`). Off by default.
+   */
+  pageObjects?: boolean | undefined;
 }
 
 export type FileStatus =
@@ -121,6 +128,7 @@ function place(
   const edited = state === "edited" || state === "foreign";
   if (options.check) return edited ? "edited" : "stale";
   if (edited && !options.force) return "edited";
+  mkdirSync(dirname(file), { recursive: true });
   writeAtomic(file, generated.content);
   if (existing === undefined) return "created";
   return edited ? "overwritten" : "updated";
@@ -183,18 +191,25 @@ export async function generateProject(
     return result;
   }
   const extras = new Map<string, Pick<FileResult, "gaps" | "secrets" | "appId">>();
-  const recordingsDir = join(projectDir, testsDir, brand.dataDirName);
+  // REP-8: on a feature branch, its own recordings come first.
+  const branch = recordingBranch(
+    config.recordings ?? { branches: "auto" },
+    options.env ?? process.env,
+    projectDir,
+  );
+  const recordingOf = (id: string) => recordingFiles(join(projectDir, testsDir), id, branch).read;
   const outDir = options.out?.dir ?? join(projectDir, specDir);
   const readFile = nodeFileReader(projectDir);
   const files = selected(projectDir, findTestFiles(projectDir, testsSettings), options.tests, cwd);
   const generated: Array<{ file: GeneratedFile; test?: string }> = [];
+  const pageObjects = options.pageObjects && !android ? new PageObjects() : undefined;
   for (const path of files) {
     const test = await loadTest(projectDir, path, config, {
       environment: loaded.environment?.name,
       seed: "codegen",
     });
     if (test?.expanded.kind !== "test") continue;
-    const recordingFile = join(recordingsDir, recordingFileName(test.id));
+    const recordingFile = recordingOf(test.id);
     if (!existsSync(recordingFile)) {
       result.skipped.push({ test: path, reason: "not recorded yet" });
       continue;
@@ -237,7 +252,7 @@ export async function generateProject(
         seed: "codegen",
         params: settings.params,
       });
-      const flowFile = flow ? join(recordingsDir, recordingFileName(flow.id)) : undefined;
+      const flowFile = flow ? recordingOf(flow.id) : undefined;
       const flowRecording =
         flowFile && existsSync(flowFile)
           ? readCodegenRecording(readFileSync(flowFile, "utf8"))
@@ -262,10 +277,12 @@ export async function generateProject(
         expanded: test.expanded,
         specs,
         ...(profile ? { profile } : {}),
+        ...(pageObjects ? { pageObjects } : {}),
       }),
       test: path,
     });
   }
+  if (pageObjects) for (const file of pageObjects.files()) generated.push({ file });
   if (generated.length > 0 && environment) {
     for (const file of generateSupportFiles(environment)) generated.push({ file });
   }

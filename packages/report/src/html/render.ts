@@ -73,7 +73,8 @@ interface Ctx {
 const badge = (kind: string, label: string) =>
   `<span class="badge v-${h(kind)}">${h(label)}</span>`;
 
-const verdictBadge = (test: TestView) => badge(test.verdict, VERDICT_LABEL[test.verdict]);
+const verdictBadge = (test: TestView) =>
+  `${badge(test.verdict, VERDICT_LABEL[test.verdict])}${test.muted ? ` ${badge("muted", "Muted")}` : ""}`;
 
 const meta = (parts: (string | null | undefined | false)[]) =>
   `<span class="meta">${parts
@@ -217,6 +218,41 @@ function warningsSection(ctx: Ctx): string {
     )
     .join("");
   return `<section id="warnings" aria-labelledby="warnings-h"><h2 id="warnings-h">Soft-check warnings</h2><p class="muted">Soft checks only warn. They never fail a test.</p><ul>${items}</ul></section>`;
+}
+
+function mutedSection(ctx: Ctx): string {
+  const list = ctx.model.muted;
+  const expired = ctx.model.tests.filter((t) => t.muteExpired);
+  const suggested = ctx.model.tests.filter((t) => t.muteSuggested);
+  if (list.length + expired.length + suggested.length === 0) return "";
+  const items = [
+    ...list.map(
+      (test) =>
+        `<li><a href="#${h(test.anchor)}">${h(test.name)}</a>: ${h(VERDICT_LABEL[test.verdict].toLowerCase())} ${meta([test.muted?.until ? `muted until ${h(test.muted.until)}` : "muted", h(test.muted?.reason ?? "")])}</li>`,
+    ),
+    ...expired.map(
+      (test) =>
+        `<li><a href="#${h(test.anchor)}">${h(test.name)}</a>: its mute ended on ${h(test.muteExpired?.until ?? "")}; it counts again</li>`,
+    ),
+    ...suggested.map(
+      (test) =>
+        `<li><a href="#${h(test.anchor)}">${h(test.name)}</a> looks flaky ${meta([h(test.muteSuggested?.reason ?? "")])}: consider muting it while it's fixed</li>`,
+    ),
+  ].join("");
+  return `<section id="muted" aria-labelledby="muted-h"><h2 id="muted-h">Muted tests</h2><p class="muted">Muted tests still run and keep their evidence. Their results don't count toward the run.</p><ul>${items}</ul></section>`;
+}
+
+function accessibilitySection(ctx: Ctx): string {
+  const list = ctx.model.accessibility;
+  if (ctx.model.accessibilityPages === 0) return "";
+  const items = list
+    .map(
+      ({ test, violation: v }) =>
+        `<li><a href="#${h(test.anchor)}">${h(test.name)}</a>, <code>${h(v.page)}</code>: ${h(v.help)} ${meta([h(v.rule), v.impact ? h(v.impact) : null, `${v.nodes} element${v.nodes === 1 ? "" : "s"}`])}${v.targets.length ? ` <code>${h(v.targets.join(", "))}</code>` : ""}</li>`,
+    )
+    .join("");
+  const pages = `${ctx.model.accessibilityPages} page${ctx.model.accessibilityPages === 1 ? "" : "s"} checked (WCAG 2 A/AA)`;
+  return `<section id="accessibility" aria-labelledby="accessibility-h"><h2 id="accessibility-h">Accessibility warnings</h2><p class="muted">${h(pages)}. These are warnings, never failures.</p>${items ? `<ul>${items}</ul>` : `<p>No problems found.</p>`}</section>`;
 }
 
 function expectedActual(check: CheckResult): string {
@@ -408,6 +444,16 @@ function testBody(ctx: Ctx, test: TestView): string {
     out.push(
       `<h4>What was checked</h4><ul>${result.checkedSummary.map((line) => `<li>${h(line)}</li>`).join("")}</ul>`,
     );
+  if (test.mocks.length > 0)
+    out.push(
+      `<h4>Mocked responses</h4><p class="muted">These requests were answered by the test, not the app.</p><ul>${test.mocks
+        .map((m) =>
+          m.source === "recorded"
+            ? `<li>${badge("mocked", "Recorded")} ${m.hits} answers from recorded traffic${m.file ? ` (<code>${h(m.file)}</code>)` : ""}</li>`
+            : `<li>${badge("mocked", "Mocked")} <code>${h(`${m.method} ${m.url}`)}</code> → ${m.status ?? "?"}${m.file ? ` with <code>${h(m.file)}</code>` : ""} ${meta([`${m.hits} request${m.hits === 1 ? "" : "s"}`])}</li>`,
+        )
+        .join("")}</ul>`,
+    );
   if (test.softWarnings.length > 0)
     out.push(
       `<h4>Soft-check warnings</h4><ul>${test.softWarnings.map((w) => `<li>${h(w.check.generated.description)}: ${h(checkLine(w.check))}</li>`).join("")}</ul>`,
@@ -498,7 +544,7 @@ ${blockedBanner(ctx)}
 ${failuresSection(ctx)}
 ${summarySection(ctx)}
 ${healsSection(ctx)}
-${warningsSection(ctx)}
+${warningsSection(ctx)}${mutedSection(ctx)}${accessibilitySection(ctx)}
 ${diagnosticsSection(ctx)}
 ${testsSection(ctx)}
 </main>

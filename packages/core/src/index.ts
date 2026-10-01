@@ -45,3 +45,4 @@ export {
 export { isScreen } from "./target/render.js";
 export { ENGINE_CAPABILITIES, type EngineCapabilities } from "./capabilities.js";
 export { parseViewport, VIEWPORT_LIMITS, type ViewportCheck } from "./run/viewport.js";
+export * from "./quarantine/index.js";
