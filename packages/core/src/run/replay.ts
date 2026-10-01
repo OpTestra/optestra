@@ -354,6 +354,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     break;
   }
   // The test's login (auth: <profile>, SEC-3): after the setup hooks, before the start page.
+  // The auth login is not one of the test's own steps (an empty test still proves nothing).
+  let loginStep: (typeof steps)[number] | undefined;
   if (!stop && options.prepare) {
     const prepared = await options.prepare();
     for (const call of prepared.modelCalls ?? []) emitCall(call);
@@ -364,7 +366,10 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     }
     for (const line of prepared.logs ?? [])
       options.emit({ type: "log", level: "info", message: line });
-    if (prepared.step) push(prepared.step);
+    if (prepared.step) {
+      loginStep = prepared.step;
+      push(prepared.step);
+    }
     if (prepared.observations && prepared.status !== "ready")
       preparedObservations = prepared.observations;
     if (prepared.status === "failed" && prepared.step)
@@ -1654,8 +1659,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
 
   await Promise.all(pendingShots);
 
-  if (!stop && steps.every((s) => s.status === "skipped")) {
-    // Nothing ran at all (an empty test): nothing can prove a pass.
+  if (!stop && steps.filter((s) => s !== loginStep).every((s) => s.status === "skipped")) {
+    // Nothing of the test ran (an empty test, even one that logs in first): nothing can prove a pass.
     stop = block("config_error", "The test has no steps to run.", null);
   }
 
