@@ -28,6 +28,8 @@ export async function runCompareCommand(
     return 2;
   }
   let file: Awaited<ReturnType<typeof bench.runComparison>>;
+  let saved: string | null = null;
+  const dir = options.scripted ? null : await bench.benchDir();
   try {
     file = await bench.runComparison({
       entries: list,
@@ -35,12 +37,17 @@ export async function runCompareCommand(
       scripted: options.scripted ?? false,
       command: `bench --compare ${list.map(bench.entryId).join(" ")}${android ? " --fixture all" : ""}${options.scripted ? " --scripted" : ""}`,
       onProgress: options.json ? () => {} : (line) => io.stdout(`${line}\n`),
+      // Saved after every model, so a crash later never loses spent calls.
+      onSave: (partial) => {
+        if (dir) saved = bench.saveComparison(dir, partial);
+      },
     });
   } catch (error) {
-    io.stdout(`${error instanceof Error ? error.message : String(error)}\n`);
+    io.stdout(
+      `${error instanceof Error ? error.message : String(error)}\n${saved ? `Saved so far: ${saved}\n` : ""}`,
+    );
     return 2;
   }
-  const saved = file.scripted ? null : bench.saveComparison(await bench.benchDir(), file);
   if (options.json) io.stdout(`${JSON.stringify(file, null, 2)}\n`);
   else io.stdout(`\n${bench.formatComparison(file)}\n${saved ? `\nSaved: ${saved}\n` : ""}`);
   return file.models.some((m) => m.problem) ? 1 : 0;

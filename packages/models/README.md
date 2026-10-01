@@ -97,7 +97,7 @@ sign-in. Images (the `look` screenshot) go in as stream-json image blocks.
 Codex (prompt on stdin):
 
 ```
-codex exec --json --output-schema <file> --output-last-message <file> --sandbox read-only --ask-for-approval never
+codex exec --json --output-schema <file> --output-last-message <file> --sandbox read-only -c approval_policy="never"
       --skip-git-repo-check --ephemeral --ignore-user-config --cd <empty temp folder>
       -c features.shell_tool=false -c features.unified_exec=false -c features.multi_agent=false -c features.apps=false
       -c features.hooks=false -c features.memories=false -c web_search="disabled" -c tools.view_image=false

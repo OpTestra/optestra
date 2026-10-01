@@ -56,12 +56,20 @@ export interface RunWriter {
 const TEXT_TYPE = /^text\/|[+/](json|xml|x-ndjson)\b/;
 const RESERVED = /^(run\.json|events\.ndjson|tests\/[^/]+\/result\.json)$/;
 
+const SHA256 = /^[a-f0-9]{64}$/;
+
 function deepScrub(value: unknown, scrub: Scrub): unknown {
   if (typeof value === "string") return scrub(value);
   if (Array.isArray(value)) return value.map((item) => deepScrub(item, scrub));
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [scrub(key), deepScrub(item, scrub)]),
+      Object.entries(value).map(([key, item]) =>
+        // A hash of the scrubbed bytes can't hold a secret, but a short one (a
+        // 6-digit code) can turn up inside its hex: masking that breaks the hash.
+        key === "sha256" && typeof item === "string" && SHA256.test(item)
+          ? [key, item]
+          : [scrub(key), deepScrub(item, scrub)],
+      ),
     );
   }
   return value;

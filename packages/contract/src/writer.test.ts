@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -248,6 +249,30 @@ describe("run writer", () => {
     } as const;
     expect(() => writer.writeArtifact(artifact, new Uint8Array([1]))).toThrow(/unscrubbed/);
     expect(existsSync(join(dir, "video.webm"))).toBe(false);
+  });
+
+  it("keeps an artifact's sha256 whole when a short secret turns up inside its hex", () => {
+    const bytes = new Uint8Array([1, 2, 3]);
+    const hash = createHash("sha256").update(bytes).digest("hex");
+    const code = hash.slice(20, 26); // a 6-character secret, like an inbox code
+    const dir = tempRunDir();
+    const writer = createRunWriter(dir, {
+      scrub: (text) => text.replaceAll(code, "[secret:CODE]"),
+    });
+    writer.emit({
+      type: "run.started",
+      engineVersion: "0",
+      project: "p",
+      environment: null,
+      target: "web",
+      trigger: "cli",
+      mode: "normal",
+    });
+    const ref = writer.writeArtifact(
+      { kind: "video", path: "video.webm", contentType: "video/webm", scrubbed: true },
+      bytes,
+    );
+    expect(ref.sha256).toBe(hash);
   });
 
   it("refuses artifact paths outside the run folder or over its documents", () => {

@@ -190,6 +190,8 @@ export interface ComparisonFile {
   prices: Record<string, unknown>;
   models: ModelComparison[];
   facts: NonModelFacts | null;
+  /** Why the facts are missing, when measuring them failed. */
+  factsProblem: string | null;
 }
 
 // ── small helpers (pure; unit-tested) ─────────────────────────────────────────
@@ -961,6 +963,8 @@ export interface ComparisonOptions {
   now?: () => Date;
   budgetUsd?: number;
   onProgress?: (line: string) => void;
+  /** Called with the file so far after each model and at the end, so a later crash loses nothing. */
+  onSave?: (file: ComparisonFile) => void;
 }
 
 export async function runComparison(options: ComparisonOptions): Promise<ComparisonFile> {
@@ -971,6 +975,25 @@ export async function runComparison(options: ComparisonOptions): Promise<Compari
   if (androidCheck && !androidCheck.ok) throw new Error(`Android: ${androidCheck.reason}`);
   const android = androidCheck?.ok ? androidCheck.fixture : null;
   const models: ModelComparison[] = [];
+  const date = (options.now?.() ?? new Date()).toISOString();
+  const prices: Record<string, unknown> = {};
+  for (const entry of options.entries) prices[entry.model] = priceFor(entry.model) ?? null;
+  const snapshot = (facts: NonModelFacts | null, factsProblem: string | null): ComparisonFile => ({
+    comparisonVersion: COMPARISON_VERSION,
+    kind: "model-comparison",
+    date,
+    engineVersion: version(),
+    commit: engineCommit(shop.benchDir),
+    os: `${process.platform} ${process.arch} (${cpus()[0]?.model ?? "cpu"}, ${cpus().length} cores)`,
+    scripted: options.scripted ?? false,
+    command:
+      options.command ??
+      `bench --compare ${options.entries.map(entryId).join(" ")}${options.android ? " --android" : ""}`,
+    prices,
+    models,
+    facts,
+    factsProblem,
+  });
   for (const entry of options.entries) {
     const budget = new BudgetMeter("run", options.budgetUsd ?? 50, "eval budget");
     const id = entryId(entry);
@@ -991,7 +1014,9 @@ export async function runComparison(options: ComparisonOptions): Promise<Compari
         say(`${id}: CLI check: ${comparison.cliCheck.message}`);
         if (!comparison.cliCheck.ok) {
           comparison.problem = `the CLI didn't accept the model: ${comparison.cliCheck.message}`;
+          comparison.total = comparison.cliCheck.calls;
           models.push(comparison);
+          options.onSave?.(snapshot(null, "not measured yet"));
           continue;
         }
       }
@@ -1026,26 +1051,21 @@ export async function runComparison(options: ComparisonOptions): Promise<Compari
     comparison.total = total;
     comparison.promptVersions = await promptVersions();
     models.push(comparison);
+    options.onSave?.(snapshot(null, "not measured yet"));
   }
-  const facts =
-    options.facts === false ? null : await nonModelFacts(shop, useMailpit, android, say);
-  const prices: Record<string, unknown> = {};
-  for (const entry of options.entries) prices[entry.model] = priceFor(entry.model) ?? null;
-  return {
-    comparisonVersion: COMPARISON_VERSION,
-    kind: "model-comparison",
-    date: (options.now?.() ?? new Date()).toISOString(),
-    engineVersion: version(),
-    commit: engineCommit(shop.benchDir),
-    os: `${process.platform} ${process.arch} (${cpus()[0]?.model ?? "cpu"}, ${cpus().length} cores)`,
-    scripted: options.scripted ?? false,
-    command:
-      options.command ??
-      `bench --compare ${options.entries.map(entryId).join(" ")}${options.android ? " --android" : ""}`,
-    prices,
-    models,
-    facts,
-  };
+  let facts: NonModelFacts | null = null;
+  let factsProblem: string | null = options.facts === false ? "not asked for" : null;
+  if (options.facts !== false) {
+    try {
+      facts = await nonModelFacts(shop, useMailpit, android, say);
+    } catch (error) {
+      factsProblem = error instanceof Error ? error.message : String(error);
+      say(`facts: stopped: ${factsProblem}`);
+    }
+  }
+  const file = snapshot(facts, factsProblem);
+  options.onSave?.(file);
+  return file;
 }
 
 async function promptVersions(): Promise<Record<string, string>> {
@@ -1157,5 +1177,6 @@ export function formatComparison(file: ComparisonFile): string {
         `  evidence ${e.fixture} ${e.mode}: ${e.passing.totalMbPerTest} MB/passing test, ${e.failing.totalMbPerTest} MB/failing test`,
       );
   }
+  if (file.factsProblem) lines.push("", `No-model facts: missing (${file.factsProblem})`);
   return lines.join("\n");
 }
