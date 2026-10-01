@@ -95,3 +95,44 @@ export function recentHeals(
   }
   return heals;
 }
+
+/**
+ * Each test's verdicts in its last `limit` finished runs, most recent first
+ * (not counting `exclude`), with the headline as its failure signature: the
+ * history flaky_or_real reads (DIA-5).
+ */
+export function recentVerdicts(
+  dataDir: string,
+  options: { exclude?: string; limit?: number } = {},
+): Map<string, { verdict: string; signature: string | null }[]> {
+  const dir = join(dataDir, RUNS_DIR);
+  const out = new Map<string, { verdict: string; signature: string | null }[]>();
+  if (!existsSync(dir)) return out;
+  const runIds = readdirSync(dir)
+    .filter((name) => name !== options.exclude && /^[0-9A-HJKMNP-TV-Z]{26}$/.test(name))
+    .sort()
+    .reverse();
+  const limit = options.limit ?? 20;
+  for (const runId of runIds) {
+    let tests: { testId?: unknown; verdict?: unknown; headline?: unknown }[];
+    try {
+      const run = JSON.parse(readFileSync(join(dir, runId, RUN_FILE), "utf8")) as {
+        tests?: typeof tests;
+      };
+      tests = Array.isArray(run.tests) ? run.tests : [];
+    } catch {
+      continue;
+    }
+    for (const row of tests) {
+      if (typeof row.testId !== "string" || typeof row.verdict !== "string") continue;
+      const list = out.get(row.testId) ?? [];
+      if (list.length >= limit) continue;
+      list.push({
+        verdict: row.verdict,
+        signature: typeof row.headline === "string" ? row.headline : null,
+      });
+      out.set(row.testId, list);
+    }
+  }
+  return out;
+}

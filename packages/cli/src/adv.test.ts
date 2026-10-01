@@ -196,3 +196,55 @@ describe("lint reads datasets", { timeout: 30_000 }, () => {
     );
   });
 });
+
+describe("mute", { timeout: 30_000 }, () => {
+  it("mutes with a reason and a date, needs --renew to change, lists and unmutes", async () => {
+    const { runMuteCommand } = await import("./commands/mute.js");
+    const dir = project();
+    const now = () => new Date("2026-10-01T12:00:00Z");
+    const first = io(dir);
+    expect(
+      await runMuteCommand(
+        "tests/login.test.md",
+        { reason: "flaky login (#12)", until: "14d" },
+        { ...first.io, now },
+      ),
+    ).toBe(0);
+    expect(first.out()).toMatch(/Muted tests\/login\.test\.md until 2026-10-15/);
+    expect(readFileSync(join(dir, brand.configFileName), "utf8")).toMatch(
+      /quarantine:\n\s+- test: tests\/login\.test\.md\n\s+reason: flaky login \(#12\)\n\s+until: "?2026-10-15"?/,
+    );
+    const again = io(dir);
+    expect(
+      await runMuteCommand(
+        "tests/login.test.md",
+        { reason: "x", until: "7d" },
+        { ...again.io, now },
+      ),
+    ).toBe(2);
+    expect(again.out()).toMatch(/pass --renew/);
+    expect(
+      await runMuteCommand(
+        "tests/login.test.md",
+        { reason: "x", until: "7d", renew: true },
+        { ...io(dir).io, now },
+      ),
+    ).toBe(0);
+    const list = io(dir);
+    await runMuteCommand(undefined, { list: true }, { ...list.io, now });
+    expect(list.out()).toMatch(/muted\s+tests\/login\.test\.md\s+until 2026-10-08\s+x/);
+    expect(
+      await runMuteCommand(
+        "tests/nope.test.md",
+        { reason: "x", until: "7d" },
+        { ...io(dir).io, now },
+      ),
+    ).toBe(2);
+    expect(
+      await runMuteCommand("tests/login.test.md", { unmute: true }, { ...io(dir).io, now }),
+    ).toBe(0);
+    expect(readFileSync(join(dir, brand.configFileName), "utf8")).not.toContain(
+      "tests/login.test.md",
+    );
+  });
+});

@@ -16,6 +16,8 @@ export interface Summary {
     failed: number;
     flaky: number;
     blocked: number;
+    /** Summary 1.2 (DIA-5). */
+    muted?: number;
   };
   cost: { usd: number; aiCalls: number; subscriptionCalls: number };
   tests: {
@@ -26,6 +28,8 @@ export interface Summary {
     blocked: { reason: string; message: string } | null;
     heals: { id: string }[];
     screenshot: string | null;
+    /** Summary 1.2 (DIA-5): muted tests don't fail the check. */
+    muted?: { reason: string; until: string } | null;
   }[];
 }
 
@@ -41,6 +45,7 @@ function counts(summary: Summary): string {
   const parts = (["passed", "healed", "failed", "flaky", "blocked"] as const)
     .filter((v) => t[v] > 0)
     .map((v) => `${t[v]} ${v}`);
+  if (t.muted) parts.push(`${t.muted} muted`);
   return parts.length ? parts.join(", ") : "no tests ran";
 }
 
@@ -71,7 +76,11 @@ export function checkOutcome(exitCode: number | null, summary: Summary | null): 
       t.failed + t.flaky > 0 ? counts(summary) : `${counts(summary)}: ${fixes(t.healed)} to review`;
     return { conclusion: "failure", title: why };
   }
-  if (t.failed + t.flaky > 0) return { conclusion: "failure", title: counts(summary) };
+  // A muted test's failure never turns the check red (DIA-5).
+  const failing = summary.tests.filter(
+    (test) => !test.muted && (test.verdict === "failed" || test.verdict === "flaky"),
+  ).length;
+  if (failing > 0) return { conclusion: "failure", title: counts(summary) };
   const reasons = blockedReasons(summary);
   return {
     conclusion: "neutral",

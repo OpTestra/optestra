@@ -1,6 +1,6 @@
 {
   "kind": "results-summary",
-  "version": "1.1",
+  "version": "1.2",
   "contractVersion": "1.0",
   "runId": "01M3EG7AG0M0AHEMTHAS09ZS7Y",
   "project": "demo-shop",
@@ -85,7 +85,10 @@
           "calls": 0
         }
       },
-      "result": "tests/tests__checkout__discount-code/result.json"
+      "result": "tests/tests__checkout__discount-code/result.json",
+      "muted": null,
+      "muteExpired": null,
+      "muteSuggested": null
     },
     {
       "testId": "tests__checkout__guest-checkout",
@@ -116,7 +119,10 @@
           "calls": 0
         }
       },
-      "result": "tests/tests__checkout__guest-checkout/result.json"
+      "result": "tests/tests__checkout__guest-checkout/result.json",
+      "muted": null,
+      "muteExpired": null,
+      "muteSuggested": null
     }
   ]
 }

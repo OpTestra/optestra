@@ -73,7 +73,8 @@ interface Ctx {
 const badge = (kind: string, label: string) =>
   `<span class="badge v-${h(kind)}">${h(label)}</span>`;
 
-const verdictBadge = (test: TestView) => badge(test.verdict, VERDICT_LABEL[test.verdict]);
+const verdictBadge = (test: TestView) =>
+  `${badge(test.verdict, VERDICT_LABEL[test.verdict])}${test.muted ? ` ${badge("muted", "Muted")}` : ""}`;
 
 const meta = (parts: (string | null | undefined | false)[]) =>
   `<span class="meta">${parts
@@ -217,6 +218,28 @@ function warningsSection(ctx: Ctx): string {
     )
     .join("");
   return `<section id="warnings" aria-labelledby="warnings-h"><h2 id="warnings-h">Soft-check warnings</h2><p class="muted">Soft checks only warn. They never fail a test.</p><ul>${items}</ul></section>`;
+}
+
+function mutedSection(ctx: Ctx): string {
+  const list = ctx.model.muted;
+  const expired = ctx.model.tests.filter((t) => t.muteExpired);
+  const suggested = ctx.model.tests.filter((t) => t.muteSuggested);
+  if (list.length + expired.length + suggested.length === 0) return "";
+  const items = [
+    ...list.map(
+      (test) =>
+        `<li><a href="#${h(test.anchor)}">${h(test.name)}</a>: ${h(VERDICT_LABEL[test.verdict].toLowerCase())} ${meta([test.muted?.until ? `muted until ${h(test.muted.until)}` : "muted", h(test.muted?.reason ?? "")])}</li>`,
+    ),
+    ...expired.map(
+      (test) =>
+        `<li><a href="#${h(test.anchor)}">${h(test.name)}</a>: its mute ended on ${h(test.muteExpired?.until ?? "")}; it counts again</li>`,
+    ),
+    ...suggested.map(
+      (test) =>
+        `<li><a href="#${h(test.anchor)}">${h(test.name)}</a> looks flaky ${meta([h(test.muteSuggested?.reason ?? "")])}: consider muting it while it's fixed</li>`,
+    ),
+  ].join("");
+  return `<section id="muted" aria-labelledby="muted-h"><h2 id="muted-h">Muted tests</h2><p class="muted">Muted tests still run and keep their evidence. Their results don't count toward the run.</p><ul>${items}</ul></section>`;
 }
 
 function expectedActual(check: CheckResult): string {
@@ -498,7 +521,7 @@ ${blockedBanner(ctx)}
 ${failuresSection(ctx)}
 ${summarySection(ctx)}
 ${healsSection(ctx)}
-${warningsSection(ctx)}
+${warningsSection(ctx)}${mutedSection(ctx)}
 ${diagnosticsSection(ctx)}
 ${testsSection(ctx)}
 </main>

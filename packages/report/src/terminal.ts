@@ -18,6 +18,8 @@ export interface TestLineInput {
   aiCalls: number;
   costUsd: number;
   headline?: string | null;
+  /** DIA-5: muted (a RunTestRef's flag, or a TestResult's mute): shown as MUTED, doesn't count. */
+  muted?: boolean | { until: string; reason: string } | undefined;
 }
 
 const LABEL: Record<Verdict, string> = {
@@ -48,6 +50,14 @@ const HEADLINE_INDENT = INDENT + 8 + 1 + 7 + 2 + 9 + 2 + 8 + 2;
 
 /** `  FAILED     12.7s       0 AI     $0.00  Discount code takes 10% off`, then the headline below. */
 export function formatTestLine(test: TestLineInput, options: TerminalOptions = {}): string {
+  if (test.muted && test.verdict !== "passed") {
+    const mute = typeof test.muted === "object" ? test.muted : undefined;
+    const label = paint(options.color, 2, "MUTED".padEnd(8));
+    const ai = `${test.aiCalls} AI`.padStart(9);
+    const line = `${" ".repeat(INDENT)}${label} ${formatDuration(test.durationMs).padStart(7)}  ${ai}  ${formatUsd(test.costUsd).padStart(8)}  ${clean(test.name)}`;
+    const why = `${test.verdict}, doesn't count: muted${mute ? ` until ${mute.until} (${clean(mute.reason)})` : ""}`;
+    return `${line}\n${" ".repeat(HEADLINE_INDENT)}${why}${test.headline ? `: ${clean(test.headline)}` : ""}`;
+  }
   const label = paint(options.color, COLOR[test.verdict], LABEL[test.verdict].padEnd(8));
   const ai = `${test.aiCalls} AI`.padStart(9);
   const line = `${" ".repeat(INDENT)}${label} ${formatDuration(test.durationMs).padStart(7)}  ${ai}  ${formatUsd(test.costUsd).padStart(8)}  ${clean(test.name)}`;
@@ -81,6 +91,25 @@ export function formatRunSummary(data: RunData, options: TerminalOptions = {}): 
     }
     lines.push("");
   }
+  if (model.muted.length > 0) {
+    lines.push(`  ${paint(options.color, 1, "Muted")} (they ran; their results don't count)`);
+    for (const test of model.muted)
+      lines.push(
+        `  ${paint(options.color, 2, "○")} ${clean(test.name)} (${clean(test.file)}): ${test.verdict}${test.muted?.until ? `, muted until ${test.muted.until}: ${clean(test.muted.reason)}` : ""}`,
+      );
+    lines.push("");
+  }
+  const expired = model.tests.filter((t) => t.muteExpired);
+  for (const test of expired)
+    lines.push(
+      `  The mute of ${clean(test.file)} ended on ${test.muteExpired?.until}: it counts again.`,
+    );
+  const suggested = model.tests.filter((t) => t.muteSuggested);
+  for (const test of suggested)
+    lines.push(
+      `  ${clean(test.file)} looks flaky (${clean(test.muteSuggested?.reason ?? "")}): mute it while it's fixed with \`mute ${clean(test.file)} --reason … --until 14d\`.`,
+    );
+  if (expired.length + suggested.length > 0) lines.push("");
   const toReview = model.heals.filter(({ heal }) => heal.status === "pending").length;
   if (toReview > 0) lines.push(`  ${plural(toReview, "fix", "fixes")} to review`, "");
   if (model.softWarnings.length > 0)
@@ -97,7 +126,10 @@ export function formatTerminal(data: RunData, options: TerminalOptions = {}): st
   const { run } = data;
   const where = [run.project, run.environment, run.target].filter(Boolean).join(" · ");
   const lines = [`Run ${run.runId}  ${clean(where)}`, ""];
-  for (const test of run.tests) lines.push(formatTestLine(test, options));
+  for (const test of run.tests) {
+    const mute = data.tests.find((t) => t.testId === test.testId)?.muted;
+    lines.push(formatTestLine(mute ? { ...test, muted: mute } : test, options));
+  }
   if (run.tests.length > 0) lines.push("");
   lines.push(formatRunSummary(data, options));
   return lines.join("\n");

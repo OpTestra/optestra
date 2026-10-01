@@ -103,6 +103,12 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `hooks.sql.client` | "psql" \| "mysql" | `"psql"` | The database client that runs statements: psql (Postgres) or mysql. |
 | `hooks.sql.timeoutSeconds` | number | `30` | Seconds before a statement is stopped. |
 
+## quarantine
+
+| Key | Type | Default | |
+|---|---|---|---|
+| `quarantine` | list of object | `[]` | Muted tests: they still run, but a failure doesn't fail the run. Each mute ends on its date. |
+
 ## models
 
 | Key | Type | Default | |

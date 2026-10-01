@@ -1,6 +1,6 @@
 {
   "kind": "results-summary",
-  "version": "1.1",
+  "version": "1.2",
   "contractVersion": "1.0",
   "runId": "01M3EFN0J0FQBKEWDYW4JQ19PW",
   "project": "demo-shop",
@@ -96,7 +96,10 @@
           "calls": 1
         }
       },
-      "result": "tests/tests__cart__add-to-cart/result.json"
+      "result": "tests/tests__cart__add-to-cart/result.json",
+      "muted": null,
+      "muteExpired": null,
+      "muteSuggested": null
     }
   ]
 }

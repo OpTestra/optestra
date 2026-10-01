@@ -46,6 +46,9 @@ lint:
   # Warnings count as errors for the exit code (CI).
   strict: false
 
+# Muted tests (DIA-5): { test, reason, until }. The spec package registers this section.
+quarantine: []
+
 # Setup and teardown hooks (AUT-10). The spec package registers this section.
 hooks:
   run:

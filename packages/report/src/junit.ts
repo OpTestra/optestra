@@ -70,7 +70,15 @@ function testcase(test: TestView, name: string): string {
   }
 
   let outcome = "";
-  if (test.verdict === "failed") {
+  if (test.muted) {
+    props.push(property("muted", true));
+    if (test.muted.until) props.push(property("muted.until", test.muted.until));
+    props.push(property("muted.reason", test.muted.reason));
+  }
+  // DIA-5: a muted test that didn't pass is reported as skipped, never as a failure.
+  if (test.muted && test.verdict !== "passed") {
+    outcome = `<skipped message="${xa(`Muted${test.muted.until ? ` until ${test.muted.until}` : ""} (${test.verdict}): ${test.muted.reason}`)}"/>`;
+  } else if (test.verdict === "failed") {
     outcome = `<failure message="${xa(test.headline ?? "Failed")}" type="${xa(test.cause ?? "failed")}">${x(failureText(test))}</failure>`;
   } else if (test.verdict === "blocked") {
     const reason = test.blocked
@@ -92,8 +100,13 @@ export function renderJunit(data: RunData): string {
   const model = buildModel(data);
   const { run } = model;
   const names = caseNames(model.tests);
-  const failures = run.totals.failed;
-  const skipped = run.totals.blocked;
+  // Muted tests that didn't pass are skipped, not failures (DIA-5).
+  const mutedNotPassed = model.tests.filter((t) => t.muted && t.verdict !== "passed");
+  const failures = run.totals.failed - mutedNotPassed.filter((t) => t.verdict === "failed").length;
+  const skipped =
+    run.totals.blocked -
+    mutedNotPassed.filter((t) => t.verdict === "blocked").length +
+    mutedNotPassed.length;
   const suiteProps = [
     property("runId", run.runId),
     property("project", run.project),
@@ -111,6 +124,7 @@ export function renderJunit(data: RunData): string {
   if (run.git?.pr) suiteProps.push(property("git.pr", run.git.pr));
   for (const verdict of ["passed", "healed", "flaky"] as const)
     suiteProps.push(property(`totals.${verdict}`, run.totals[verdict]));
+  if (run.totals.muted) suiteProps.push(property("totals.muted", run.totals.muted));
   if (run.blocked)
     suiteProps.push(property("blocked", `${run.blocked.reason}: ${run.blocked.message}`));
 

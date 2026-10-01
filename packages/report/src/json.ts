@@ -13,7 +13,7 @@ import { buildModel, type RunData, type TestView } from "./model.js";
 // AGT-3): per test, what happened, why, and where to look. Versioned like the
 // contract: additive changes bump the minor, readers ignore unknown fields.
 
-export const SUMMARY_VERSION = "1.1";
+export const SUMMARY_VERSION = "1.2";
 export const SUMMARY_KIND = "results-summary";
 
 export interface SummaryCheck {
@@ -83,6 +83,12 @@ export interface SummaryTest {
   ai: { calls: number; costUsd: number; recent: { runs: number; calls: number } | null };
   /** The test's result document, relative to the run folder. */
   result: string;
+  /** 1.2 (DIA-5): muted until a date: the verdict doesn't count toward exitCode. */
+  muted: { reason: string; until: string } | null;
+  /** 1.2: its mute ended before this run (it counts again). */
+  muteExpired: { reason: string; until: string } | null;
+  /** 1.2: looks flaky: muting is suggested (never done). */
+  muteSuggested: { reason: string; confidence: number } | null;
 }
 
 export interface ResultsSummary {
@@ -181,6 +187,13 @@ function testOf(test: TestView, cliName: string): SummaryTest {
       recent: test.result?.ai.recent ?? null,
     },
     result: test.ref.result,
+    muted: test.muted ? { reason: test.muted.reason, until: test.muted.until } : null,
+    muteExpired: test.muteExpired
+      ? { reason: test.muteExpired.reason, until: test.muteExpired.until }
+      : null,
+    muteSuggested: test.muteSuggested
+      ? { reason: test.muteSuggested.reason, confidence: test.muteSuggested.confidence }
+      : null,
   };
 }
 
@@ -379,6 +392,12 @@ export function resultsSummaryJsonSchema(): Record<string, unknown> {
             ...str,
             description: "The test's result document, relative to the run folder.",
           },
+          muted: {
+            description: "1.2 (DIA-5): muted until a date; its verdict doesn't count.",
+            oneOf: [{ type: "null" }, obj({ reason: str, until: str })],
+          },
+          muteExpired: { oneOf: [{ type: "null" }, obj({ reason: str, until: str })] },
+          muteSuggested: { oneOf: [{ type: "null" }, obj({ reason: str, confidence: unit })] },
         }),
       },
     }),

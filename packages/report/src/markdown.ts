@@ -162,6 +162,29 @@ function warningsBlock(parts: Parts, limit: number): string {
   return `<details><summary>Soft-check warnings (${list.length}, never failures)</summary>\n\n${rows.join("\n")}\n\n</details>`;
 }
 
+function mutedBlock(parts: Parts, limit: number): string {
+  const { model } = parts;
+  const expired = model.tests.filter((t) => t.muteExpired);
+  const suggested = model.tests.filter((t) => t.muteSuggested);
+  if (model.muted.length + expired.length + suggested.length === 0) return "";
+  const rows = [
+    ...model.muted
+      .slice(0, limit)
+      .map(
+        (t) =>
+          `- ${md(t.name)} (${code(t.file)}): ${VERDICT_LABEL[t.verdict].toLowerCase()}, muted${t.muted?.until ? ` until ${t.muted.until}` : ""}: ${md(t.muted?.reason ?? "")}`,
+      ),
+    ...expired.map(
+      (t) => `- ${md(t.name)}: its mute ended on ${t.muteExpired?.until}, it counts again`,
+    ),
+    ...suggested.map(
+      (t) =>
+        `- ${md(t.name)} looks flaky (${md(t.muteSuggested?.reason ?? "")}): consider muting it while it's fixed`,
+    ),
+  ];
+  return `<details><summary>Muted tests (${model.muted.length}; they ran, their results don't count)</summary>\n\n${rows.join("\n")}\n\n</details>`;
+}
+
 function aiBlock(parts: Parts, limit: number): string {
   const rows = parts.model.tests
     .filter((t) => t.result?.ai.recent || t.ref.aiCalls > 0)
@@ -184,7 +207,7 @@ function testsBlock(parts: Parts, limit: number): string {
     .slice(0, limit)
     .map(
       (t) =>
-        `| ${VERDICT_LABEL[t.verdict]} | ${cell(t.name)} | ${formatDuration(t.ref.durationMs)} | ${t.ref.aiCalls} | ${md(formatUsd(t.ref.costUsd))} |`,
+        `| ${VERDICT_LABEL[t.verdict]}${t.muted ? " (muted)" : ""} | ${cell(t.name)} | ${formatDuration(t.ref.durationMs)} | ${t.ref.aiCalls} | ${md(formatUsd(t.ref.costUsd))} |`,
     );
   if (tests.length > limit)
     rows.push(`| | and ${plural(tests.length - limit, "more test")} | | | |`);
@@ -220,6 +243,7 @@ function compose(parts: Parts, level: (typeof LEVELS)[number]): string {
     failuresBlock(parts, level.groups, level.tests),
     level.list > 0 ? healsBlock(parts, level.list) : "",
     level.list > 0 ? warningsBlock(parts, level.list) : "",
+    level.list > 0 ? mutedBlock(parts, level.list) : "",
     level.list > 0 ? aiBlock(parts, level.list) : "",
     level.list > 0 ? testsBlock(parts, level.list) : "",
     footer(parts),

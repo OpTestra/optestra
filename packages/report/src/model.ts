@@ -13,6 +13,8 @@ import {
   type TestResult,
   VERDICTS,
   type Verdict,
+  type Mute,
+  type MuteSuggestion,
 } from "@optestra/contract";
 
 // One read of a run, shared by every output. Pure functions of the contract
@@ -67,6 +69,10 @@ export interface TestView {
   evidence: EvidenceView[];
   /** Soft checks that did not pass in the final attempt: warnings, never failures (VER-3). */
   softWarnings: FailingCheck[];
+  /** DIA-5: muted (its verdict doesn't count), the mute that ended, a suggestion to mute. */
+  muted: Mute | null;
+  muteExpired: Mute | null;
+  muteSuggested: MuteSuggestion | null;
   /** Heal proposals of the final attempt (HEAL-4, HEAL-6). */
   heals: HealProposal[];
   modelCalls: ModelCall[];
@@ -88,6 +94,8 @@ export interface ReportModel {
   groups: FailureGroup[];
   heals: { test: TestView; heal: HealProposal }[];
   softWarnings: { test: TestView; warning: FailingCheck }[];
+  /** DIA-5: muted tests, shown apart (they ran; their verdicts don't count). */
+  muted: TestView[];
   /** Model calls paid by the user's own AI plan (MOD-6). */
   subscriptionCalls: number;
   tags: string[];
@@ -255,6 +263,9 @@ function viewOf(ref: RunTestRef, result: TestResult | null, anchor: string): Tes
       .map((check) => ({ attempt: last?.attempt ?? 1, check })),
     heals: last?.heals ?? [],
     modelCalls: result?.attempts.flatMap((a) => a.modelCalls) ?? [],
+    muted: result?.muted ?? (ref.muted ? { reason: "muted", until: "", source: "" } : null),
+    muteExpired: result?.muteExpired ?? null,
+    muteSuggested: result?.muteSuggested ?? null,
   };
 }
 
@@ -286,6 +297,8 @@ export function buildModel(data: RunData): ReportModel {
   for (const test of tests) {
     if (test.verdict !== "failed" && test.verdict !== "flaky" && test.verdict !== "blocked")
       continue;
+    // A muted test's failure is shown apart, never as what went wrong (DIA-5).
+    if (test.muted) continue;
     const key = groupKey(test);
     let group = byKey.get(key);
     if (!group) {
@@ -318,6 +331,7 @@ export function buildModel(data: RunData): ReportModel {
     groups,
     heals: tests.flatMap((test) => test.heals.map((heal) => ({ test, heal }))),
     softWarnings: tests.flatMap((test) => test.softWarnings.map((warning) => ({ test, warning }))),
+    muted: tests.filter((test) => test.muted),
     subscriptionCalls: calls.filter((c) => c.billing === "subscription").length,
     tags: [...new Set(tests.flatMap((t) => t.tags))].sort(),
     diagnostics: (data.diagnostics ?? []).filter((d) => d.severity !== "info"),
@@ -328,9 +342,11 @@ export function buildModel(data: RunData): ReportModel {
 export function runStatus(model: ReportModel): Verdict | "empty" {
   const { run } = model;
   if (run.blocked) return "blocked";
+  // Muted tests don't count (DIA-5); they are shown apart.
+  const counted = model.tests.filter((t) => !t.muted);
   for (const verdict of ["failed", "flaky", "blocked", "healed", "passed"] as const)
-    if (run.totals[verdict] > 0) return verdict;
-  return "empty";
+    if (counted.some((t) => t.verdict === verdict)) return verdict;
+  return model.tests.length > 0 ? "passed" : "empty";
 }
 
 /** "$0.0184", "$0.00 · 3 calls via your subscription", "$1.25 (+2 unpriced)". */

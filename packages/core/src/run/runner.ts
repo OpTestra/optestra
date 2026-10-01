@@ -79,8 +79,9 @@ import { createTestInbox, type TestInbox } from "../author/inbox.js";
 import { applyPatches, type HealPatch } from "../heal/patch.js";
 import { markAutoApplied } from "../heal/policy.js";
 import { DEFAULT_HOOKS, type HookContext } from "../hooks/exec.js";
+import { muteState, muteSuggestion } from "../quarantine/quarantine.js";
 import { chaptersVtt, consoleErrors } from "./evidence.js";
-import { recentAiUsage, recentHeals } from "./history.js";
+import { recentAiUsage, recentHeals, recentVerdicts } from "./history.js";
 import { profileFlowPath, profileLogin, replayProfileFlow } from "./profiles.js";
 import { replayAttempt } from "./replay.js";
 import { type Shard, selectShard } from "./shard.js";
@@ -603,6 +604,9 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   const testsDir = resolve(projectDir, config.tests?.dir ?? "tests");
   const history = recentAiUsage(dataDir, { exclude: runId });
   const healHistory = recentHeals(dataDir, { exclude: runId, limit: REPEATED_HEALS.runs - 1 });
+  // DIA-5: today's mutes, and each test's recent verdicts (for mute suggestions).
+  const runDate = new Date();
+  const verdictHistory = recentVerdicts(dataDir, { exclude: runId });
   const results: TestResult[] = [];
   const contexts = new Map<
     string,
@@ -633,6 +637,19 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       matrix,
     });
     const recent = history.get(testId) ?? null;
+    // DIA-5: a muted test runs as usual; only its verdict doesn't count.
+    const mute = muteState(config.quarantine ?? [], { path: plan.path, id: plan.testId }, runDate);
+    const muteFields = {
+      ...(mute.muted ? { muted: mute.muted } : {}),
+      ...(mute.expired ? { muteExpired: mute.expired } : {}),
+    };
+    if (mute.expired)
+      emit({
+        type: "log",
+        level: "warn",
+        testId,
+        message: `The mute of ${plan.path} ended on ${mute.expired.until} ("${mute.expired.reason}"): it counts again. Renew it with ${brand.cliName} mute ${plan.path} --renew --until <date> --reason "…", or fix the test.`,
+      });
     if (plan.problem) {
       emit({
         type: "test.finished",
@@ -642,6 +659,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         failureCause: "blocked",
         headline: `Blocked: the test file has problems: ${plan.problem}`,
         recentAi: recent,
+        ...muteFields,
       });
       return;
     }
@@ -656,6 +674,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         failureCause: "blocked",
         headline: `Blocked: ${message}`,
         recentAi: recent,
+        ...muteFields,
       });
       return;
     }
@@ -1122,6 +1141,35 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         if (trace) failureEvidence.push({ kind: "artifact", path: trace.path });
       }
     }
+    // DIA-5: a test that looks flaky gets a mute suggestion (never a mute).
+    let muteSuggested: Awaited<ReturnType<typeof muteSuggestion>>;
+    if (!mute.muted && (verdict.verdict === "failed" || verdict.verdict === "flaky")) {
+      const provisional = provisionalResult(
+        { ...plan, id: testId },
+        runId,
+        records,
+        verdict,
+        matrix,
+      );
+      muteSuggested = await where.run(
+        { testId, attempt: last?.attempt ?? 1, sink: records.at(-1)?.decisions ?? [] },
+        () => muteSuggestion(provisional, decisions, verdictHistory.get(testId) ?? []),
+      );
+      if (muteSuggested)
+        emit({
+          type: "log",
+          level: "info",
+          testId,
+          message: `${plan.path} looks flaky (${muteSuggested.reason}). While it's being fixed you can mute it: ${brand.cliName} mute ${plan.path} --reason "…" --until 14d`,
+        });
+    }
+    if (mute.muted && verdict.verdict !== "passed")
+      emit({
+        type: "log",
+        level: "info",
+        testId,
+        message: `${plan.path} is muted until ${mute.muted.until} ("${mute.muted.reason}"): it ran (${verdict.verdict}), and doesn't count.`,
+      });
     // HEAL-7: a test that keeps healing should be re-recorded.
     const pastHeals = healHistory.get(testId) ?? { runs: 0, healed: 0 };
     const healsNow = {
@@ -1146,6 +1194,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       checkedSummary: verdict.checkedSummary,
       recentAi: recent,
       recentHeals: healsNow,
+      ...muteFields,
+      ...(muteSuggested ? { muteSuggested } : {}),
     });
 
     // ── keep what was recorded or compiled (REP-4), heals `auto` applied, and the portable spec ──

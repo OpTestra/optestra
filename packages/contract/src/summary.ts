@@ -13,6 +13,8 @@ export interface RunSummary {
 
 export function summarize(run: Run): RunSummary {
   const parts = VERDICTS.filter((v) => run.totals[v] > 0).map((v) => `${run.totals[v]} ${v}`);
+  // 1.5 (DIA-5): muted tests are counted under their verdict and named apart.
+  if (run.totals.muted) parts.push(`${run.totals.muted} muted`);
   return {
     totals: run.totals,
     durationMs: run.durationMs,

@@ -421,3 +421,36 @@ describe("no new leaks (guarantee 4)", () => {
     }
   });
 });
+
+describe("a muted failing test (DIA-5)", () => {
+  const base = load(join(FIXTURES, "failed-product-bug"));
+  const mute = { reason: "known bug #42", until: "2026-10-15", source: "project file" };
+  const data: RunData = {
+    ...base,
+    run: {
+      ...base.run,
+      totals: { ...base.run.totals, muted: 1 },
+      tests: base.run.tests.map((t) => (t.verdict === "failed" ? { ...t, muted: true } : t)),
+    },
+    tests: base.tests.map((t) => (t.verdict === "failed" ? { ...t, muted: mute } : t)),
+  };
+  const out = outputs(data);
+
+  it("keeps its verdict but doesn't count: exit 0, skipped in JUnit, shown apart everywhere", () => {
+    const summary = JSON.parse(out.json);
+    expect(summary.exitCode).toBe(0);
+    expect(summary.failureGroups).toEqual([]);
+    const failed = summary.tests.find((t: { verdict: string }) => t.verdict === "failed");
+    expect(failed.muted).toEqual({ reason: "known bug #42", until: "2026-10-15" });
+    expect(out.junit).not.toContain("<failure ");
+    expect(out.junit).toContain(
+      '<skipped message="Muted until 2026-10-15 (failed): known bug #42"/>',
+    );
+    expect(out.junit).toMatch(/failures="0"/);
+    expect(out.markdown).toContain("Muted tests (1; they ran, their results don't count)");
+    expect(out.html).toContain('<section id="muted"');
+    expect(out.terminal).toContain("MUTED");
+    expect(out.terminal).toMatch(/failed, doesn't count: muted until 2026-10-15 \(known bug #42\)/);
+    expect(out.terminal).toMatch(/1 passed, 1 failed, 1 muted/);
+  });
+});

@@ -25,6 +25,7 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
     rules: {},
     strict: false,
   },
+  quarantine: [],
   hooks: {
     run: {
       allow: [],

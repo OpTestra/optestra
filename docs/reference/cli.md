@@ -26,6 +26,8 @@ Exit codes follow one rule for every command that runs or checks something: **0*
 | [`explore`](#explore) | explore the app toward a goal (AI) and report errors, failed requests, console errors, broken links and dead ends, with proposed tests. Never fails a run |
 | [`mcp`](#mcp) | start the MCP server for coding agents (stdio) on this project: list, draft, save and run tests, read results, accept heals |
 | [`run`](#run) | run tests: replay each recording with no AI, evaluate every check, write a results folder (exit 0 passed, 1 failed, 2 blocked) |
+| [`mute`](#mute) | mute a test until a date, with a reason: it still runs, but its failures don't fail the run (--list shows the mutes) |
+| [`unmute`](#unmute) | end a test's mute now: its failures count again |
 | [`explain`](#explain) | explain why tests failed, from the run's evidence (rules only; --ai: one AI call). Never changes a verdict |
 | [`heal`](#heal) | review a run's heals (default: the latest run): the recording diff, why, confidence; accept or reject them |
 | [`checks`](#checks) | show what each Expect line of a test was compiled into: the check, how it was made, its sanity test |
@@ -399,6 +401,44 @@ run tests: replay each recording with no AI, evaluate every check, write a resul
 | `--android <version>` | Android projects: the Android version (default: android.version); repeat for a matrix | `[]` |
 | `--no-video` | don't record a video per attempt |  |
 | `--verbose` | print every step, heal and warning |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## mute {#mute}
+
+mute a test until a date, with a reason: it still runs, but its failures don't fail the run (--list shows the mutes)
+
+```sh
+%cli% mute [options] [test]
+```
+
+| Argument | |
+|---|---|
+| `[test]` | the test file |
+
+| Option | | Default |
+|---|---|---|
+| `--reason <text>` | why it is muted (an issue link helps) |  |
+| `--until <date>` | the last day of the mute: YYYY-MM-DD, or 14d / 2w (at most 90 days) |  |
+| `--renew` | change a mute that already exists (renewing is a decision) |  |
+| `--list` | list the mutes and whether they still apply |  |
+| `--json` | print machine-readable JSON |  |
+| `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
+
+## unmute {#unmute}
+
+end a test's mute now: its failures count again
+
+```sh
+%cli% unmute [options] <test>
+```
+
+| Argument | |
+|---|---|
+| `<test>` | the test file |
+
+| Option | | Default |
+|---|---|---|
+| `--json` | print machine-readable JSON |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
 
 ## explain {#explain}

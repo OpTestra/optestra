@@ -18,6 +18,7 @@ import type { EvalCommandOptions } from "./commands/eval.js";
 import type { DecisionsCommandOptions } from "./commands/decisions.js";
 import type { DoctorCommandOptions } from "./commands/doctor.js";
 import type { ExplainCommandOptions } from "./commands/explain.js";
+import type { MuteCommandOptions } from "./commands/mute.js";
 import type { ExploreCommandOptions } from "./commands/explore.js";
 import { registerExportCommand } from "./commands/export.js";
 import type { GenerateCommandOptions } from "./commands/generate.js";
@@ -519,6 +520,46 @@ export function createProgram(): Command {
       } finally {
         process.off("SIGINT", onInterrupt);
       }
+    });
+
+  program
+    .command("mute")
+    .description(
+      "mute a test until a date, with a reason: it still runs, but its failures don't fail the run (--list shows the mutes)",
+    )
+    .argument("[test]", "the test file")
+    .option("--reason <text>", "why it is muted (an issue link helps)")
+    .option("--until <date>", "the last day of the mute: YYYY-MM-DD, or 14d / 2w (at most 90 days)")
+    .option("--renew", "change a mute that already exists (renewing is a decision)")
+    .option("--list", "list the mutes and whether they still apply")
+    .option("--json", "print machine-readable JSON")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (test: string | undefined, options: MuteCommandOptions) => {
+      const { runMuteCommand } = await import("./commands/mute.js");
+      process.exitCode = await runMuteCommand(test, options, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdout: (text) => process.stdout.write(text),
+      });
+    });
+
+  program
+    .command("unmute")
+    .description("end a test's mute now: its failures count again")
+    .argument("<test>", "the test file")
+    .option("--json", "print machine-readable JSON")
+    .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
+    .action(async (test: string, options: MuteCommandOptions) => {
+      const { runMuteCommand } = await import("./commands/mute.js");
+      process.exitCode = await runMuteCommand(
+        test,
+        { ...options, unmute: true },
+        {
+          cwd: process.cwd(),
+          env: process.env,
+          stdout: (text) => process.stdout.write(text),
+        },
+      );
     });
 
   program
