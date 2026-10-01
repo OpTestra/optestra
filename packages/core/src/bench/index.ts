@@ -72,3 +72,16 @@ export {
   runModelEval,
   saveModelEval,
 } from "./models.js";
+export {
+  add as addCallTotals,
+  type CallTotals,
+  type ComparisonFile,
+  type ComparisonOptions,
+  complexityOf,
+  formatComparison,
+  type ModelComparison,
+  runComparison,
+  saveComparison,
+  summarize,
+  totals as callTotals,
+} from "./comparison.js";

@@ -140,8 +140,12 @@ export function createProgram(): Command {
       "--models <entries...>",
       "evaluate these models (provider:model, e.g. claude-code:claude-sonnet-4-6, openrouter:z-ai/glm-4.6): authoring, check compile, fixer heals (real AI calls)",
     )
+    .option(
+      "--compare <entries...>",
+      "compare these models (provider:model) for pricing: quality, $ per authored test, heal, draft and explain at list prices, plus replay time, CPU and evidence size (real AI calls; --fixture all adds Android)",
+    )
     .option("--scripted", "run the model evals with a scripted stand-in (no AI; for CI)")
-    .option("--yes", "for --models: don't ask before the real-model run")
+    .option("--yes", "for --models and --compare: don't ask before the real-model run")
     .option("--measures", "print the success measures (application section 10) from real data")
     .option("--json", "print machine-readable JSON")
     .action(async (options: BenchCommandOptions) => {

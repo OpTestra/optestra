@@ -24,6 +24,8 @@ export interface BenchCommandOptions {
   measures?: boolean;
   /** For --models: say yes to the real-model run without asking. */
   yes?: boolean;
+  /** EVAL-0: compare these models (pool entries) and measure the cost facts. */
+  compare?: string[];
 }
 
 const GATED = new Set([
@@ -51,6 +53,10 @@ export async function runBenchCommand(
   if (!Number.isInteger(reruns) || reruns < 1) {
     io.stdout(`--reruns must be a whole number of 1 or more, not "${options.reruns}".\n`);
     return 2;
+  }
+  if (options.compare?.length) {
+    const { runCompareCommand } = await import("./bench-compare.js");
+    return runCompareCommand(options, io);
   }
   if (options.models?.length || options.scripted) {
     const { runModelEvalCommand } = await import("./bench-models.js");

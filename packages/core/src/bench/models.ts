@@ -163,10 +163,10 @@ function evalConfig(config: Config, entry: ModelEntry, scripted: boolean): Confi
   } as Config;
 }
 
-async function modelsFor(
+export async function modelsFor(
   dir: string,
   entry: ModelEntry,
-  options: ModelEvalOptions,
+  options: Pick<ModelEvalOptions, "env" | "scripted">,
   budget: BudgetMeter,
 ): Promise<Models> {
   const env = options.env ?? process.env;
@@ -200,7 +200,7 @@ async function modelsFor(
 }
 
 /** Removes the committed recordings of a project copy, so every test is authored. */
-function withoutRecordings(dir: string): void {
+export function withoutRecordings(dir: string): void {
   const data = join(dir, "tests", brand.dataDirName);
   for (const name of readdirSync(data))
     if (name.endsWith(".steps.json")) rmSync(join(data, name), { force: true });
