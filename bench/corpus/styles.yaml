@@ -1,0 +1,36 @@
+# The phrasing styles of the real-developer corpus (COST-0). Every entry in
+# bench/corpus/<fixture>/<style>/<gold>.test.md re-phrases the gold test
+# bench/fixtures/<fixture>/tests/<gold>.test.md: same front matter, same intent,
+# same expected verdict on every variant. `tidy` is the gold test itself.
+#
+# routes: how the text enters the engine.
+#   file         it is the body of tests/<gold>.test.md: lint, then authoring
+#   description  it goes to `new` / Describe it, which drafts a test, which is then authored
+# The first route is the one a developer would take with that text; `bench --corpus`
+# runs the listed routes (`--route` picks one).
+version: 1
+styles:
+  tidy:
+    imitates: The existing gold test, written to the format guide. The control.
+    routes: [file]
+  terse:
+    imitates: A developer's shorthand notes. Lowercase, few quotes, arrows and slashes, no articles.
+    routes: [file, description]
+  verbose:
+    imitates: A paragraph written like a ticket description or a Slack message explaining the test.
+    routes: [description, file]
+  acceptance:
+    imitates: A user story with acceptance criteria pasted from Jira or Linear (bullets, sometimes a numbered list).
+    routes: [description, file]
+  gherkin:
+    imitates: A Given/When/Then scenario as BDD teams write it.
+    routes: [description, file]
+  spoken:
+    imitates: A speech-to-text transcript of someone describing the test aloud. Filler words, self-corrections, numbers as words, run-on sentences, "log in"/"login" and "check out" slips.
+    routes: [description, file]
+  sloppy:
+    imitates: A test written in a hurry. Typos, wrong capitalisation, a label slightly off from the UI, an obvious step left out. Asserted values are kept.
+    routes: [file]
+  mixed:
+    imitates: A numbered list where some steps are prose, some quote the UI label and some don't.
+    routes: [file]
