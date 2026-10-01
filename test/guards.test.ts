@@ -178,7 +178,8 @@ describe("engine guards", () => {
     "packages/browser/src/launch.ts",
     // Bench (BEN-0): the shop's generated specs through a Node + Playwright Test's CLI, no shell.
     "packages/core/src/bench/fixtures.ts",
-    // run:/sql: hooks (AUT-10): an allowlisted command or the database client, no shell.
+    // run:/sql: hooks (AUT-10): an allowlisted command or the database client, no shell
+    // (cmd.exe only for a Windows batch file, see hooks/launch.ts).
     "packages/core/src/hooks/exec.ts",
     // Tests with code steps run through their generated spec: Node + Playwright Test's CLI (LOOP-4).
     "packages/core/src/run/spec-run.ts",
@@ -217,7 +218,9 @@ describe("engine guards", () => {
     expect(bench).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
     // Hooks start one command (allowlisted, or psql/mysql), never through a shell.
     const hooks = readFileSync(join(root, "packages/core/src/hooks/exec.ts"), "utf8");
-    expect([...hooks.matchAll(/spawn\(/g)]).toHaveLength(1);
+    // The hook, plus taskkill on Windows to stop it and what it started (a batch file's cmd.exe).
+    expect([...hooks.matchAll(/spawn\(/g)]).toHaveLength(2);
+    expect(hooks).toContain('spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"], {');
     expect(hooks).toContain("shell: false,");
     expect(hooks).not.toMatch(/shell:\s*true|execSync|execFile|import \{[^}]*\bexec\b/);
   });
