@@ -3,11 +3,11 @@ import { mkdirSync, mkdtempSync, realpathSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { brand } from "@testament/brand";
-import { defaultRedactor, Redactor } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { defaultRedactor, Redactor } from "@optestra/config/node";
 // RESTRICTED import: the browser driver types secrets into allowed domains (SEC-1).
-import { prepareSecret, revealSecret } from "@testament/config/reveal";
-import type { CheckOp } from "@testament/recording";
+import { prepareSecret, revealSecret } from "@optestra/config/reveal";
+import type { CheckOp } from "@optestra/recording";
 import type {
   Browser,
   BrowserContext,
@@ -88,7 +88,7 @@ import type {
 } from "./types.js";
 
 const ACTION_TIMEOUT_MS = 5_000;
-/** Storage values shorter than this aren't scrubbed (a "1" would scrub every 1), as in @testament/auth. */
+/** Storage values shorter than this aren't scrubbed (a "1" would scrub every 1), as in @optestra/auth. */
 const MIN_STATE_VALUE = 6;
 const NAVIGATION_TIMEOUT_MS = 30_000;
 const MODEL_MAX_WIDTH = 1280;

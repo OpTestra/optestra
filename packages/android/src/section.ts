@@ -1,4 +1,4 @@
-import { registerSection } from "@testament/config";
+import { registerSection } from "@optestra/config";
 import { z } from "zod";
 import { ANDROID_VERSIONS, DEVICE_PROFILES } from "./sdk.js";
 
@@ -30,7 +30,7 @@ export const androidSchema = z
   })
   .describe("Android runs: version and device profile (Android projects).");
 
-declare module "@testament/config" {
+declare module "@optestra/config" {
   interface ConfigSections {
     android: AndroidSettings;
   }

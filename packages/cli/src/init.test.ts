@@ -12,8 +12,8 @@ import {
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { loadProject } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { loadProject } from "@optestra/config/node";
 import { afterAll, describe, expect, it } from "vitest";
 import { type Asker, EXAMPLE_TEST, runInitCommand } from "./commands/init.js";
 

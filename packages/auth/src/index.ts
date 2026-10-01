@@ -1,7 +1,7 @@
 /**
  * Login building blocks (SEC-3, SEC-4, SEC-5): auth profiles with saved sessions,
  * TOTP secrets and test email inboxes. Node only; the pure code/link extraction is
- * also available as `@testament/auth/extract`.
+ * also available as `@optestra/auth/extract`.
  *
  * Importing this registers the `auth` and `inbox` config sections and the `totp`
  * secret type. Import it before loading config or resolving secrets.

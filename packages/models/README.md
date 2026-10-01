@@ -1,11 +1,11 @@
-# @testament/models
+# @optestra/models
 
 The ONE layer through which the engine talks to AI models. Callers see only this
 interface; the Vercel AI SDK and provider packages are an implementation detail.
 Importing the package registers the `models` config section.
 
 ```ts
-import { BudgetMeter, createModels } from "@testament/models";
+import { BudgetMeter, createModels } from "@optestra/models";
 
 const models = createModels({ config, sources, environment, budgets: [BudgetMeter.forRun(config)] });
 const result = await models.complete("planner", { system, messages, output: schema });
@@ -28,7 +28,7 @@ implicitly allowed only on the provider's API host. If it is declared, its
 
 ## Use your AI subscription (MOD-6)
 
-Instead of an API key, Testament can use the AI plan you already pay for. It does
+Instead of an API key, Optestra can use the AI plan you already pay for. It does
 this through the vendor's **own official command-line tool**, which you install
 and sign in to yourself. The two provider kinds are `claude-code` and `codex`.
 They are in the default pools, after the API-key entries. They are used when
@@ -47,9 +47,9 @@ signs in for you. `models --check` reports, for each tool: installed (and its
 version), recent enough, and signed in. It asks the tool's own status command
 and never reads its files.
 
-### What Testament does and never does
+### What Optestra does and never does
 
-- **Never touches your sign-in.** Testament never reads, copies, stores, logs or
+- **Never touches your sign-in.** Optestra never reads, copies, stores, logs or
   forwards the tool's tokens or config files. Sign-in happens only in the
   vendor's tool. We run the unmodified binary, as you.
 - **The tool is a model, not an agent (SAF-2).** Every one of its own tools is
@@ -62,7 +62,7 @@ and never reads its files.
   our API keys or secrets are passed. The browser is still only ever touched
   through our closed action set.
 - **Local only.** `models.allowDelegated` (default `true`) is set to `false` in
-  Testament Cloud workers. We never route other people's usage through a
+  Optestra Cloud workers. We never route other people's usage through a
   subscription.
 - **Honest about cost and limits.** Calls are recorded with
   `billing: "subscription"` and cost 0 to the run budget. Tokens and the tool's
@@ -104,7 +104,7 @@ codex exec --json --output-schema <file> --output-last-message <file> --sandbox 
       -c project_doc_max_bytes=0 -c history.persistence="none" [--model …] [--image <file>…] -
 ```
 
-Before first use, Testament checks the version (`claude --version`) or the
+Before first use, Optestra checks the version (`claude --version`) or the
 flags (`codex exec --help`). A tool without every lock-down flag is refused
 with the fix (`cli_unavailable`). On Windows the native `claude.exe` /
 `codex.exe` is needed, because `.cmd` shims would need a shell. `binary:` in a
@@ -161,7 +161,7 @@ Each comes with a plain-English `message` and a `fix`.
   wins. It is read from the response body by the transport. An unknown price gives
   cost `null` and a warning, never a guess.
 - **Usage caps:** a `UsageStore` records spend per provider. `projectUsageStore(dir)`
-  writes `<project>/.testament/usage.json` (the folder name comes from brand);
+  writes `<project>/.optestra/usage.json` (the folder name comes from brand);
   `MemoryUsageStore` keeps it in memory. The cloud will plug in a shared store.
 - **Budgets:** a `BudgetMeter` per run and per suite (`run.budget`). It is checked
   before every call and stops the call with `budget_exceeded`. Actual cost is added
@@ -177,7 +177,7 @@ model, usage, cost, latency, every attempt and outcome, and tags.
 ## Security
 
 - Keys are FND-1 `SecretValue`s. They are revealed only inside this package at
-  request time, via `@testament/config/reveal`.
+  request time, via `@optestra/config/reveal`.
 - `transport.ts` is the only file in the engine allowed to make network calls.
   Every provider gets a fetch pinned to its own host (host and port). A request
   to any other host is refused, so a key can't be sent elsewhere.

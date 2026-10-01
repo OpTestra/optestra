@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ENV_PREFIX } from "@testament/config";
+import { ENV_PREFIX } from "@optestra/config";
 import { describe, expect, it } from "vitest";
 import { avdConfig, avdCores } from "./emulator.js";
 import { COUNTERS_COMMAND, firewallRules, parseCounters, resetRules } from "./firewall.js";

@@ -1,4 +1,4 @@
-import type { ToolDefinition } from "@testament/models";
+import type { ToolDefinition } from "@optestra/models";
 import { z } from "zod";
 import { PLANNER_TOOLS, parseToolCall, type WebToolCall } from "../author/tools.js";
 

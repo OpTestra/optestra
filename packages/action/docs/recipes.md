@@ -3,13 +3,13 @@
 Everything the GitHub Action does is the open CLI underneath. The pattern is
 the same everywhere:
 
-1. `testament doctor --json --strict`: a pre-check. Exit 0 when the project,
+1. `optestra doctor --json --strict`: a pre-check. Exit 0 when the project,
    environment, secrets, browser and AI setup are ready. Anything else stops the
    job with the reason, before any test runs.
-2. `testament run --replay-only`: exit 0 passed, 1 failed, 2 blocked.
-3. `testament results <run> --junit junit.xml --markdown summary.md`: JUnit for
+2. `optestra run --replay-only`: exit 0 passed, 1 failed, 2 blocked.
+3. `optestra results <run> --junit junit.xml --markdown summary.md`: JUnit for
    the CI's test tab, Markdown for a merge-request note.
-4. `testament report <run>`: the offline HTML report in the run folder. Keep the
+4. `optestra report <run>`: the offline HTML report in the run folder. Keep the
    whole folder as an artifact (videos, traces, screenshots).
 
 Decide what exit code 2 (blocked: couldn't run) means for you. The recipes treat
@@ -23,13 +23,13 @@ your project declares. Never expose them to jobs for merge requests from forks.
 ```dockerfile
 # Playwright's image has Chromium's system libraries.
 FROM mcr.microsoft.com/playwright:v1.63.0-noble
-RUN npm install -g @testament/cli@0.4.2 && testament install-browsers
+RUN npm install -g @optestra/cli@0.4.2 && optestra install-browsers
 WORKDIR /work
-ENTRYPOINT ["testament"]
+ENTRYPOINT ["optestra"]
 ```
 
 ```bash
-docker run --rm -v "$PWD:/work" -e TEST_PASSWORD testament-cli run --replay-only
+docker run --rm -v "$PWD:/work" -e TEST_PASSWORD optestra-cli run --replay-only
 ```
 
 ## GitLab CI
@@ -38,15 +38,15 @@ docker run --rm -v "$PWD:/work" -e TEST_PASSWORD testament-cli run --replay-only
 e2e:
   image: mcr.microsoft.com/playwright:v1.63.0-noble
   variables:
-    TESTAMENT_BASE_URL: $CI_ENVIRONMENT_URL   # a review app, if you have one
+    OPTESTRA_BASE_URL: $CI_ENVIRONMENT_URL   # a review app, if you have one
   script:
-    - npm install -g @testament/cli@0.4.2
-    - testament install-browsers
-    - testament doctor --json --strict
-    - set +e; testament run --replay-only; code=$?; set -e
-    - run=$(ls -d .testament/runs/* | sort | tail -1)
-    - testament results "$run" --junit junit.xml --markdown summary.md || true
-    - testament report "$run"
+    - npm install -g @optestra/cli@0.4.2
+    - optestra install-browsers
+    - optestra doctor --json --strict
+    - set +e; optestra run --replay-only; code=$?; set -e
+    - run=$(ls -d .optestra/runs/* | sort | tail -1)
+    - optestra results "$run" --junit junit.xml --markdown summary.md || true
+    - optestra report "$run"
     - cp -r "$run" e2e-run
     - if [ "$code" = 2 ]; then echo "Some tests were blocked (couldn't run); see summary.md"; exit 0; fi
     - exit $code
@@ -57,8 +57,8 @@ e2e:
       junit: junit.xml
 ```
 
-Sharding: `parallel: 4` and `testament run --shard $CI_NODE_INDEX/$CI_NODE_TOTAL`,
-then a later job with `needs:` runs `testament merge-runs <artifact folders> --out merged`.
+Sharding: `parallel: 4` and `optestra run --shard $CI_NODE_INDEX/$CI_NODE_TOTAL`,
+then a later job with `needs:` runs `optestra merge-runs <artifact folders> --out merged`.
 
 ## CircleCI
 
@@ -71,17 +71,17 @@ jobs:
     parallelism: 4
     steps:
       - checkout
-      - run: npm install -g @testament/cli@0.4.2 && testament install-browsers
-      - run: testament doctor --json --strict
+      - run: npm install -g @optestra/cli@0.4.2 && optestra install-browsers
+      - run: optestra doctor --json --strict
       - run:
           name: Run tests
           command: |
             set +e
-            testament run --replay-only --shard $((CIRCLE_NODE_INDEX + 1))/$CIRCLE_NODE_TOTAL
+            optestra run --replay-only --shard $((CIRCLE_NODE_INDEX + 1))/$CIRCLE_NODE_TOTAL
             code=$?
-            run=$(ls -d .testament/runs/* | sort | tail -1)
-            testament results "$run" --junit results/junit.xml
-            testament report "$run"
+            run=$(ls -d .optestra/runs/* | sort | tail -1)
+            optestra results "$run" --junit results/junit.xml
+            optestra report "$run"
             mkdir -p artifacts && cp -r "$run" artifacts/run
             [ "$code" = 2 ] && exit 0
             exit $code
@@ -104,14 +104,14 @@ pipelines:
       - step:
           name: e2e
           script:
-            - npm install -g @testament/cli@0.4.2
-            - testament install-browsers
-            - testament doctor --json --strict
-            - set +e; testament run --replay-only; code=$?; set -e
-            - run=$(ls -d .testament/runs/* | sort | tail -1)
+            - npm install -g @optestra/cli@0.4.2
+            - optestra install-browsers
+            - optestra doctor --json --strict
+            - set +e; optestra run --replay-only; code=$?; set -e
+            - run=$(ls -d .optestra/runs/* | sort | tail -1)
             # Bitbucket reads JUnit files from test-results/ automatically.
-            - mkdir -p test-results && testament results "$run" --junit test-results/junit.xml || true
-            - testament report "$run" && cp -r "$run" e2e-run
+            - mkdir -p test-results && optestra results "$run" --junit test-results/junit.xml || true
+            - optestra report "$run" && cp -r "$run" e2e-run
             - if [ "$code" = 2 ]; then exit 0; fi
             - exit $code
           artifacts:
@@ -123,6 +123,6 @@ need them are Blocked (missing secret), exit 2.
 
 ## Preview URLs
 
-Point a run at a preview with `--base-url <url>` (or the `TESTAMENT_BASE_URL`
+Point a run at a preview with `--base-url <url>` (or the `OPTESTRA_BASE_URL`
 variable). Protected previews: see the Action README's "Protected previews"
 section; it's project configuration, so it works the same in every CI.

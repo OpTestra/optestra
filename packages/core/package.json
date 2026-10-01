@@ -1,5 +1,5 @@
 {
-  "name": "@testament/core",
+  "name": "@optestra/core",
   "version": "0.1.0",
   "description": "The test engine.",
   "license": "MIT",
@@ -19,17 +19,17 @@
     }
   },
   "dependencies": {
-    "@testament/android": "workspace:^",
-    "@testament/auth": "workspace:^",
-    "@testament/brand": "workspace:^",
-    "@testament/browser": "workspace:^",
-    "@testament/codegen": "workspace:^",
-    "@testament/config": "workspace:^",
-    "@testament/contract": "workspace:^",
-    "@testament/decide": "workspace:^",
-    "@testament/models": "workspace:^",
-    "@testament/recording": "workspace:^",
-    "@testament/spec": "workspace:^",
+    "@optestra/android": "workspace:^",
+    "@optestra/auth": "workspace:^",
+    "@optestra/brand": "workspace:^",
+    "@optestra/browser": "workspace:^",
+    "@optestra/codegen": "workspace:^",
+    "@optestra/config": "workspace:^",
+    "@optestra/contract": "workspace:^",
+    "@optestra/decide": "workspace:^",
+    "@optestra/models": "workspace:^",
+    "@optestra/recording": "workspace:^",
+    "@optestra/spec": "workspace:^",
     "zod": "^4.6.5"
   },
   "files": [
@@ -48,7 +48,7 @@
     "node": ">=24"
   },
   "devDependencies": {
-    "@testament/fixture-android": "workspace:*",
-    "@testament/fixture-shop": "workspace:*"
+    "@optestra/fixture-android": "workspace:*",
+    "@optestra/fixture-shop": "workspace:*"
   }
 }

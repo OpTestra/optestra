@@ -12,8 +12,8 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { expandTest, mapReader, parseTest } from "@testament/spec";
+import { brand } from "@optestra/brand";
+import { expandTest, mapReader, parseTest } from "@optestra/spec";
 import { afterAll, describe, expect, it } from "vitest";
 import { composeProject, GOLDEN_DIR } from "./fixture-project.test-support.js";
 import { fileState, withHeader } from "./header.js";
@@ -56,20 +56,22 @@ describe("generated specs (goldens)", async () => {
 
   it("generates a spec for every recorded test, plus the fixtures and config", () => {
     expect(result.ok).toBe(true);
-    expect(Object.keys(files)).toEqual([
-      "playwright.config.ts",
-      `${brand.cliName}.fixtures.ts`,
-      `${brand.cliName}.reporter.ts`,
-      `${brand.cliName}.teardown.ts`,
-      "tests__allowed-hosts.spec.ts",
-      "tests__avatar-upload.spec.ts",
-      "tests__billing-zero-due.spec.ts",
-      "tests__checkout-trial.spec.ts",
-      "tests__create-project.spec.ts",
-      "tests__delete-account-guard.spec.ts",
-      "tests__settings-profile.spec.ts",
-      "tests__sort-orders.spec.ts",
-    ]);
+    expect(Object.keys(files)).toEqual(
+      [
+        "playwright.config.ts",
+        `${brand.cliName}.fixtures.ts`,
+        `${brand.cliName}.reporter.ts`,
+        `${brand.cliName}.teardown.ts`,
+        "tests__allowed-hosts.spec.ts",
+        "tests__avatar-upload.spec.ts",
+        "tests__billing-zero-due.spec.ts",
+        "tests__checkout-trial.spec.ts",
+        "tests__create-project.spec.ts",
+        "tests__delete-account-guard.spec.ts",
+        "tests__settings-profile.spec.ts",
+        "tests__sort-orders.spec.ts",
+      ].sort(),
+    );
     expect(result.skipped.map((s) => s.test)).toEqual([
       "tests/declined-card.test.md",
       "tests/login.test.md",

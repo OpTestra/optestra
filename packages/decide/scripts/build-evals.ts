@@ -7,12 +7,7 @@
 // including tricky ones the rules should escalate rather than guess.
 
 import { readFileSync, writeFileSync } from "node:fs";
-import {
-  failureCauseCase,
-  flakyInput,
-  healInput,
-  signatureFromTestResult,
-} from "@testament/decide";
+import { failureCauseCase, flakyInput, healInput, signatureFromTestResult } from "@optestra/decide";
 
 const root = new URL("..", import.meta.url);
 const contract = new URL("../contract/fixtures/v1/", root);

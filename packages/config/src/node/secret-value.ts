@@ -24,7 +24,7 @@ const redactors = new WeakMap<SecretValue, Redactor>();
 /**
  * An opaque secret. Printing, logging, JSON-encoding or interpolating it gives
  * `[secret:NAME]`. The value is only reachable through `revealSecret` from
- * `@testament/config/reveal`.
+ * `@optestra/config/reveal`.
  */
 export class SecretValue {
   readonly name: string;

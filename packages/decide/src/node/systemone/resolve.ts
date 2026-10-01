@@ -1,6 +1,6 @@
-import { brand } from "@testament/brand";
-import type { Config } from "@testament/config";
-import { processEnvSource, type SecretSource, type SecretValue } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import type { Config } from "@optestra/config";
+import { processEnvSource, type SecretSource, type SecretValue } from "@optestra/config/node";
 import { createDecisions, type Decisions, type OnDecision } from "../../decide.js";
 import type { BackendId, DecisionsSettings, ModelBackendId } from "../../section.js";
 import { fileCache } from "../file-cache.js";

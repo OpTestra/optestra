@@ -1,8 +1,8 @@
 ---
-"@testament/browser": patch
-"@testament/decide": patch
-"@testament/models": minor
-"@testament/cli": patch
+"@optestra/browser": patch
+"@optestra/decide": patch
+"@optestra/models": minor
+"@optestra/cli": patch
 ---
 
 Fix two intermittent problems (FIX-1). Settle's quiet window now counts from
@@ -13,5 +13,5 @@ recorded as `"failed"` before), and failed requests keep Playwright's failure
 text in `failure`. The `failure_cause` decision accepts pending requests. The
 CLI loads each command's implementation only when it runs, so `--help`,
 `config`, `list`, `show` and `lint` no longer load Playwright or the AI SDK;
-`@testament/models/section` registers the `models` project-file section
+`@optestra/models/section` registers the `models` project-file section
 without the AI SDK.

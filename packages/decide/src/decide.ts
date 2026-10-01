@@ -1,5 +1,5 @@
-import { defaultRegistry } from "@testament/config";
-import { type DecisionRecord, ulid } from "@testament/contract";
+import { defaultRegistry } from "@optestra/config";
+import { type DecisionRecord, ulid } from "@optestra/contract";
 import { type BackendAnswer, type DecisionBackend, validAnswer } from "./backend.js";
 import { type CachedDecision, cacheKey, type DecisionCache } from "./cache.js";
 import { taskProblems, verdictProblems } from "./guard.js";

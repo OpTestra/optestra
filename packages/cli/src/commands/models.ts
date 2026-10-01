@@ -1,12 +1,12 @@
 import { resolve } from "node:path";
-import { hasErrors } from "@testament/config";
+import { hasErrors } from "@optestra/config";
 import {
   defaultRedactor,
   dotenvSource,
   findProject,
   loadProject,
   processEnvSource,
-} from "@testament/config/node";
+} from "@optestra/config/node";
 import {
   type CapUsage,
   capUsage,
@@ -20,7 +20,7 @@ import {
   resolvePools,
   resolveProviders,
   VENDOR_LABEL,
-} from "@testament/models";
+} from "@optestra/models";
 import type { CommandIo } from "./config.js";
 
 export interface ModelsCommandOptions {

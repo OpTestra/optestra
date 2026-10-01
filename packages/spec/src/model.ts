@@ -1,4 +1,4 @@
-import type { HealPolicy, StepKind } from "@testament/contract";
+import type { HealPolicy, StepKind } from "@optestra/contract";
 
 /*
  * The test model. Plain, JSON-safe data: the apps and the MCP server send it

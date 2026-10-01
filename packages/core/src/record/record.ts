@@ -6,8 +6,8 @@ import type {
   RecordedUserEvent,
   RecordReply,
   Session,
-} from "@testament/browser";
-import type { Config } from "@testament/config";
+} from "@optestra/browser";
+import type { Config } from "@optestra/config";
 import {
   type CheckRecording,
   type Command,
@@ -20,7 +20,7 @@ import {
   type StepRecording,
   stepKey,
   type TemplateVariable,
-} from "@testament/recording";
+} from "@optestra/recording";
 import {
   expandTest,
   type FileReader,
@@ -28,7 +28,7 @@ import {
   mapReader,
   parseTest,
   type TestSpec,
-} from "@testament/spec";
+} from "@optestra/spec";
 import { commandOf, fingerprintOf, pageTemplate } from "../author/commands.js";
 import { compileCheck } from "../checks/compile.js";
 import type { DraftItem } from "../draft/draft.js";
@@ -68,7 +68,7 @@ export interface RecordTestOptions {
   signal?: AbortSignal | undefined;
   onProgress?: ((line: RecordProgress) => void) | undefined;
   /** Test hook: a scripted person using the page (see Session.record). */
-  user?: ((user: import("@testament/browser").ScriptedUser) => void) | undefined;
+  user?: ((user: import("@optestra/browser").ScriptedUser) => void) | undefined;
   now?: () => Date;
 }
 

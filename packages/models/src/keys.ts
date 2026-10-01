@@ -1,5 +1,5 @@
-import type { Config } from "@testament/config";
-import { processEnvSource, type SecretSource, type SecretValue } from "@testament/config/node";
+import type { Config } from "@optestra/config";
+import { processEnvSource, type SecretSource, type SecretValue } from "@optestra/config/node";
 import { isDelegatedKind, MODEL_ROLES, type ModelRole, type ProviderSettings } from "./config.js";
 import { findBinary, type ResolvedBinary } from "./delegated/process.js";
 import { keyOptional, providerBaseUrl } from "./providers.js";

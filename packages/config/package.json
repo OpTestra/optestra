@@ -1,5 +1,5 @@
 {
-  "name": "@testament/config",
+  "name": "@optestra/config",
   "version": "0.1.0",
   "description": "Project config: schema, defaults, merge with provenance, diagnostics, environments and secrets.",
   "license": "MIT",
@@ -30,7 +30,7 @@
     "gen:defaults": "node scripts/gen-defaults.ts"
   },
   "dependencies": {
-    "@testament/brand": "workspace:^",
+    "@optestra/brand": "workspace:^",
     "yaml": "^2.9.1",
     "zod": "^4.6.5"
   },

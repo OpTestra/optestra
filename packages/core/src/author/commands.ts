@@ -7,7 +7,7 @@ import {
   routeOf,
   type TemplateVariable,
   toTemplate,
-} from "@testament/recording";
+} from "@optestra/recording";
 import type { ActionOutcome, CandidatesResult, ElementSummary } from "../target/harness.js";
 
 // Turning what the harness did into recorded commands: locators instead of refs

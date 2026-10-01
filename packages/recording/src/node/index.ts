@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { type ParsedRecording, parseRecording, serializeRecording } from "../serialize.js";
 import type { Recording } from "../schema.js";
 

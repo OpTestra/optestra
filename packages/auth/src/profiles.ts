@@ -1,5 +1,5 @@
-import type { Diagnostic } from "@testament/config";
-import type { Range, TestSpec } from "@testament/spec";
+import type { Diagnostic } from "@optestra/config";
+import type { Range, TestSpec } from "@optestra/spec";
 import type { AuthProfile, AuthSettings } from "./section.js";
 
 /** How a test starts: logged out, with a named profile, or as the test itself says (no `auth:`). */

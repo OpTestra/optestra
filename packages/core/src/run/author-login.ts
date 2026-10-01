@@ -1,8 +1,8 @@
-import { type AuthProfile, SessionStore } from "@testament/auth";
-import type { Session } from "@testament/browser";
-import type { Config } from "@testament/config";
-import { createLogger, defaultRedactor } from "@testament/config/node";
-import { writeRecording } from "@testament/recording/node";
+import { type AuthProfile, SessionStore } from "@optestra/auth";
+import type { Session } from "@optestra/browser";
+import type { Config } from "@optestra/config";
+import { createLogger, defaultRedactor } from "@optestra/config/node";
+import { writeRecording } from "@optestra/recording/node";
 import type { TestInbox } from "../author/inbox.js";
 import type { StopReason } from "../author/types.js";
 import { type ProfileFlowOptions, profileLogin, replayProfileFlow } from "./profiles.js";

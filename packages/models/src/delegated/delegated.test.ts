@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
-import { resolveConfig } from "@testament/config";
-import { Redactor } from "@testament/config/node";
+import { resolveConfig } from "@optestra/config";
+import { Redactor } from "@optestra/config/node";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import "../config.js";

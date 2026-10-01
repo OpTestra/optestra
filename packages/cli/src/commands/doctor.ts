@@ -1,9 +1,9 @@
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
-import { createInbox } from "@testament/auth";
-import { brand } from "@testament/brand";
-import type { Config, Diagnostic } from "@testament/config";
+import { createInbox } from "@optestra/auth";
+import { brand } from "@optestra/brand";
+import type { Config, Diagnostic } from "@optestra/config";
 import {
   defaultRedactor,
   dotenvSource,
@@ -16,14 +16,14 @@ import {
   projectFile,
   resolveSecrets,
   type SecretSource,
-} from "@testament/config/node";
-import type { DecisionsSettings, ModelBackendId } from "@testament/decide";
+} from "@optestra/config/node";
+import type { DecisionsSettings, ModelBackendId } from "@optestra/decide";
 import {
   type BackendCheck,
   checkLaya,
   checkSystemOne,
   resolveDecisionBackend,
-} from "@testament/decide/node";
+} from "@optestra/decide/node";
 import {
   checkProviders,
   isDelegatedKind,
@@ -31,9 +31,9 @@ import {
   resolvePools,
   resolveProviders,
   VENDOR_LABEL,
-} from "@testament/models";
-import { recordingPath } from "@testament/recording/node";
-import { DEFAULT_TESTS, loadTests } from "@testament/spec/node";
+} from "@optestra/models";
+import { recordingPath } from "@optestra/recording/node";
+import { DEFAULT_TESTS, loadTests } from "@optestra/spec/node";
 import type { CommandIo } from "./config.js";
 import { runLintCommand } from "./lint.js";
 import { playwrightOverlap } from "./playwright-setup.js";
@@ -469,7 +469,7 @@ async function inboxCheck(
 /** The real browser: Chromium through the harness, no evidence kept. */
 export const harnessProbes: DoctorProbes = {
   async openBrowser() {
-    const harness = await import("@testament/browser");
+    const harness = await import("@optestra/browser");
     let launched: Awaited<ReturnType<typeof harness.launchBrowser>>;
     try {
       launched = await harness.launchBrowser({ browser: "chromium" });
@@ -680,7 +680,7 @@ async function recordingsChecks(
     });
     return checks;
   }
-  const { generateProject } = await import("@testament/codegen/node");
+  const { generateProject } = await import("@optestra/codegen/node");
   const generated = await generateProject({ projectDir: dir, environment, env, check: true });
   if (!generated.ok) {
     checks.push({

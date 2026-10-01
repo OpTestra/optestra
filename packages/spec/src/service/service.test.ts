@@ -1,4 +1,4 @@
-import { resolveConfig } from "@testament/config";
+import { resolveConfig } from "@optestra/config";
 import { describe, expect, it } from "vitest";
 import { mapReader } from "../expand.js";
 import { createLanguageService } from "./index.js";

@@ -1,10 +1,10 @@
-# @testament/auth
+# @optestra/auth
 
 Login building blocks (SEC-3, SEC-4, SEC-5): **auth profiles** with saved login
 sessions, **TOTP secrets** typed like any other secret, and **test email
 inboxes** (Mailpit, Mailosaur, MailSlurp) that hand back a verification code or
 a magic link. Node only; the pure code/link extraction is also
-`@testament/auth/extract` (browser-safe).
+`@optestra/auth/extract` (browser-safe).
 
 AUTH-0 built and tested the parts. AUTH-1 wired them into runs and authoring
 (see `packages/core/README.md`, "Auth profiles" and "Test inboxes"): the runner
@@ -12,7 +12,7 @@ calls `ensureProfile` with the real login flow and a `check.url` validation,
 opens sessions with the saved state, and connects `{{inbox.…}}` and the agent's
 `read_inbox` tool to `InboxValues`.
 
-Importing `@testament/auth` registers the `auth` and `inbox` config sections and
+Importing `@optestra/auth` registers the `auth` and `inbox` config sections and
 the `totp` secret type. Import it before loading config or resolving secrets.
 
 ## What is stored where (for the data page, SAF-5)
@@ -20,7 +20,7 @@ the `totp` secret type. Import it before loading config or resolving secrets.
 | What | Where | Who can read it |
 |---|---|---|
 | Profile definitions (flow, params, check, reuse, ttl) | the project file, `auth.profiles` | committed with the project |
-| Saved login sessions (Playwright storage state: cookies + local storage) | `<project>/<dataDir>/auth/<environment>/<profile>/<worker>.json`, e.g. `.testament/auth/staging/admin/w0.json` | the owner only: folders `0700`, files `0600`, written atomically. The folder has its own `.gitignore` (`*`) and the data dir is git-ignored. Never in artifacts, reports or logs |
+| Saved login sessions (Playwright storage state: cookies + local storage) | `<project>/<dataDir>/auth/<environment>/<profile>/<worker>.json`, e.g. `.optestra/auth/staging/admin/w0.json` | the owner only: folders `0700`, files `0600`, written atomically. The folder has its own `.gitignore` (`*`) and the data dir is git-ignored. Never in artifacts, reports or logs |
 | TOTP seeds, inbox API keys | secret sources (`.env`, environment variables, later the keychain / vault), like every secret | never in the project file |
 | TOTP codes, inbox codes and links | nowhere: produced at the moment they are typed | registered with the redactor, so logs and evidence show `[secret:NAME]` |
 | Emails | in your inbox provider | the engine reads one message when a step needs it and keeps nothing |
@@ -60,7 +60,7 @@ auth:
   - passes the injected `validate` when the profile has a `check`.
 
 ```ts
-import { ensureProfile, SessionStore } from "@testament/auth";
+import { ensureProfile, SessionStore } from "@optestra/auth";
 
 const store = new SessionStore({ projectDir });
 const result = await ensureProfile("admin", {
@@ -96,13 +96,13 @@ types the code of that moment (RFC 6238, `node:crypto`). If fewer than
 so the code is still valid when the form is submitted.
 
 How it works:
-- `@testament/config` has **secret types**. `@testament/auth` registers
+- `@optestra/config` has **secret types**. `@optestra/auth` registers
   `totp`, and `resolveSecrets` checks the seed.
   - A bad seed is `SECRET_INVALID`, with the fix and without the value; the
     secret is then left out, so a fill gets `missing_secret`.
   - A good seed becomes a **dynamic** `SecretValue`.
 - The browser's secret fill awaits `prepareSecret(secret)` from
-  `@testament/config/reveal` right before typing. For a TOTP secret that
+  `@optestra/config/reveal` right before typing. For a TOTP secret that
   produces the current code.
   - The code is registered with the secret's redactor and the session's own
     redactor before it is typed.
@@ -216,17 +216,17 @@ reason (`InboxValueError`).
 
 ## CLI
 
-- `testament auth` lists profiles with their saved-session status per
+- `optestra auth` lists profiles with their saved-session status per
   environment: valid until …, expired, or none. It also reports profiles
   whose flow is missing (exit 1), then each saved session by profile,
   environment and worker. It never shows a cookie. With
   `--clear [profile] [-e env]` it deletes saved sessions instead.
-- `testament doctor` checks "Profile flows recorded": every profile's login
+- `optestra doctor` checks "Profile flows recorded": every profile's login
   flow exists (fail) and has a recording (warn: the first run records it with
   the AI).
-- `testament inbox check` checks the configured provider: reachable, and key
+- `optestra inbox check` checks the configured provider: reachable, and key
   valid. Exit 0 when OK, 1 when the check fails, 2 when no inbox is configured.
-- `testament inbox last --to <address> [--wait 5]` prints the latest email's
+- `optestra inbox last --to <address> [--wait 5]` prints the latest email's
   sender, subject, time, extracted code and allowed link, plus the hosts of
   refused links. It is for debugging and never prints a body.
 
@@ -241,12 +241,12 @@ reason (`InboxValueError`).
   - the transports and adapters against loopback fakes of Mailpit, Mailosaur
     and MailSlurp;
   - key domains, typed misses and config sections.
-- `pnpm --filter @testament/auth test:browser`, part of `pnpm
+- `pnpm --filter @optestra/auth test:browser`, part of `pnpm
   bench:fixtures:test`, runs the e2e tests:
   - a TOTP fill in Chromium: a valid code on the allowed host, refused on
     another host, and the code in no output or trace;
   - a shop sign-up whose code is read from a real Mailpit, using the shop's own
-    project settings (`bench/fixtures/shop/testament.config.yaml`).
+    project settings (`bench/fixtures/shop/optestra.config.yaml`).
 - The Mailpit e2e is skipped, with a message, when Mailpit isn't running. Start
   Mailpit with `docker run -d -p 8025:8025 -p 1025:1025 axllent/mailpit`. CI
   runs it as a service with `REQUIRE_MAILPIT=1`.

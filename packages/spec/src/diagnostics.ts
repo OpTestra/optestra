@@ -1,4 +1,4 @@
-import type { Diagnostic } from "@testament/config";
+import type { Diagnostic } from "@optestra/config";
 import type { Range } from "./model.js";
 
 /** Stable codes. The editors and SPEC-1 key off these; never rename one. */

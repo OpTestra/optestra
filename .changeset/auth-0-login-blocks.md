@@ -1,12 +1,12 @@
 ---
-"@testament/auth": minor
-"@testament/config": minor
-"@testament/browser": minor
-"@testament/spec": minor
-"@testament/cli": minor
+"@optestra/auth": minor
+"@optestra/config": minor
+"@optestra/browser": minor
+"@optestra/spec": minor
+"@optestra/cli": minor
 ---
 
-Add the login building blocks (AUTH-0). `@testament/auth` has auth profiles
+Add the login building blocks (AUTH-0). `@optestra/auth` has auth profiles
 (`auth.profiles`, a test's `auth: name`) with a saved-session store
 (`SessionStore`, `ensureProfile` with an injected login flow and check;
 owner-only, git-ignored, values redacted), the `totp` secret type (RFC 6238,

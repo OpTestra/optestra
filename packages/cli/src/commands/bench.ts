@@ -60,7 +60,7 @@ export async function runBenchCommand(
     const { runMeasuresCommand } = await import("./bench-measures.js");
     return runMeasuresCommand(options, io);
   }
-  const bench = await import("@testament/core/bench");
+  const bench = await import("@optestra/core/bench");
   let report: Awaited<ReturnType<typeof bench.runBench>>;
   try {
     report = await bench.runBench({

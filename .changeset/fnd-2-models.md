@@ -1,10 +1,10 @@
 ---
-"@testament/models": minor
-"@testament/config": minor
-"@testament/core": minor
-"@testament/cli": minor
+"@optestra/models": minor
+"@optestra/config": minor
+"@optestra/core": minor
+"@optestra/cli": minor
 ---
 
-Add the AI model adapter (`@testament/models`): provider pools with failover, prices,
+Add the AI model adapter (`@optestra/models`): provider pools with failover, prices,
 usage caps, budgets, call records and a key check; `models` in the CLI. The redacting
-logger now lives in `@testament/config/node` (still re-exported by core).
+logger now lives in `@optestra/config/node` (still re-exported by core).

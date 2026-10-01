@@ -1,9 +1,9 @@
-// THE ONLY FILE IN @testament/auth THAT TOUCHES THE NETWORK (see test/guards.test.ts).
+// THE ONLY FILE IN @optestra/auth THAT TOUCHES THE NETWORK (see test/guards.test.ts).
 // Every inbox request (Mailpit, Mailosaur, MailSlurp) goes through `createInboxTransport`,
 // pinned to the configured inbox host, so an API key can't be sent anywhere else.
 // RESTRICTED import: the key is revealed only here, only for its own provider's host.
-import { revealSecret } from "@testament/config/reveal";
-import { defaultRedactor, type SecretValue } from "@testament/config/node";
+import { revealSecret } from "@optestra/config/reveal";
+import { defaultRedactor, type SecretValue } from "@optestra/config/node";
 
 export type FetchLike = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 

@@ -2,9 +2,9 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { ulid } from "@testament/contract";
-import { createDecisions } from "@testament/decide";
+import { brand } from "@optestra/brand";
+import { ulid } from "@optestra/contract";
+import { createDecisions } from "@optestra/decide";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   type CheckOptions,
@@ -13,13 +13,13 @@ import {
   type Observation,
   openSession,
   type Session,
-} from "@testament/browser";
-import { createSecretValue, loadProject } from "@testament/config/node";
-import type { ScriptedCall, ScriptedReply } from "@testament/models/testing";
-import { type CheckOp, type Recording, serializeRecording } from "@testament/recording";
-import { expandTest, type ExpandedTest, mapReader, parseTest } from "@testament/spec";
-import { loadTest } from "@testament/spec/node";
-import { startShop, type Variant, verificationCode } from "@testament/fixture-shop";
+} from "@optestra/browser";
+import { createSecretValue, loadProject } from "@optestra/config/node";
+import type { ScriptedCall, ScriptedReply } from "@optestra/models/testing";
+import { type CheckOp, type Recording, serializeRecording } from "@optestra/recording";
+import { expandTest, type ExpandedTest, mapReader, parseTest } from "@optestra/spec";
+import { loadTest } from "@optestra/spec/node";
+import { startShop, type Variant, verificationCode } from "@optestra/fixture-shop";
 import { authorTest } from "../src/author/author.js";
 import { authoringLogin } from "../src/run/author-login.js";
 import type { AuthoringReport } from "../src/author/types.js";

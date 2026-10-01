@@ -1,10 +1,10 @@
 ---
-"@testament/core": minor
-"@testament/browser": minor
-"@testament/contract": minor
-"@testament/spec": minor
-"@testament/codegen": minor
-"@testament/cli": minor
+"@optestra/core": minor
+"@optestra/browser": minor
+"@optestra/contract": minor
+"@optestra/spec": minor
+"@optestra/codegen": minor
+"@optestra/cli": minor
 ---
 
 Logins and email codes in real runs (AUTH-1). A test with `auth: <profile>`

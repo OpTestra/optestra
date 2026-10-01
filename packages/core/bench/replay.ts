@@ -18,12 +18,12 @@
 // process. REQUIRE_MAILPIT=1 (CI) makes a missing Mailpit an error. The generated
 // specs can only read Mailpit, so without it their email tests aren't compared.
 //
-// The scoring is Bench's (`@testament/core/bench`, the same as the CLI's `bench`);
+// The scoring is Bench's (`@optestra/core/bench`, the same as the CLI's `bench`);
 // this script keeps CI's per-row output and its gates.
 
 import { rmSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import type { TestResult } from "@testament/contract";
+import type { TestResult } from "@optestra/contract";
 import {
   type BenchRow,
   EQUIVALENCE_VARIANTS,
@@ -34,7 +34,7 @@ import {
   runShopVariant,
   shopFixture,
   specShop,
-} from "@testament/core/bench";
+} from "@optestra/core/bench";
 
 /** The perf smoke (PERF-0): replay of the correct shop may take at most this many times the specs. */
 const MAX_REPLAY_RATIO = 2;

@@ -5,11 +5,11 @@ import type {
   ModelCall,
   RunMode,
   StepResult,
-} from "@testament/contract";
-import type { AttemptObservations, Decisions } from "@testament/decide";
-import type { BudgetMeter, Models } from "@testament/models";
-import type { CheckRecording, Recording, StepRecording } from "@testament/recording";
-import type { ExpandedTest } from "@testament/spec";
+} from "@optestra/contract";
+import type { AttemptObservations, Decisions } from "@optestra/decide";
+import type { BudgetMeter, Models } from "@optestra/models";
+import type { CheckRecording, Recording, StepRecording } from "@optestra/recording";
+import type { ExpandedTest } from "@optestra/spec";
 import type { TestInbox } from "../author/inbox.js";
 import type { HealPatch } from "../heal/patch.js";
 import type { HarnessSession } from "../target/harness.js";

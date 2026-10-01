@@ -10,12 +10,12 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createInboxValues } from "@testament/auth";
-import { brand } from "@testament/brand";
-import { launchBrowser, openSession } from "@testament/browser";
-import { ENV_PREFIX } from "@testament/config";
-import { readRun } from "@testament/contract/node";
-import { shopInbox, startShop, type Variant, verificationCode } from "@testament/fixture-shop";
+import { createInboxValues } from "@optestra/auth";
+import { brand } from "@optestra/brand";
+import { launchBrowser, openSession } from "@optestra/browser";
+import { ENV_PREFIX } from "@optestra/config";
+import { readRun } from "@optestra/contract/node";
+import { shopInbox, startShop, type Variant, verificationCode } from "@optestra/fixture-shop";
 import { afterAll, describe, expect, it } from "vitest";
 import { readZip } from "../../browser/src/zip.js";
 import { createTestInbox } from "../src/author/inbox.js";

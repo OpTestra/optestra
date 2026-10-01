@@ -17,7 +17,7 @@ export function commentMarker(cliName: string, checkName: string): string {
 
 /**
  * Replaces every `artifact:<path>` link the summary leaves (same format as
- * @testament/report's fillArtifactLinks); `url` returns null to drop the link.
+ * @optestra/report's fillArtifactLinks); `url` returns null to drop the link.
  */
 export function fillArtifactLinks(markdown: string, url: (path: string) => string | null): string {
   return markdown.replace(/\]\(artifact:([^)\s]+)\)/g, (_match, path: string) => {

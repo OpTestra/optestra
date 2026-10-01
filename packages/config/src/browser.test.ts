@@ -6,7 +6,7 @@ import { parse } from "yaml";
 import { BUILT_IN_DEFAULTS } from "./defaults.generated.js";
 
 const SRC = dirname(fileURLToPath(import.meta.url));
-const ALLOWED_PACKAGES = new Set(["zod", "@testament/brand"]);
+const ALLOWED_PACKAGES = new Set(["zod", "@optestra/brand"]);
 
 /** Every module reachable from `entry` through relative imports, plus the bare imports they make. */
 function importGraph(entry: string) {

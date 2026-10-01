@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
-import { brand } from "@testament/brand";
-import { findProject, projectFile } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { findProject, projectFile } from "@optestra/config/node";
 import type { CommandIo } from "./config.js";
 
 // `record` (AUT-8): opens a browser window on the app; you click through it and
@@ -34,7 +34,7 @@ export async function runRecordCommand(
     confirm?: (question: string) => Promise<boolean>;
     signal?: AbortSignal;
     /** Test hook: records without a window (see core recordProject). */
-    record?: typeof import("@testament/core/node").recordProject;
+    record?: typeof import("@optestra/core/node").recordProject;
   },
 ): Promise<number> {
   if (options.out && options.accept) {
@@ -61,7 +61,7 @@ export async function runRecordCommand(
       start = options.url;
     }
   }
-  const core = await import("@testament/core/node");
+  const core = await import("@optestra/core/node");
   const record = io.record ?? core.recordProject;
   io.stdout(
     "Recording: a browser window opens. Click through the app; mark what you expect with the overlay (Expect text / Expect URL) or Alt+Shift+E, then press Finish (or close the window, or Ctrl-C here).\n",
@@ -119,7 +119,7 @@ export async function runRecordCommand(
     return 0;
   }
   try {
-    const { loadProject } = await import("@testament/config/node");
+    const { loadProject } = await import("@optestra/config/node");
     const testsDir = loadProject(dir, { env: io.env }).config.tests?.dir ?? "tests";
     const saved = core.saveRecorded(recorded, target, testsDir);
     io.stdout(

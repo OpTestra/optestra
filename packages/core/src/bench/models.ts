@@ -1,10 +1,10 @@
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
-import type { Config } from "@testament/config";
-import { loadProject, processEnvSource } from "@testament/config/node";
-import type { TestResult } from "@testament/contract";
-import { BudgetMeter, createModels, type Models } from "@testament/models";
+import { brand } from "@optestra/brand";
+import type { Config } from "@optestra/config";
+import { loadProject, processEnvSource } from "@optestra/config/node";
+import type { TestResult } from "@optestra/contract";
+import { BudgetMeter, createModels, type Models } from "@optestra/models";
 import { version } from "../index.js";
 import type { RunTestsResult } from "../run/runner.js";
 import {
@@ -173,7 +173,7 @@ async function modelsFor(
   const loaded = loadProject(dir, { env });
   const config = evalConfig(loaded.config, entry, options.scripted ?? false);
   if (options.scripted) {
-    const { scriptedModel } = await import("@testament/models/testing");
+    const { scriptedModel } = await import("@optestra/models/testing");
     const stand = scriptedModel({
       toolCalls: [
         {

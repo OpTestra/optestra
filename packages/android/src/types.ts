@@ -25,12 +25,12 @@ import type {
   SettleOptions,
   SettleResult,
   Target,
-} from "@testament/browser";
-import type { SecretValue } from "@testament/config/node";
+} from "@optestra/browser";
+import type { SecretValue } from "@optestra/config/node";
 
 // The same shapes as the web harness wherever the concept is the same (guarantee 1):
 // observations, targets, locators, candidates, outcomes, post-state, settle,
-// screenshots and check results are `@testament/browser`'s own types. Android-only
+// screenshots and check results are `@optestra/browser`'s own types. Android-only
 // concepts extend them.
 
 export type {

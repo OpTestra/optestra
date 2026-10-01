@@ -1,5 +1,5 @@
-import type { CheckKind, CheckResult } from "@testament/contract";
-import { type CheckOp, type CheckRecording, describeCheck } from "@testament/recording";
+import type { CheckKind, CheckResult } from "@optestra/contract";
+import { type CheckOp, type CheckRecording, describeCheck } from "@optestra/recording";
 import type { CheckEvaluation } from "../target/harness.js";
 
 // A recorded check → the contract's CheckResult (VER-1). Every run evaluates

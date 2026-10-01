@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { launchBrowser, type LaunchedBrowser, openSession } from "@testament/browser";
-import { createSecretValue } from "@testament/config/node";
-import { serializeRecording } from "@testament/recording";
-import { loadTest } from "@testament/spec/node";
-import { startShop, type Variant } from "@testament/fixture-shop";
+import { launchBrowser, type LaunchedBrowser, openSession } from "@optestra/browser";
+import { createSecretValue } from "@optestra/config/node";
+import { serializeRecording } from "@optestra/recording";
+import { loadTest } from "@optestra/spec/node";
+import { startShop, type Variant } from "@optestra/fixture-shop";
 import { authorTest } from "../src/author/author.js";
 import {
   agentScript,

@@ -1,5 +1,5 @@
 {
-  "name": "@testament/fixture-android",
+  "name": "@optestra/fixture-android",
   "version": "0.0.0",
   "private": true,
   "description": "Acme Shop for Android: the Bench fixture app (BEN-1), one APK per variant.",

@@ -1,4 +1,4 @@
-import type { TestResult } from "@testament/contract";
+import type { TestResult } from "@optestra/contract";
 
 // Bench scoring (BEN-1, BEN-2): one test × variant result against the fixture's
 // gold manifest. Scoring only reads results; it never changes one (guarantee 3).

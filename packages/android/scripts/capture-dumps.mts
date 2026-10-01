@@ -5,9 +5,9 @@
 import { randomBytes } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
-import { Allowlist } from "@testament/browser";
-import { apkPath } from "@testament/fixture-android";
-import { startShop } from "@testament/fixture-shop";
+import { Allowlist } from "@optestra/browser";
+import { apkPath } from "@optestra/fixture-android";
+import { startShop } from "@optestra/fixture-shop";
 import { DriverClient } from "../dist/driver.js";
 import { launchEmulator } from "../dist/emulator.js";
 import { Screen } from "../dist/hierarchy.js";

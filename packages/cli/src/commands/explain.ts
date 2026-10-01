@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { brand } from "@testament/brand";
-import { findProject } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { findProject } from "@optestra/config/node";
 import type { CommandIo } from "./config.js";
 
 // `explain [runDir] [test]` (DIA-6): why a test failed, from the run's own
@@ -18,7 +18,7 @@ export interface ExplainCommandOptions {
 export async function runExplainCommand(
   args: string[],
   options: ExplainCommandOptions,
-  io: CommandIo & { models?: import("@testament/models").Models },
+  io: CommandIo & { models?: import("@optestra/models").Models },
 ): Promise<number> {
   const fail = (message: string) => {
     io.stdout(options.json ? `${JSON.stringify({ error: message }, null, 2)}\n` : `${message}\n`);
@@ -33,7 +33,7 @@ export async function runExplainCommand(
     ? resolve(io.cwd, options.dir)
     : (findProject(runDir ?? io.cwd) ?? findProject(io.cwd));
   if (!runDir) {
-    const { latestRunDir } = await import("@testament/report/node");
+    const { latestRunDir } = await import("@optestra/report/node");
     runDir = project ? latestRunDir(project) : undefined;
     if (!runDir)
       return fail(
@@ -43,12 +43,12 @@ export async function runExplainCommand(
       );
   }
 
-  let models: import("@testament/models").Models | undefined = io.models;
-  let budget: import("@testament/models").BudgetMeter | undefined;
+  let models: import("@optestra/models").Models | undefined = io.models;
+  let budget: import("@optestra/models").BudgetMeter | undefined;
   if (options.ai && !models) {
     if (!project) return fail("--ai needs the project (for its AI settings). Use -C <project>.");
-    const m = await import("@testament/models");
-    const { dotenvSource, loadProject, processEnvSource } = await import("@testament/config/node");
+    const m = await import("@optestra/models");
+    const { dotenvSource, loadProject, processEnvSource } = await import("@optestra/config/node");
     const loaded = loadProject(project, { environment: options.env, env: io.env });
     budget = m.BudgetMeter.forRun(loaded.config);
     models = m.createModels({
@@ -65,7 +65,7 @@ export async function runExplainCommand(
       );
   }
 
-  const { explainRun, formatExplanation } = await import("@testament/core/node");
+  const { explainRun, formatExplanation } = await import("@optestra/core/node");
   let result: Awaited<ReturnType<typeof explainRun>>;
   try {
     result = await explainRun(runDir, {

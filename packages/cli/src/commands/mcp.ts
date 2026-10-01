@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { brand } from "@testament/brand";
-import { findProject, projectFile } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { findProject, projectFile } from "@optestra/config/node";
 
 // `mcp` (AGT-1): the MCP server for coding agents, over stdio, on the project
 // in this folder. stdout carries only the protocol; messages go to stderr.
@@ -27,7 +27,7 @@ export async function runMcpCommand(
     );
     return 2;
   }
-  const { serveStdio } = await import("@testament/mcp");
+  const { serveStdio } = await import("@optestra/mcp");
   await serveStdio({
     project: dir,
     ...(options.env ? { environment: options.env } : {}),

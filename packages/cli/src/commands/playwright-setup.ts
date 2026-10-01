@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 
 // What `init` and `doctor` need to know about a repository that already has a
 // Playwright setup. Read-only: its config and specs are never changed. The one

@@ -1,6 +1,6 @@
 import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
-import type { Allowlist, HookRequest, HookResult } from "@testament/browser";
+import type { Allowlist, HookRequest, HookResult } from "@optestra/browser";
 
 // Setup/teardown requests (AUT-10) for Android tests. They seed the app's backend
 // from this machine, not from the device, so they go to the environment's

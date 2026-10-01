@@ -1,6 +1,6 @@
-import { defaultRedactor } from "@testament/config/node";
-import { type ModelCall, ulid } from "@testament/contract";
-import { type ModelCallRecord, toModelCall } from "@testament/models";
+import { defaultRedactor } from "@optestra/config/node";
+import { type ModelCall, ulid } from "@optestra/contract";
+import { type ModelCallRecord, toModelCall } from "@optestra/models";
 import {
   type CheckOp,
   type CheckRecording,
@@ -15,14 +15,14 @@ import {
   routeOf,
   type StepRecording,
   stepKey,
-} from "@testament/recording";
+} from "@optestra/recording";
 import type {
   BoundText,
   ExactOp,
   ExpandedStep,
   ExpandedTest,
   Locator as SpecLocator,
-} from "@testament/spec";
+} from "@optestra/spec";
 import { type CompiledCheck, compileCheck, verifyCheck } from "../checks/index.js";
 import { type HookContext, runScriptHook, runSqlHook } from "../hooks/exec.js";
 import type { Action, LocatorSpec, PageCopy } from "../target/harness.js";

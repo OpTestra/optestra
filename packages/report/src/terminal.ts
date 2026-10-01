@@ -1,4 +1,4 @@
-import { formatDuration, formatUsd, stepLabel, summarize, type Verdict } from "@testament/contract";
+import { formatDuration, formatUsd, stepLabel, summarize, type Verdict } from "@optestra/contract";
 import { buildModel, CAUSE_LABEL, costText, plural, type RunData, words } from "./model.js";
 
 // Quiet terminal output (CLI-4): one line per test, then a summary and the

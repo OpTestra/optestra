@@ -1,12 +1,12 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import { defaultRedactor } from "@testament/config/node";
+import { defaultRedactor } from "@optestra/config/node";
 import {
   type CheckResult,
   type HealProposal,
   HealProposalSchema,
   type ModelCall,
   type StepResult,
-} from "@testament/contract";
+} from "@optestra/contract";
 import {
   classifyHeal,
   decideMiss,
@@ -20,8 +20,8 @@ import {
   rankCandidates,
   type SameElementAnswer,
   sameElementInputFor,
-} from "@testament/decide";
-import { toModelCall } from "@testament/models";
+} from "@optestra/decide";
+import { toModelCall } from "@optestra/models";
 import {
   type CheckOp,
   type CheckRecording,
@@ -34,8 +34,8 @@ import {
   routeOf,
   type StepRecording,
   stepKey,
-} from "@testament/recording";
-import type { BoundText, ExactOp, ExpandedStep } from "@testament/spec";
+} from "@optestra/recording";
+import type { BoundText, ExactOp, ExpandedStep } from "@optestra/spec";
 import { runActionStep } from "../author/agent.js";
 import { authorCheck, exactCheck, runExactOp, runHook } from "../author/author.js";
 import { parseGuard } from "../author/guards.js";

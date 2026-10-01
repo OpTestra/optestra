@@ -12,7 +12,7 @@ export type SecretTypeCheck =
 
 /**
  * A secret type other than plain `text`. The owning package registers it when it
- * loads (like a config section): `@testament/auth` registers `totp`.
+ * loads (like a config section): `@optestra/auth` registers `totp`.
  */
 export interface SecretTypeDefinition {
   type: string;

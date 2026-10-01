@@ -1,5 +1,5 @@
-import { defaultRegistry } from "@testament/config";
-import { type DecisionRecord, DecisionRecordSchema } from "@testament/contract";
+import { defaultRegistry } from "@optestra/config";
+import { type DecisionRecord, DecisionRecordSchema } from "@optestra/contract";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {

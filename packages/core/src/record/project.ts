@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import { DEFAULT_DEVICE, openSession } from "@testament/browser";
-import { testIdFromPath } from "@testament/contract";
-import { recordingPath, writeRecording } from "@testament/recording/node";
-import { nodeFileReader } from "@testament/spec/node";
+import { DEFAULT_DEVICE, openSession } from "@optestra/browser";
+import { testIdFromPath } from "@optestra/contract";
+import { recordingPath, writeRecording } from "@optestra/recording/node";
+import { nodeFileReader } from "@optestra/spec/node";
 import { freePath, type ProjectDraftOptions, prepare } from "../draft/project.js";
 import { type RecordedTest, type RecordProgress, recordTest } from "./record.js";
 
@@ -17,7 +17,7 @@ export interface RecordProjectOptions
   name?: string | undefined;
   onProgress?: ((line: RecordProgress) => void) | undefined;
   /** Test hook: a scripted person using the page. */
-  user?: ((user: import("@testament/browser").ScriptedUser) => void) | undefined;
+  user?: ((user: import("@optestra/browser").ScriptedUser) => void) | undefined;
   /** Default true: the overlay to mark expectations and finish. */
   overlay?: boolean | undefined;
 }

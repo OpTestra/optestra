@@ -1,5 +1,5 @@
 {
-  "name": "@testament/auth",
+  "name": "@optestra/auth",
   "version": "0.1.0",
   "description": "Login building blocks: auth profiles with saved sessions, TOTP secrets and test email inboxes.",
   "license": "MIT",
@@ -23,14 +23,14 @@
     "test:browser": "tsc -b . ../browser ../../bench/fixtures/shop && vitest run --config vitest.config.ts"
   },
   "dependencies": {
-    "@testament/brand": "workspace:^",
-    "@testament/config": "workspace:^",
-    "@testament/spec": "workspace:^",
+    "@optestra/brand": "workspace:^",
+    "@optestra/config": "workspace:^",
+    "@optestra/spec": "workspace:^",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@testament/browser": "workspace:*",
-    "@testament/fixture-shop": "workspace:*"
+    "@optestra/browser": "workspace:*",
+    "@optestra/fixture-shop": "workspace:*"
   },
   "engines": {
     "node": ">=24"

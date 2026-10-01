@@ -1,7 +1,7 @@
-import type { Observation, ObservedElement } from "@testament/browser";
-import { renderForModel } from "@testament/browser";
-import type { ModelCall } from "@testament/contract";
-import { type Models, type ToolDefinition, toModelCall } from "@testament/models";
+import type { Observation, ObservedElement } from "@optestra/browser";
+import { renderForModel } from "@optestra/browser";
+import type { ModelCall } from "@optestra/contract";
+import { type Models, type ToolDefinition, toModelCall } from "@optestra/models";
 import { z } from "zod";
 import { compileCheck } from "../checks/compile.js";
 import {

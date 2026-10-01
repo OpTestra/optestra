@@ -1,5 +1,5 @@
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
 
 /*
  * The docs never write the product's names: pages use these placeholders and the
@@ -13,7 +13,7 @@ import { ENV_PREFIX } from "@testament/config";
  */
 
 /** The engine's GitHub repository (owner/name). Not a brand.json field: it only changes by moving the repo. */
-export const REPO = "TestamentHQ/testament";
+export const REPO = "optestra/optestra";
 
 export const BRAND_TOKENS: Readonly<Record<string, string>> = {
   "%Name%": brand.productName,

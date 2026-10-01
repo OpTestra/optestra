@@ -1,4 +1,4 @@
-import { defaultRegistry, httpUrlSchema, SECRET_NAME } from "@testament/config";
+import { defaultRegistry, httpUrlSchema, SECRET_NAME } from "@optestra/config";
 import { z } from "zod";
 
 export const PROVIDER_KINDS = [
@@ -105,7 +105,7 @@ export type PoolEntrySettings = z.infer<typeof poolEntrySchema>;
 export type PriceSettings = z.infer<typeof priceSchema>;
 export type ModelsSettings = z.infer<typeof modelsSchema>;
 
-declare module "@testament/config" {
+declare module "@optestra/config" {
   interface ConfigSections {
     models: ModelsSettings;
   }

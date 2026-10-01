@@ -1,4 +1,4 @@
-import { nodeFileReader } from "@testament/spec/node";
+import { nodeFileReader } from "@optestra/spec/node";
 import {
   freePath,
   type ProjectDraftOptions,

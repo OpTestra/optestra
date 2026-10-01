@@ -1,5 +1,5 @@
 {
-  "name": "@testament/report",
+  "name": "@optestra/report",
   "version": "0.1.0",
   "description": "Turns a results-contract run folder into an offline HTML report, JUnit XML, JSON, a Markdown summary and terminal output.",
   "license": "MIT",
@@ -24,8 +24,8 @@
     "test:browser": "tsc -b . && vitest run --config vitest.config.ts"
   },
   "dependencies": {
-    "@testament/brand": "workspace:^",
-    "@testament/contract": "workspace:^"
+    "@optestra/brand": "workspace:^",
+    "@optestra/contract": "workspace:^"
   },
   "engines": {
     "node": ">=24"

@@ -1,5 +1,5 @@
 # Acme Shop as a project: the demo project (ONB-5) and the Bench fixture.
-# Start the shop first: pnpm --filter @testament/fixture-shop start -- --port 4100
+# Start the shop first: pnpm --filter @optestra/fixture-shop start -- --port 4100
 version: 1
 
 project:

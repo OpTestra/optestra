@@ -10,10 +10,10 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
-import { readRun } from "@testament/contract/node";
-import { startShop, type Variant } from "@testament/fixture-shop";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
+import { readRun } from "@optestra/contract/node";
+import { startShop, type Variant } from "@optestra/fixture-shop";
 import { afterAll, describe, expect, it } from "vitest";
 import { scriptedModels } from "../src/author/test-kit.test-support.js";
 import { type RunTestsOptions, runTests } from "../src/run/runner.js";

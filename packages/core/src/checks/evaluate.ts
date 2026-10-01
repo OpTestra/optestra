@@ -1,5 +1,5 @@
-import type { BudgetMeter, ModelCallRecord, Models } from "@testament/models";
-import type { CheckOp } from "@testament/recording";
+import type { BudgetMeter, ModelCallRecord, Models } from "@optestra/models";
+import type { CheckOp } from "@optestra/recording";
 import { z } from "zod";
 import type {
   CheckEvaluation,

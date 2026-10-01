@@ -1,37 +1,37 @@
 # Integrations for coding agents
 
-Testament gives coding agents (Claude Code, Cursor, Codex, any MCP client) the
+Optestra gives coding agents (Claude Code, Cursor, Codex, any MCP client) the
 same tests a person runs: they can list, run and read them, draft new ones,
 and accept heals. They can't change what a test checks.
 
 | File | What it is |
 |---|---|
-| `agents/AGENTS.md` | The snippet for your repository's `AGENTS.md` or `CLAUDE.md`: how to use the CLI and the MCP server, and the rules (never edit an `Expect:` line to make a test pass). `testament init` offers to append it (asked first; `--agents` to do it without asking). |
-| `claude-code/skills/testament/SKILL.md` | The same instructions as a Claude Code skill, with the workflow after a code change. Copy the folder to `.claude/skills/testament/` in your repository (or `~/.claude/skills/`). |
+| `agents/AGENTS.md` | The snippet for your repository's `AGENTS.md` or `CLAUDE.md`: how to use the CLI and the MCP server, and the rules (never edit an `Expect:` line to make a test pass). `optestra init` offers to append it (asked first; `--agents` to do it without asking). |
+| `claude-code/skills/optestra/SKILL.md` | The same instructions as a Claude Code skill, with the workflow after a code change. Copy the folder to `.claude/skills/optestra/` in your repository (or `~/.claude/skills/`). |
 
 ## The MCP server
 
-`testament mcp` serves the project in the current folder over stdio. It opens
+`optestra mcp` serves the project in the current folder over stdio. It opens
 no port and makes no network requests of its own; running tests reaches only
-your app, like `testament run`.
+your app, like `optestra run`.
 
 Claude Code, from the project folder:
 
 ```bash
-claude mcp add testament -- npx testament mcp
+claude mcp add optestra -- npx optestra mcp
 ```
 
 Cursor (`.cursor/mcp.json`), Codex (`~/.codex/config.toml`) and other clients
 run the same command:
 
 ```json
-{ "mcpServers": { "testament": { "command": "npx", "args": ["testament", "mcp"] } } }
+{ "mcpServers": { "optestra": { "command": "npx", "args": ["optestra", "mcp"] } } }
 ```
 
 ```toml
-[mcp_servers.testament]
+[mcp_servers.optestra]
 command = "npx"
-args = ["testament", "mcp"]
+args = ["optestra", "mcp"]
 ```
 
 Options: `-C <project>` (another folder), `--env <name>` (the default
@@ -60,5 +60,5 @@ AI use. Its JSON Schema is the tool's output schema.
 
 ### Resources
 
-- `testament://docs/test-format`: the `.test.md` format and the lint rules.
-- `testament://docs/agents`: the instructions above.
+- `optestra://docs/test-format`: the `.test.md` format and the lint rules.
+- `optestra://docs/agents`: the instructions above.

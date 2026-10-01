@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { createSecretValue } from "@testament/config/node";
+import { createSecretValue } from "@optestra/config/node";
 import {
   ALLOWED_DOMAINS,
   APP_PACKAGE,
@@ -9,8 +9,8 @@ import {
   SHOP_PORT,
   VARIANTS,
   type Variant,
-} from "@testament/fixture-android";
-import { type RunningShop, startShop } from "@testament/fixture-shop";
+} from "@optestra/fixture-android";
+import { type RunningShop, startShop } from "@optestra/fixture-shop";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
 import {

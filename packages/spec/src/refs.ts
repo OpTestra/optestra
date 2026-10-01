@@ -1,4 +1,4 @@
-import { SECRET_NAME } from "@testament/config";
+import { SECRET_NAME } from "@optestra/config";
 import { opTemplates } from "./exact.js";
 import type { GeneratorRegistry } from "./generators.js";
 import { INBOX_MEMBERS, NAMESPACES, type Template, type TestSpec } from "./model.js";

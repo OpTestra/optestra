@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { memorySource, Redactor, resolveSecrets } from "@testament/config/node";
-import { launchBrowser, type LaunchedBrowser, openSession } from "@testament/browser";
+import { memorySource, Redactor, resolveSecrets } from "@optestra/config/node";
+import { launchBrowser, type LaunchedBrowser, openSession } from "@optestra/browser";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { parseTotpSeed, verifyTotp } from "@testament/auth";
+import { parseTotpSeed, verifyTotp } from "@optestra/auth";
 import { readZip } from "../../browser/src/zip.js";
 
 // SEC-4 in a real browser: a TOTP secret types the current code on its allowed host

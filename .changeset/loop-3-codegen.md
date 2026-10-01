@@ -1,9 +1,9 @@
 ---
-"@testament/codegen": minor
-"@testament/cli": minor
+"@optestra/codegen": minor
+"@optestra/cli": minor
 ---
 
-Add generated Playwright specs (LOOP-3). `@testament/codegen` turns a recording
+Add generated Playwright specs (LOOP-3). `@optestra/codegen` turns a recording
 into a plain `@playwright/test` spec next to the test, with one `test.step` per
 English step, flows as named step groups, role and label locators, web-first
 assertions and learned waits instead of sleeps. A shared fixtures module

@@ -1,10 +1,10 @@
 ---
-"@testament/decide": minor
-"@testament/config": minor
-"@testament/cli": minor
+"@optestra/decide": minor
+"@optestra/config": minor
+"@optestra/cli": minor
 ---
 
-Add `@testament/decide`, the decision layer: typed decision tasks (choice, score
+Add `@optestra/decide`, the decision layer: typed decision tasks (choice, score
 and noul questions), a rules → decision model → escalate pipeline with hard time
 limits, `race` for during-run decisions and `decideBatch` for after-run ones, a
 content-addressed decision cache, per-task metrics, a labelled-examples store and

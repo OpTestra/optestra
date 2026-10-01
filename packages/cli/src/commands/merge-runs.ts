@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
-import { brand } from "@testament/brand";
-import { RUN_FILE } from "@testament/contract";
+import { brand } from "@optestra/brand";
+import { RUN_FILE } from "@optestra/contract";
 import type { CommandIo } from "./config.js";
 
 // `merge-runs <dirs…> --out <dir>` (CLI-3, CI-6): shard run folders → one run
@@ -41,8 +41,8 @@ export async function runMergeRunsCommand(
     io.stdout(`No run folders (with ${RUN_FILE}) found in ${dirs.join(", ")}.\n`);
     return 2;
   }
-  const { mergeRuns } = await import("@testament/contract/node");
-  const { exitCodeFor } = await import("@testament/contract");
+  const { mergeRuns } = await import("@optestra/contract/node");
+  const { exitCodeFor } = await import("@optestra/contract");
   let merged: ReturnType<typeof mergeRuns>;
   try {
     merged = mergeRuns(folders, out);
@@ -55,13 +55,13 @@ export async function runMergeRunsCommand(
   // Healed counts as passed only when the project's heal policy is `auto` (CLI-5).
   let healedCountsAsPass = options.healedPasses ?? false;
   if (!healedCountsAsPass) {
-    const { findProject, loadProject, projectFile } = await import("@testament/config/node");
+    const { findProject, loadProject, projectFile } = await import("@optestra/config/node");
     const project = options.dir ? resolve(io.cwd, options.dir) : findProject(io.cwd);
     if (project && existsSync(projectFile(project)))
       healedCountsAsPass = loadProject(project, { env: io.env }).config.run.healPolicy === "auto";
   }
   const exitCode = exitCodeFor(merged.run, { healedCountsAsPass });
-  const { formatRunSummary } = await import("@testament/report");
+  const { formatRunSummary } = await import("@optestra/report");
   const near = relative(io.cwd, out);
   const where = near.startsWith("..") ? posix(out) : posix(near) || ".";
   const shards = merged.shards.map((s) => `  ${posix(s.dir)}: ${s.tests} tests`).join("\n");

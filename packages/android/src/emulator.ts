@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { ENV_PREFIX } from "@testament/config";
+import { ENV_PREFIX } from "@optestra/config";
 import { NetworkGuard } from "./guard.js";
 import {
   AndroidSetupError,

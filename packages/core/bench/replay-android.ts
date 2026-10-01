@@ -8,7 +8,7 @@
 // heals without AI are expected there (`healed` or `passed` both count), and a
 // miss only an AI heal could fix is counted as "needs AI", not as a wrong answer.
 //
-// Needs the APKs (pnpm --filter @testament/fixture-android build:apks) and an
+// Needs the APKs (pnpm --filter @optestra/fixture-android build:apks) and an
 // Android SDK. One emulator serves every variant; the shop's server (the app's
 // backend) runs `correct` on port 4180, as the APKs are built for.
 
@@ -16,12 +16,12 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { launchEmulator } from "@testament/android";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
-import { parseYaml } from "@testament/config/node";
-import type { TestResult } from "@testament/contract";
-import { runTests } from "@testament/core/node";
+import { launchEmulator } from "@optestra/android";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
+import { parseYaml } from "@optestra/config/node";
+import type { TestResult } from "@optestra/contract";
+import { runTests } from "@optestra/core/node";
 import {
   apkPath,
   apksBuilt,
@@ -29,9 +29,9 @@ import {
   SHOP_PORT,
   VARIANTS,
   type Variant,
-} from "@testament/fixture-android";
-import { startShop } from "@testament/fixture-shop";
-import { loadTest } from "@testament/spec/node";
+} from "@optestra/fixture-android";
+import { startShop } from "@optestra/fixture-shop";
+import { loadTest } from "@optestra/spec/node";
 
 const PASSWORD = "shop-demo-pass";
 
@@ -56,7 +56,7 @@ const { values } = parseArgs({
 
 if (!apksBuilt())
   throw new Error(
-    "The fixture APKs are not built: pnpm --filter @testament/fixture-android build:apks",
+    "The fixture APKs are not built: pnpm --filter @optestra/fixture-android build:apks",
   );
 
 const manifest = parseYaml(

@@ -1,4 +1,4 @@
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import type { FixtureMetrics } from "./metrics.js";
 import {
   type BaselineComparison,

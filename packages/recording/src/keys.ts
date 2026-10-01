@@ -1,4 +1,4 @@
-import { hash16 } from "@testament/spec";
+import { hash16 } from "@optestra/spec";
 
 /**
  * Bumped ONLY when replay semantics change (what a command means, how keys are

@@ -1,4 +1,4 @@
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { describe, expect, it } from "vitest";
 import { formatBench } from "./format.js";
 import { evalGate } from "./gate.js";

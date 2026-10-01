@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { FAILURE_CAUSES } from "@testament/contract";
+import { brand } from "@optestra/brand";
+import { FAILURE_CAUSES } from "@optestra/contract";
 import {
   AGENTS_END_MARKER,
   AGENTS_MARKER,
@@ -10,7 +10,7 @@ import {
   agentsSnippet,
   appendAgentsSnippet,
   TOOL_NAMES,
-} from "@testament/mcp";
+} from "@optestra/mcp";
 import { describe, expect, it } from "vitest";
 import { createProgram } from "./program.js";
 

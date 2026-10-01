@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
-import type { CheckEvaluation, CheckStatus } from "@testament/browser";
+import type { CheckEvaluation, CheckStatus } from "@optestra/browser";
 import {
   bindCheck,
   type Locator as CheckLocator,
   type CheckOp,
   describeLocator,
-} from "@testament/recording";
+} from "@optestra/recording";
 import type { Screen, ScreenNode } from "./hierarchy.js";
 import { matchAll, WHOLE_SCREEN_SELECTORS } from "./locators.js";
 import type { RequestSummary } from "./types.js";

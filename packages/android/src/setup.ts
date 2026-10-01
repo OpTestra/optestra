@@ -1,6 +1,6 @@
 import { accessSync, constants, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { snapshotName } from "./emulator.js";
 import {
   ANDROID_VERSIONS,

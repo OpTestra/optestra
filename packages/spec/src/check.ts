@@ -1,4 +1,4 @@
-import type { Config } from "@testament/config";
+import type { Config } from "@optestra/config";
 import type { SpecDiagnostic } from "./diagnostics.js";
 import { sortDiagnostics } from "./diagnostics.js";
 import { type ExpandContext, type ExpandedTest, expandTest } from "./expand.js";

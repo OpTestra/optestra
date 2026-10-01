@@ -1,9 +1,9 @@
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { basename, join, relative, sep } from "node:path";
-import { brand } from "@testament/brand";
-import type { EvidenceFile } from "@testament/browser";
-import { defaultRedactor } from "@testament/config/node";
-import { recordingPath, writeRecording } from "@testament/recording/node";
+import { brand } from "@optestra/brand";
+import type { EvidenceFile } from "@optestra/browser";
+import { defaultRedactor } from "@optestra/config/node";
+import { recordingPath, writeRecording } from "@optestra/recording/node";
 import type { AuthoringReport, AuthorResult } from "./types.js";
 
 export interface SaveOptions {

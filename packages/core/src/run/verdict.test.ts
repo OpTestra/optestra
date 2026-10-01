@@ -8,9 +8,9 @@ import {
   foldEvents,
   type HealProposal,
   type StepResult,
-} from "@testament/contract";
-import type { EmitInput } from "@testament/contract/node";
-import { groupFailures } from "@testament/decide";
+} from "@optestra/contract";
+import type { EmitInput } from "@optestra/contract/node";
+import { groupFailures } from "@optestra/decide";
 import { describe, expect, it } from "vitest";
 import { chaptersVtt, consoleErrors } from "./evidence.js";
 import { recentAiUsage } from "./history.js";

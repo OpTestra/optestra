@@ -2,17 +2,17 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import {
   type LaunchedBrowser,
   launchBrowser,
   openSession,
   type ScriptedUser,
-} from "@testament/browser";
-import { ENV_PREFIX } from "@testament/config";
-import { createSecretValue } from "@testament/config/node";
-import { type RunningShop, startShop } from "@testament/fixture-shop";
-import { checkTest, mapReader } from "@testament/spec";
+} from "@optestra/browser";
+import { ENV_PREFIX } from "@optestra/config";
+import { createSecretValue } from "@optestra/config/node";
+import { type RunningShop, startShop } from "@optestra/fixture-shop";
+import { checkTest, mapReader } from "@optestra/spec";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { scriptedModels } from "../src/author/test-kit.test-support.js";
 import { saveRecorded } from "../src/record/project.js";

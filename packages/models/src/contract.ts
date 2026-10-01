@@ -1,4 +1,4 @@
-import type { ModelCall } from "@testament/contract";
+import type { ModelCall } from "@optestra/contract";
 import type { ModelCallRecord } from "./types.js";
 
 /**

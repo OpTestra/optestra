@@ -1,5 +1,5 @@
 {
-  "name": "@testament/cli",
+  "name": "@optestra/cli",
   "version": "0.1.0",
   "description": "Command-line interface for CI, coding agents and power users.",
   "license": "MIT",
@@ -11,30 +11,30 @@
     }
   },
   "bin": {
-    "testament": "bin/cli.js"
+    "optestra": "bin/cli.js"
   },
   "brand": {
     "bin": "cliName"
   },
   "dependencies": {
-    "@testament/android": "workspace:^",
-    "@testament/auth": "workspace:^",
-    "@testament/brand": "workspace:^",
-    "@testament/browser": "workspace:^",
-    "@testament/codegen": "workspace:^",
-    "@testament/config": "workspace:^",
-    "@testament/contract": "workspace:^",
-    "@testament/core": "workspace:^",
-    "@testament/decide": "workspace:^",
-    "@testament/mcp": "workspace:^",
-    "@testament/models": "workspace:^",
-    "@testament/recording": "workspace:^",
-    "@testament/report": "workspace:^",
-    "@testament/spec": "workspace:^",
+    "@optestra/android": "workspace:^",
+    "@optestra/auth": "workspace:^",
+    "@optestra/brand": "workspace:^",
+    "@optestra/browser": "workspace:^",
+    "@optestra/codegen": "workspace:^",
+    "@optestra/config": "workspace:^",
+    "@optestra/contract": "workspace:^",
+    "@optestra/core": "workspace:^",
+    "@optestra/decide": "workspace:^",
+    "@optestra/mcp": "workspace:^",
+    "@optestra/models": "workspace:^",
+    "@optestra/recording": "workspace:^",
+    "@optestra/report": "workspace:^",
+    "@optestra/spec": "workspace:^",
     "commander": "^15.0.0"
   },
   "devDependencies": {
-    "@testament/fixture-shop": "workspace:*"
+    "@optestra/fixture-shop": "workspace:*"
   },
   "files": [
     "bin",

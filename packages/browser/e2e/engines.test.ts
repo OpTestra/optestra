@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { BrowserName } from "@testament/browser";
+import type { BrowserName } from "@optestra/browser";
 import { find, open, shop } from "./helpers.js";
 
 // A basic run on Firefox and WebKit proves the launch path (TGT-3). Chromium is

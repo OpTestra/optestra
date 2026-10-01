@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
-import type { ModelEvalFile } from "@testament/core/bench";
+import { brand } from "@optestra/brand";
+import type { ModelEvalFile } from "@optestra/core/bench";
 import type { BenchCommandOptions } from "./bench.js";
 import type { CommandIo } from "./config.js";
 
@@ -43,7 +43,7 @@ export async function modelEval(
   | { ok: true; results: ModelEvalFile; reference: number | null; saved: string | null }
   | { ok: false; code: number }
 > {
-  const bench = await import("@testament/core/bench");
+  const bench = await import("@optestra/core/bench");
   const texts = options.models?.length
     ? options.models
     : options.scripted

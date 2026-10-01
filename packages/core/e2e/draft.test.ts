@@ -1,8 +1,8 @@
-import { type LaunchedBrowser, launchBrowser, openSession } from "@testament/browser";
-import { createSecretValue } from "@testament/config/node";
-import { type RunningShop, startShop } from "@testament/fixture-shop";
-import type { ScriptedCall, ScriptedReply } from "@testament/models/testing";
-import { checkTest, mapReader } from "@testament/spec";
+import { type LaunchedBrowser, launchBrowser, openSession } from "@optestra/browser";
+import { createSecretValue } from "@optestra/config/node";
+import { type RunningShop, startShop } from "@optestra/fixture-shop";
+import type { ScriptedCall, ScriptedReply } from "@optestra/models/testing";
+import { checkTest, mapReader } from "@optestra/spec";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { promptText, refIn, scriptedModels } from "../src/author/test-kit.test-support.js";
 import { exploreDraft } from "../src/draft/draft.js";

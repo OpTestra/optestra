@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { brand } from "@testament/brand";
-import type { Config } from "@testament/config";
+import { brand } from "@optestra/brand";
+import type { Config } from "@optestra/config";
 import {
   logger as defaultLogger,
   defaultRedactor,
@@ -8,8 +8,8 @@ import {
   processEnvSource,
   type Redactor,
   type SecretSource,
-} from "@testament/config/node";
-import { revealSecret } from "@testament/config/reveal";
+} from "@optestra/config/node";
+import { revealSecret } from "@optestra/config/reveal";
 import {
   generateText,
   jsonSchema,

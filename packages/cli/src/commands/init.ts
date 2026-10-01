@@ -10,15 +10,15 @@ import {
 } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { createInterface } from "node:readline";
-import { brand } from "@testament/brand";
-import type { ConfigPatch } from "@testament/config";
+import { brand } from "@optestra/brand";
+import type { ConfigPatch } from "@optestra/config";
 import {
   createProject,
   loadProject,
   parseDotenv,
   projectFile,
   saveProject,
-} from "@testament/config/node";
+} from "@optestra/config/node";
 // Registers the sections the project file may use (models, tests, decisions, auth).
 import "../sections.js";
 import type { Command } from "commander";
@@ -106,7 +106,7 @@ export interface InitIo extends CommandIo {
   /** Test hook for the closing doctor run. */
   probes?: DoctorProbes;
   /** Test hook for --suggest: proposes drafts without a browser or AI. */
-  suggest?: typeof import("@testament/core/node").suggestStarterTests;
+  suggest?: typeof import("@optestra/core/node").suggestStarterTests;
 }
 
 // ── detecting the repository ──────────────────────────────────────────────────
@@ -315,7 +315,7 @@ async function offerAgentInstructions(
   io: InitIo,
 ): Promise<void> {
   if (!options.agents && !ask) return;
-  const { appendAgentsSnippet } = await import("@testament/mcp/instructions");
+  const { appendAgentsSnippet } = await import("@optestra/mcp/instructions");
   const present = AGENT_FILES.filter((name) => existsSync(join(dir, name)));
   for (const name of present.length ? present : (["AGENTS.md"] as const)) {
     const file = join(dir, name);
@@ -344,7 +344,7 @@ async function offerAgentInstructions(
 /** ONB-2: explores the app and proposes starter tests; each is saved only on a yes. */
 async function suggestStarters(dir: string, ask: Asker | undefined, io: InitIo): Promise<void> {
   io.stdout(`\nExploring the app for starter tests…\n`);
-  const core = await import("@testament/core/node");
+  const core = await import("@optestra/core/node");
   const { DraftSetupError } = core;
   const suggestStarterTests = io.suggest ?? core.suggestStarterTests;
   let suggestions: Awaited<ReturnType<typeof suggestStarterTests>>;
@@ -399,7 +399,7 @@ const isAiChoice = (value: string): value is AiChoice =>
   (AI_CHOICES as readonly string[]).includes(value);
 
 async function defaultAiChoice(env: CommandIo["env"]): Promise<number> {
-  const { findBinary, signInStatus } = await import("@testament/models");
+  const { findBinary, signInStatus } = await import("@optestra/models");
   for (const kind of ["claude-code", "codex"] as const) {
     const found = findBinary(kind, undefined, env);
     if (found.ok && (await signInStatus(kind, found.binary, env)).signedIn) {
@@ -599,7 +599,7 @@ export async function runInitCommand(
       env: io.env,
       ...(io.probes ? { probes: io.probes } : {}),
     });
-    const { defaultRedactor } = await import("@testament/config/node");
+    const { defaultRedactor } = await import("@optestra/config/node");
     io.stdout(`\n${defaultRedactor.redact(formatDoctorReport(report))}\n`);
   }
 

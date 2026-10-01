@@ -8,7 +8,7 @@ import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import {
   type CheckOp,
   type Command,
@@ -20,9 +20,9 @@ import {
   type Recording,
   routeOf,
   stepKey,
-} from "@testament/recording";
-import { recordingPath } from "@testament/recording/node";
-import { loadTest } from "@testament/spec/node";
+} from "@optestra/recording";
+import { recordingPath } from "@optestra/recording/node";
+import { loadTest } from "@optestra/spec/node";
 
 const here = fileURLToPath(new URL("..", import.meta.url));
 const SHOP = join(here, "../../bench/fixtures/shop");

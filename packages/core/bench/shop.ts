@@ -1,14 +1,14 @@
 // The Acme Shop fixture for the bench scripts (perf): Bench's own drivers
-// (`@testament/core/bench`), with the shop found once.
+// (`@optestra/core/bench`), with the shop found once.
 
-import type { RunTestsOptions, RunTestsResult } from "@testament/core/node";
+import type { RunTestsOptions, RunTestsResult } from "@optestra/core/node";
 import {
   mailpitRunning,
   runShopVariant,
   type SpecRun,
   shopFixture,
   specShop as specRun,
-} from "@testament/core/bench";
+} from "@optestra/core/bench";
 
 export { mailpitRunning };
 

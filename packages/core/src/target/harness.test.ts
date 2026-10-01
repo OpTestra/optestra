@@ -1,5 +1,5 @@
-import type { AndroidSession } from "@testament/android";
-import type { Session } from "@testament/browser";
+import type { AndroidSession } from "@optestra/android";
+import type { Session } from "@optestra/browser";
 import { describe, expect, it } from "vitest";
 import type { HarnessSession } from "./harness.js";
 

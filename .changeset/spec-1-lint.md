@@ -1,11 +1,11 @@
 ---
-"@testament/spec": minor
-"@testament/config": minor
-"@testament/contract": minor
-"@testament/cli": minor
+"@optestra/spec": minor
+"@optestra/config": minor
+"@optestra/contract": minor
+"@optestra/cli": minor
 ---
 
-Add test lint and editor support to `@testament/spec`: data-driven lint rules
+Add test lint and editor support to `@optestra/spec`: data-driven lint rules
 (vague steps, unobservable or missing expectations, soft-only tests, missing
 start, compound expectations, literal credentials, fixed emails, undeclared
 destructive steps, vague guards, fixed waits, duplicate names, unused flows) with

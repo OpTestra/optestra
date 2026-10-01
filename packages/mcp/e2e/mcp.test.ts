@@ -3,8 +3,8 @@ import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { type RunningShop, startShop } from "@testament/fixture-shop";
+import { brand } from "@optestra/brand";
+import { type RunningShop, startShop } from "@optestra/fixture-shop";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 // What a coding agent does with the MCP server (AGT-1, AGT-3): list the shop's

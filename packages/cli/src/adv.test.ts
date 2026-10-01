@@ -1,9 +1,9 @@
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import type { ExploreResult } from "@testament/core";
-import type { ProjectRecording } from "@testament/core/node";
+import { brand } from "@optestra/brand";
+import type { ExploreResult } from "@optestra/core";
+import type { ProjectRecording } from "@optestra/core/node";
 import { afterAll, describe, expect, it } from "vitest";
 import { runExplainCommand } from "./commands/explain.js";
 import { runExploreCommand } from "./commands/explore.js";

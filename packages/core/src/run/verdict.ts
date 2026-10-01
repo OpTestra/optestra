@@ -5,7 +5,7 @@ import type {
   HealProposal,
   StepResult,
   Verdict,
-} from "@testament/contract";
+} from "@optestra/contract";
 
 // Verdicts (HEAL-2), decided by code from the checks and steps, never by a
 // model (VER-2). A test passes only if every hard check of its final attempt

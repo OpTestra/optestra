@@ -1,8 +1,8 @@
 import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
-import { createLogger, Redactor } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { createLogger, Redactor } from "@optestra/config/node";
 import { afterEach, describe, expect, it } from "vitest";
 import type { AuthProfile } from "./section.js";
 import {

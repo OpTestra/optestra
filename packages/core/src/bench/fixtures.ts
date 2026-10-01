@@ -12,12 +12,12 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createInbox } from "@testament/auth";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
-import { nodeRuntime, parseYaml } from "@testament/config/node";
-import type { TestResult } from "@testament/contract";
-import { loadTest } from "@testament/spec/node";
+import { createInbox } from "@optestra/auth";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
+import { nodeRuntime, parseYaml } from "@optestra/config/node";
+import type { TestResult } from "@optestra/contract";
+import { loadTest } from "@optestra/spec/node";
 import { type RunTestsOptions, type RunTestsResult, runTests } from "../run/runner.js";
 import {
   type BenchRow,
@@ -40,7 +40,7 @@ const PASSWORD = "shop-demo-pass";
 export const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
 const MAILPIT_SMTP = process.env.MAILPIT_SMTP ?? "127.0.0.1:1025";
 
-/** What Bench uses of `@testament/fixture-shop`. */
+/** What Bench uses of `@optestra/fixture-shop`. */
 interface ShopModule {
   VARIANTS: readonly string[];
   startShop(options: {
@@ -51,7 +51,7 @@ interface ShopModule {
   shopInbox(shop: unknown): NonNullable<RunTestsOptions["inbox"]>;
 }
 
-/** What Bench uses of `@testament/fixture-android`. */
+/** What Bench uses of `@optestra/fixture-android`. */
 interface AndroidModule {
   VARIANTS: readonly string[];
   FIXTURE_DIR: string;
@@ -86,8 +86,8 @@ export interface ShopFixture {
 }
 
 export async function shopFixture(): Promise<ShopFixture> {
-  const module = await load<ShopModule>("@testament/fixture-shop");
-  const entry = fileURLToPath(import.meta.resolve("@testament/fixture-shop"));
+  const module = await load<ShopModule>("@optestra/fixture-shop");
+  const entry = fileURLToPath(import.meta.resolve("@optestra/fixture-shop"));
   const dir = join(dirname(entry), "..");
   const manifest = parseYaml(readFileSync(join(dir, "manifest.yaml"), "utf8"), "manifest.yaml")
     .value as Manifest;
@@ -289,7 +289,7 @@ export async function specShop(
   useMailpit: boolean,
 ): Promise<SpecRun> {
   const dir = projectCopy(fixture.dir, "bench-spec-");
-  const { generateProject } = await import("@testament/codegen/node");
+  const { generateProject } = await import("@optestra/codegen/node");
   const generated = await generateProject({ projectDir: dir, env: {} });
   if (!generated.ok) throw new Error(generated.problems.join("\n"));
   mkdirSync(join(dir, "node_modules", "@playwright"), { recursive: true });
@@ -383,17 +383,16 @@ export async function androidFixture(
 ): Promise<{ ok: true; fixture: AndroidFixture } | { ok: false; reason: string }> {
   let module: AndroidModule;
   try {
-    module = await load<AndroidModule>("@testament/fixture-android");
+    module = await load<AndroidModule>("@optestra/fixture-android");
   } catch (error) {
     return { ok: false, reason: error instanceof Error ? error.message : String(error) };
   }
   if (!module.apksBuilt())
     return {
       ok: false,
-      reason:
-        "the fixture APKs aren't built (pnpm --filter @testament/fixture-android build:apks).",
+      reason: "the fixture APKs aren't built (pnpm --filter @optestra/fixture-android build:apks).",
     };
-  const { androidDoctor, DEFAULT_ANDROID_VERSION } = await import("@testament/android");
+  const { androidDoctor, DEFAULT_ANDROID_VERSION } = await import("@optestra/android");
   const doctor = await androidDoctor(env);
   // Bench needs the default Android version's image, not every version's.
   const needed = doctor.checks.filter(
@@ -438,7 +437,7 @@ export async function runAndroidVariants(
   onVariant: (variant: string, run: RunTestsResult, ms: number, dir: string) => Promise<void>,
   onProgress?: (line: string) => void,
 ): Promise<void> {
-  const { launchEmulator } = await import("@testament/android");
+  const { launchEmulator } = await import("@optestra/android");
   const shop = await shopModule.startShop({ variant: "correct", port: fixture.module.SHOP_PORT });
   const emulator = await launchEmulator({ ...(onProgress ? { onProgress } : {}) });
   try {

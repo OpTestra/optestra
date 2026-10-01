@@ -5,8 +5,8 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { SessionStore } from "@testament/auth";
+import { brand } from "@optestra/brand";
+import { SessionStore } from "@optestra/auth";
 import { afterAll, describe, expect, it } from "vitest";
 
 const bin = fileURLToPath(new URL("../bin/cli.js", import.meta.url));

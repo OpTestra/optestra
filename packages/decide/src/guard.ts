@@ -1,4 +1,4 @@
-import { VERDICTS } from "@testament/contract";
+import { VERDICTS } from "@optestra/contract";
 import { type AnyTask, QUESTION_KINDS, type Questions } from "./task.js";
 
 /**

@@ -1,4 +1,4 @@
-import type { DecisionRecord } from "@testament/contract";
+import type { DecisionRecord } from "@optestra/contract";
 
 /** Per-task counters, for the report and for judging whether a backend or task earns its keep. */
 export interface TaskMetrics {

@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { type TestResult, TestResultSchema } from "@testament/contract";
+import { type TestResult, TestResultSchema } from "@optestra/contract";
 import { describe, expect, it } from "vitest";
 import {
   classifyFailure,

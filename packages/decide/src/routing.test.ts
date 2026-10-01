@@ -1,4 +1,4 @@
-import { defaultRegistry } from "@testament/config";
+import { defaultRegistry } from "@optestra/config";
 import { describe, expect, it } from "vitest";
 import {
   type BackendResponse,

@@ -1,4 +1,4 @@
-import type { Redactor } from "@testament/config/node";
+import type { Redactor } from "@optestra/config/node";
 import { APICallError, NoObjectGeneratedError } from "ai";
 import { BlockedHostError } from "./transport.js";
 import type { AttemptOutcome } from "./types.js";

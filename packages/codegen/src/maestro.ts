@@ -1,7 +1,7 @@
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
-import type { Command, Fingerprint, Locator } from "@testament/recording";
-import type { ExpandedStep, ExpandedTest, Hook } from "@testament/spec";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
+import type { Command, Fingerprint, Locator } from "@optestra/recording";
+import type { ExpandedStep, ExpandedTest, Hook } from "@optestra/spec";
 import { type Header, withHeader } from "./header.js";
 import type { CodegenCheck, CodegenRecording } from "./recording.js";
 import {

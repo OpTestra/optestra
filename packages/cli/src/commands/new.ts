@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
-import { brand } from "@testament/brand";
-import { findProject, projectFile } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { findProject, projectFile } from "@optestra/config/node";
 import type { CommandIo } from "./config.js";
 
 // `new "<sentence>"` (AUT-7, "Describe it"): explores the app and drafts a
@@ -33,7 +33,7 @@ export async function runNewCommand(
   io: CommandIo & {
     confirm?: (question: string) => Promise<boolean>;
     /** Test hook: drafts without a browser or AI. */
-    draft?: typeof import("@testament/core/node").draftTest;
+    draft?: typeof import("@optestra/core/node").draftTest;
   },
 ): Promise<number> {
   const fail = (message: string, code = 2) => {
@@ -49,7 +49,7 @@ export async function runNewCommand(
   if (!existsSync(projectFile(dir)))
     return fail(`No project file found in ${dir}. Create one first (${brand.cliName} init).`);
 
-  const core = await import("@testament/core/node");
+  const core = await import("@optestra/core/node");
   const { DraftSetupError } = core;
   const draftTest = io.draft ?? core.draftTest;
   if (!options.json) io.stdout(`Drafting "${sentence.trim()}" by exploring the app…\n`);

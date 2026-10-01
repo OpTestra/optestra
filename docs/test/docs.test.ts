@@ -4,7 +4,7 @@
 // by scripts/check-site.ts after `vitepress build`.)
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-import { configJsonSchema } from "@testament/config";
+import { configJsonSchema } from "@optestra/config";
 import type { Command } from "commander";
 import { beforeAll, describe, expect, it } from "vitest";
 import { parseAllDocuments } from "yaml";

@@ -1,4 +1,4 @@
-# @testament/contract
+# @optestra/contract
 
 The results contract: the one versioned format the engine uses to describe a
 run. The CLI, HTML report, PR comment, MCP server, desktop app, web app and cloud
@@ -8,9 +8,9 @@ all read this and nothing else. Depends only on zod.
 
 | Import | Use | Runs in |
 |---|---|---|
-| `@testament/contract` | schemas, types, enums, `foldEvents`, `summarize`, `exitCodeFor`, `runLayout`, `testIdFromPath`, `ulid`, `contractJsonSchemas` | browser and Node |
-| `@testament/contract/node` | `createRunWriter`, `readRun`, `runDir` | Node |
-| `@testament/contract/schema/{run,test-result,event}.json` | JSON Schema (generated at build) | other languages, tools |
+| `@optestra/contract` | schemas, types, enums, `foldEvents`, `summarize`, `exitCodeFor`, `runLayout`, `testIdFromPath`, `ulid`, `contractJsonSchemas` | browser and Node |
+| `@optestra/contract/node` | `createRunWriter`, `readRun`, `runDir` | Node |
+| `@optestra/contract/schema/{run,test-result,event}.json` | JSON Schema (generated at build) | other languages, tools |
 
 ## Versioning
 
@@ -111,7 +111,7 @@ attempt.finished, test.finished, run.finished, log`
 ## Writing a run
 
 ```ts
-import { createRunWriter, runDir } from "@testament/contract/node";
+import { createRunWriter, runDir } from "@optestra/contract/node";
 
 const writer = createRunWriter(runDir(dataDir, runId), {
   scrub: (text) => redactor.redact(text), // the config redactor; required

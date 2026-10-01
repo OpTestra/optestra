@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { describe, expect, it } from "vitest";
 import { describeCheck, parseRecording, serializeRecording } from "./index.js";
 

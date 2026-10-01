@@ -1,5 +1,5 @@
-import { defaultRedactor, SecretValue } from "@testament/config/node";
-import { revealSecret } from "@testament/config/reveal";
+import { defaultRedactor, SecretValue } from "@optestra/config/node";
+import { revealSecret } from "@optestra/config/reveal";
 import type {
   BackendCallOptions,
   BackendRequest,

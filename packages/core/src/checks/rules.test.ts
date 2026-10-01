@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import type { CheckOp } from "@testament/recording";
+import type { CheckOp } from "@optestra/recording";
 import { describe, expect, it } from "vitest";
 import type { Observation } from "../target/harness.js";
 import { compileByRules, matchRules, namesMatch, type Probe } from "./rules.js";

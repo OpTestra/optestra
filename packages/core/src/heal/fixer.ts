@@ -1,5 +1,5 @@
-import type { Command, StepRecording } from "@testament/recording";
-import type { ExpandedStep } from "@testament/spec";
+import type { Command, StepRecording } from "@optestra/recording";
+import type { ExpandedStep } from "@optestra/spec";
 import {
   type ActionStepResult,
   type AgentContext,

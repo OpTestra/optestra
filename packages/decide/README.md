@@ -1,4 +1,4 @@
-# @testament/decide
+# @optestra/decide
 
 The decision layer: the one place every small typed decision goes through
 ("is this the same button?", "was this failure the app or the network?").
@@ -9,8 +9,8 @@ confidence threshold the decision escalates instead of guessing.
 
 | Import | Use | Runs in |
 |---|---|---|
-| `@testament/decide` | task contract, `createDecisions` (decide, race, batch), backend interface, `mockBackend`, `memoryCache`, metrics, the `decisions` config section, built-in tasks | browser and Node |
-| `@testament/decide/node` | `fileCache(projectDir)` (`.testament/decisions/`), `createLabelStore(projectDir)` (`.testament/labels/`), and the decision model backends: `createProjectDecisions`, `resolveDecisionBackend`, `createSystemOneBackend`, Ollaya setup (`ollayaStatus`, `pullModel`), `checkSystemOne` / `checkLaya`, `benchBackend` | Node |
+| `@optestra/decide` | task contract, `createDecisions` (decide, race, batch), backend interface, `mockBackend`, `memoryCache`, metrics, the `decisions` config section, built-in tasks | browser and Node |
+| `@optestra/decide/node` | `fileCache(projectDir)` (`.optestra/decisions/`), `createLabelStore(projectDir)` (`.optestra/labels/`), and the decision model backends: `createProjectDecisions`, `resolveDecisionBackend`, `createSystemOneBackend`, Ollaya setup (`ollayaStatus`, `pullModel`), `checkSystemOne` / `checkLaya`, `benchBackend` | Node |
 
 Importing the main entry registers the `decisions` config section.
 
@@ -63,7 +63,7 @@ carries the task's `onEscalate` (`fixer | human | block`), which tells the calle
 what to do next.
 
 ```ts
-import { createProjectDecisions } from "@testament/decide/node";
+import { createProjectDecisions } from "@optestra/decide/node";
 
 // What a run does: the backend comes from config (auto → Jev if JEV_API_KEY is set,
 // else rules only). The cache lives on disk. The warm-up loads Laya before the first
@@ -186,7 +186,7 @@ in the result, and in the metrics (`backendSkipped: { too_slow, timeouts }`).
 `backend` alone sets both.
 
 `enabled: false` makes the task escalate with reason `disabled`. The section can
-be overridden per environment. `testament decisions` lists the effective values
+be overridden per environment. `optestra decisions` lists the effective values
 and warns about override names that match no task.
 
 ## Cache
@@ -194,7 +194,7 @@ and warns about override names that match no task.
 Only model answers are cached. Rules answers are instant, so they never are.
 The key is `cacheKey(task, version, input, backendId)`: canonical JSON of the
 zod-parsed input with sorted keys. `fileCache` stores one file per key, named by
-the key's sha256, under `.testament/decisions/`. An entry older than `ttlSeconds`
+the key's sha256, under `.optestra/decisions/`. An entry older than `ttlSeconds`
 is a miss. `bypassCache` (on the instance or on a single call) skips both reads
 and writes, for evals. Cache writes never slow a decision down.
 
@@ -206,10 +206,10 @@ labels.recordLabel(pageIsError, input, { is_error: true }, { source: "confirmed"
 labels.readLabels("page_is_error");
 ```
 
-Each call appends one line to `.testament/labels/<task>.jsonl`, with the task
+Each call appends one line to `.optestra/labels/<task>.jsonl`, with the task
 version, source, time, parsed input and answers. Every line passes through the
 redactor (the process-wide one by default). If the answers don't fit the task's
-questions, the call throws. Training (`testament train`) and evals come later.
+questions, the call throws. Training (`optestra train`) and evals come later.
 
 ## Decision model backends
 
@@ -245,12 +245,12 @@ beyond what the state contains, no test files, no keys except the backend's own.
 - **Kev:** `uv run --extra serve python -m kev.serve --run jaredpalmer/kev-4b --port 8009`, then `backend: kev`.
 - **Laya:**
   1. Install Ollaya (the desktop app, or `curl -fsSL https://ollaya.dev/install.sh | sh`).
-  2. Run `testament decider setup laya`. It finds Ollaya and lists its models. If
+  2. Run `optestra decider setup laya`. It finds Ollaya and lists its models. If
      the model is missing, it shows the download size and asks before pulling it
      (`--yes` skips the question).
   3. Set `backend: laya`.
 
-  Testament never installs Ollaya, and it never pulls a model during a run.
+  Optestra never installs Ollaya, and it never pulls a model during a run.
 
 **Failures degrade and never break a run.** Each of these ends as a
 `BackendFailure`, and the pipeline then returns the rules answer or an escalation:
@@ -565,9 +565,9 @@ faster and trained before it helps here.
 
 ## CLI
 
-- `testament decisions [--json]` shows the routing per phase (e.g. `During  auto → none (rules only)`, `After  auto → jev (JEV_API_KEY set)`), the threshold, the cache and every task, with its effective threshold, limit, phase, escalation and questions.
-- `testament decisions --eval [--backend rules|jev|kev|laya] [--model-only] [--json]` scores the after-run tasks on the committed eval sets. It shows accuracy on decided cases, decided and escalated %, false labels, p50 overall and for model calls, and escalation reasons. `--model-only` turns the rules off to measure the model alone. Exit 1 on any false label.
-- `testament decisions --check` checks all three backends: whether the key is valid (`GET /v1/models`, no tokens spent), whether the backend is reachable, and whether the model is installed. It shows the fix for each problem, and exits 2 only if a backend a phase uses is unusable.
-- `testament decisions --bench [--backend jev|kev|laya|all] [--n 50]` runs `page_is_error` on fixed unclear inputs after a warm-up, with the cache off. It prints p50/p95, the share within 100 ms, the error rate, decided/escalated counts and agreement with the expected answers. Laya's during-run target (p50 < 100 ms) is reported as met or missed.
-- `testament decider setup laya [--model …] [--yes]` sets up Laya (see above). `setup jev` and `setup kev` print the steps.
-- `testament decisions --stats <runDir> [--json]` prints metrics per task, built from the run's `decision.made` events (or from its documents when there are no events).
+- `optestra decisions [--json]` shows the routing per phase (e.g. `During  auto → none (rules only)`, `After  auto → jev (JEV_API_KEY set)`), the threshold, the cache and every task, with its effective threshold, limit, phase, escalation and questions.
+- `optestra decisions --eval [--backend rules|jev|kev|laya] [--model-only] [--json]` scores the after-run tasks on the committed eval sets. It shows accuracy on decided cases, decided and escalated %, false labels, p50 overall and for model calls, and escalation reasons. `--model-only` turns the rules off to measure the model alone. Exit 1 on any false label.
+- `optestra decisions --check` checks all three backends: whether the key is valid (`GET /v1/models`, no tokens spent), whether the backend is reachable, and whether the model is installed. It shows the fix for each problem, and exits 2 only if a backend a phase uses is unusable.
+- `optestra decisions --bench [--backend jev|kev|laya|all] [--n 50]` runs `page_is_error` on fixed unclear inputs after a warm-up, with the cache off. It prints p50/p95, the share within 100 ms, the error rate, decided/escalated counts and agreement with the expected answers. Laya's during-run target (p50 < 100 ms) is reported as met or missed.
+- `optestra decider setup laya [--model …] [--yes]` sets up Laya (see above). `setup jev` and `setup kev` print the steps.
+- `optestra decisions --stats <runDir> [--json]` prints metrics per task, built from the run's `decision.made` events (or from its documents when there are no events).

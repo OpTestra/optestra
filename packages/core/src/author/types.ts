@@ -1,6 +1,6 @@
-import type { ModelCall } from "@testament/contract";
-import type { BudgetMeter, Models } from "@testament/models";
-import type { CheckOp, Recording, Sanity } from "@testament/recording";
+import type { ModelCall } from "@optestra/contract";
+import type { BudgetMeter, Models } from "@optestra/models";
+import type { CheckOp, Recording, Sanity } from "@optestra/recording";
 import type { CheckStatus, HarnessSession } from "../target/harness.js";
 
 /** The harness calls the author uses. A web Session and an AndroidSession satisfy it. */

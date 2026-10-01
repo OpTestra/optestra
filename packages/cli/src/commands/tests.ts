@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
-import type { Config } from "@testament/config";
-import { findProject, loadProject, projectFile } from "@testament/config/node";
+import type { Config } from "@optestra/config";
+import { findProject, loadProject, projectFile } from "@optestra/config/node";
 import {
   type ExpandedStep,
   type ExpandedTest,
@@ -11,8 +11,8 @@ import {
   type Step,
   specSteps,
   type TestSpec,
-} from "@testament/spec";
-import { type LoadedTest, loadTest, loadTests } from "@testament/spec/node";
+} from "@optestra/spec";
+import { type LoadedTest, loadTest, loadTests } from "@optestra/spec/node";
 import type { CommandIo } from "./config.js";
 
 export interface ListCommandOptions {

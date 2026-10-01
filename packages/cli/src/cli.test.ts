@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { version } from "@testament/core";
+import { brand } from "@optestra/brand";
+import { version } from "@optestra/core";
 import { describe, expect, it } from "vitest";
 
 const bin = fileURLToPath(new URL("../bin/cli.js", import.meta.url));

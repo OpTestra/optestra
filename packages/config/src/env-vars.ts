@@ -1,4 +1,4 @@
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import type { z } from "zod";
 import type { Diagnostic } from "./diagnostics.js";
 import { formatPath, type Path, setAt } from "./paths.js";

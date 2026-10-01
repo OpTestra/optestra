@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { launchBrowser, type LaunchedBrowser, type Session } from "@testament/browser";
+import { launchBrowser, type LaunchedBrowser, type Session } from "@optestra/browser";
 import {
   eventually,
   find,

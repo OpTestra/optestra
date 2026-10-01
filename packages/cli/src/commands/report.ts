@@ -1,7 +1,7 @@
 import { relative, resolve } from "node:path";
-import { brand } from "@testament/brand";
-import { findProject } from "@testament/config/node";
-import { latestRunDir, loadRunData, openFile, writeHtmlReport } from "@testament/report/node";
+import { brand } from "@optestra/brand";
+import { findProject } from "@optestra/config/node";
+import { latestRunDir, loadRunData, openFile, writeHtmlReport } from "@optestra/report/node";
 import type { CommandIo } from "./config.js";
 
 export interface ReportCommandOptions {

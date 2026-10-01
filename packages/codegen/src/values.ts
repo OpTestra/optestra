@@ -1,5 +1,5 @@
-import type { Template } from "@testament/spec";
-import { BUILT_IN_GENERATORS } from "@testament/spec";
+import type { Template } from "@optestra/spec";
+import { BUILT_IN_GENERATORS } from "@optestra/spec";
 import {
   call,
   type Expr,

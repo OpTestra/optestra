@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { checkKey, type Recording, serializeRecording } from "@testament/recording";
+import { brand } from "@optestra/brand";
+import { checkKey, type Recording, serializeRecording } from "@optestra/recording";
 import { describe, expect, it } from "vitest";
 
 // `checks <test>` prints what each Expect line was compiled into, from the recording.

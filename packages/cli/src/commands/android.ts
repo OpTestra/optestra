@@ -36,9 +36,9 @@ export async function runAndroidSetupCommand(
   options: AndroidSetupOptions,
   io: AndroidIo,
 ): Promise<number> {
-  const android = await import("@testament/android");
+  const android = await import("@optestra/android");
   const versions = options.android?.length ? options.android : [android.DEFAULT_ANDROID_VERSION];
-  let plan: import("@testament/android").AndroidSetupPlan;
+  let plan: import("@optestra/android").AndroidSetupPlan;
   try {
     plan = android.androidSetupPlan(versions, io.env as NodeJS.ProcessEnv);
   } catch (error) {
@@ -90,7 +90,7 @@ export async function runAndroidDoctorCommand(
   options: AndroidDoctorOptions,
   io: CommandIo,
 ): Promise<number> {
-  const android = await import("@testament/android");
+  const android = await import("@optestra/android");
   const report = await android.androidDoctor(io.env as NodeJS.ProcessEnv);
   if (options.json) {
     io.stdout(`${JSON.stringify(report, null, 2)}\n`);
@@ -111,8 +111,8 @@ export async function runAndroidSnapshotCommand(
   options: AndroidSnapshotOptions,
   io: CommandIo,
 ): Promise<number> {
-  const android = await import("@testament/android");
-  let opened: import("@testament/android").OpenSessionResult;
+  const android = await import("@optestra/android");
+  let opened: import("@optestra/android").OpenSessionResult;
   try {
     opened = await android.openAndroidSession({
       apk: resolve(io.cwd, apk),

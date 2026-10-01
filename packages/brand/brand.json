@@ -1,11 +1,11 @@
 {
   "$comment": "The one place for product naming. {Name} = productName, {name} = its lowercase slug. After editing, run `pnpm brand:apply` in engine/ and then in apps/.",
-  "productName": "Testament",
+  "productName": "Optestra",
   "cliName": "{name}",
   "npmScope": "@{name}",
   "desktopAppName": "{Name}",
   "webAppName": "{Name}",
-  "domain": "{name}.dev",
+  "domain": "{name}.com",
   "configFileName": "{name}.config.yaml",
   "dataDirName": ".{name}"
 }

@@ -1,5 +1,5 @@
-import { brand } from "@testament/brand";
-import { formatDuration, formatUsd, stepLabel } from "@testament/contract";
+import { brand } from "@optestra/brand";
+import { formatDuration, formatUsd, stepLabel } from "@optestra/contract";
 import { escapeMarkdown as md, markdownCode as code } from "./escape.js";
 import {
   buildModel,

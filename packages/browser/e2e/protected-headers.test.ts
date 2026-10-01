@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createServer, type IncomingHttpHeaders, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { type LaunchedBrowser, launchBrowser } from "@testament/browser";
+import { type LaunchedBrowser, launchBrowser } from "@optestra/browser";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eventually, open, secret } from "./helpers.js";
 

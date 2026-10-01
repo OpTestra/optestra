@@ -13,7 +13,7 @@ import {
   type TestResult,
   VERDICTS,
   type Verdict,
-} from "@testament/contract";
+} from "@optestra/contract";
 
 // One read of a run, shared by every output. Pure functions of the contract
 // documents: nothing here looks at artifact contents, logs or events, so no

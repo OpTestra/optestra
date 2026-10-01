@@ -1,10 +1,10 @@
 ---
-"@testament/decide": minor
-"@testament/config": minor
-"@testament/cli": minor
+"@optestra/decide": minor
+"@optestra/config": minor
+"@optestra/cli": minor
 ---
 
-Add the four after-run decisions to `@testament/decide`: `failure_cause`,
+Add the four after-run decisions to `@optestra/decide`: `failure_cause`,
 `flaky_or_real` (advice only), `duplicate_or_new` (failure groups) and
 `heal_class`. Their rules are data-driven and every decided answer carries its
 evidence. The runner helpers are `inputFromTestResult`, `classifyFailure`,

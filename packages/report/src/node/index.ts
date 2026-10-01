@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, readdirSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
-import { brand } from "@testament/brand";
-import { isUlid, RUN_FILE, RUNS_DIR, withHealReview } from "@testament/contract";
-import { type ReadDiagnostic, readHealReview, readRun } from "@testament/contract/node";
+import { brand } from "@optestra/brand";
+import { isUlid, RUN_FILE, RUNS_DIR, withHealReview } from "@optestra/contract";
+import { type ReadDiagnostic, readHealReview, readRun } from "@optestra/contract/node";
 import { type HtmlReportOptions, renderHtmlReport } from "../html/render.js";
 import type { RunData } from "../model.js";
 

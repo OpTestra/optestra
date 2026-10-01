@@ -12,7 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { TestResult } from "@testament/contract";
+import type { TestResult } from "@optestra/contract";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { afterAll, describe, expect, it } from "vitest";
 import {

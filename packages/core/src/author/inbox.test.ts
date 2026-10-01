@@ -1,7 +1,7 @@
-import { createInboxValues, type Inbox, type InboxMessage } from "@testament/auth";
-import { Redactor } from "@testament/config/node";
-import { prepareSecret } from "@testament/config/reveal";
-import { expandTest, mapReader, parseTest } from "@testament/spec";
+import { createInboxValues, type Inbox, type InboxMessage } from "@optestra/auth";
+import { Redactor } from "@optestra/config/node";
+import { prepareSecret } from "@optestra/config/reveal";
+import { expandTest, mapReader, parseTest } from "@optestra/spec";
 import { describe, expect, it } from "vitest";
 import { createTestInbox, inboxAddressFor, prepareInbox } from "./inbox.js";
 import { describeVariables, harnessValue, stepVariables, withInbox } from "./variables.js";

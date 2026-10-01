@@ -10,16 +10,16 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX, hasErrors } from "@testament/config";
-import { findProject, loadProject, projectFile } from "@testament/config/node";
-import { DEFAULT_TESTS } from "@testament/spec/node";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX, hasErrors } from "@optestra/config";
+import { findProject, loadProject, projectFile } from "@optestra/config/node";
+import { DEFAULT_TESTS } from "@optestra/spec/node";
 import type { Command } from "commander";
 import type { CommandIo } from "./config.js";
 
 // `export [--out dir]` (EXP-2): a standalone Playwright project made from the
 // recorded tests. It runs with `npm install && npx playwright test` and holds
-// no @testament/* dependency, no secret value and no runtime of ours: the specs
+// no @optestra/* dependency, no secret value and no runtime of ours: the specs
 // and helpers come from codegen's generateProject, plus a package.json that
 // pins only @playwright/test, a root playwright.config.ts, a README and a
 // .env.example with secret names.
@@ -38,7 +38,7 @@ const TEARDOWN = `${brand.cliName}.teardown.ts`;
 
 /** The @playwright/test version the engine itself runs (playwright and @playwright/test share it). */
 export function playwrightVersion(): string {
-  const fromBrowser = createRequire(import.meta.resolve("@testament/browser"));
+  const fromBrowser = createRequire(import.meta.resolve("@optestra/browser"));
   const pkg = JSON.parse(readFileSync(fromBrowser.resolve("playwright/package.json"), "utf8")) as {
     version: string;
   };
@@ -195,8 +195,8 @@ export async function runExportCommand(
   }
 
   const specsDir = join(out, SPECS);
-  const { generateProject } = await import("@testament/codegen/node");
-  const { withHeader } = await import("@testament/codegen");
+  const { generateProject } = await import("@optestra/codegen/node");
+  const { withHeader } = await import("@optestra/codegen");
   const result = await generateProject({
     projectDir: dir,
     environment: options.env,
@@ -229,7 +229,7 @@ export async function runExportCommand(
   // Files the upload steps use, at the same place relative to the specs.
   const testsDir = loaded.config.tests?.dir ?? DEFAULT_TESTS.dir;
   const copied: string[] = [];
-  const { recordingPath } = await import("@testament/recording/node");
+  const { recordingPath } = await import("@optestra/recording/node");
   for (const spec of specs) {
     const id = spec.path.slice(SPECS.length + 1).replace(/\.spec\.ts$/, "");
     const recordingFile = join(dir, recordingPath(testsDir, id));

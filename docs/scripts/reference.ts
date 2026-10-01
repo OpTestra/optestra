@@ -3,15 +3,15 @@
 // the JSON results from their schema, and the lint rules from the reference the
 // spec package generates. `pnpm --filter ./docs gen` writes them; a test fails
 // when a committed page no longer matches.
-import "@testament/spec";
-import "@testament/models/section";
-import "@testament/decide";
-import "@testament/auth";
-import "@testament/android/section";
+import "@optestra/spec";
+import "@optestra/models/section";
+import "@optestra/decide";
+import "@optestra/auth";
+import "@optestra/android/section";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { BUILT_IN_DEFAULTS, configJsonSchema } from "@testament/config";
-import { resultsSummaryJsonSchema } from "@testament/report";
+import { BUILT_IN_DEFAULTS, configJsonSchema } from "@optestra/config";
+import { resultsSummaryJsonSchema } from "@optestra/report";
 import type { Command, Option } from "commander";
 import { toBrandTokens } from "../.vitepress/brand.ts";
 

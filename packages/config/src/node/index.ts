@@ -1,6 +1,6 @@
 /**
  * Node entry: project files, YAML, `.env` files, secrets and the redactor.
- * The raw value of a secret is only available from `@testament/config/reveal`.
+ * The raw value of a secret is only available from `@optestra/config/reveal`.
  */
 export { type DotenvResult, parseDotenv, readDotenvFile } from "./dotenv.js";
 export {

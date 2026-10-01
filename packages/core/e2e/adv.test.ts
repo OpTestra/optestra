@@ -11,10 +11,10 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
-import { startShop, type Variant } from "@testament/fixture-shop";
-import { readRecording, recordingPath } from "@testament/recording/node";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
+import { startShop, type Variant } from "@optestra/fixture-shop";
+import { readRecording, recordingPath } from "@optestra/recording/node";
 import { afterAll, describe, expect, it } from "vitest";
 import { agentScript, scriptedModels } from "../src/author/test-kit.test-support.js";
 import { explainRun, formatExplanation } from "../src/explain/explain.js";

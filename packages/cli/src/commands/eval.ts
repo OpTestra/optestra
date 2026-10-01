@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { baselinePath } from "./bench.js";
 import type { CommandIo } from "./config.js";
 
@@ -28,7 +28,7 @@ export interface EvalCommandOptions {
 }
 
 export async function runEvalCommand(options: EvalCommandOptions, io: CommandIo): Promise<number> {
-  const bench = await import("@testament/core/bench");
+  const bench = await import("@optestra/core/bench");
   const { decisionEvals } = await import("./decisions.js");
   const say = options.json ? () => {} : (line: string) => io.stdout(`${line}\n`);
 

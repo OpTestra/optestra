@@ -66,7 +66,7 @@ export type FrameLocator = z.infer<typeof FrameLocatorSchema>;
 const framePath = z.array(FrameLocatorSchema).optional();
 
 /**
- * A locator spec, the same shape as `@testament/browser`'s `LocatorSpec`:
+ * A locator spec, the same shape as `@optestra/browser`'s `LocatorSpec`:
  * `frame` is the iframe path from the page to the element's frame.
  */
 export const LocatorSchema = z.discriminatedUnion("kind", [

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { isScalar, Scalar, stringify } from "yaml";
 import type { Diagnostic } from "../diagnostics.js";
 import { isPlainObject } from "../paths.js";

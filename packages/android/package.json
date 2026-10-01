@@ -1,5 +1,5 @@
 {
-  "name": "@testament/android",
+  "name": "@optestra/android",
   "version": "0.1.0",
   "description": "The Android harness: a safe, isolated emulator session with a closed set of actions, observation and evidence.",
   "license": "MIT",
@@ -25,16 +25,16 @@
     "test:android": "tsc -b ../cli ../../bench/fixtures/shop ../../bench/fixtures/android && vitest run --config vitest.config.ts"
   },
   "dependencies": {
-    "@testament/brand": "workspace:^",
-    "@testament/browser": "workspace:^",
-    "@testament/config": "workspace:^",
-    "@testament/contract": "workspace:^",
-    "@testament/recording": "workspace:^",
+    "@optestra/brand": "workspace:^",
+    "@optestra/browser": "workspace:^",
+    "@optestra/config": "workspace:^",
+    "@optestra/contract": "workspace:^",
+    "@optestra/recording": "workspace:^",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@testament/fixture-android": "workspace:*",
-    "@testament/fixture-shop": "workspace:*",
+    "@optestra/fixture-android": "workspace:*",
+    "@optestra/fixture-shop": "workspace:*",
     "yaml": "^2.9.1"
   },
   "engines": {

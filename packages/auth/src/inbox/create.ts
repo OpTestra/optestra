@@ -1,5 +1,5 @@
-import type { Config } from "@testament/config";
-import { processEnvSource, type SecretSource, type SecretValue } from "@testament/config/node";
+import type { Config } from "@optestra/config";
+import { processEnvSource, type SecretSource, type SecretValue } from "@optestra/config/node";
 import type { InboxSettings } from "../section.js";
 import { failure } from "./common.js";
 import { createMailosaurInbox } from "./mailosaur.js";

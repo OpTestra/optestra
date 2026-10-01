@@ -1,5 +1,5 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import type { ModelCall } from "@testament/contract";
+import type { ModelCall } from "@optestra/contract";
 import {
   type BudgetMeter,
   type ImagePart,
@@ -7,10 +7,10 @@ import {
   type Models,
   type TextPart,
   toModelCall,
-} from "@testament/models";
-import type { Command, Fingerprint, Locator, RecordedAction } from "@testament/recording";
-import { toTemplate } from "@testament/recording";
-import type { ExpandedStep, ExpandedTest } from "@testament/spec";
+} from "@optestra/models";
+import type { Command, Fingerprint, Locator, RecordedAction } from "@optestra/recording";
+import { toTemplate } from "@optestra/recording";
+import type { ExpandedStep, ExpandedTest } from "@optestra/spec";
 import type { Action, ActionOutcome, Observation, ObservedElement } from "../target/harness.js";
 import { renderForModel } from "../target/render.js";
 import { commandOf, fingerprintOf, pageTemplate } from "./commands.js";

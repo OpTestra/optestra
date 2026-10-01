@@ -5,7 +5,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { afterAll, describe, expect, it } from "vitest";
 
 const bin = fileURLToPath(new URL("../bin/cli.js", import.meta.url));

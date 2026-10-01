@@ -1,5 +1,5 @@
 {
-  "name": "@testament/decide",
+  "name": "@optestra/decide",
   "version": "0.1.0",
   "description": "The decision layer: small typed decisions answered by rules first, a decision model second, escalated below threshold.",
   "license": "MIT",
@@ -25,9 +25,9 @@
     "eval:baseline": "node scripts/write-baseline.ts"
   },
   "dependencies": {
-    "@testament/brand": "workspace:^",
-    "@testament/config": "workspace:^",
-    "@testament/contract": "workspace:^",
+    "@optestra/brand": "workspace:^",
+    "@optestra/config": "workspace:^",
+    "@optestra/contract": "workspace:^",
     "zod": "^4.6.5"
   },
   "engines": {

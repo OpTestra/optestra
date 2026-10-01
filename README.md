@@ -1,4 +1,4 @@
-# Testament
+# Optestra
 
 **Test your website or Android app from plain English.** The first run uses AI to
 work out the steps and records them. Every later run replays the recording with
@@ -49,33 +49,32 @@ Never: click "Delete account"
 </tr>
 </table>
 
-> "Testament" is a placeholder name. All naming comes from
-> [`packages/brand/brand.json`](packages/brand/brand.json).
+> All naming comes from [`packages/brand/brand.json`](packages/brand/brand.json).
 
 ## Install
 
 Node 24. Then, in your web app's repository, with the app running:
 
 ```sh
-npm install -D @testament/cli
-npx testament init                          # project file, tests/example.test.md, .env.example, .gitignore lines
-npx testament author tests/example.test.md  # the AI does the steps once and saves the recording
-npx testament run                           # replays the recording: no AI when nothing changed
-npx testament report --open                 # the offline HTML report
+npm install -D @optestra/cli
+npx optestra init                          # project file, tests/example.test.md, .env.example, .gitignore lines
+npx optestra author tests/example.test.md  # the AI does the steps once and saves the recording
+npx optestra run                           # replays the recording: no AI when nothing changed
+npx optestra report --open                 # the offline HTML report
 ```
 
 The npm packages are published with the first release. Until then, build from
-this repository (below) and run `node packages/cli/bin/cli.js` instead of `npx testament`.
+this repository (below) and run `node packages/cli/bin/cli.js` instead of `npx optestra`.
 
 `init` asks three things (name, base URL, AI setup: your Claude or ChatGPT
 subscription, an API key, or later), never overwrites a file, leaves an
 existing Playwright setup alone and puts keys only in `.env`. For CI, pass
-everything as flags: `npx testament init --yes --name Shop --url http://localhost:3000 --ai claude-code`.
+everything as flags: `npx optestra init --yes --name Shop --url http://localhost:3000 --ai claude-code`.
 It ends with `doctor`, which you can run any time:
 
 ```sh
-npx testament doctor          # one line per check: ok / warn / FAIL, each problem with its fix
-npx testament doctor --json   # exit 0 all ok, 1 warnings with --strict, 2 any failure
+npx optestra doctor          # one line per check: ok / warn / FAIL, each problem with its fix
+npx optestra doctor --json   # exit 0 all ok, 1 warnings with --strict, 2 any failure
 ```
 
 Describe a test in one sentence and let it explore the app for a draft
@@ -83,20 +82,20 @@ Describe a test in one sentence and let it explore the app for a draft
 until you say so:
 
 ```sh
-npx testament new "a returning user can log in and see the dashboard"          # prints the draft
-npx testament new "a returning user can log in and see the dashboard" --accept # saves it in tests/
+npx optestra new "a returning user can log in and see the dashboard"          # prints the draft
+npx optestra new "a returning user can log in and see the dashboard" --accept # saves it in tests/
 ```
 
 Coding agents (Claude Code, Cursor, Codex) use the same tests through the MCP
-server, `npx testament mcp` (for Claude Code: `claude mcp add testament -- npx
-testament mcp`), and the instructions in [integrations/](integrations/README.md).
+server, `npx optestra mcp` (for Claude Code: `claude mcp add optestra -- npx
+optestra mcp`), and the instructions in [integrations/](integrations/README.md).
 
 The recorded test is also a plain Playwright spec you own:
 
 ```sh
-npx testament generate                        # tests/.testament/*.spec.ts
-npx playwright test -c tests/.testament       # runs without this tool
-npx testament export --out ../my-playwright   # a standalone Playwright project
+npx optestra generate                        # tests/.optestra/*.spec.ts
+npx playwright test -c tests/.optestra       # runs without this tool
+npx optestra export --out ../my-playwright   # a standalone Playwright project
 ```
 
 Timed on the demo shop (a copy of `bench/fixtures/shop` with no project file,
@@ -108,15 +107,15 @@ answer `init`'s three questions.
 **No API key?** If you pay for Claude or ChatGPT, install Claude Code or Codex
 and sign in with its own command (`claude auth login` / `codex login`): the
 engine uses it as its AI model, locked down (no shell, no files, no web), and
-never touches its sign-in. `npx testament login` shows what's ready. Google
+never touches its sign-in. `npx optestra login` shows what's ready. Google
 subscriptions can't be used this way; use a Gemini API key.
 [Details and vendor terms](docs/ai/subscription.md).
 
 ## The promises
 
 1. **Your tests are yours.** Every recorded website test is also a plain
-   Playwright spec in your repository that runs without Testament.
-   [If Testament disappears](docs/if-it-disappears.md), nothing breaks.
+   Playwright spec in your repository that runs without Optestra.
+   [If Optestra disappears](docs/if-it-disappears.md), nothing breaks.
 2. **A pass means a real check passed.** Every `Expect:` line becomes a typed
    check that code evaluates; the verdict is decided by code, never by a model.
 3. **Zero AI when nothing changed.** Replays use no model and cost nothing.
@@ -152,7 +151,7 @@ Node 24 (see `.nvmrc`) and pnpm 10 (`corepack enable`; the version is pinned in 
 pnpm install
 pnpm check          # format check, lint, typecheck, test, build (incl. the docs site), brand:check
 pnpm build
-npx testament --version   # CLI from the workspace (name comes from brand.json)
+npx optestra --version   # CLI from the workspace (name comes from brand.json)
 ```
 
 The open-source (MIT) engine runs, records, replays and heals tests on its own,

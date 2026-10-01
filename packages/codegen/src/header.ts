@@ -1,5 +1,5 @@
-import { brand } from "@testament/brand";
-import { hash16 } from "@testament/spec";
+import { brand } from "@optestra/brand";
+import { hash16 } from "@optestra/spec";
 
 // Every generated file starts with a header. Its content hash covers the whole
 // file (with the hash itself blanked), so a hand edit anywhere is detected and

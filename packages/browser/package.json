@@ -1,5 +1,5 @@
 {
-  "name": "@testament/browser",
+  "name": "@optestra/browser",
   "version": "0.1.0",
   "description": "The browser harness: a safe, isolated browser session with a closed set of actions, observation and evidence.",
   "license": "MIT",
@@ -19,14 +19,14 @@
     "test:browser": "tsc -b ../cli ../../bench/fixtures/shop && vitest run --config vitest.config.ts"
   },
   "dependencies": {
-    "@testament/brand": "workspace:^",
-    "@testament/config": "workspace:^",
-    "@testament/contract": "workspace:^",
-    "@testament/recording": "workspace:^",
+    "@optestra/brand": "workspace:^",
+    "@optestra/config": "workspace:^",
+    "@optestra/contract": "workspace:^",
+    "@optestra/recording": "workspace:^",
     "playwright": "1.63.0"
   },
   "devDependencies": {
-    "@testament/fixture-shop": "workspace:*"
+    "@optestra/fixture-shop": "workspace:*"
   },
   "engines": {
     "node": ">=24"

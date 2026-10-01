@@ -13,8 +13,8 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
-import { defaultRedactor, type Logger, logger, type Redactor } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { defaultRedactor, type Logger, logger, type Redactor } from "@optestra/config/node";
 import type { AuthProfile, AuthSettings } from "./section.js";
 
 // Saved login sessions (SEC-3): Playwright storage state per project, environment,

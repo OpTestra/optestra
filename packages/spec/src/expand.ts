@@ -1,5 +1,5 @@
-import type { HealPolicy } from "@testament/contract";
-import { testIdFromPath } from "@testament/contract";
+import type { HealPolicy } from "@optestra/contract";
+import { testIdFromPath } from "@optestra/contract";
 import { type SpecDiagnostic, sortDiagnostics } from "./diagnostics.js";
 import { opTemplates, printExactOp } from "./exact.js";
 import { DEFAULT_EMAIL_DOMAIN, defaultGenerators, type GeneratorRegistry } from "./generators.js";

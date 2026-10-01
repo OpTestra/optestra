@@ -1,4 +1,4 @@
-import { HEAL_POLICIES } from "@testament/contract";
+import { HEAL_POLICIES } from "@optestra/contract";
 import { isMap, isScalar, isSeq, LineCounter, type Node, parseDocument, Scalar } from "yaml";
 import { z } from "zod";
 import {

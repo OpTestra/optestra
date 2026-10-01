@@ -1,31 +1,31 @@
-# What happens if Testament disappears
+# What happens if Optestra disappears
 
 Nothing breaks. Your tests keep running.
 
-Every website test you record with Testament also exists as a plain Playwright
-spec, generated next to the test in `tests/.testament/` and committed with your
+Every website test you record with Optestra also exists as a plain Playwright
+spec, generated next to the test in `tests/.optestra/` and committed with your
 code. Those files use only `@playwright/test`, Node's built-ins and three helper
-files in the same folder. They don't import Testament, call Testament's servers,
+files in the same folder. They don't import Optestra, call Optestra's servers,
 or need an account, a key or a licence. The engine that makes them is open
 source (MIT).
 
-You can check this today, with Testament still installed: run the specs with
+You can check this today, with Optestra still installed: run the specs with
 plain Playwright (below), or export them to a folder that has nothing of ours in
 it at all.
 
-## Run them without Testament
+## Run them without Optestra
 
 In your repository:
 
 ```bash
 npm install -D @playwright/test
 npx playwright install chromium
-SHOP_PASSWORD=… npx playwright test -c tests/.testament
+SHOP_PASSWORD=… npx playwright test -c tests/.optestra
 ```
 
 - The config in that folder runs the specs in Chromium, Firefox and WebKit
-  against the base URL they were generated for. `TESTAMENT_BASE_URL` points
-  them somewhere else, and `TESTAMENT_ALLOWED_DOMAINS` changes the hosts pages
+  against the base URL they were generated for. `OPTESTRA_BASE_URL` points
+  them somewhere else, and `OPTESTRA_ALLOWED_DOMAINS` changes the hosts pages
   may reach.
 - Secrets are read from environment variables named after them. They are never
   written into the files.
@@ -35,7 +35,7 @@ SHOP_PASSWORD=… npx playwright test -c tests/.testament
 ## Export a standalone project
 
 ```bash
-testament export --out ../shop-playwright
+optestra export --out ../shop-playwright
 cd ../shop-playwright
 npm install && npx playwright install chromium
 cp .env.example .env    # fill in the secret values
@@ -54,12 +54,12 @@ shop-playwright/
   files/                  files the upload steps use
   tests/
     <test>.spec.ts        one per recorded test
-    testament.fixtures.ts allowed domains, secrets, values, network and inbox helpers
-    testament.reporter.ts scrubs secrets out of kept traces
-    testament.teardown.ts scrubs them again after the run
+    optestra.fixtures.ts allowed domains, secrets, values, network and inbox helpers
+    optestra.reporter.ts scrubs secrets out of kept traces
+    optestra.teardown.ts scrubs them again after the run
 ```
 
-There is no `@testament/*` package in it, no secret value and no Testament
+There is no `@optestra/*` package in it, no secret value and no Optestra
 runtime; the engine's tests check all three on every build. Tests that were
 never recorded are listed in the README and left out.
 
@@ -70,17 +70,17 @@ readable code with the English step above each block, and the safety rails that
 plain Playwright can enforce (allowed domains, secrets typed only into their
 domains, masked on screen and scrubbed from kept traces).
 
-You lose what Testament adds on top:
+You lose what Optestra adds on top:
 
 - self-healing when the page changes (a changed button now fails the test);
 - model-judged checks and `Never:` rules (they appear as annotations);
 - saved logins (`auth:` tests skip, with the reason);
 - verdicts, failure causes and flaky-test detection;
-- Testament's secret vault and scrubbed evidence.
+- Optestra's secret vault and scrubbed evidence.
 
 ## Owning the code
 
-The specs are yours to edit. Testament never overwrites a file you changed
-(`testament generate` lists it and leaves it alone unless you pass `--force`).
-If you stop using Testament, commit the folder, or the export, and carry on with
+The specs are yours to edit. Optestra never overwrites a file you changed
+(`optestra generate` lists it and leaves it alone unless you pass `--force`).
+If you stop using Optestra, commit the folder, or the export, and carry on with
 Playwright.

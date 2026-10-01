@@ -3,15 +3,15 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createSecretValue, type SecretValue } from "@testament/config/node";
+import { createSecretValue, type SecretValue } from "@optestra/config/node";
 import {
   ALLOWED_DOMAINS,
   APP_PACKAGE,
   apkPath,
   SHOP_PORT,
   type Variant,
-} from "@testament/fixture-android";
-import { type RunningShop, startShop } from "@testament/fixture-shop";
+} from "@optestra/fixture-android";
+import { type RunningShop, startShop } from "@optestra/fixture-shop";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   type AndroidActionOutcome,

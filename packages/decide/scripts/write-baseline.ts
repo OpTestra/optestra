@@ -2,8 +2,8 @@
 // a test holds the rules to. Run after changing rules or eval sets:
 //   pnpm --filter ./packages/decide build && node packages/decide/scripts/write-baseline.ts
 import { writeFileSync } from "node:fs";
-import { createDecisions } from "@testament/decide";
-import { EVAL_TASKS, loadEvalSet, runEval } from "@testament/decide/node";
+import { createDecisions } from "@optestra/decide";
+import { EVAL_TASKS, loadEvalSet, runEval } from "@optestra/decide/node";
 
 const decisions = createDecisions({ backend: null });
 const baseline: Record<string, object> = {};

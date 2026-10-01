@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const SRC = dirname(fileURLToPath(import.meta.url));
-const ALLOWED_PACKAGES = new Set(["yaml", "zod", "@testament/config", "@testament/contract"]);
+const ALLOWED_PACKAGES = new Set(["yaml", "zod", "@optestra/config", "@optestra/contract"]);
 
 /** Every module reachable from `entry` through relative imports, plus the bare imports they make. */
 function importGraph(entry: string) {

@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
-import { brand } from "@testament/brand";
-import { findProject, projectFile } from "@testament/config/node";
-import type { Event, RunMode } from "@testament/contract";
+import { brand } from "@optestra/brand";
+import { findProject, projectFile } from "@optestra/config/node";
+import type { Event, RunMode } from "@optestra/contract";
 import type { CommandIo } from "./config.js";
 
 // `run [tests…]` (LOOP-4, CLI-2/4/5): replays every selected test from its
@@ -89,7 +89,7 @@ export async function runRunCommand(
   }
   let viewport: { width: number; height: number } | undefined;
   if (options.viewport !== undefined) {
-    const { parseViewport } = await import("@testament/core");
+    const { parseViewport } = await import("@optestra/core");
     const checked = parseViewport(options.viewport);
     if (!checked.ok) {
       io.stdout(`--viewport: ${checked.message}\n`);
@@ -107,15 +107,15 @@ export async function runRunCommand(
       ? "rerecord"
       : undefined;
 
-  const { parseShard, runTests } = await import("@testament/core/node");
+  const { parseShard, runTests } = await import("@optestra/core/node");
   const shard = options.shard === undefined ? undefined : parseShard(options.shard);
   if (typeof shard === "string") {
     io.stdout(`${shard}\n`);
     return 2;
   }
-  const { exitCodeFor, formatDuration, stepLabel } = await import("@testament/contract");
-  const { loadProject } = await import("@testament/config/node");
-  const { ENV_PREFIX } = await import("@testament/config");
+  const { exitCodeFor, formatDuration, stepLabel } = await import("@optestra/contract");
+  const { loadProject } = await import("@optestra/config/node");
+  const { ENV_PREFIX } = await import("@optestra/config");
   // --base-url (a preview deploy, CI-1/ENV-2): the environment's baseUrl for this run.
   const env = options.baseUrl ? { ...io.env, [`${ENV_PREFIX}BASE_URL`]: options.baseUrl } : io.env;
   const verbose = options.verbose ?? false;
@@ -181,7 +181,7 @@ export async function runRunCommand(
   }
 
   const run = result.run;
-  const { formatRunSummary, formatTestLine } = await import("@testament/report");
+  const { formatRunSummary, formatTestLine } = await import("@optestra/report");
   const color = io.color ?? false;
   io.stdout("\n");
   // A matrix run (TGT-5): each line names its browser and device.

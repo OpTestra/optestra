@@ -16,12 +16,12 @@ import type {
   SettleOptions,
   SettleResult,
   Target,
-} from "@testament/browser";
-import type { CheckOp } from "@testament/recording";
+} from "@optestra/browser";
+import type { CheckOp } from "@optestra/recording";
 
 // The target layer (MOB-1): one engine, two harnesses. The author, the replayer,
 // the check compiler and the heals talk to a HarnessSession; a web Session
-// (@testament/browser) and an AndroidSession (@testament/android) both satisfy it
+// (@optestra/browser) and an AndroidSession (@optestra/android) both satisfy it
 // as they are, with no adapter. Where the two differ the types here are the
 // wider of the two (e.g. a refusal's type is any string); Android adds actions.
 
@@ -129,7 +129,7 @@ export type {
   InspectResult,
   LocatorSpec,
   ObservedElement,
-} from "@testament/browser";
+} from "@optestra/browser";
 // The engine's names for these, as its modules use them (the web's names, widened).
 export type {
   HarnessActOptions as ActOptions,

@@ -1,6 +1,6 @@
-import { createSecretValue } from "@testament/config/node";
-import { serializeRecording } from "@testament/recording";
-import { expandTest, mapReader, parseTest } from "@testament/spec";
+import { createSecretValue } from "@optestra/config/node";
+import { serializeRecording } from "@optestra/recording";
+import { expandTest, mapReader, parseTest } from "@optestra/spec";
 import { describe, expect, it } from "vitest";
 import { authorTest } from "./author.js";
 import { checkGuards, destructiveIntent, parseGuard } from "./guards.js";

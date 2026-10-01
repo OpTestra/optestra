@@ -1,5 +1,5 @@
-import { HealProposalSchema } from "@testament/contract";
-import type { Command } from "@testament/recording";
+import { HealProposalSchema } from "@optestra/contract";
+import type { Command } from "@optestra/recording";
 import { describe, expect, it } from "vitest";
 import { agentScript, promptText, scriptedModels } from "../author/test-kit.test-support.js";
 import { fixerProposal } from "../run/heal.js";

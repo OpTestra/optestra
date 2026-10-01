@@ -3,10 +3,10 @@ import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { type Event, ulid } from "@testament/contract";
-import { createRunWriter, type EmitInput, mergeRuns, readRun } from "@testament/contract/node";
-import { selectShard } from "@testament/core/node";
-import { renderJsonSummary, renderJunit, renderMarkdownSummary } from "@testament/report";
+import { type Event, ulid } from "@optestra/contract";
+import { createRunWriter, type EmitInput, mergeRuns, readRun } from "@optestra/contract/node";
+import { selectShard } from "@optestra/core/node";
+import { renderJsonSummary, renderJunit, renderMarkdownSummary } from "@optestra/report";
 import { afterAll, describe, expect, it } from "vitest";
 
 // Shard split + merge-runs round trip (CI-6): a run split into shards by test

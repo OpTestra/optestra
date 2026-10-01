@@ -3,13 +3,13 @@ import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync }
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { type LaunchedEmulator, launchEmulator } from "@testament/android";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
-import type { TestResult } from "@testament/contract";
-import { apkPath, apksBuilt, FIXTURE_DIR, SHOP_PORT } from "@testament/fixture-android";
-import { type RunningShop, startShop } from "@testament/fixture-shop";
-import type { Recording } from "@testament/recording";
+import { type LaunchedEmulator, launchEmulator } from "@optestra/android";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
+import type { TestResult } from "@optestra/contract";
+import { apkPath, apksBuilt, FIXTURE_DIR, SHOP_PORT } from "@optestra/fixture-android";
+import { type RunningShop, startShop } from "@optestra/fixture-shop";
+import type { Recording } from "@optestra/recording";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   agentScript,
@@ -128,7 +128,7 @@ const recordings = () =>
 beforeAll(async () => {
   if (!apksBuilt())
     throw new Error(
-      "Build the fixture APKs first: pnpm --filter @testament/fixture-android build:apks",
+      "Build the fixture APKs first: pnpm --filter @optestra/fixture-android build:apks",
     );
   shop = await startShop({ variant: "correct", port: SHOP_PORT });
   emulator = await launchEmulator({ onProgress: (message) => console.log(message) });

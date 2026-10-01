@@ -1,6 +1,6 @@
-import type { HealPolicy, HealProposal } from "@testament/contract";
-import type { Evidence, SameElementAnswer } from "@testament/decide";
-import { type Command, describeLocator, type Locator } from "@testament/recording";
+import type { HealPolicy, HealProposal } from "@optestra/contract";
+import type { Evidence, SameElementAnswer } from "@optestra/decide";
+import { type Command, describeLocator, type Locator } from "@optestra/recording";
 import { describeCommand, patchDiff } from "../heal/patch.js";
 
 // A heal found without AI (HEAL-1 level 1: a stored fallback locator, or a

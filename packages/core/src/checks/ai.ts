@@ -1,5 +1,5 @@
-import type { BudgetMeter, ModelCallRecord, Models } from "@testament/models";
-import { type CheckOp, CheckOpSchema } from "@testament/recording";
+import type { BudgetMeter, ModelCallRecord, Models } from "@optestra/models";
+import { type CheckOp, CheckOpSchema } from "@optestra/recording";
 import { z } from "zod";
 import type { Observation } from "../target/harness.js";
 import { isScreen, renderForModel } from "../target/render.js";

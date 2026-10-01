@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { findProject, loadProject, projectFile } from "@testament/config/node";
+import { findProject, loadProject, projectFile } from "@optestra/config/node";
 import type { Command } from "commander";
 import type { CommandIo } from "./config.js";
 
@@ -90,7 +90,7 @@ export async function runSnapshotCommand(
       return 2;
     }
   }
-  const harness = await import("@testament/browser");
+  const harness = await import("@optestra/browser");
   let session: Awaited<ReturnType<typeof harness.openSession>>;
   try {
     session = await harness.openSession({
@@ -99,7 +99,7 @@ export async function runSnapshotCommand(
       ...(resolved.baseUrl ? { baseUrl: resolved.baseUrl } : {}),
       ...(options.device ? { device: options.device } : {}),
       ...(storageState
-        ? { storageState: storageState as import("@testament/browser").StorageState }
+        ? { storageState: storageState as import("@optestra/browser").StorageState }
         : {}),
     });
   } catch (error) {
@@ -145,7 +145,7 @@ export async function runInstallBrowsersCommand(
   const names: BrowserName[] = ["chromium"];
   if (options.firefox || options.all) names.push("firefox");
   if (options.webkit || options.all) names.push("webkit");
-  const { installBrowsers } = await import("@testament/browser");
+  const { installBrowsers } = await import("@optestra/browser");
   return installBrowsers(names, { withDeps: options.withDeps ?? false, stdout: io.stdout });
 }
 

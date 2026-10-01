@@ -11,16 +11,16 @@ import {
   inboxEmailDomain,
   SessionStore,
   testAuth,
-} from "@testament/auth";
+} from "@optestra/auth";
 // The android config section (version, device), so Android projects load here too.
-import "@testament/android/section";
-import { brand } from "@testament/brand";
+import "@optestra/android/section";
+import { brand } from "@optestra/brand";
 import {
   type Config,
   hasErrors,
   protectedHeaderSpecs,
   protectionSecretNames,
-} from "@testament/config";
+} from "@optestra/config";
 import {
   createLogger,
   defaultRedactor,
@@ -29,7 +29,7 @@ import {
   processEnvSource,
   resolveSecrets,
   type SecretSource,
-} from "@testament/config/node";
+} from "@optestra/config/node";
 import {
   type ArtifactRef,
   type Attempt,
@@ -53,27 +53,27 @@ import {
   type TestResult,
   type Trigger,
   ulid,
-} from "@testament/contract";
-import { createRunWriter, type EmitInput, type RunWriter, runDir } from "@testament/contract/node";
+} from "@optestra/contract";
+import { createRunWriter, type EmitInput, type RunWriter, runDir } from "@optestra/contract/node";
 import {
   type AttemptObservations,
   classifyFailure,
   type Decisions,
   type FailureGroup,
   groupFailures,
-} from "@testament/decide";
-import { createProjectDecisions } from "@testament/decide/node";
-import { BudgetMeter, createModels, type Models, projectUsageStore } from "@testament/models";
+} from "@optestra/decide";
+import { createProjectDecisions } from "@optestra/decide/node";
+import { BudgetMeter, createModels, type Models, projectUsageStore } from "@optestra/models";
 import {
   type CheckRecording,
   RECORDING_EPOCH,
   RECORDING_VERSION,
   type Recording,
   type StepRecording,
-} from "@testament/recording";
-import { readRecording, recordingPath, writeRecording } from "@testament/recording/node";
-import { type ExpandedTest, hasSpecErrors } from "@testament/spec";
-import { datasetColumnProblems, loadDataset, loadTest, loadTests } from "@testament/spec/node";
+} from "@optestra/recording";
+import { readRecording, recordingPath, writeRecording } from "@optestra/recording/node";
+import { type ExpandedTest, hasSpecErrors } from "@optestra/spec";
+import { datasetColumnProblems, loadDataset, loadTest, loadTests } from "@optestra/spec/node";
 import { promptVersionFor } from "../author/agent.js";
 import { createTestInbox, type TestInbox } from "../author/inbox.js";
 import { applyPatches, type HealPatch } from "../heal/patch.js";
@@ -141,7 +141,7 @@ export interface RunTestsOptions {
   devices?: readonly string[];
   androidVersions?: readonly string[];
   /** Android: a running emulator to share (tests, Bench); left running. Implies one worker. */
-  emulator?: import("@testament/android").LaunchedEmulator;
+  emulator?: import("@optestra/android").LaunchedEmulator;
   /** Browser locale and timezone for every session (ENV-5), e.g. "de-DE", "Europe/Berlin". */
   locale?: string;
   timezone?: string;
@@ -1194,7 +1194,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       // The portable copy: a Playwright spec, or a Maestro flow for Android (MOB-6).
       if (options.generateSpecs ?? true) {
         try {
-          const { generateAfterRecording } = await import("@testament/codegen/node");
+          const { generateAfterRecording } = await import("@optestra/codegen/node");
           const generated = await generateAfterRecording(projectDir, plan.path, {
             environment: environment.name,
             env,
@@ -1314,7 +1314,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   // ── DIA-4: group the run's failures (one broken login, many tests) ─────────
   const folded = await (async () => {
     // Fold what has been written so far to get the test results.
-    const { foldEvents } = await import("@testament/contract");
+    const { foldEvents } = await import("@optestra/contract");
     const events = readEvents(writer);
     return foldEvents([
       ...events,

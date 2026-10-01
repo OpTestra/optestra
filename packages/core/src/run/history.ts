@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { RUN_FILE, RUNS_DIR } from "@testament/contract";
+import { RUN_FILE, RUNS_DIR } from "@optestra/contract";
 
 // LRN-5: AI use per test over its last runs ("used AI 0 times in its last 20
 // runs"), from the project's previous run folders. Only run.json is read.

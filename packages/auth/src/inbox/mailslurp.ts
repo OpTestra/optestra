@@ -1,4 +1,4 @@
-import type { SecretValue } from "@testament/config/node";
+import type { SecretValue } from "@optestra/config/node";
 import {
   arr,
   failure,

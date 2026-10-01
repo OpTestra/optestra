@@ -4,7 +4,7 @@ import {
   CheckRecordingSchema,
   type Recording,
   RecordingSchema,
-} from "@testament/recording";
+} from "@optestra/recording";
 import { z } from "zod";
 
 // The generator reads recordings leniently in one place: the check ops. New

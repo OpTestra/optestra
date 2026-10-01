@@ -1,10 +1,10 @@
 import { existsSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
-import { hasErrors } from "@testament/config";
-import { findProject, loadProject, projectFile } from "@testament/config/node";
-import { testIdFromPath } from "@testament/contract";
-import { type CheckRecording, describeCheck, type Sanity } from "@testament/recording";
-import { readRecording, recordingPath } from "@testament/recording/node";
+import { hasErrors } from "@optestra/config";
+import { findProject, loadProject, projectFile } from "@optestra/config/node";
+import { testIdFromPath } from "@optestra/contract";
+import { type CheckRecording, describeCheck, type Sanity } from "@optestra/recording";
+import { readRecording, recordingPath } from "@optestra/recording/node";
 import type { CommandIo } from "./config.js";
 
 // `checks <test>`: what each Expect/Soft line of a test was compiled into
@@ -52,7 +52,7 @@ export async function runChecksCommand(
     io.stdout(`No project file found for ${file}.\n`);
     return 2;
   }
-  await import("@testament/models"); // registers the models config section
+  await import("@optestra/models"); // registers the models config section
   const loaded = loadProject(dir, { environment: options.env, env: io.env });
   if (hasErrors(loaded.diagnostics)) {
     for (const d of loaded.diagnostics.filter((d) => d.severity === "error")) {

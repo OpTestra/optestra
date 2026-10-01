@@ -5,10 +5,10 @@
 //   pnpm build && node docs/scripts/capture-pr-comment.ts
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildComment, commentMarker } from "@testament/action";
-import { brand } from "@testament/brand";
-import { renderMarkdownSummary } from "@testament/report";
-import { loadRunData } from "@testament/report/node";
+import { buildComment, commentMarker } from "@optestra/action";
+import { brand } from "@optestra/brand";
+import { renderMarkdownSummary } from "@optestra/report";
+import { loadRunData } from "@optestra/report/node";
 import MarkdownIt from "markdown-it";
 import { chromium } from "playwright";
 import { DOCS_ROOT, ENGINE_ROOT } from "./reference.ts";

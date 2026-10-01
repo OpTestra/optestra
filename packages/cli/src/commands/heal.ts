@@ -1,6 +1,6 @@
 import { relative, resolve } from "node:path";
-import { brand } from "@testament/brand";
-import { findProject } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { findProject } from "@optestra/config/node";
 import type { CommandIo } from "./config.js";
 
 // `heal [runDir]` (HEAL-4): the heals of a run (default: the latest) with the
@@ -34,7 +34,7 @@ export async function runHealCommand(
   options: HealCommandOptions,
   io: CommandIo,
 ): Promise<number> {
-  const { latestRunDir } = await import("@testament/report/node");
+  const { latestRunDir } = await import("@optestra/report/node");
   const project = options.dir
     ? resolve(io.cwd, options.dir)
     : (findProject(runDir ? resolve(io.cwd, runDir) : io.cwd) ?? findProject(io.cwd));
@@ -49,7 +49,7 @@ export async function runHealCommand(
         ? `No finished runs in ${shown(io.cwd, project)}. Run the tests first, or pass a run folder.`
         : `Not inside a project (no ${brand.configFileName} found). Pass a run folder.`,
     );
-  const { applyHeals, listHeals, BEHAVIOUR_WARNING } = await import("@testament/core/node");
+  const { applyHeals, listHeals, BEHAVIOUR_WARNING } = await import("@optestra/core/node");
   let listing: ReturnType<typeof listHeals>;
   try {
     listing = listHeals(dir);

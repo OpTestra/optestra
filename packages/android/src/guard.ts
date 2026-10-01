@@ -1,7 +1,7 @@
 import { lookup } from "node:dns/promises";
 import { createServer, request as httpRequest, type IncomingMessage, type Server } from "node:http";
 import { type AddressInfo, isIP, type Socket, connect as tcpConnect } from "node:net";
-import type { Allowlist } from "@testament/browser";
+import type { Allowlist } from "@optestra/browser";
 import { HttpLog } from "./http-log.js";
 import { MAX_SNIFF_BYTES, type Sniffed, sniff } from "./sniff.js";
 import type { AndroidRefusal, RequestSummary } from "./types.js";

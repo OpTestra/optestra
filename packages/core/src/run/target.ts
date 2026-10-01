@@ -1,10 +1,10 @@
 import { rmSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
-import type { LaunchedEmulator } from "@testament/android";
-import type { BrowserName, LaunchedBrowser, Session } from "@testament/browser";
-import type { Config, EnvironmentSettings, ProtectedHeaderSpec } from "@testament/config";
-import type { SecretValue } from "@testament/config/node";
-import type { ArtifactKind, AttemptFile, BlockedReason, MatrixEntry } from "@testament/contract";
+import type { LaunchedEmulator } from "@optestra/android";
+import type { BrowserName, LaunchedBrowser, Session } from "@optestra/browser";
+import type { Config, EnvironmentSettings, ProtectedHeaderSpec } from "@optestra/config";
+import type { SecretValue } from "@optestra/config/node";
+import type { ArtifactKind, AttemptFile, BlockedReason, MatrixEntry } from "@optestra/contract";
 import type { HarnessSession, TargetName } from "../target/harness.js";
 
 // The runner's target layer (MOB-1): what a run needs from its target, behind one
@@ -82,7 +82,7 @@ export async function resolveTarget(
         ok: false,
         message: `The environment "${environment.name}" has no baseUrl. Choose one with --env, or set baseUrl.`,
       };
-    const browserModule = await import("@testament/browser");
+    const browserModule = await import("@optestra/browser");
     const browsers: BrowserName[] = options.browsers?.length
       ? unique(options.browsers)
       : [options.browser ?? "chromium"];
@@ -104,7 +104,7 @@ export async function resolveTarget(
       },
     };
   }
-  const android = await import("@testament/android");
+  const android = await import("@optestra/android");
   if (!settings.app)
     return {
       ok: false,
@@ -229,7 +229,7 @@ export async function launchWorker(
   options: { headless: boolean; emulator?: LaunchedEmulator },
 ): Promise<TargetWorker> {
   if (target.name === "web" && cell.target === "web") {
-    const browserModule = await import("@testament/browser");
+    const browserModule = await import("@optestra/browser");
     let launched: LaunchedBrowser;
     try {
       launched = await browserModule.launchBrowser({
@@ -305,7 +305,7 @@ export async function launchWorker(
       "config_error",
     );
 
-  const android = await import("@testament/android");
+  const android = await import("@optestra/android");
   let emulator = options.emulator;
   const owns = !emulator;
   if (!emulator) {

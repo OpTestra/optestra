@@ -79,9 +79,9 @@ export const ENGINE_CAPABILITIES = {
   /** AGT-0: `draftTest` (write a test from a goal) and the MCP server. */
   draftTest: true,
   mcp: true,
-  /** CLI-1 / PERF-0: `runDoctor({ secretSources, node })` in @testament/cli. */
+  /** CLI-1 / PERF-0: `runDoctor({ secretSources, node })` in @optestra/cli. */
   doctor: { secretSources: true, node: true },
-  /** BEN-0: the CLI's `bench`, model evals and the `eval` gate (`@testament/core/bench`). */
+  /** BEN-0: the CLI's `bench`, model evals and the `eval` gate (`@optestra/core/bench`). */
   bench: { fixtures: ["shop", "android"], models: true, evalGate: true, measures: true },
 } as const;
 

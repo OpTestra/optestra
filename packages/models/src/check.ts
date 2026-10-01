@@ -1,7 +1,7 @@
-import { brand } from "@testament/brand";
-import type { Config } from "@testament/config";
-import { defaultRedactor, processEnvSource, type SecretSource } from "@testament/config/node";
-import { revealSecret } from "@testament/config/reveal";
+import { brand } from "@optestra/brand";
+import type { Config } from "@optestra/config";
+import { defaultRedactor, processEnvSource, type SecretSource } from "@optestra/config/node";
+import { revealSecret } from "@optestra/config/reveal";
 import { generateText, type LanguageModel } from "ai";
 import { isDelegatedKind, type ProviderKind } from "./config.js";
 import { INSTALL_HINT, SIGN_IN_COMMAND, VENDOR_LABEL } from "./delegated/lockdown.js";

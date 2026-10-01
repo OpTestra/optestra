@@ -2,7 +2,7 @@
 # sent to us. Permissions it uses: contents: read, pull-requests: write (the comment),
 # checks: write (the status check). See README.md.
 # brand:next name: "{productName}"
-name: "Testament"
+name: "Optestra"
 description: "Run plain-English end-to-end tests on every pull request: one sticky comment, a status check, artifacts."
 branding:
   icon: check-circle
@@ -54,7 +54,7 @@ inputs:
   check-name:
     description: "Name of the status check (and of its comment, so several suites can each have one)."
     # brand:next default: "{productName}"
-    default: "Testament"
+    default: "Optestra"
   upload-artifacts:
     description: "on: upload the HTML report with videos, traces and screenshots, and link them. off: nothing is uploaded."
     default: "on"
@@ -116,9 +116,9 @@ runs:
         SHARD: ${{ inputs.shard }}
         ARTIFACT_PREFIX: ${{ inputs.artifact-prefix }}
         # brand:next PACKAGE: "{npmScope}/cli"
-        PACKAGE: "@testament/cli"
+        PACKAGE: "@optestra/cli"
         # brand:next CLI_NAME: "{cliName}"
-        CLI_NAME: "testament"
+        CLI_NAME: "optestra"
       run: |
         set -euo pipefail
         if [ -n "$CLI_PATH" ]; then
@@ -201,7 +201,7 @@ runs:
         WORKING_DIR: ${{ inputs.working-directory }}
         RUN_STARTED_MS: ${{ steps.run.outputs.started-ms }}
         # brand:next DATA_DIR: "{dataDirName}"
-        DATA_DIR: ".testament"
+        DATA_DIR: ".optestra"
       run: node "$GITHUB_ACTION_PATH/dist/cli.js" locate
 
     - id: merge
@@ -291,7 +291,7 @@ runs:
         OUT_DIR: ${{ steps.cli.outputs.out }}
         EXIT_CODE: ${{ steps.run.outputs.exit-code || steps.merge.outputs.exit-code }}
         # brand:next CLI_NAME: "{cliName}"
-        CLI_NAME: "testament"
+        CLI_NAME: "optestra"
         CHECK_NAME: ${{ inputs.check-name }}
         COMMENT: ${{ inputs.shard == '' && inputs.comment || 'off' }}
         CHECK: ${{ inputs.shard == '' && inputs.check || 'off' }}

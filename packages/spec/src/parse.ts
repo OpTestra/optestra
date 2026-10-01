@@ -1,4 +1,4 @@
-import type { Config } from "@testament/config";
+import type { Config } from "@optestra/config";
 import { parseBody } from "./body.js";
 import { type SpecDiagnostic, sortDiagnostics } from "./diagnostics.js";
 import { parseFrontmatterYaml, validateFrontmatter } from "./frontmatter.js";

@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, sampleProject, tempDir } from "../sample.test-support.js";
 import { createProject, findProject, loadProject, saveProject } from "./project.js";

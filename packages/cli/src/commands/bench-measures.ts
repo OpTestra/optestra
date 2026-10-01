@@ -1,8 +1,8 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
-import type { BenchReport } from "@testament/core/bench";
+import { brand } from "@optestra/brand";
+import type { BenchReport } from "@optestra/core/bench";
 import { baselinePath, type BenchCommandOptions } from "./bench.js";
 import type { CommandIo } from "./config.js";
 
@@ -43,7 +43,7 @@ async function timeInit(url: string, io: CommandIo): Promise<number | null> {
 }
 
 export async function collectMeasures(io: CommandIo): Promise<Measure[]> {
-  const bench = await import("@testament/core/bench");
+  const bench = await import("@optestra/core/bench");
   const shop = await bench.shopFixture();
   const file = baselinePath(shop.benchDir);
   const baseline = existsSync(file)

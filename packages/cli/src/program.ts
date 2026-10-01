@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { Command } from "commander";
 import { registerAndroidCommands } from "./commands/android.js";
 import { registerAuthCommands } from "./commands/auth.js";
@@ -40,7 +40,7 @@ import type { ListCommandOptions, ShowCommandOptions } from "./commands/tests.js
 
 /** The engine version, read without loading the engine. */
 function engineVersion(): string {
-  const entry = fileURLToPath(import.meta.resolve("@testament/core"));
+  const entry = fileURLToPath(import.meta.resolve("@optestra/core"));
   const pkg = JSON.parse(readFileSync(join(dirname(entry), "..", "package.json"), "utf8"));
   return (pkg as { version: string }).version;
 }
@@ -223,7 +223,7 @@ export function createProgram(): Command {
     .option("--healed-passes", "count healed tests as passed (default: they fail the exit code)")
     .option("--flaky-passes", "do not fail the exit code for flaky tests")
     .action(async (runDir: string, options: ResultsCommandOptions) => {
-      const { shouldUseColor } = await import("@testament/report/node");
+      const { shouldUseColor } = await import("@optestra/report/node");
       const { runResultsCommand } = await import("./commands/results.js");
       process.exitCode = runResultsCommand(runDir, options, {
         cwd: process.cwd(),
@@ -244,7 +244,7 @@ export function createProgram(): Command {
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (dirs: string[], options: MergeRunsCommandOptions) => {
       const { runMergeRunsCommand } = await import("./commands/merge-runs.js");
-      const { shouldUseColor } = await import("@testament/report/node");
+      const { shouldUseColor } = await import("@optestra/report/node");
       process.exitCode = await runMergeRunsCommand(dirs, options, {
         cwd: process.cwd(),
         env: process.env,
@@ -494,7 +494,7 @@ export function createProgram(): Command {
     .option("--verbose", "print every step, heal and warning")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (tests: string[], options: RunCommandOptions) => {
-      const { shouldUseColor } = await import("@testament/report/node");
+      const { shouldUseColor } = await import("@optestra/report/node");
       const { runRunCommand } = await import("./commands/run.js");
       // Ctrl-C stops the run cleanly (the running test's evidence is kept); a second one quits.
       const stop = new AbortController();

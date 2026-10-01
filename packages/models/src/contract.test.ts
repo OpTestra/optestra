@@ -1,4 +1,4 @@
-import { ModelCallSchema } from "@testament/contract";
+import { ModelCallSchema } from "@optestra/contract";
 import { describe, expect, it } from "vitest";
 import { createModels } from "./client.js";
 import { toModelCall } from "./contract.js";

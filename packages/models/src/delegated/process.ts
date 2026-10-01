@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, statSync } from "node:fs";
 import { delimiter, isAbsolute, join, resolve } from "node:path";
-import { isNodeScript, type NodeRuntime, nodeRuntime } from "@testament/config/node";
+import { isNodeScript, type NodeRuntime, nodeRuntime } from "@optestra/config/node";
 import type { DelegatedKind } from "../config.js";
 import { BINARY_NAME } from "./lockdown.js";
 

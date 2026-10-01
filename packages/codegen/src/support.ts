@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
 import { withHeader } from "./header.js";
 import { arr, formatNumber, obj, printModule, quote, str } from "./print/js.js";
 import { CHECKED_ELSEWHERE, FIXTURES_MODULE, type GeneratedFile } from "./spec.js";

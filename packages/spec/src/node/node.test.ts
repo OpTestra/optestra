@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { resolveConfig } from "@testament/config";
+import { resolveConfig } from "@optestra/config";
 import { afterAll, describe, expect, it } from "vitest";
 import { matchGlob } from "../glob.js";
 import { file } from "../spec.test-support.js";

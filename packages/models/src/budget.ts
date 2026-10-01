@@ -1,4 +1,4 @@
-import type { Config } from "@testament/config";
+import type { Config } from "@optestra/config";
 
 /**
  * Tracks AI spend against a cap (MOD-5). Checked before every call; actual cost

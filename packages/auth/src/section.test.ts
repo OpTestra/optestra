@@ -1,9 +1,9 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
-import { loadProject } from "@testament/config/node";
-import { parseTest } from "@testament/spec";
+import { brand } from "@optestra/brand";
+import { loadProject } from "@optestra/config/node";
+import { parseTest } from "@optestra/spec";
 import { afterEach, describe, expect, it } from "vitest";
 import "./index.js";
 import { checkProfiles, checkTestAuth, testAuth } from "./profiles.js";

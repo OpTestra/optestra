@@ -2,7 +2,7 @@ import { cpSync, mkdtempSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 
 // The demo shop as a project for the init/doctor/export tests: its project file
 // and tests, plus codegen's hand-written recordings of the shop tests (not the

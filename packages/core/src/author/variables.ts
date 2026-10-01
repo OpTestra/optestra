@@ -1,5 +1,5 @@
-import { type TemplateVariable, templateParts } from "@testament/recording";
-import type { BoundSegment, ExpandedStep, ExpandedTest } from "@testament/spec";
+import { type TemplateVariable, templateParts } from "@optestra/recording";
+import type { BoundSegment, ExpandedStep, ExpandedTest } from "@optestra/spec";
 import { INBOX_SECRETS } from "./inbox.js";
 
 // A step's variables: what the agent may type as templates, and the values used

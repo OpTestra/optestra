@@ -1,5 +1,5 @@
 {
-  "name": "@testament/spec",
+  "name": "@optestra/spec",
   "version": "0.1.0",
   "description": "The test file format: parser, flows, variables, step keys and printer for .test.md files.",
   "license": "MIT",
@@ -26,8 +26,8 @@
     "gen:rule-docs": "node scripts/gen-rule-docs.ts"
   },
   "dependencies": {
-    "@testament/config": "workspace:^",
-    "@testament/contract": "workspace:^",
+    "@optestra/config": "workspace:^",
+    "@optestra/contract": "workspace:^",
     "yaml": "^2.9.1",
     "zod": "^4.6.5"
   },

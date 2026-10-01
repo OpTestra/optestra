@@ -1,7 +1,7 @@
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createSecretValue, Redactor } from "@testament/config/node";
+import { createSecretValue, Redactor } from "@optestra/config/node";
 import { afterAll, describe, expect, it } from "vitest";
 import {
   allowedCommand,

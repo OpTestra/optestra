@@ -1,7 +1,7 @@
-import { type Config, resolveConfig } from "@testament/config";
-import { memorySource, Redactor } from "@testament/config/node";
-import { BudgetMeter, createModels, type Models } from "@testament/models";
-import { type ScriptedCall, type ScriptedReply, scriptedModel } from "@testament/models/testing";
+import { type Config, resolveConfig } from "@optestra/config";
+import { memorySource, Redactor } from "@optestra/config/node";
+import { BudgetMeter, createModels, type Models } from "@optestra/models";
+import { type ScriptedCall, type ScriptedReply, scriptedModel } from "@optestra/models/testing";
 import type {
   ActionOutcome,
   CandidatesResult,

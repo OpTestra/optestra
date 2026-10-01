@@ -1,5 +1,5 @@
 {
-  "name": "@testament/recording",
+  "name": "@optestra/recording",
   "version": "0.1.0",
   "description": "The recording format: what was done for each test step (commands, locators, fingerprints, waits) and the typed checks, replayed later without AI.",
   "license": "MIT",
@@ -22,8 +22,8 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@testament/brand": "workspace:^",
-    "@testament/spec": "workspace:^",
+    "@optestra/brand": "workspace:^",
+    "@optestra/spec": "workspace:^",
     "zod": "^4.6.5"
   },
   "engines": {

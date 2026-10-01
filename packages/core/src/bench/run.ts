@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
-import type { TestResult } from "@testament/contract";
+import type { TestResult } from "@optestra/contract";
 import { version } from "../index.js";
 import {
   androidFixture,

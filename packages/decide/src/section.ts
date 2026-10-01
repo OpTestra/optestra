@@ -1,4 +1,4 @@
-import { defaultRegistry } from "@testament/config";
+import { defaultRegistry } from "@optestra/config";
 import { z } from "zod";
 
 /**
@@ -154,7 +154,7 @@ export const decisionsSchema = z
   })
   .describe("The decision layer: rules first, a decision model second.");
 
-declare module "@testament/config" {
+declare module "@optestra/config" {
   interface ConfigSections {
     decisions: DecisionsSettings;
   }

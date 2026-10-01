@@ -1,6 +1,6 @@
 /**
  * Browser-safe entry: schema, types, defaults, merge, diagnostics and JSON Schema.
- * File access, `.env` files, secrets and the redactor live in `@testament/config/node`.
+ * File access, `.env` files, secrets and the redactor live in `@optestra/config/node`.
  */
 export { BUILT_IN_DEFAULTS } from "./defaults.generated.js";
 export {

@@ -4,7 +4,7 @@
   "access": "restricted",
   "commit": false,
   "format": false,
-  "fixed": [["@testament/*"]],
+  "fixed": [["@optestra/*"]],
   "linked": [],
   "ignore": [],
   "updateInternalDependencies": "patch",

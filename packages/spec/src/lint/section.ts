@@ -1,4 +1,4 @@
-import { registerSection } from "@testament/config";
+import { registerSection } from "@optestra/config";
 import { z } from "zod";
 import { RULE_IDS, type RuleLevel } from "./types.js";
 
@@ -18,7 +18,7 @@ export const lintSchema = z
   })
   .describe("Test lint rules.");
 
-declare module "@testament/config" {
+declare module "@optestra/config" {
   interface ConfigSections {
     lint: LintSettings;
   }

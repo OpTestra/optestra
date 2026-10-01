@@ -1,5 +1,5 @@
 import { writeFileSync } from "node:fs";
-import { configJsonSchema } from "@testament/config";
+import { configJsonSchema } from "@optestra/config";
 import "./config.js";
 
 // Build step: the full project-file schema including the models section.

@@ -1,7 +1,7 @@
 /**
  * Browser-safe entry: the decision layer. Tasks, the rules → model → escalate
  * pipeline, racing, batching, the backend interface, metrics and an in-memory
- * cache. Disk stores (cache, labels) live in `@testament/decide/node`.
+ * cache. Disk stores (cache, labels) live in `@optestra/decide/node`.
  * Importing this registers the `decisions` config section.
  */
 import "./section.js";

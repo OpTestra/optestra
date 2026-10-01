@@ -1,4 +1,4 @@
-import { EvidenceRefSchema } from "@testament/contract";
+import { EvidenceRefSchema } from "@optestra/contract";
 import { describe, expect, it } from "vitest";
 import { createDecisions, type Decided } from "../decide.js";
 import { loadEvalSet } from "../node/evals.js";

@@ -5,9 +5,9 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
-import { loadProject, processEnvSource } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
+import { loadProject, processEnvSource } from "@optestra/config/node";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   type DoctorBrowser,

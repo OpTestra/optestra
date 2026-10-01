@@ -1,13 +1,13 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { brand } from "@testament/brand";
-import { type Config, hasErrors } from "@testament/config";
-import { loadProject } from "@testament/config/node";
-import type { RunMode, Trigger } from "@testament/contract";
-import { recordingPath } from "@testament/recording/node";
-import { buildResultsSummary, resultsSummaryJsonSchema } from "@testament/report";
-import { checkTest, type Finding } from "@testament/spec";
-import { loadTests, nodeFileReader } from "@testament/spec/node";
+import { brand } from "@optestra/brand";
+import { type Config, hasErrors } from "@optestra/config";
+import { loadProject } from "@optestra/config/node";
+import type { RunMode, Trigger } from "@optestra/contract";
+import { recordingPath } from "@optestra/recording/node";
+import { buildResultsSummary, resultsSummaryJsonSchema } from "@optestra/report";
+import { checkTest, type Finding } from "@optestra/spec";
+import { loadTests, nodeFileReader } from "@optestra/spec/node";
 import { z } from "zod";
 import type { ToolResult, ToolSpec } from "./protocol.js";
 
@@ -16,7 +16,7 @@ import type { ToolResult, ToolSpec } from "./protocol.js";
 // tool that changes an `Expect:` line (AGT-2, AGT-4). `accept_heal` goes
 // through the HEAL-0 API, which changes a step's commands and never a check.
 
-type CoreNode = typeof import("@testament/core/node");
+type CoreNode = typeof import("@optestra/core/node");
 
 export interface ToolContext {
   /** The project folder. */
@@ -24,7 +24,7 @@ export interface ToolContext {
   /** Default environment for runs and drafts (else the project's default). */
   environment?: string | undefined;
   env: Readonly<Record<string, string | undefined>>;
-  /** The engine's Node API; tests inject fakes. Default: @testament/core/node. */
+  /** The engine's Node API; tests inject fakes. Default: @optestra/core/node. */
   core?: () => Promise<
     Pick<CoreNode, "runTests" | "draftTest" | "listHeals" | "applyHeals" | "explainRun">
   >;
@@ -96,7 +96,7 @@ const FindingSchema = z.object({
 });
 
 async function runDirFor(p: Loaded, runId: string | undefined): Promise<string> {
-  const { latestRunDir, runsDir } = await import("@testament/report/node");
+  const { latestRunDir, runsDir } = await import("@optestra/report/node");
   if (runId) {
     if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(runId))
       throw new ToolError(`"${runId}" is not a run id.`);
@@ -111,7 +111,7 @@ async function runDirFor(p: Loaded, runId: string | undefined): Promise<string> 
 
 /** The results summary of a run folder, plus each test's evidence files (absolute paths). */
 async function resultsOf(runDir: string) {
-  const { loadRunData } = await import("@testament/report/node");
+  const { loadRunData } = await import("@optestra/report/node");
   const loaded = loadRunData(runDir);
   if (!loaded.ok)
     throw new ToolError(
@@ -229,7 +229,7 @@ interface Tool<I extends z.ZodType> {
 const tool = <I extends z.ZodType>(t: Tool<I>) => t;
 
 const loadCore = (ctx: ToolContext) =>
-  ctx.core ? ctx.core() : (import("@testament/core/node") as Promise<CoreNode>);
+  ctx.core ? ctx.core() : (import("@optestra/core/node") as Promise<CoreNode>);
 
 export const TOOLS = [
   tool({
@@ -532,10 +532,10 @@ export const TOOLS = [
       const p = project(ctx);
       const dir = await runDirFor(p, args.runId);
       const core = await loadCore(ctx);
-      let models: import("@testament/models").Models | undefined;
+      let models: import("@optestra/models").Models | undefined;
       if (args.ai) {
-        const m = await import("@testament/models");
-        const { dotenvSource, processEnvSource } = await import("@testament/config/node");
+        const m = await import("@optestra/models");
+        const { dotenvSource, processEnvSource } = await import("@optestra/config/node");
         models = m.createModels({
           config: p.config,
           sources: [processEnvSource(ctx.env), dotenvSource(p.dir)],

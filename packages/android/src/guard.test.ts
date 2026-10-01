@@ -1,7 +1,7 @@
 import { createServer, request, type Server } from "node:http";
 import { type AddressInfo, connect, createServer as netServer, type Socket } from "node:net";
 import { connect as tlsConnect } from "node:tls";
-import { Allowlist } from "@testament/browser";
+import { Allowlist } from "@optestra/browser";
 import { afterEach, describe, expect, it } from "vitest";
 import { NetworkGuard, parseConnectTarget } from "./guard.js";
 import { HttpLog } from "./http-log.js";

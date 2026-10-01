@@ -2,7 +2,7 @@ import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 
 const SAMPLE = fileURLToPath(new URL("../examples/sample-project/", import.meta.url));
 const created: string[] = [];

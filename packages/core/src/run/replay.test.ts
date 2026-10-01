@@ -1,4 +1,4 @@
-import { createSecretValue } from "@testament/config/node";
+import { createSecretValue } from "@optestra/config/node";
 import { describe, expect, it } from "vitest";
 import { agentScript, scriptedModels } from "../author/test-kit.test-support.js";
 import {

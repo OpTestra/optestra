@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
-import { hasErrors } from "@testament/config";
-import { loadProject, projectFile } from "@testament/config/node";
+import { hasErrors } from "@optestra/config";
+import { loadProject, projectFile } from "@optestra/config/node";
 import {
   applySafeFixes,
   type CheckedFile,
@@ -10,8 +10,8 @@ import {
   lintConfigDiagnostics,
   lintProject,
   type SpecDiagnostic,
-} from "@testament/spec";
-import { DEFAULT_TESTS, findTestFiles, nodeFileReader } from "@testament/spec/node";
+} from "@optestra/spec";
+import { DEFAULT_TESTS, findTestFiles, nodeFileReader } from "@optestra/spec/node";
 import type { CommandIo } from "./config.js";
 import { openProject } from "./tests.js";
 
@@ -118,7 +118,7 @@ export async function runLintCommand(
       const findings = result.findings.filter((f) => f.file === path || f.file === undefined);
       // AUT-9: a dataset is read here (the parser reads no files).
       if (result.spec.frontmatter.dataset) {
-        const { datasetColumnProblems, loadDataset } = await import("@testament/spec/node");
+        const { datasetColumnProblems, loadDataset } = await import("@optestra/spec/node");
         const dataset = loadDataset(project.dir, path, result.spec.frontmatter.dataset);
         const problems = dataset.diagnostics.length
           ? dataset.diagnostics

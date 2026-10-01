@@ -8,9 +8,9 @@ coverage/
 .DS_Store
 # Local data dir (managed by brand:apply)
 # brand:next {dataDirName}/
-.testament/
+.optestra/
 # Recordings next to the tests are committed (REP-1); only their authoring reports stay local.
 # brand:next !**/tests/{dataDirName}/
-!**/tests/.testament/
+!**/tests/.optestra/
 # brand:next **/tests/{dataDirName}/authoring/
-**/tests/.testament/authoring/
+**/tests/.optestra/authoring/

@@ -1,4 +1,4 @@
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import {
   type ExitPolicy,
   exitCodeFor,
@@ -6,7 +6,7 @@ import {
   type HealChange,
   needsRerecord,
   type Verdict,
-} from "@testament/contract";
+} from "@optestra/contract";
 import { buildModel, type RunData, type TestView } from "./model.js";
 
 // The machine-readable summary for coding agents and other tools (EVD-4,

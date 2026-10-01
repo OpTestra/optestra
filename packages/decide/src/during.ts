@@ -11,13 +11,13 @@ import {
 /**
  * During-run glue for replay (LOOP-4) and healing (HEAL): the recording's
  * Fingerprint and the browser's ElementFacts in, identity and next action out.
- * Pure and browser-safe; the shapes mirror @testament/recording and
- * @testament/browser structurally, so neither is imported.
+ * Pure and browser-safe; the shapes mirror @optestra/recording and
+ * @optestra/browser structurally, so neither is imported.
  */
 
 type Box = { x: number; y: number; width: number; height: number } | null;
 
-/** @testament/recording's Fingerprint (the fields identity needs). */
+/** @optestra/recording's Fingerprint (the fields identity needs). */
 export interface FingerprintLike {
   role: string;
   name: string;
@@ -28,7 +28,7 @@ export interface FingerprintLike {
   box: Box;
 }
 
-/** @testament/browser's ElementFacts. */
+/** @optestra/browser's ElementFacts. */
 export interface ElementFactsLike {
   role: string;
   name: string;

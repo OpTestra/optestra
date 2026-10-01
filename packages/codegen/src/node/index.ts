@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
-import { brand } from "@testament/brand";
-import { type Config, hasErrors } from "@testament/config";
-import { loadProject, parseYaml } from "@testament/config/node";
-import { DEFAULT_EMAIL_DOMAIN, parseTest, type TestSpec } from "@testament/spec";
-import { DEFAULT_TESTS, findTestFiles, loadTest, nodeFileReader } from "@testament/spec/node";
+import { brand } from "@optestra/brand";
+import { type Config, hasErrors } from "@optestra/config";
+import { loadProject, parseYaml } from "@optestra/config/node";
+import { DEFAULT_EMAIL_DOMAIN, parseTest, type TestSpec } from "@optestra/spec";
+import { DEFAULT_TESTS, findTestFiles, loadTest, nodeFileReader } from "@optestra/spec/node";
 import { fileState } from "../header.js";
 import { generateMaestroFlow } from "../maestro.js";
 import { readCodegenRecording } from "../recording.js";
@@ -289,7 +289,7 @@ interface ProfileSettings {
 
 /**
  * The project's auth profiles (flow and params only). The `auth` section belongs
- * to @testament/auth, which codegen doesn't import: when it isn't registered the
+ * to @optestra/auth, which codegen doesn't import: when it isn't registered the
  * section is read from the project file itself.
  */
 function authProfiles(config: object, file: string): Record<string, ProfileSettings> {

@@ -1,8 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
-import type { loadProject } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
+import type { loadProject } from "@optestra/config/node";
 import type { CommandIo } from "./config.js";
 import type { ExportCommandOptions } from "./export.js";
 
@@ -25,7 +25,7 @@ export async function exportMaestro(context: {
   io: CommandIo;
 }): Promise<number> {
   const { dir, out, options, loaded, io } = context;
-  const { generateProject } = await import("@testament/codegen/node");
+  const { generateProject } = await import("@optestra/codegen/node");
   const result = await generateProject({
     projectDir: dir,
     environment: options.env,

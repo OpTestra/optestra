@@ -1,5 +1,5 @@
-import { resolveConfig } from "@testament/config";
-import { memorySource } from "@testament/config/node";
+import { resolveConfig } from "@optestra/config";
+import { memorySource } from "@optestra/config/node";
 import { describe, expect, it } from "vitest";
 import { resolvePools, resolveProviders } from "./keys.js";
 import { testConfig } from "./test-kit.test-support.js";

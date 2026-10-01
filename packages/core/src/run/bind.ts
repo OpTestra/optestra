@@ -1,4 +1,4 @@
-import { type Locator, type RecordedAction, templateParts } from "@testament/recording";
+import { type Locator, type RecordedAction, templateParts } from "@optestra/recording";
 import { harnessValue, inboxMemberOf, type StepVariables } from "../author/variables.js";
 import type { Action, LocatorSpec } from "../target/harness.js";
 

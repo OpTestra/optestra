@@ -1,7 +1,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
-import { defaultRedactor } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { defaultRedactor } from "@optestra/config/node";
 import { validAnswer } from "../backend.js";
 import type { AnyTask, Answers, InputOf, QuestionsOf } from "../task.js";
 

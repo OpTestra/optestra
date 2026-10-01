@@ -1,7 +1,7 @@
 // Manual check with a REAL key (never run in CI). From engine/, after `pnpm build`:
 //   ANTHROPIC_API_KEY=... node packages/models/scripts/smoke.ts [planner|fixer]
 // Makes one small structured-output request and prints the result, usage and cost.
-import { resolveConfig } from "@testament/config";
+import { resolveConfig } from "@optestra/config";
 import { z } from "zod";
 import { createModels } from "../dist/index.js";
 

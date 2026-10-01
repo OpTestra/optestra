@@ -1,8 +1,8 @@
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
-import { Redactor } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { Redactor } from "@optestra/config/node";
 import { afterAll, describe, expect, it } from "vitest";
 import { createDecisions, mockBackend, pageIsError } from "../index.js";
 import { createLabelStore, fileCache } from "./index.js";

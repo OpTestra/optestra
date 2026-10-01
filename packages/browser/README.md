@@ -1,4 +1,4 @@
-# @testament/browser
+# @optestra/browser
 
 The browser harness: the one safe, controlled browser that the AI agent (LOOP-1)
 and the replayer (LOOP-4) both drive. It launches browsers, isolates each test,
@@ -7,7 +7,7 @@ types secrets and captures evidence. It makes no AI calls and reads no test
 files, so the replayer can use it with no model at all. Node only.
 
 ```ts
-import { launchBrowser, openSession, renderForModel } from "@testament/browser";
+import { launchBrowser, openSession, renderForModel } from "@optestra/browser";
 
 const browser = await launchBrowser({ browser: "chromium" }); // one per worker
 const session = await openSession({                           // one per test
@@ -62,7 +62,7 @@ These hold by construction; each has a test that fails if it breaks
    `allowUpload: { dir }`, and only for files inside that folder (after
    resolving symlinks). `src/misc.test.ts` pins the exported names and methods.
 3. **Secrets are typed, never seen (SEC-1, SEC-2, SEC-6).** `fill` with
-   `{ secret: NAME }` gets the value (`prepareSecret` from `@testament/config/reveal`)
+   `{ secret: NAME }` gets the value (`prepareSecret` from `@optestra/config/reveal`)
    only at the moment of typing. For a dynamic secret, such as a TOTP seed (AUTH-0),
    that is when the value is produced: the current code, registered with the
    session's redactor before it is typed. It is typed only if the element's own frame
@@ -340,7 +340,7 @@ keep their size, scale and touch only.
 ## Dev CLI
 
 ```bash
-testament snapshot http://127.0.0.1:4100/pricing [--env staging] [--device iphone-15] [--browser webkit] [--screenshot out.png] [--storage-state state.json] [--json]
+optestra snapshot http://127.0.0.1:4100/pricing [--env staging] [--device iphone-15] [--browser webkit] [--screenshot out.png] [--storage-state state.json] [--json]
 ```
 
 `snapshot` prints the rendered observation, the allowlist and any refused
@@ -354,7 +354,7 @@ arrive. Exit codes: 0 when the page opened, 1 when it was refused or failed,
 
 - `pnpm test` (part of `pnpm check`) runs the browser-free unit tests in
   `src/*.test.ts`.
-- `pnpm --filter @testament/browser test:browser` runs the real-browser tests
+- `pnpm --filter @optestra/browser test:browser` runs the real-browser tests
   in `e2e/`. They use the demo shop and a small hostile page server on
   127.0.0.1, with `localhost` as the "other host". `pnpm bench:fixtures:test`
   and the CI `fixtures` job include them.
@@ -364,7 +364,7 @@ arrive. Exit codes: 0 when the page opened, 1 when it was refused or failed,
 ## Checks (LOOP-2)
 
 `session.check(op, options)` evaluates one typed `CheckOp` from
-`@testament/recording` (src/check.ts). It is read-only and not part of the
+`@optestra/recording` (src/check.ts). It is read-only and not part of the
 action set: the agent has no tool for it; the check compiler (LOOP-2) and the
 replayer (LOOP-4) call it.
 

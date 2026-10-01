@@ -1,14 +1,14 @@
 import { relative, resolve } from "node:path";
-import { type ExitPolicy, exitCodeFor, withHealReview } from "@testament/contract";
-import { readHealReview, readRun } from "@testament/contract/node";
+import { type ExitPolicy, exitCodeFor, withHealReview } from "@optestra/contract";
+import { readHealReview, readRun } from "@optestra/contract/node";
 import {
   formatTerminal,
   type RunData,
   renderJsonSummary,
   renderJunit,
   renderMarkdownSummary,
-} from "@testament/report";
-import { writeFileAtomic } from "@testament/report/node";
+} from "@optestra/report";
+import { writeFileAtomic } from "@optestra/report/node";
 import type { CommandIo } from "./config.js";
 
 export interface ResultsCommandOptions {

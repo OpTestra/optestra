@@ -1,5 +1,5 @@
-import type { ProtectedHeaderSpec } from "@testament/config";
-import type { SecretValue } from "@testament/config/node";
+import type { ProtectedHeaderSpec } from "@optestra/config";
+import type { SecretValue } from "@optestra/config/node";
 
 /** Browser engines a session can run on (TGT-3). */
 export type BrowserName = "chromium" | "firefox" | "webkit";

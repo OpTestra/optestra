@@ -1,4 +1,4 @@
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 
 // The instructions for coding agents (AGT-2): an AGENTS.md / CLAUDE.md snippet.
 // `init` appends it (asked first); the MCP server serves it as a resource; the

@@ -1,14 +1,14 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { createSecretValue, Redactor, type SecretValue } from "@testament/config/node";
-import { type RunningShop, startShop, type Variant } from "@testament/fixture-shop";
+import { createSecretValue, Redactor, type SecretValue } from "@optestra/config/node";
+import { type RunningShop, startShop, type Variant } from "@optestra/fixture-shop";
 import {
   type Observation,
   type ObservedElement,
   openSession,
   type Session,
   type SessionOptions,
-} from "@testament/browser";
+} from "@optestra/browser";
 
 // Shared setup for the browser tests: the demo shop on 127.0.0.1, and a small
 // "hostile" page server for traffic the shop's CSP would stop before our guard.

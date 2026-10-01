@@ -1,7 +1,7 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { type LaunchedBrowser, launchBrowser, openSession } from "@testament/browser";
-import type { ScriptedCall, ScriptedReply } from "@testament/models/testing";
+import { type LaunchedBrowser, launchBrowser, openSession } from "@optestra/browser";
+import type { ScriptedCall, ScriptedReply } from "@optestra/models/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { promptText, refIn, scriptedModels } from "../src/author/test-kit.test-support.js";
 import { exploreApp } from "../src/explore/explore.js";

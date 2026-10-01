@@ -1,9 +1,9 @@
 ---
-"@testament/report": minor
-"@testament/cli": minor
+"@optestra/report": minor
+"@optestra/cli": minor
 ---
 
-Add reports and exports from a run (EVD-0). The new `@testament/report` package
+Add reports and exports from a run (EVD-0). The new `@optestra/report` package
 renders a run folder as a self-contained offline HTML report (failure groups,
 headline and screenshot first, per-step evidence, heal proposals with signals,
 AI calls and cost, works with JS off, styled from one tokens file), JUnit XML,

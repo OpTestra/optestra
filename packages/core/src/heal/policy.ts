@@ -1,4 +1,4 @@
-import type { HealProposal } from "@testament/contract";
+import type { HealProposal } from "@optestra/contract";
 
 // The fix policies (HEAL-5), per test (`heal:` in the frontmatter, else
 // run.healPolicy):

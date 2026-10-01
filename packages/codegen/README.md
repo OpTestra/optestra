@@ -1,33 +1,33 @@
-# @testament/codegen
+# @optestra/codegen
 
 Turns a recording into a plain `@playwright/test` spec that lives next to the
-test and runs with `npx playwright test`, with **no Testament installed**
+test and runs with `npx playwright test`, with **no Optestra installed**
 (REP-1, EXP-1, promise 2: "your tests are Playwright code you own").
 
-Testament's own replay (LOOP-4) runs the *recording* through the safe browser
+Optestra's own replay (LOOP-4) runs the *recording* through the safe browser
 harness (allowlist, secrets, evidence, healing). The spec is generated from the
 same recording as the portable, human-owned copy. Tests with inline ```ts code
 blocks are the exception: LOOP-4 runs those through this spec.
 
 | Import | Use |
 |---|---|
-| `@testament/codegen` | `generateSpec(recording, { expanded, specs })`, `generateSupportFiles(environment)`, `readCodegenRecording`, `fileState`, `withHeader` |
-| `@testament/codegen/node` | `generateProject({ projectDir, tests?, environment?, force?, check?, out? })`, `generateAfterRecording(projectDir, testPath)`. `out: { dir, label }` writes elsewhere (the CLI's `export`) |
+| `@optestra/codegen` | `generateSpec(recording, { expanded, specs })`, `generateSupportFiles(environment)`, `readCodegenRecording`, `fileState`, `withHeader` |
+| `@optestra/codegen/node` | `generateProject({ projectDir, tests?, environment?, force?, check?, out? })`, `generateAfterRecording(projectDir, testPath)`. `out: { dir, label }` writes elsewhere (the CLI's `export`) |
 
 Node only: the runtime templates in `runtime/` are read from disk.
 
 ```bash
-testament generate                      # every recorded test
-testament generate tests/checkout.test.md --force
-testament generate --check              # CI: exit 1 if a spec is stale or edited by hand
-npx playwright test -c tests/.testament # run them, Testament or not
+optestra generate                      # every recorded test
+optestra generate tests/checkout.test.md --force
+optestra generate --check              # CI: exit 1 if a spec is stale or edited by hand
+npx playwright test -c tests/.optestra # run them, Optestra or not
 ```
 
 ## Android: Maestro flows (MOB-6)
 
 For an Android project (`project.target: android`) `generateProject` writes a
 [Maestro](https://maestro.dev) flow per recorded test instead,
-`<tests dir>/.testament/<testId>.maestro.yaml` (`generateMaestroFlow(recording,
+`<tests dir>/.optestra/<testId>.maestro.yaml` (`generateMaestroFlow(recording,
 { expanded, baseUrl })`), with the same header (as `#` comments), content hash
 and hand-edit rules. The flow runs with the Maestro CLI alone. The CLI's `export`
 wraps the flows in a Maestro workspace (`config.yaml`, `README.md`, `flows/`).
@@ -46,29 +46,29 @@ wraps the flows in a Maestro workspace (`config.yaml`, `README.md`, `flows/`).
   a code step) ends the flow there.
 
 The goldens are the Android fixture's committed flows
-(`bench/fixtures/android/tests/.testament/*.maestro.yaml`, `src/maestro.test.ts`).
+(`bench/fixtures/android/tests/.optestra/*.maestro.yaml`, `src/maestro.test.ts`).
 
 ## What is generated
 
-Everything goes to `<tests dir>/.testament/`, next to the recordings, and is
+Everything goes to `<tests dir>/.optestra/`, next to the recordings, and is
 meant to be committed:
 
 | File | What |
 |---|---|
 | `<testId>.spec.ts` | One per recorded test. |
-| `testament.fixtures.ts` | The helpers the specs use (below), with the environment's base URL, allowed domains, secret domains and vars baked in as defaults. |
-| `testament.reporter.ts` | Scrubs secrets out of every kept trace after each test (below). |
-| `testament.teardown.ts` | Global teardown: scrubs every trace again after the run, in case `--reporter` replaced the scrubbing reporter. |
+| `optestra.fixtures.ts` | The helpers the specs use (below), with the environment's base URL, allowed domains, secret domains and vars baked in as defaults. |
+| `optestra.reporter.ts` | Scrubs secrets out of every kept trace after each test (below). |
+| `optestra.teardown.ts` | Global teardown: scrubs every trace again after the run, in case `--reporter` replaced the scrubbing reporter. |
 | `playwright.config.ts` | `testDir: "."`, base URL, Chromium, Firefox and WebKit projects, trace and video on failure, the scrubbing reporter and teardown, the harness's action (5 s) and navigation (30 s) timeouts, service workers blocked, downloads off. |
 
 Every file starts with a header: where it came from, the recording it was built
 from (with a key), "safe to edit", and a content hash.
 
 The generated `create-project` spec (from the goldens in
-`fixtures/shop/tests/.testament/`):
+`fixtures/shop/tests/.optestra/`):
 
 ```ts
-import { allowed, expect, test } from "./testament.fixtures";
+import { allowed, expect, test } from "./optestra.fixtures";
 
 test.beforeEach(async ({ page }) => {
   // setup: POST /__test/seed
@@ -85,7 +85,7 @@ test("A new project is saved", { tag: ["@smoke", "@projects"] }, async ({ page, 
   await test.step("Log in (flows/login.test.md)", async () => {
     // 2. Fill "Email" with {{params.email}}
     await test.step('Fill "Email" with {{params.email}}', async () => {
-      // 2 fallback locators recorded: Testament can heal this.
+      // 2 fallback locators recorded: Optestra can heal this.
       await page.getByRole("textbox", { name: "Email", exact: true }).fill(loginParams.email);
     });
 
@@ -126,10 +126,10 @@ test("A new project is saved", { tag: ["@smoke", "@projects"] }, async ({ page, 
 
 ### Commands
 
-The locator is the command's primary one, printed the way `@testament/browser`
+The locator is the command's primary one, printed the way `@optestra/browser`
 resolves it: text-like locators exact unless recorded otherwise, frames via
 `contentFrame()` (or `frameLocator` for CSS), `nth` via `.first()` / `.nth(n)`.
-Fallbacks and fingerprints are not emitted (healing is Testament's job); a
+Fallbacks and fingerprints are not emitted (healing is Optestra's job); a
 comment gives their count.
 
 | Recorded action | Code |
@@ -163,7 +163,7 @@ ever emits `waitForTimeout`.
 | `network` | `network.expectResponse({ method, url, status })`: a matching response since the current action step began |
 | `aria_snapshot` | `toMatchAriaSnapshot(\`…\`)` |
 | `code` | the code, verbatim, inside its step |
-| `pending`, `soft_judgment`, any unknown op | `checkedByTestament(line, reason)`: an annotation plus a comment; never passes or fails the spec |
+| `pending`, `soft_judgment`, any unknown op | `checkedByOptestra(line, reason)`: an annotation plus a comment; never passes or fails the spec |
 
 `Soft:` checks use `expect.soft` (helpers take `{ soft: true }`). A `scope`
 container becomes a chained locator. Recordings are read leniently: an op this
@@ -178,33 +178,33 @@ package doesn't know (from a newer LOOP-2) is noted, not an error.
 - **Generated values** (`unique.*`, `faker.*`) are made fresh on every run by
   the `values` fixture (ENV-3). A generator used directly in a step is called
   once at the top of that step.
-- **Environment vars** (`{{env.X}}`) read `TESTAMENT_VAR_X`, defaulting to the
+- **Environment vars** (`{{env.X}}`) read `OPTESTRA_VAR_X`, defaulting to the
   environment's `vars`.
 - **Secrets** are never in the code: `secrets.fill(locator, "NAME")` reads the
   `NAME` environment variable when typing, and refuses unless the field's frame
   is on an allowed host and one of the secret's domains (SEC-1, SEC-2). A value
   that mixes a secret with other text can't be typed that way, so the step skips.
 - **Inbox values** (`{{inbox.code}}`, `{{inbox.link}}`) read the newest email
-  sent to an address the test generated, from Mailpit (`TESTAMENT_MAILPIT_URL`).
+  sent to an address the test generated, from Mailpit (`OPTESTRA_MAILPIT_URL`).
   Without it the test skips with the reason.
 
 ## The fixtures module
 
-`testament.fixtures.ts` imports only `@playwright/test` and Node built-ins.
+`optestra.fixtures.ts` imports only `@playwright/test` and Node built-ins.
 
 - **`allowlist`** (automatic): a context route aborts every request to a host
   outside the allowed domains, sockets included, and a page that still lands on
   such a host is sent to `about:blank` (SAF-1).
 - **`values`**, **`secrets`**, **`network`**, **`inbox`**: see above.
 - **Helpers**: `allowed(target)`, `route(pattern)` for `toHaveURL`,
-  `containing(text)`, `expectCount`, `upload`, `checkedByTestament`.
-- **Overrides** at run time: `TESTAMENT_BASE_URL`, `TESTAMENT_ALLOWED_DOMAINS`
-  (comma-separated), `TESTAMENT_VAR_<NAME>`, `TESTAMENT_MAILPIT_URL`, and each
+  `containing(text)`, `expectCount`, `upload`, `checkedByOptestra`.
+- **Overrides** at run time: `OPTESTRA_BASE_URL`, `OPTESTRA_ALLOWED_DOMAINS`
+  (comma-separated), `OPTESTRA_VAR_<NAME>`, `OPTESTRA_MAILPIT_URL`, and each
   secret by its own name.
 
-## Portable vs Testament-only
+## Portable vs Optestra-only
 
-| | Plain Playwright (this spec) | Testament |
+| | Plain Playwright (this spec) | Optestra |
 |---|---|---|
 | Actions, checks, learned waits | yes | yes |
 | Allowed domains | route layer (requests, sockets, main frame) | route + refusing proxy + main-frame check (catches redirects) |
@@ -219,7 +219,7 @@ package doesn't know (from a newer LOOP-2) is noted, not an error.
 
 Playwright's own trace records what a test types (call parameters), the page's
 request bodies and field values in its DOM snapshots. So the generated
-`testament.reporter.ts` rewrites every kept trace after each test: each
+`optestra.reporter.ts` rewrites every kept trace after each test: each
 declared secret's value, read from the environment, is replaced with
 `[secret:NAME]` in every entry, as typed, JSON-escaped, URL-encoded (`%XX` and
 form `+`) and base64, including base64 runs that decode to text containing it
@@ -232,12 +232,12 @@ warning. So is every trace when a secret is shorter than 4 characters (too
 short to find reliably). An unscrubbed trace is never kept.
 
 `--reporter` on the command line replaces the config's reporters, so
-`testament.teardown.ts` (a `globalTeardown`, which flags can't replace) scrubs
+`optestra.teardown.ts` (a `globalTeardown`, which flags can't replace) scrubs
 every trace in the output folders again after the run. A reporter that copies
 traces before the run ends (e.g. `blob`) could copy one before that pass.
 
 `secrets.fill` also masks the field for as long as it exists, as the harness
-does (`-webkit-text-security: disc`, plus a `data-testament-secret`
+does (`-webkit-text-security: disc`, plus a `data-optestra-secret`
 attribute), so video and screenshots don't show the value. Password fields are
 masked by the browser anyway. Firefox ignores `-webkit-text-security` on
 older versions.
@@ -259,7 +259,7 @@ Biome run; output with unusual shapes may still differ from a formatter.
 ## Tests
 
 - `src/codegen.test.ts` (in `pnpm check`): goldens for eight shop tests
-  (`fixtures/shop/tests/.testament/*.spec.ts`, plus the fixtures and config),
+  (`fixtures/shop/tests/.optestra/*.spec.ts`, plus the fixtures and config),
   byte-identical regeneration, imports, no secret values (a planted one),
   hand-edit detection, `--check`, unknown ops, value handling, and a strict
   `tsc --noEmit` of the output.
@@ -272,7 +272,7 @@ Biome run; output with unusual shapes may still differ from a formatter.
   form of it (once through the reporter, once with `--reporter=json` so only
   the teardown scrubs).
 
-The recordings in `fixtures/shop/tests/.testament/*.steps.json` are
+The recordings in `fixtures/shop/tests/.optestra/*.steps.json` are
 hand-written stand-ins for real LOOP-1 recordings
 (`node scripts/fixture-recordings.ts` rewrites them). Update goldens with
 `pnpm vitest run packages/codegen -u`.

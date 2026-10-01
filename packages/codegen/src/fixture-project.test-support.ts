@@ -2,7 +2,7 @@ import { cpSync, mkdtempSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 
 // The fixture project the goldens and the plain-Playwright runs use: the demo
 // shop's project file and tests, plus this package's extra test and the

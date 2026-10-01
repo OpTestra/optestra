@@ -1,4 +1,4 @@
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import type { z } from "zod";
 import type { Diagnostic, DiagnosticCode, Severity } from "./diagnostics.js";
 import { ENVIRONMENT_VAR, envVarLayer } from "./env-vars.js";

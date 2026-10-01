@@ -1,7 +1,7 @@
 import { defineConfig } from "vitest/config";
 
 // Emulator tests against the Android fixture app. Not part of `pnpm check` (which
-// needs no Android SDK); run by `pnpm --filter @testament/android test:android`
+// needs no Android SDK); run by `pnpm --filter @optestra/android test:android`
 // and the CI `android` job.
 export default defineConfig({
   test: {

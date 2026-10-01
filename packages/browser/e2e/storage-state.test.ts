@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { launchBrowser, type LaunchedBrowser } from "@testament/browser";
+import { launchBrowser, type LaunchedBrowser } from "@optestra/browser";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readZip } from "../src/zip.js";
 import { login, open, PASSWORD, secret, seed, shop } from "./helpers.js";

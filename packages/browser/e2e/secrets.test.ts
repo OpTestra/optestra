@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { asDynamicSecret, Redactor } from "@testament/config/node";
+import { asDynamicSecret, Redactor } from "@optestra/config/node";
 import {
   type ActionOutcome,
   launchBrowser,
   type LaunchedBrowser,
   renderForModel,
-} from "@testament/browser";
+} from "@optestra/browser";
 import { readZip } from "../src/zip.js";
 import { find, hostile, open, PASSWORD, secret, seed, shop } from "./helpers.js";
 

@@ -2,7 +2,7 @@
  * Browser-safe entry: the test file model, parser, flow expansion, step keys
  * and printer. No disk access: flows are read through a `FileReader` callback,
  * so the web app runs this against files stored in the cloud. Disk access lives
- * in `@testament/spec/node`. Importing this registers the `tests` config section.
+ * in `@optestra/spec/node`. Importing this registers the `tests` config section.
  */
 import "./section.js";
 import "./lint/section.js";

@@ -5,7 +5,7 @@ import {
   type CheckOp,
   type Locator as CheckLocator,
   describeLocator,
-} from "@testament/recording";
+} from "@optestra/recording";
 import type { Browser, FrameLocator, Locator, Page } from "playwright";
 import type { RequestSummary } from "./types.js";
 

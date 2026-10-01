@@ -3,10 +3,10 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { brand } from "@testament/brand";
-import { type NodeRuntime, nodeRuntime } from "@testament/config/node";
-import type { StepResult } from "@testament/contract";
-import type { ExpandedTest } from "@testament/spec";
+import { brand } from "@optestra/brand";
+import { type NodeRuntime, nodeRuntime } from "@optestra/config/node";
+import type { StepResult } from "@optestra/contract";
+import type { ExpandedTest } from "@optestra/spec";
 import { stepLabelOf } from "./replay.js";
 import type { ReplayEvent, ReplayResult } from "./types.js";
 
@@ -93,7 +93,7 @@ function run(
 
 export async function runSpecTest(options: SpecTestOptions): Promise<ReplayResult> {
   const { projectDir, attempt } = options;
-  const { generateAfterRecording } = await import("@testament/codegen/node");
+  const { generateAfterRecording } = await import("@optestra/codegen/node");
   const generated = await generateAfterRecording(projectDir, options.testPath, {
     environment: options.environment,
     env: options.env,

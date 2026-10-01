@@ -1,5 +1,5 @@
 {
-  "name": "@testament/brand",
+  "name": "@optestra/brand",
   "version": "0.1.0",
   "description": "Single source of product naming, plus the brand-sync tool (apply/check).",
   "license": "MIT",

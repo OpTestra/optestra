@@ -7,8 +7,8 @@ import {
   SIGN_IN_COMMAND,
   signInStatus,
   VENDOR_LABEL,
-} from "@testament/models";
-import { brand } from "@testament/brand";
+} from "@optestra/models";
+import { brand } from "@optestra/brand";
 import type { CommandIo } from "./config.js";
 
 // `login` (MOD-6): shows which AI subscription tools are available and the exact

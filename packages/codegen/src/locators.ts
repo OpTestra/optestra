@@ -1,7 +1,7 @@
-import type { FrameLocator, Locator } from "@testament/recording";
+import type { FrameLocator, Locator } from "@optestra/recording";
 import { type Expr, id, method, num, obj, raw, str } from "./print/js.js";
 
-// Recorded locators → Playwright locators, mirroring `@testament/browser`'s
+// Recorded locators → Playwright locators, mirroring `@optestra/browser`'s
 // `toLocator`: text-like locators match exactly unless recorded otherwise,
 // iframes are entered through their frame path, `nth` picks one of several.
 

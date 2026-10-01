@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { type Browser, type BrowserType, chromium, firefox, webkit } from "playwright";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import type { BrowserName } from "./types.js";
 
 // One browser per worker, one context per test. A LaunchedBrowser never exposes

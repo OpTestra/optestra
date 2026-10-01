@@ -4,10 +4,10 @@ import {
   type InboxMember,
   type InboxValues,
   inboxSecret,
-} from "@testament/auth";
-import type { BlockedReason } from "@testament/contract";
-import type { Redactor, SecretValue } from "@testament/config/node";
-import type { BoundSegment, ExpandedStep, ExpandedTest } from "@testament/spec";
+} from "@optestra/auth";
+import type { BlockedReason } from "@optestra/contract";
+import type { Redactor, SecretValue } from "@optestra/config/node";
+import type { BoundSegment, ExpandedStep, ExpandedTest } from "@optestra/spec";
 
 // The test inbox in one attempt (SEC-5, AUTH-1). The agent's read_inbox tool and
 // the replayer ask it for {{inbox.code}} / {{inbox.link}}; the value never leaves

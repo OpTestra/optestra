@@ -1,4 +1,4 @@
-# @testament/spec
+# @optestra/spec
 
 The test file format: `.test.md` files turned into a typed, validated model
 that every later phase runs from, plus the lint rules and the editor language
@@ -14,17 +14,17 @@ message, exact fix, file and line/column range.
 
 | Import | Use | Runs in |
 |---|---|---|
-| `@testament/spec` | `parseTest`, `expandTest`, `printTest`, the model types, diagnostics, generators, `textKey`, globs; `checkTest`, `lintTest`, `lintProject`, the lint rules; `createLanguageService`. Registers the `tests` and `lint` config sections | browser and Node |
-| `@testament/spec/node` | `loadTests`, `loadTest`, `findTestFiles`, `nodeFileReader` | Node |
-| `@testament/spec/lint-words.yaml` | the word lists and patterns behind the lint rules | data |
+| `@optestra/spec` | `parseTest`, `expandTest`, `printTest`, the model types, diagnostics, generators, `textKey`, globs; `checkTest`, `lintTest`, `lintProject`, the lint rules; `createLanguageService`. Registers the `tests` and `lint` config sections | browser and Node |
+| `@optestra/spec/node` | `loadTests`, `loadTest`, `findTestFiles`, `nodeFileReader` | Node |
+| `@optestra/spec/lint-words.yaml` | the word lists and patterns behind the lint rules | data |
 
-The main entry imports only `yaml`, `zod`, `@testament/config` and
-`@testament/contract` (a test enforces it). Flow files are read through a
+The main entry imports only `yaml`, `zod`, `@optestra/config` and
+`@optestra/contract` (a test enforces it). Flow files are read through a
 `FileReader` callback, so the web app can run parsing and expansion against
 files stored in the cloud.
 
 ```ts
-import { expandTest, mapReader, parseTest, printTest } from "@testament/spec";
+import { expandTest, mapReader, parseTest, printTest } from "@optestra/spec";
 
 const { spec, diagnostics } = parseTest(text, "tests/checkout.test.md", { config });
 const expanded = await expandTest(spec, {
@@ -37,7 +37,7 @@ const text2 = printTest(spec);       // canonical text
 ```
 
 ```ts
-import { loadTests } from "@testament/spec/node";
+import { loadTests } from "@optestra/spec/node";
 const { tests, flows, diagnostics } = await loadTests(projectDir, config); // config may be undefined
 ```
 
@@ -105,7 +105,7 @@ environments:
 ## Datasets (AUT-9)
 
 `dataset: data/users.csv` (or `.json`), relative to the test file, runs the test
-once per row. `@testament/spec/node`'s `loadDataset(projectDir, testPath,
+once per row. `@optestra/spec/node`'s `loadDataset(projectDir, testPath,
 dataset)` reads it (CSV with a header row, RFC 4180 quoting; or a JSON array of
 flat objects) into `{ path, columns, rows: [{ row, values }], diagnostics }`,
 at most `MAX_DATASET_ROWS` (200). `loadTest(…, { data: row.values })` binds a
@@ -281,7 +281,7 @@ gives it back byte for byte. Canonical form:
 ## Project loading (`/node`)
 
 The `tests` config section (registered when this package loads; defaults in
-`@testament/config`'s `defaults.yaml`):
+`@optestra/config`'s `defaults.yaml`):
 
 ```yaml
 tests:
@@ -308,7 +308,7 @@ rule-based and deterministic (same file + same config → same findings), and
 runs in the browser too.
 
 ```ts
-import { checkTest } from "@testament/spec";
+import { checkTest } from "@optestra/spec";
 
 const { spec, expanded, findings } = await checkTest(text, "tests/checkout.test.md", {
   readFile, config, environment: "staging",
@@ -654,7 +654,7 @@ test requires under 20 ms).
 
 ## Diagnostics
 
-Same shape as `@testament/config` (`code`, `severity`, `message`, `fix`,
+Same shape as `@optestra/config` (`code`, `severity`, `message`, `fix`,
 `file`, `line`, `path`) plus `range` (1-based line and column, end exclusive,
 columns in UTF-16 units). `path` is the frontmatter field (`setup[0].request`)
 when the problem is there. Codes are stable.

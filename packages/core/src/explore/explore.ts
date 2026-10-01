@@ -1,5 +1,5 @@
-import type { ActionOutcome, Observation, Session } from "@testament/browser";
-import type { ModelCall } from "@testament/contract";
+import type { ActionOutcome, Observation, Session } from "@optestra/browser";
+import type { ModelCall } from "@optestra/contract";
 import {
   assembleDraft,
   type DraftItem,

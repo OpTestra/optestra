@@ -1,5 +1,5 @@
-import { createSecretValue, memorySource, Redactor } from "@testament/config/node";
-import { prepareSecret, revealSecret } from "@testament/config/reveal";
+import { createSecretValue, memorySource, Redactor } from "@optestra/config/node";
+import { prepareSecret, revealSecret } from "@optestra/config/reveal";
 import { afterEach, describe, expect, it } from "vitest";
 import "../index.js";
 import type { InboxSettings } from "../section.js";
@@ -394,7 +394,7 @@ describe("InboxValues ({{inbox.code}}, {{inbox.link}}, {{inbox.subject}})", () =
       }),
       created,
     ];
-    const { defaultRedactor } = await import("@testament/config/node");
+    const { defaultRedactor } = await import("@optestra/config/node");
     const text = JSON.stringify(results);
     expect(text).not.toContain(KEY);
     const header = server.requests[0]?.headers.authorization ?? "";

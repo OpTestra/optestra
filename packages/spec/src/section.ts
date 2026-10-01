@@ -1,4 +1,4 @@
-import { registerSection } from "@testament/config";
+import { registerSection } from "@optestra/config";
 import { z } from "zod";
 
 export interface TestsSettings {
@@ -22,7 +22,7 @@ export const testsSchema = z
   })
   .describe("Where the test files are.");
 
-declare module "@testament/config" {
+declare module "@optestra/config" {
   interface ConfigSections {
     tests: TestsSettings;
   }

@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
-import { brand } from "@testament/brand";
-import { SecretValue } from "@testament/config/node";
-import { revealSecret } from "@testament/config/reveal";
+import { brand } from "@optestra/brand";
+import { SecretValue } from "@optestra/config/node";
+import { revealSecret } from "@optestra/config/reveal";
 import { createTransport, type FetchLike } from "./transport.js";
 import { errorMessage, failureFromHttp } from "./wire.js";
 

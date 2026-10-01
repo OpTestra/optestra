@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import type { ProviderSettings } from "./config.js";
 
 export interface UsageEntry {

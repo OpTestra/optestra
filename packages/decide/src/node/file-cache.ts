@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import type { CachedDecision, DecisionCache } from "../cache.js";
 
 /** `<project>/<dataDir>/decisions/`. */

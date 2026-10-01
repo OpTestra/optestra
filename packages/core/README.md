@@ -1,4 +1,4 @@
-# @testament/core
+# @optestra/core
 
 The engine. It holds the **author** (LOOP-1): the first AI run of a test,
 which records every action step so that later runs can replay it without AI;
@@ -11,11 +11,11 @@ the fix policies, and review and accept.
 
 | Import | Use |
 |---|---|
-| `@testament/core` | record: `recordTest`; explore: `exploreApp`; hooks: `runScriptHook`, `runSqlHook`, `DEFAULT_HOOKS`; drafting: `exploreDraft`, `exploreStarters`, `finishDraft`, `DRAFT_TOOLS`, `DRAFT_LIMITS`, `DRAFT_PROMPT_VERSION`; `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `ANDROID_TOOLS`, `toolsFor`, `PROMPT_VERSION`, `promptVersionFor`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `fixerProposal`, `chaptersVtt`; heals: `runFixer`, `fixerContext`, `FIXER_LIMITS`, `FIXER_PROMPT_VERSION`, `applyPatches`, `HealPatchSchema`, `describeCommand`, `markAutoApplied` |
-| `@testament/core/node` | `recordProject`, `saveRecorded`, `exploreProject`, `explainRun`, `explainTest`, `formatExplanation`; `draftTest`, `suggestStarterTests` (drafting against a project folder); `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `resolveTarget` / `launchWorker` (the target layer), `mergeRecording`, `recentAiUsage`, `recentHeals`, `runSpecTest`; heals: `listHeals`, `applyHeals` |
+| `@optestra/core` | record: `recordTest`; explore: `exploreApp`; hooks: `runScriptHook`, `runSqlHook`, `DEFAULT_HOOKS`; drafting: `exploreDraft`, `exploreStarters`, `finishDraft`, `DRAFT_TOOLS`, `DRAFT_LIMITS`, `DRAFT_PROMPT_VERSION`; `authorTest`, report and option types, guards (`parseGuard`, `checkGuards`, `destructiveIntent`), `PLANNER_TOOLS`, `ANDROID_TOOLS`, `toolsFor`, `PROMPT_VERSION`, `promptVersionFor`, `version()`, the redacting `logger`; checks: `compileCheck`, `verifyCheck`, `evaluateCheck`, `sanityTest`, `compileByRules`, `compileByAi`, `RULES`, `CHECK_PROMPT_VERSION`; replay: `replayAttempt`, `decideVerdict`, `bindAction`, `verifyOutcome`, `checkResult`, `healProposal`, `fixerProposal`, `chaptersVtt`; heals: `runFixer`, `fixerContext`, `FIXER_LIMITS`, `FIXER_PROMPT_VERSION`, `applyPatches`, `HealPatchSchema`, `describeCommand`, `markAutoApplied` |
+| `@optestra/core/node` | `recordProject`, `saveRecorded`, `exploreProject`, `explainRun`, `explainTest`, `formatExplanation`; `draftTest`, `suggestStarterTests` (drafting against a project folder); `saveAuthoring` (writes the recording, report, screenshots and evidence); `runTests` (a whole run → contract run folder), `resolveTarget` / `launchWorker` (the target layer), `mergeRecording`, `recentAiUsage`, `recentHeals`, `runSpecTest`; heals: `listHeals`, `applyHeals` |
 
 Types for either target: `HarnessSession`, `HarnessAction`, `HarnessObservation`,
-`HarnessOutcome`, `TargetName`, `targetOfSession`, `isScreen` (from `@testament/core`).
+`HarnessOutcome`, `TargetName`, `targetOfSession`, `isScreen` (from `@optestra/core`).
 
 ## Targets: web and Android (MOB-1)
 
@@ -62,11 +62,11 @@ On Android:
 
 ## Capabilities (BEN-0)
 
-`ENGINE_CAPABILITIES` (from `@testament/core`) says what this engine can do, as
+`ENGINE_CAPABILITIES` (from `@optestra/core`) says what this engine can do, as
 plain versioned data, so the apps don't sniff exports or option names:
 
 ```ts
-import { ENGINE_CAPABILITIES } from "@testament/core";
+import { ENGINE_CAPABILITIES } from "@optestra/core";
 ENGINE_CAPABILITIES.capabilitiesVersion;          // 1: bumps when a field changes meaning
 ENGINE_CAPABILITIES.runTests.options;             // every runTests option (checked against RunTestsOptions at compile time)
 ENGINE_CAPABILITIES.runTests.evidenceModes;       // ["full", "failures", "minimal"]
@@ -77,13 +77,13 @@ ENGINE_CAPABILITIES.targets;                      // ["web", "android"]
 
 New fields and new names in lists are additive; readers ignore what they don't know.
 
-Bench (`testament bench`, model evals, the `eval` gate) is `@testament/core/bench`;
+Bench (`optestra bench`, model evals, the `eval` gate) is `@optestra/core/bench`;
 see [bench/README.md](../../bench/README.md).
 
 ## How a run works (LOOP-4)
 
 ```ts
-import { runTests } from "@testament/core/node";
+import { runTests } from "@optestra/core/node";
 
 const result = await runTests({
   projectDir,             // the project folder
@@ -177,7 +177,7 @@ any AI is spent.
 
 **Auth profiles (SEC-3, AUTH-1).** A test with `auth: <profile>` starts logged
 in. After its setup hooks and before its start page, the runner calls
-`ensureProfile` (`@testament/auth`):
+`ensureProfile` (`@optestra/auth`):
 1. A saved session for (environment, profile, worker; `shared` profiles use one
    for all workers) is reused when it is younger than `ttlMinutes`, was made for
    this profile definition, and passes the profile's `check`: the test's own
@@ -269,7 +269,7 @@ A step is named as the test file numbers it: StepResult `label` is `"3"`, or
 `"1 › Log in step 4"` for step 4 of the flow "Log in" used at step 1 (one part
 per flow on the way). Headlines ("Step 1 › Log in step 4 "Click "Log in"": …"),
 the CLI's step list, the reports and the PR comment all use it
-(`stepLabel(step)` from `@testament/contract`, which falls back to the position
+(`stepLabel(step)` from `@optestra/contract`, which falls back to the position
 for older runs). An auth profile's login is step `0`.
 
 ### Speed (PERF-0)
@@ -360,8 +360,8 @@ The CLI's exit code counts healed as a failure unless the policy is `auto`
 ### Review and accept (HEAL-4, HEAL-6)
 
 ```bash
-testament heal [runDir] [--list] [--json]          # default: the latest run
-testament heal [runDir] --accept <id…|all> [--reject <id…>] [--json]
+optestra heal [runDir] [--list] [--json]          # default: the latest run
+optestra heal [runDir] --accept <id…|all> [--reject <id…>] [--json]
 ```
 
 The list shows each heal with the recording's before/after (one line per
@@ -390,7 +390,7 @@ from the recording with zero AI (LRN-3: paid once).
 For agents and the apps: `heal --json`, and
 
 ```ts
-import { applyHeals, listHeals } from "@testament/core/node";
+import { applyHeals, listHeals } from "@optestra/core/node";
 const listing = listHeals(runDir);        // { runId, heals: HealItem[], rerecord: [...] }
 const result = await applyHeals(projectDir, runDir, ["01K…"] /* or "all" */, { reject: [] });
 // { accepted, rejected, skipped (with reasons), recordings, specs, warnings, labels }
@@ -400,7 +400,7 @@ const result = await applyHeals(projectDir, runDir, ["01K…"] /* or "all" */, {
 
 Each TestResult carries `recentHeals` (`{ runs, healed }` over its last 10 runs,
 this one included). At 3 or more the run logs "re-record this test" with the
-command (`testament run <file> --rerecord`), and `heal --list`, the report JSON
+command (`optestra run <file> --rerecord`), and `heal --list`, the report JSON
 (`rerecord`) and the HTML report show it.
 
 ### Evidence (EVD-1)
@@ -431,11 +431,11 @@ results are the record reviewers look at.
 ### CLI
 
 ```bash
-testament run [tests…] [--tag t] [--grep name] [--env local] [--base-url url] [--shard i/n] \
+optestra run [tests…] [--tag t] [--grep name] [--env local] [--base-url url] [--shard i/n] \
   [--replay-only | --rerecord] [--retries n] [--workers n] [--headed] [--budget 0.50] [--no-video] [--verbose] \
   [--browser chromium --browser webkit] [--device laptop --device iphone-15] [--locale de-DE] [--timezone Europe/Berlin] [--viewport 1280x720] \
   [--evidence full|failures|minimal]
-testament merge-runs <shard folders…> --out <dir>
+optestra merge-runs <shard folders…> --out <dir>
 ```
 
 `--browser` and `--device` repeat for a matrix (TGT-5): every selected test
@@ -446,7 +446,7 @@ one quits at once).
 
 `--shard i/n` (CLI-3) runs only slice i of n: the selected test ids are sorted
 and dealt out in turn (`selectShard`), so every machine computes the same
-disjoint slices. `merge-runs` (`mergeRuns` in `@testament/contract/node`)
+disjoint slices. `merge-runs` (`mergeRuns` in `@optestra/contract/node`)
 interleaves the shards' events by time into one run folder and copies their
 artifacts; it reports exactly like an unsharded run. `--base-url` runs against
 a preview deploy. An environment's `protection` (SEC-8) adds secret headers
@@ -459,7 +459,7 @@ subscription" for subscription calls), the headline and cause of each failure,
 the failure groups, then the summary and the results folder. `--verbose`
 prints every step, heal and warning. Exit code via `exitCodeFor` (CLI-5): 0
 passed, 1 failed/flaky (and healed unless the heal policy is `auto`), 2
-blocked or config error. `testament results <runDir>` reads the same folder.
+blocked or config error. `optestra results <runDir>` reads the same folder.
 
 ## Record, explore, explain, datasets and hooks (ADV-0)
 
@@ -518,7 +518,7 @@ saved here; the CLI (`new`, `init --suggest`), the MCP server (`draft_test`)
 and the apps decide, and only on an explicit accept.
 
 ```ts
-import { draftTest, suggestStarterTests } from "@testament/core/node";
+import { draftTest, suggestStarterTests } from "@optestra/core/node";
 
 const draft = await draftTest("a returning user can log in and see the dashboard", {
   project: projectDir,   // the project folder: settings, environment, secrets, models
@@ -579,9 +579,9 @@ rest in one call (`propose_tests`). Each is drafted from a fresh session.
 ## authorTest
 
 ```ts
-const result = await authorTest(expanded, {  // ExpandedTest from @testament/spec
+const result = await authorTest(expanded, {  // ExpandedTest from @optestra/spec
   session,                 // a LOOP-0 browser Session
-  models,                  // createModels(...) from @testament/models
+  models,                  // createModels(...) from @optestra/models
   budget,                  // the run's BudgetMeter (MOD-5)
   production,              // the environment's production flag (SAF-4)
   timeoutMs,               // the test's timeout, else run.timeoutSeconds
@@ -624,7 +624,7 @@ There are no verdicts and no contract run folder (LOOP-4 adds those).
 1. `observe()` → `renderForModel()` (untrusted page content). A downsampled
    screenshot is added only when it's needed (MOD-3): the observation was
    truncated, an iframe has no usable elements, or the model asked with `look`.
-2. The `planner` role is called through `@testament/models`. The prompt holds:
+2. The `planner` role is called through `@optestra/models`. The prompt holds:
    - the step (variables filled in, secrets as `{{secret.NAME}}`);
    - the step's variables (plain values shown; secrets by name only);
    - the `Never:` lines;
@@ -716,7 +716,7 @@ are `skipped`. Nothing is reported as a partial success.
 ## How Expect lines become checks
 
 "A pass means a real check passed." Every `Expect:` and `Soft:` line becomes,
-while the test is authored, one typed `CheckOp` from `@testament/recording`
+while the test is authored, one typed `CheckOp` from `@optestra/recording`
 (VER-1). The op is shown to the user, stored in the recording and re-run on
 every run by plain code in the browser harness, with no model (VER-2). The
 line itself is never changed, split, merged or dropped (HEAL-3); a line that
@@ -812,7 +812,7 @@ sanity-tested.
 ### Evaluating checks (for LOOP-4)
 
 `evaluateCheck(session, op, { values, timeoutMs, since, models })` runs a
-deterministic op through `session.check` (see `@testament/browser`) and a
+deterministic op through `session.check` (see `@optestra/browser`) and a
 `soft_judgment` through the model. `since` marks where the current action
 step began: network checks count only requests from there on. Replay should
 pass `session.requestMark()` (cheap); a `pageCopy()` works too.
@@ -837,7 +837,7 @@ every action, and a refusal is shown to the model and recorded in the report.
 
 ## Report
 
-`<project>/.testament/authoring/<runId>/report.json`, redacted, next to
+`<project>/.optestra/authoring/<runId>/report.json`, redacted, next to
 `steps/<i>-before.png` / `-after.png` and the harness evidence (`trace.zip`,
 `console.log`, `network.har`, and optionally `video.webm`). It holds:
 - test and environment identity;
@@ -877,8 +877,8 @@ evidence for it.
 ## CLI
 
 ```bash
-testament author tests/create-project.test.md [--env local] [--headed] [--device laptop] [--browser webkit] [--video]
-testament author tests/sign-in.test.md --android 16 --device pixel-8   # an Android project
+optestra author tests/create-project.test.md [--env local] [--headed] [--device laptop] [--browser webkit] [--video]
+optestra author tests/sign-in.test.md --android 16 --device pixel-8   # an Android project
 ```
 
 It prints one line per step (status, actions, AI calls and cost). For a check
@@ -891,7 +891,7 @@ problem (including "no model key"). A check that failed while authoring
 doesn't change the exit code: authoring has no verdicts.
 
 ```bash
-testament checks tests/create-project.test.md [--json]
+optestra checks tests/create-project.test.md [--json]
 ```
 
 Prints each check from the recording: the line, the summary, the op, how it

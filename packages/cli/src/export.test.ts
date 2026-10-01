@@ -12,7 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { afterAll, describe, expect, it } from "vitest";
 import { playwrightVersion } from "./commands/export.js";
 import { SHOP_PASSWORD, shopProject } from "./shop-project.test-support.js";

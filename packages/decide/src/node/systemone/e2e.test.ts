@@ -1,5 +1,5 @@
-import { defaultRegistry } from "@testament/config";
-import { processEnvSource } from "@testament/config/node";
+import { defaultRegistry } from "@optestra/config";
+import { processEnvSource } from "@optestra/config/node";
 import { describe, expect, it } from "vitest";
 import { createDecisions, type DecisionsSettings } from "../../index.js";
 import { resolveDecisionBackend } from "./resolve.js";

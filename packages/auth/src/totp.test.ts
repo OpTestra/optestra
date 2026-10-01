@@ -1,5 +1,5 @@
-import { memorySource, Redactor, resolveSecrets } from "@testament/config/node";
-import { prepareSecret, revealSecret } from "@testament/config/reveal";
+import { memorySource, Redactor, resolveSecrets } from "@optestra/config/node";
+import { prepareSecret, revealSecret } from "@optestra/config/reveal";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import "./index.js";
 import {

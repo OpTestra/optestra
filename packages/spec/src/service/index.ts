@@ -1,4 +1,4 @@
-import type { Config } from "@testament/config";
+import type { Config } from "@optestra/config";
 import { type CheckContext, checkTest } from "../check.js";
 import { printExactOp } from "../exact.js";
 import { type FileReader, flowCandidates, normalizePath } from "../expand.js";

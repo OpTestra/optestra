@@ -10,8 +10,8 @@ harness must refuse ("Check for updates" → `https://203.0.113.7/…`).
 ## Build and run
 
 ```bash
-pnpm --filter @testament/fixture-android build:apks   # every variant; needs Java 17+, Gradle, ANDROID_HOME
-pnpm --filter @testament/fixture-shop start -- --port 4180
+pnpm --filter @optestra/fixture-android build:apks   # every variant; needs Java 17+, Gradle, ANDROID_HOME
+pnpm --filter @optestra/fixture-shop start -- --port 4180
 ```
 
 The APKs land in `app/build/outputs/apk/<flavor>/debug/`; they are never
@@ -45,13 +45,13 @@ the manifest's verdicts and failing steps.
 
 ## Recordings and the Bench (MOB-1)
 
-`tests/.testament/*.steps.json` are the engine's recordings of every test,
+`tests/.optestra/*.steps.json` are the engine's recordings of every test,
 authored once on the `correct` build with Claude Sonnet 4.6. A run replays them
 with no AI:
 
 ```bash
-pnpm --filter @testament/fixture-shop start -- --port 4180
-SHOP_PASSWORD=shop-demo-pass testament run -C bench/fixtures/android   # 7 passed, 0 AI calls
+pnpm --filter @optestra/fixture-shop start -- --port 4180
+SHOP_PASSWORD=shop-demo-pass optestra run -C bench/fixtures/android   # 7 passed, 0 AI calls
 pnpm bench:replay:android   # every variant scored against manifest.yaml (starts its own shop)
 ```
 

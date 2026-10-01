@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { resolveConfig } from "@testament/config";
+import { resolveConfig } from "@optestra/config";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 import { checkTest } from "../check.js";

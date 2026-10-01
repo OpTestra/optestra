@@ -145,8 +145,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build the driver and the fixture APKs
         run: |
-          pnpm --filter @testament/android build:driver
-          pnpm --filter @testament/fixture-android build:apks
-      - run: pnpm --filter @testament/android test:android
-      - run: pnpm --filter @testament/core test:android
+          pnpm --filter @optestra/android build:driver
+          pnpm --filter @optestra/fixture-android build:apks
+      - run: pnpm --filter @optestra/android test:android
+      - run: pnpm --filter @optestra/core test:android
       - run: pnpm bench:replay:android

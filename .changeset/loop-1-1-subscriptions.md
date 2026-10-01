@@ -1,9 +1,9 @@
 ---
-"@testament/models": minor
-"@testament/contract": minor
-"@testament/config": minor
-"@testament/core": minor
-"@testament/cli": minor
+"@optestra/models": minor
+"@optestra/contract": minor
+"@optestra/config": minor
+"@optestra/core": minor
+"@optestra/cli": minor
 ---
 
 Use your AI subscription (MOD-6): new `claude-code` and `codex` provider kinds

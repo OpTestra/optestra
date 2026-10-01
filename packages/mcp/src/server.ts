@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { agentInstructions } from "./instructions.js";
 import { type ResourceSpec, type ServerDefinition, serveStreams } from "./protocol.js";
 import { callTool, type ToolContext, toolSpecs } from "./tools.js";
@@ -22,7 +22,7 @@ function version(): string {
 
 /** The test file format and lint reference: the spec package's README. */
 function formatReference(): string {
-  const entry = fileURLToPath(import.meta.resolve("@testament/spec"));
+  const entry = fileURLToPath(import.meta.resolve("@optestra/spec"));
   return readFileSync(join(dirname(entry), "..", "README.md"), "utf8");
 }
 

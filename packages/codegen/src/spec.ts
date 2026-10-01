@@ -1,5 +1,5 @@
-import { brand } from "@testament/brand";
-import type { Command, Locator } from "@testament/recording";
+import { brand } from "@optestra/brand";
+import type { Command, Locator } from "@optestra/recording";
 import {
   type BoundText,
   type ExactOp,
@@ -11,7 +11,7 @@ import {
   parseTemplate,
   specSteps,
   type TestSpec,
-} from "@testament/spec";
+} from "@optestra/spec";
 import { type Header, withHeader } from "./header.js";
 import { holdsValue, locatorExpr } from "./locators.js";
 import {

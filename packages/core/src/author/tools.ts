@@ -1,4 +1,4 @@
-import type { ToolDefinition } from "@testament/models";
+import type { ToolDefinition } from "@optestra/models";
 import { z } from "zod";
 
 // The planner's tools mirror LOOP-0's closed action set exactly, plus three

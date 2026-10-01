@@ -1,7 +1,7 @@
 # Architecture (engine)
 
-Repos: this engine is `TestamentHQ/testament` (MIT, public at launch); the closed
-apps and cloud live in `TestamentHQ/platform` (checked out as `../apps`).
+Repos: this engine is `optestra/optestra` (MIT, public at launch); the closed
+apps and cloud live in `optestra/platform` (checked out as `../apps`).
 
 pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 (project references) into its own `dist/`.
@@ -24,7 +24,7 @@ pnpm workspace, TypeScript strict, Node 24. Each package builds with `tsc -b`
 | `packages/cli` | CLI binary (name from brand) for CI, coding agents and power users; `init`, `doctor` (also `runDoctor()` from the package entry, for the apps' Setup check) and `export` | engine phases, CLI-0 |
 | `packages/mcp` | MCP server for coding agents | agents phase |
 | `packages/action` | The GitHub Action: a composite `action.yml` (installs the CLI, caches Chromium, runs, uploads artifacts) and a Node step with no dependencies (sticky PR comment, check run where Blocked is neutral, job summary, AGT-4 notice), talking to GitHub through its one transport. Docs for sharding, previews, forks and other CI systems | CI-0 |
-| `bench/fixtures/shop` | Acme Shop (`@testament/fixture-shop`, private): the demo project and first Bench fixture, with variants, plain-English tests, gold `manifest.yaml` and a Playwright reference suite. See `bench/README.md` | FND-4 |
+| `bench/fixtures/shop` | Acme Shop (`@optestra/fixture-shop`, private): the demo project and first Bench fixture, with variants, plain-English tests, gold `manifest.yaml` and a Playwright reference suite. See `bench/README.md` | FND-4 |
 
 ## Dependency direction
 
@@ -65,7 +65,7 @@ contract ──► zod only (bottom of the graph)
   to the on-device driver, 127.0.0.1 only) and `packages/android/src/hooks.ts`
   (a test's setup/teardown requests, from this machine to the environment's
   baseUrl or an allowed host only; no redirects).
-  Secret values are revealed (`@testament/config/reveal`) only in the browser
+  Secret values are revealed (`@optestra/config/reveal`) only in the browser
   and Android drivers and these transports' key handling (guard-tested).
   Programs are started only from named files: the brand tool, the browser
   installer, the delegated CLI runner and `packages/android/src/tools.ts` (adb
@@ -120,7 +120,7 @@ contract ──► zod only (bottom of the graph)
   contract `DecisionRecord` through `onDecision` (the runner emits `decision.made`).
   No task can output a verdict (enforced at registration). Default backend `none`:
   rules only. DEC-2 adds the six real tasks as specs in `src/tasks/`. See `packages/decide/README.md`.
-- DEC-1 (done): decision model backends in `@testament/decide/node`. One System One
+- DEC-1 (done): decision model backends in `@optestra/decide/node`. One System One
   client (`createSystemOneBackend`) serves Jev (hosted by TypeSafe AI), Kev (self-hosted)
   and Laya. **Ollaya** (a local server for decision models, like Ollama for System One
   models; 127.0.0.1:11435) is the Laya runtime: the client uses its native `/api/decide`
@@ -151,7 +151,7 @@ contract ──► zod only (bottom of the graph)
   checks for Expect/Soft. Output: the recording
   (`<tests>/<data dir>/<testId>.steps.json`, committed) and the authoring report
   (`<project>/<data dir>/authoring/<runId>/`). CLI `author`. Scripted-model browser
-  tests run in `bench:fixtures:test`; `@testament/models/testing` provides the
+  tests run in `bench:fixtures:test`; `@optestra/models/testing` provides the
   scripted model. See `packages/recording/README.md` and `packages/core/README.md`.
 
 - LOOP-2 (done): the check compiler. At each Expect/Soft step, `authorTest`
@@ -171,7 +171,7 @@ contract ──► zod only (bottom of the graph)
   verdicts. CLI: `author` shows each check; `checks <test>` lists them. See
   "How Expect lines become checks" in `packages/core/README.md`.
 
-- DEC-2 (done): the four after-run decisions in `@testament/decide`:
+- DEC-2 (done): the four after-run decisions in `@optestra/decide`:
   - `failure_cause` (DIA-1);
   - `flaky_or_real` (advice only; the flaky verdict stays deterministic);
   - `duplicate_or_new` (DIA-4 failure groups; its options are the run's groups);
@@ -212,7 +212,7 @@ contract ──► zod only (bottom of the graph)
   `setup_failed`. Generated specs log in with the profile's flow. See
   `packages/core/README.md`.
 
-- DEC-3 (done): the during-run decisions in `@testament/decide`:
+- DEC-3 (done): the during-run decisions in `@optestra/decide`:
   - `same_element`: weighted identity signals from `same-element.json`. It never
     guesses "same"; anything doubtful escalates, with per-signal evidence.
   - `miss_action`: the HEAL-1 healing ladder: block → no_heal (the right element
@@ -225,11 +225,11 @@ contract ──► zod only (bottom of the graph)
   either package. Eval sets are built from the shop's correct vs cosmetic builds.
 
 - LOOP-3 (done): `packages/codegen`. `generateSpec(recording, { expanded, specs })`
-  turns a recording into `<tests>/.testament/<testId>.spec.ts`: one `test.step`
+  turns a recording into `<tests>/.optestra/<testId>.spec.ts`: one `test.step`
   per English step (the line as a comment), flows as named step groups,
   role/label locators, web-first assertions, learned waits, data/params objects,
   generated values at run time, secrets by name through a domain-checked helper.
-  `generateSupportFiles` writes `testament.fixtures.ts` (the allowlist as a
+  `generateSupportFiles` writes `optestra.fixtures.ts` (the allowlist as a
   Playwright route, secrets, values, network and inbox helpers) and
   `playwright.config.ts` from templates in `packages/codegen/runtime/`, plus a
   reporter and global teardown that scrub secrets out of every kept Playwright
@@ -246,7 +246,7 @@ contract ──► zod only (bottom of the graph)
   inline CSS/JS, a CSP that allows no network, artifacts linked relative to the
   run folder, works with JS off, failure groups and headline + screenshot first),
   `renderJunit`, `renderJsonSummary` (`results-summary` 1.0, schema at
-  `@testament/report/schema/results-summary.json`), `renderMarkdownSummary`
+  `@optestra/report/schema/results-summary.json`), `renderMarkdownSummary`
   (capped under GitHub's comment limit, screenshots as `artifact:<path>`
   placeholders that the Action fills with `fillArtifactLinks`) and
   `formatTestLine` / `formatRunSummary` / `formatTerminal` (CLI-4; LOOP-4's `run`
@@ -257,7 +257,7 @@ contract ──► zod only (bottom of the graph)
 
 - LOOP-4 (done): the runner in `packages/core/src/run/`. `runTests({ projectDir,
   tests, tags, grep, environment, mode, retries, workers, budgetUsd, onEvent })`
-  (`@testament/core/node`) runs a project: one browser per worker, one session per
+  (`@optestra/core/node`) runs a project: one browser per worker, one session per
   attempt, setup hooks, the start page, then `replayAttempt` per step: bind the
   recorded command, validate the element against its fingerprint
   (`decideSameElement`, REP-5), act, check the recorded post-state (VER-5), and on
@@ -284,7 +284,7 @@ contract ──► zod only (bottom of the graph)
   (HEAL-5): `strict` never heals, `review` keeps proposals pending, `auto`
   applies a passed attempt's heals at once (never a `behavior_change`). Review
   (HEAL-4): `listHeals(runDir)` / `applyHeals(projectDir, runDir, ids)`
-  (`@testament/core/node`) and CLI `heal [runDir] [--accept …] [--reject …]
+  (`@optestra/core/node`) and CLI `heal [runDir] [--accept …] [--reject …]
   [--json]` apply patches to the recording (keys and checks untouched),
   regenerate the spec, record decisions in `heals/review.json` and write
   same_element / miss_action / heal_class labels (LRN-9). HEAL-7: tests that
@@ -301,7 +301,7 @@ contract ──► zod only (bottom of the graph)
   `changed`), `candidates(ref)`, `check(op)`, `requestMark()`, `pageCopy()`,
   `screenshot()`, `close()` → evidence (video.webm, logcat.txt, network.har). CLI
   `android setup | doctor | snapshot`. Emulator tests: `pnpm --filter
-  @testament/android test:android` (CI job `android`). See
+  @optestra/android test:android` (CI job `android`). See
   `packages/android/README.md`.
 
 - MOB-1 (done): one engine, two targets. The author, the replayer, the check
@@ -326,7 +326,7 @@ contract ──► zod only (bottom of the graph)
   and prompts (`planner-android-v2`, `fixer-android-v1`); checks compile by
   the same phrase rules (screen, toast, dialog wording). Not on Android yet:
   code steps, auth profiles and the portable spec. Engine emulator tests:
-  `pnpm --filter @testament/core test:android`; the fixture's bench:
+  `pnpm --filter @optestra/core test:android`; the fixture's bench:
   `pnpm bench:replay:android`.
 
 ## Results contract (`packages/contract`)

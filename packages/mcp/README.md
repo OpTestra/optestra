@@ -1,17 +1,17 @@
-# @testament/mcp
+# @optestra/mcp
 
-The MCP server for coding agents (AGT-1): `testament mcp` serves the project in
+The MCP server for coding agents (AGT-1): `optestra mcp` serves the project in
 the current folder over stdio. Setup for Claude Code, Cursor and Codex, the
 tool table and the agent instructions are in
 [integrations/README.md](../../integrations/README.md).
 
 | Import | Use |
 |---|---|
-| `@testament/mcp` | `serveStdio(ctx)`, `createServer(ctx)`, `callTool`, `toolSpecs()`, `TOOL_NAMES`, `RESOURCES`; the protocol layer `createHandler`, `serveStreams`, `PROTOCOL_VERSIONS` |
-| `@testament/mcp/instructions` | `agentInstructions()`, `agentRules()`, `agentsSnippet()`, `appendAgentsSnippet(text)` (light: no engine) |
+| `@optestra/mcp` | `serveStdio(ctx)`, `createServer(ctx)`, `callTool`, `toolSpecs()`, `TOOL_NAMES`, `RESOURCES`; the protocol layer `createHandler`, `serveStreams`, `PROTOCOL_VERSIONS` |
+| `@optestra/mcp/instructions` | `agentInstructions()`, `agentRules()`, `agentsSnippet()`, `appendAgentsSnippet(text)` (light: no engine) |
 
 ```ts
-import { serveStdio } from "@testament/mcp";
+import { serveStdio } from "@optestra/mcp";
 await serveStdio({ project: "/path/to/project", env: process.env });
 ```
 
@@ -42,7 +42,7 @@ do.
 | `get_test` | `path` | `path name text steps[] recorded findings[]` |
 | `draft_test` | `sentence`, `start?`, `environment?` | `saved: false`, `status reason message name path text lintClean findings[] notes[] ai` |
 | `save_test` | `path`, `text` | `saved: true`, `path`, `findings[]` |
-| `run_tests` | `tests?[] tags?[] grep? environment? mode?` (`normal` or `replay-only`) | `runDir`, `summary` (the results summary, `@testament/report`), `evidence[]` |
+| `run_tests` | `tests?[] tags?[] grep? environment? mode?` (`normal` or `replay-only`) | `runDir`, `summary` (the results summary, `@optestra/report`), `evidence[]` |
 | `get_results` | `runId?` | as `run_tests` |
 | `explain` | `runId?`, `test?`, `ai?` | `explainRun` (DIA-6): per test the diagnosis, next steps and cited evidence; `ai: true` makes one model call |
 | `list_heals` | `runId?` | `listHeals` (HEAL-0) |
@@ -61,5 +61,5 @@ Guarantees:
 
 ## Resources
 
-`testament://docs/test-format` (the spec package's README: the file format and
-lint rules) and `testament://docs/agents` (the instructions for agents).
+`optestra://docs/test-format` (the spec package's README: the file format and
+lint rules) and `optestra://docs/agents` (the instructions for agents).

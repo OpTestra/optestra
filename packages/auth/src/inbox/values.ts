@@ -3,9 +3,9 @@ import {
   createSecretValue,
   type Redactor,
   type SecretValue,
-} from "@testament/config/node";
+} from "@optestra/config/node";
 import { extractCode, extractLinks, pickLink } from "./extract.js";
-import { INBOX_MEMBERS, type InboxMember } from "@testament/spec";
+import { INBOX_MEMBERS, type InboxMember } from "@optestra/spec";
 import type { Inbox, InboxFailureReason, InboxMessage, InboxResult } from "./types.js";
 
 // Run-time values for the `inbox` template namespace: {{inbox.code}}, {{inbox.link}},
@@ -15,7 +15,7 @@ import type { Inbox, InboxFailureReason, InboxMessage, InboxResult } from "./typ
 // recording keeps the template, never the one-time value.
 
 // The member list is the spec's, so the template namespace and this provider can't drift.
-export { INBOX_MEMBERS, type InboxMember } from "@testament/spec";
+export { INBOX_MEMBERS, type InboxMember } from "@optestra/spec";
 
 /** Secret names the values are typed under (labels `[secret:INBOX_CODE]`, …). */
 export const INBOX_SECRET_NAMES = { code: "INBOX_CODE", link: "INBOX_LINK" } as const;

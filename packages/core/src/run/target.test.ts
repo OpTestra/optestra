@@ -1,6 +1,6 @@
-import "@testament/android/section";
+import "@optestra/android/section";
 import { resolve } from "node:path";
-import { resolveConfig } from "@testament/config";
+import { resolveConfig } from "@optestra/config";
 import { describe, expect, it } from "vitest";
 import { cellLabel, engineKey, matrixOf, resolveTarget, type TargetCell } from "./target.js";
 

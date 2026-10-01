@@ -1,7 +1,7 @@
 # Acme Shop for Android as a project: the Bench fixture app (BEN-1).
-# Build the APKs (pnpm --filter @testament/fixture-android build:apks), then start
+# Build the APKs (pnpm --filter @optestra/fixture-android build:apks), then start
 # the shop's server on the port the app is built for:
-#   pnpm --filter @testament/fixture-shop start -- --port 4180
+#   pnpm --filter @optestra/fixture-shop start -- --port 4180
 version: 1
 
 project:

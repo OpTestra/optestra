@@ -8,15 +8,15 @@ import {
   pickLink,
   type SessionEntry,
   SessionStore,
-} from "@testament/auth";
-import type { Diagnostic } from "@testament/config";
+} from "@optestra/auth";
+import type { Diagnostic } from "@optestra/config";
 import {
   defaultRedactor,
   dotenvSource,
   findProject,
   loadProject,
   processEnvSource,
-} from "@testament/config/node";
+} from "@optestra/config/node";
 import type { Command } from "commander";
 import type { CommandIo } from "./config.js";
 

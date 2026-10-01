@@ -10,8 +10,8 @@
 
 import { writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import type { TestResult } from "@testament/contract";
-import { VARIANTS, type Variant } from "@testament/fixture-shop";
+import type { TestResult } from "@optestra/contract";
+import { VARIANTS, type Variant } from "@optestra/fixture-shop";
 import { mailpitRunning, replayShop, specShop } from "./shop.ts";
 
 const { values } = parseArgs({

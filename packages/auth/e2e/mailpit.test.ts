@@ -1,17 +1,17 @@
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { ENV_PREFIX } from "@testament/config";
-import { createSecretValue, loadProject, Redactor } from "@testament/config/node";
-import { verificationCode, startShop, type RunningShop } from "@testament/fixture-shop";
+import { ENV_PREFIX } from "@optestra/config";
+import { createSecretValue, loadProject, Redactor } from "@optestra/config/node";
+import { verificationCode, startShop, type RunningShop } from "@optestra/fixture-shop";
 import {
   launchBrowser,
   type LaunchedBrowser,
   type Observation,
   openSession,
   renderForModel,
-} from "@testament/browser";
+} from "@optestra/browser";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { checkProfiles, createInbox, createInboxValues, inboxSecret } from "@testament/auth";
+import { checkProfiles, createInbox, createInboxValues, inboxSecret } from "@optestra/auth";
 
 // SEC-5 end to end: the shop sends its sign-up code to a real Mailpit over SMTP; the
 // browser harness signs up, and the code is read through the Mailpit adapter and

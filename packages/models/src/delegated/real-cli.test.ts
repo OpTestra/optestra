@@ -1,7 +1,7 @@
 import { mkdtempSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { resolveConfig } from "@testament/config";
+import { resolveConfig } from "@optestra/config";
 import { describe, expect, it } from "vitest";
 import "../config.js";
 import { createModels } from "../client.js";

@@ -1,4 +1,4 @@
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { z } from "zod";
 import { isPlainObject } from "./paths.js";
 import { type ConfigRegistry, defaultRegistry } from "./registry.js";

@@ -1,5 +1,5 @@
-import type { StepResult } from "@testament/contract";
-import { type ExpectPost, routeOf, type TemplateVariable } from "@testament/recording";
+import type { StepResult } from "@optestra/contract";
+import { type ExpectPost, routeOf, type TemplateVariable } from "@optestra/recording";
 import { pageTemplate } from "../author/commands.js";
 import type { ActionOutcome, ElementSummary, Observation } from "../target/harness.js";
 

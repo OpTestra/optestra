@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
-import { brand } from "@testament/brand";
-import { type Config, type Diagnostic, hasErrors } from "@testament/config";
+import { brand } from "@optestra/brand";
+import { type Config, type Diagnostic, hasErrors } from "@optestra/config";
 import {
   defaultRedactor,
   dotenvSource,
@@ -8,9 +8,9 @@ import {
   loadProject,
   processEnvSource,
   type SecretSource,
-} from "@testament/config/node";
-import type { DecisionRecord } from "@testament/contract";
-import { readRun } from "@testament/contract/node";
+} from "@optestra/config/node";
+import type { DecisionRecord } from "@optestra/contract";
+import { readRun } from "@optestra/contract/node";
 import {
   createDecisions,
   type DecisionMetrics,
@@ -18,7 +18,7 @@ import {
   MODEL_BACKENDS,
   type ModelBackendId,
   metricsFromRecords,
-} from "@testament/decide";
+} from "@optestra/decide";
 import {
   type BackendCheck,
   type BackendSelection,
@@ -31,7 +31,7 @@ import {
   runEval,
   checkSystemOne,
   resolveDecisionBackend,
-} from "@testament/decide/node";
+} from "@optestra/decide/node";
 import type { CommandIo } from "./config.js";
 
 export interface DecisionsCommandOptions {

@@ -1,4 +1,4 @@
-import type { CheckOp, Sanity } from "@testament/recording";
+import type { CheckOp, Sanity } from "@optestra/recording";
 import type { CheckEvaluation, PageCopy } from "../target/harness.js";
 import type { CheckSession } from "./evaluate.js";
 

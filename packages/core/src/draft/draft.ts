@@ -1,15 +1,15 @@
-import type { Action, ActionOutcome, Observation, PageCopy, Session } from "@testament/browser";
-import { renderForModel } from "@testament/browser";
-import type { Config } from "@testament/config";
-import type { ModelCall } from "@testament/contract";
+import type { Action, ActionOutcome, Observation, PageCopy, Session } from "@optestra/browser";
+import { renderForModel } from "@optestra/browser";
+import type { Config } from "@optestra/config";
+import type { ModelCall } from "@optestra/contract";
 import {
   type BudgetMeter,
   type ImagePart,
   type Models,
   type TextPart,
   toModelCall,
-} from "@testament/models";
-import { type TemplateVariable, toTemplate } from "@testament/recording";
+} from "@optestra/models";
+import { type TemplateVariable, toTemplate } from "@optestra/recording";
 import {
   applySafeFixes,
   checkTest,
@@ -24,7 +24,7 @@ import {
   type Step,
   type TestSpec,
   template,
-} from "@testament/spec";
+} from "@optestra/spec";
 import { checkGuards } from "../author/guards.js";
 import { compileCheck } from "../checks/compile.js";
 import prompt from "./drafter-prompt.json" with { type: "json" };

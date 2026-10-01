@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
-import { brand } from "@testament/brand";
-import { findProject, projectFile } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { findProject, projectFile } from "@optestra/config/node";
 import type { CommandIo } from "./config.js";
 
 // `explore [url] --goal "…"` (EXPL-1, EXPL-2): roams the running app toward a
@@ -26,7 +26,7 @@ const posix = (path: string) => path.split(sep).join("/");
 export async function runExploreCommand(
   url: string | undefined,
   options: ExploreCommandOptions,
-  io: CommandIo & { explore?: typeof import("@testament/core/node").exploreProject },
+  io: CommandIo & { explore?: typeof import("@optestra/core/node").exploreProject },
 ): Promise<number> {
   const fail = (message: string) => {
     io.stdout(options.json ? `${JSON.stringify({ error: message }, null, 2)}\n` : `${message}\n`);
@@ -48,7 +48,7 @@ export async function runExploreCommand(
       return fail(`"${url}" is not a URL.`);
     }
   }
-  const core = await import("@testament/core/node");
+  const core = await import("@optestra/core/node");
   const explore = io.explore ?? core.exploreProject;
   if (!options.json) io.stdout(`Exploring toward "${options.goal.trim()}"…\n`);
   let result: Awaited<ReturnType<typeof core.exploreProject>>;

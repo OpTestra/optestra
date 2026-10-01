@@ -2,11 +2,11 @@ import type { RunningShop } from "./server.js";
 
 // A test inbox over the shop's own outbox, read in process (no network): for the
 // engine's e2e tests and the Bench when Mailpit isn't running. It has the shape of
-// @testament/auth's Inbox (the Mailpit adapter's), so a run can't tell the
+// @optestra/auth's Inbox (the Mailpit adapter's), so a run can't tell the
 // difference; the fixture doesn't import the engine. `hold` never delivers, for
 // the "no message in time" tests.
 
-/** Messages this long before `since` still count (as in @testament/auth). */
+/** Messages this long before `since` still count (as in @optestra/auth). */
 const CLOCK_SKEW_MS = 2000;
 
 interface OutboxMessage {

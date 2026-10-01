@@ -7,7 +7,7 @@ import {
   hasErrors,
   isPlainObject,
   type Provenance,
-} from "@testament/config";
+} from "@optestra/config";
 import {
   defaultRedactor,
   dotenvSource,
@@ -15,7 +15,7 @@ import {
   loadProject,
   processEnvSource,
   resolveSecrets,
-} from "@testament/config/node";
+} from "@optestra/config/node";
 
 export interface ConfigCommandOptions {
   env?: string;

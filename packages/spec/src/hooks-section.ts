@@ -1,4 +1,4 @@
-import { registerSection } from "@testament/config";
+import { registerSection } from "@optestra/config";
 import { z } from "zod";
 
 // Setup and teardown hooks (AUT-10). `run` scripts start only when their
@@ -62,7 +62,7 @@ export const hooksSchema = z
   })
   .describe("Setup and teardown hooks: what run: may start, and where sql: statements go.");
 
-declare module "@testament/config" {
+declare module "@optestra/config" {
   interface ConfigSections {
     hooks: HooksSettings;
   }

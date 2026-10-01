@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
-import { brand } from "@testament/brand";
-import { loadProject } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { loadProject } from "@optestra/config/node";
 import {
   type HealDecision,
   type HealProposal,
@@ -10,11 +10,11 @@ import {
   runLayout,
   type TestResult,
   withHealReview,
-} from "@testament/contract";
-import { readHealReview, readRun, writeHealReview } from "@testament/contract/node";
-import { healClass, missAction, sameElement } from "@testament/decide";
-import { createLabelStore } from "@testament/decide/node";
-import { readRecording, recordingPath, writeRecording } from "@testament/recording/node";
+} from "@optestra/contract";
+import { readHealReview, readRun, writeHealReview } from "@optestra/contract/node";
+import { healClass, missAction, sameElement } from "@optestra/decide";
+import { createLabelStore } from "@optestra/decide/node";
+import { readRecording, recordingPath, writeRecording } from "@optestra/recording/node";
 import { applyPatches, describeCommand, type HealPatch, HealPatchSchema } from "./patch.js";
 
 // Review and accept (HEAL-4). A run's heals are proposals; a person (or an
@@ -323,7 +323,7 @@ export async function applyHeals(
     const testPath = patches.get(patched.applied[0] as string)?.testPath ?? heals[0]?.file ?? "";
     if (options.generateSpecs ?? true) {
       try {
-        const { generateAfterRecording } = await import("@testament/codegen/node");
+        const { generateAfterRecording } = await import("@optestra/codegen/node");
         const generated = await generateAfterRecording(project, testPath, {
           ...(options.environment ? { environment: options.environment } : {}),
           ...(options.env ? { env: options.env } : {}),

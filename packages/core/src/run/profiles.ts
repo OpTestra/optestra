@@ -6,15 +6,15 @@ import {
   type LoginResult,
   type SessionStore,
   type StorageState,
-} from "@testament/auth";
-import type { Session } from "@testament/browser";
-import type { Config } from "@testament/config";
-import type { SecretValue } from "@testament/config/node";
-import type { StepResult } from "@testament/contract";
-import { type Recording, routeOf } from "@testament/recording";
-import { readRecording, recordingPath } from "@testament/recording/node";
-import type { ExpandedTest } from "@testament/spec";
-import { loadTest } from "@testament/spec/node";
+} from "@optestra/auth";
+import type { Session } from "@optestra/browser";
+import type { Config } from "@optestra/config";
+import type { SecretValue } from "@optestra/config/node";
+import type { StepResult } from "@optestra/contract";
+import { type Recording, routeOf } from "@optestra/recording";
+import { readRecording, recordingPath } from "@optestra/recording/node";
+import type { ExpandedTest } from "@optestra/spec";
+import { loadTest } from "@optestra/spec/node";
 import type { TestInbox } from "../author/inbox.js";
 import { replayAttempt } from "./replay.js";
 import type { PrepareOutcome, ReplayOptions, ReplayResult } from "./types.js";

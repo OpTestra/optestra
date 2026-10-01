@@ -3,11 +3,11 @@ import { existsSync, mkdtempSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { Allowlist } from "@testament/browser";
-import { defaultRedactor, Redactor } from "@testament/config/node";
+import { Allowlist } from "@optestra/browser";
+import { defaultRedactor, Redactor } from "@optestra/config/node";
 // RESTRICTED import: the Android driver types secrets into the app they belong to (SEC-1).
-import { prepareSecret, revealSecret } from "@testament/config/reveal";
-import type { CheckOp } from "@testament/recording";
+import { prepareSecret, revealSecret } from "@optestra/config/reveal";
+import type { CheckOp } from "@optestra/recording";
 import {
   type AndroidCheckOptions,
   AndroidRequestMark,

@@ -1,4 +1,4 @@
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import {
   type ArtifactRef,
   type Attempt,
@@ -11,7 +11,7 @@ import {
   type StepResult,
   needsRerecord,
   stepLabel,
-} from "@testament/contract";
+} from "@optestra/contract";
 import { encodePath, escapeHtml as h } from "../escape.js";
 import {
   buildModel,

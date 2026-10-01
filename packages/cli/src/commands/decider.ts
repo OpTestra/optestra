@@ -1,13 +1,13 @@
 import { resolve } from "node:path";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import {
   defaultRedactor,
   dotenvSource,
   findProject,
   loadProject,
   processEnvSource,
-} from "@testament/config/node";
-import type { DecisionsSettings } from "@testament/decide";
+} from "@optestra/config/node";
+import type { DecisionsSettings } from "@optestra/decide";
 import {
   canonicalModel,
   formatBytes,
@@ -16,7 +16,7 @@ import {
   ollayaStatus,
   pullModel,
   resolveBackendKey,
-} from "@testament/decide/node";
+} from "@optestra/decide/node";
 import type { CommandIo } from "./config.js";
 
 export interface DeciderSetupOptions {

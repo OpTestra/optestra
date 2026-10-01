@@ -1,6 +1,6 @@
-import type { CheckOp, Locator } from "@testament/recording";
+import type { CheckOp, Locator } from "@optestra/recording";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { LocatorSpec, PageCopy, Session } from "@testament/browser";
+import type { LocatorSpec, PageCopy, Session } from "@optestra/browser";
 import { ALLOWED, open, PASSWORD, secret, seed, shop } from "./helpers.js";
 
 // The check evaluator (LOOP-2) on the real shop: every op type, auto-waiting,

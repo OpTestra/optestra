@@ -17,10 +17,10 @@ A **fixture** is a small, realistic app plus:
   exactly as the manifest says.
 
 Three things are scored against the manifest: the reference suite (below),
-the engine's replay (`testament bench`, and `pnpm bench:replay` in CI), and AI
-models (`testament bench --models`).
+the engine's replay (`optestra bench`, and `pnpm bench:replay` in CI), and AI
+models (`optestra bench --models`).
 
-## `testament bench` (BEN-2)
+## `optestra bench` (BEN-2)
 
 ```bash
 node packages/cli/bin/cli.js bench [--fixture shop|android|all] [--reruns 10] [--variant v …] [--no-equivalence] [--save-baseline] [--json]
@@ -31,7 +31,7 @@ variant of the chosen fixtures replays from the committed recordings with no AI
 (`cosmetic` in normal mode with no model, so heals without AI happen), `correct`
 runs `--reruns` times, and the shop's replay verdicts are compared with its
 generated specs run as plain Playwright. Android runs when an emulator is
-available (`testament android setup`, APKs built); otherwise it is skipped with
+available (`optestra android setup`, APKs built); otherwise it is skipped with
 one line saying why. The report starts with how it was measured (engine version
 and commit, OS, Node, date, reruns, models, the command that reproduces it) and
 shows, per fixture and in total:
@@ -53,9 +53,9 @@ engine got worse on false passes, false fails, wrong verdicts, equivalence or AI
 calls on `correct` (flake and hit-rate changes are shown, not gated: they're
 noisy); 2 when Bench can't run. `--save-baseline` writes the run as the new
 baseline (commit it with the change that explains it). The scoring lives in
-`@testament/core/bench`; `pnpm bench:replay` uses the same code.
+`@optestra/core/bench`; `pnpm bench:replay` uses the same code.
 
-## Model evals (`testament bench --models`, MOD-9)
+## Model evals (`optestra bench --models`, MOD-9)
 
 ```bash
 node packages/cli/bin/cli.js bench --models claude-code:claude-sonnet-4-6 claude-code:claude-haiku-4-5 openrouter:z-ai/glm-4.6 --yes
@@ -82,16 +82,16 @@ Real models spend calls: without `--yes` the command prints the estimate (about
 model runs once; nothing retries. Real results are written to
 `bench/results/<date>-shop-models.json` with the date, engine version, commit and
 model ids, to be committed. The newest real result also gives the first-run
-(authoring) numbers in `testament bench`.
+(authoring) numbers in `optestra bench`.
 
-## The eval gate (`testament eval`, LRN-10)
+## The eval gate (`optestra eval`, LRN-10)
 
 ```bash
 node packages/cli/bin/cli.js eval [--backend rules|jev|kev|laya] [--models provider:model …] [--fixture shop] [--no-bench] [--save-baseline]
 ```
 
 **The gate for changing a default**: a decision backend, a prompt, or the
-default planner/fixer model is only switched when `testament eval` passes. It
+default planner/fixer model is only switched when `optestra eval` passes. It
 runs the decision evals (`decisions --eval`) with the candidate backend and
 Bench's false-pass check (every variant once, no AI), and with `--models` the
 model eval, then compares with the committed baseline:
@@ -105,7 +105,7 @@ Exit 0 passed, 1 failed, 2 couldn't run. It only reports; it never changes a
 test result or a default. After an accepted change, `--save-baseline` stores the
 decision eval results in `bench/baseline.json`.
 
-## Success measures (`testament bench --measures`)
+## Success measures (`optestra bench --measures`)
 
 Prints application section 10 with real numbers where there are some: the
 Bench numbers from the committed baseline (and which one), the time to a first
@@ -125,7 +125,7 @@ smoke duration as a labelled projection. Cloud and business measures are marked
 
 ```bash
 pnpm install
-pnpm --filter @testament/fixture-shop start -- --variant cosmetic --port 4100
+pnpm --filter @optestra/fixture-shop start -- --variant cosmetic --port 4100
 ```
 
 It builds, then serves on `http://127.0.0.1:4100`. `--help` lists the variants.

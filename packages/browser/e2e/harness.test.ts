@@ -8,7 +8,7 @@ import {
   type LaunchedBrowser,
   renderForModel,
   type Session,
-} from "@testament/browser";
+} from "@optestra/browser";
 import { find, hostile, login, open, PASSWORD, seed, shop } from "./helpers.js";
 
 // Observation, candidates, actions with post-state, settle and screenshots,

@@ -1,4 +1,4 @@
-import type { EvidenceRef } from "@testament/contract";
+import type { EvidenceRef } from "@optestra/contract";
 import type { z } from "zod";
 
 /**

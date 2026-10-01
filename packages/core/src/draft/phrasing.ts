@@ -1,4 +1,4 @@
-import type { ObservedElement } from "@testament/browser";
+import type { ObservedElement } from "@optestra/browser";
 
 // How a drafted action reads in the test (AUT-7). Written by code from the
 // element the action used, never by the model, so a draft's steps name what the

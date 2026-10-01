@@ -1,9 +1,9 @@
 ---
-"@testament/decide": minor
-"@testament/cli": minor
+"@optestra/decide": minor
+"@optestra/cli": minor
 ---
 
-Add the during-run decisions to `@testament/decide`. `same_element` scores
+Add the during-run decisions to `@optestra/decide`. `same_element` scores
 identity signals with weights from a data file, never guesses "same", and puts
 every signal's score in its evidence. `miss_action` implements the HEAL-1
 healing ladder: block, no_heal, replay_fallback, refind, call_fixer. New helpers:

@@ -1,4 +1,4 @@
-// THE ONLY FILE IN @testament/decide THAT TOUCHES THE NETWORK (see test/guards.test.ts).
+// THE ONLY FILE IN @optestra/decide THAT TOUCHES THE NETWORK (see test/guards.test.ts).
 // Every System One request (Jev, Kev, Laya via Ollaya) goes through `createTransport`,
 // which only talks to the configured backend's own host, so a key or a page's
 // state can never be sent anywhere else.

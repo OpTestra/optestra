@@ -1,4 +1,4 @@
-import type { Attempt, FailureCause, HealProposal, TestResult, Verdict } from "@testament/contract";
+import type { Attempt, FailureCause, HealProposal, TestResult, Verdict } from "@optestra/contract";
 import { createDecisions, type DecisionResult, type Decisions } from "./decide.js";
 import type { Evidence } from "./task.js";
 import type { FailureSignature } from "./tasks/duplicate-or-new.js";

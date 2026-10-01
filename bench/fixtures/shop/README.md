@@ -73,7 +73,7 @@ to that local Mailpit (SEC-5). Non-loopback hosts are refused.
 
 `shopInbox(shop)` (exported) is a test inbox over the shop's own outbox, read in
 process with no network: the engine's e2e tests and the Bench use it when
-Mailpit isn't running. It has the shape of `@testament/auth`'s `Inbox`.
+Mailpit isn't running. It has the shape of `@optestra/auth`'s `Inbox`.
 
 ## Auth profile
 

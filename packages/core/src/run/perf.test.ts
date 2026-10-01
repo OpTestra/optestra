@@ -1,4 +1,4 @@
-import type { ExpandedStep } from "@testament/spec";
+import type { ExpandedStep } from "@optestra/spec";
 import { describe, expect, it } from "vitest";
 import { stepLabelOf } from "./replay.js";
 import {

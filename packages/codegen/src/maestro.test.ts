@@ -2,9 +2,9 @@ import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync }
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
-import { loadTest } from "@testament/spec/node";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
+import { loadTest } from "@optestra/spec/node";
 import { afterAll, describe, expect, it } from "vitest";
 import { parseAllDocuments } from "yaml";
 import { fileState } from "./header.js";
@@ -27,7 +27,7 @@ afterAll(() => {
 function composeAndroid(): string {
   const dir = mkdtempSync(join(tmpdir(), "codegen-android-"));
   temps.push(dir);
-  // The `android` section belongs to @testament/android (not a codegen dependency):
+  // The `android` section belongs to @optestra/android (not a codegen dependency):
   // it says which emulator to use, nothing the flows depend on.
   const config = readFileSync(join(ANDROID_DIR, brand.configFileName), "utf8").replace(
     /\n# Tests run on Android[\s\S]*$/,

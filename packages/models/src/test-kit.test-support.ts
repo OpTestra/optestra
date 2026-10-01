@@ -1,5 +1,5 @@
-import { type Config, resolveConfig } from "@testament/config";
-import { createLogger, memorySource } from "@testament/config/node";
+import { type Config, resolveConfig } from "@optestra/config";
+import { createLogger, memorySource } from "@optestra/config/node";
 import { APICallError } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
 import "./config.js";

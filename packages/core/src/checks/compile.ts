@@ -1,5 +1,5 @@
-import type { BudgetMeter, ModelCallRecord, Models } from "@testament/models";
-import { type CheckOp, describeCheck, type Sanity } from "@testament/recording";
+import type { BudgetMeter, ModelCallRecord, Models } from "@optestra/models";
+import { type CheckOp, describeCheck, type Sanity } from "@optestra/recording";
 import type { PageCopy } from "../target/harness.js";
 import { compileByAi } from "./ai.js";
 import { type CheckSession, type EvaluatedCheck, evaluateCheck } from "./evaluate.js";

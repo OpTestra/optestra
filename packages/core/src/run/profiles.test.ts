@@ -1,8 +1,8 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type AuthProfile, SessionStore, type StorageState } from "@testament/auth";
-import { createLogger, Redactor } from "@testament/config/node";
+import { type AuthProfile, SessionStore, type StorageState } from "@optestra/auth";
+import { createLogger, Redactor } from "@optestra/config/node";
 import { afterEach, describe, expect, it } from "vitest";
 import { type ProfileLoginOptions, profileLogin } from "./profiles.js";
 import type { ReplayResult } from "./types.js";

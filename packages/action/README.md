@@ -1,4 +1,4 @@
-# Testament GitHub Action
+# Optestra GitHub Action
 
 Runs your plain-English tests on every pull request, **in your own runner, with
 your own keys**. Nothing is sent to us. You get:
@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # …start your app, or test a deployed preview (below)…
-      - uses: TestamentHQ/testament/packages/action@v1
+      - uses: optestra/optestra/packages/action@v1
         with:
           version: 0.4.2
         env:
@@ -70,9 +70,9 @@ the job summary; it warns that it couldn't post the comment or the check.
 | `mode` | `replay-only` | `replay-only`, `normal` or `rerecord` (see below) |
 | `comment` | `on` | `off`: job summary only |
 | `check` | `on` | `off`: no status check |
-| `check-name` | `Testament` | The check's name; each name gets its own comment |
+| `check-name` | `Optestra` | The check's name; each name gets its own comment |
 | `upload-artifacts` | `on` | `off`: upload nothing |
-| `artifact-prefix` | `testament` | Prefix for artifact names; use one per job when several jobs run the Action |
+| `artifact-prefix` | `optestra` | Prefix for artifact names; use one per job when several jobs run the Action |
 | `github-token` | `github.token` | Token for the comment and the check |
 | `node-version` | `24` | Node.js for the CLI |
 
@@ -94,7 +94,7 @@ recordings. So the default is `replay-only`:
   the next push.
 - **Strict**: a step that no longer matches its recording, a test without a
   recording, or a check that was never compiled **fails** with its reason. Record
-  and heal locally (`testament run`, then `testament heal --accept`), and commit
+  and heal locally (`optestra run`, then `optestra heal --accept`), and commit
   the recordings.
 
 Choose `mode: normal` to have CI heal with your AI key (spend capped by `budget`).
@@ -144,7 +144,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.deployment.sha }}
-      - uses: TestamentHQ/testament/packages/action@v1
+      - uses: optestra/optestra/packages/action@v1
         with:
           env: preview   # an environment whose allowedDomains include the preview host
         env:
@@ -163,7 +163,7 @@ in its secret's `domains`**, never anywhere else. Values never appear in
 evidence.
 
 ```yaml
-# testament.config.yaml
+# optestra.config.yaml
 secrets:
   VERCEL_BYPASS:
     domains: ["*.vercel.app"]
@@ -215,7 +215,7 @@ jobs:
         shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
-      - uses: TestamentHQ/testament/packages/action@v1
+      - uses: optestra/optestra/packages/action@v1
         with:
           shard: ${{ matrix.shard }}/4
 
@@ -227,16 +227,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v8
         with:
-          pattern: testament-run-*
+          pattern: optestra-run-*
           path: shards
-      - uses: TestamentHQ/testament/packages/action@v1
+      - uses: optestra/optestra/packages/action@v1
         with:
           merge: shards
 ```
 
 Tests are split by id (sorted, dealt out in turn): every machine computes the
 same slices, they never overlap, and their sizes differ by at most one.
-Locally: `testament run --shard 2/4` and `testament merge-runs <folders…> --out <dir>`.
+Locally: `optestra run --shard 2/4` and `optestra merge-runs <folders…> --out <dir>`.
 
 ## Other CI systems
 

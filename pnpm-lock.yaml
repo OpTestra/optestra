@@ -14,10 +14,10 @@ importers:
       '@changesets/cli':
         specifier: 3.0.3
         version: 3.0.3
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:*
         version: link:packages/brand
-      '@testament/cli':
+      '@optestra/cli':
         specifier: workspace:*
         version: link:packages/cli
       '@types/node':
@@ -53,37 +53,37 @@ importers:
 
   docs:
     devDependencies:
-      '@testament/action':
+      '@optestra/action':
         specifier: workspace:*
         version: link:../packages/action
-      '@testament/android':
+      '@optestra/android':
         specifier: workspace:*
         version: link:../packages/android
-      '@testament/auth':
+      '@optestra/auth':
         specifier: workspace:*
         version: link:../packages/auth
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:*
         version: link:../packages/brand
-      '@testament/cli':
+      '@optestra/cli':
         specifier: workspace:*
         version: link:../packages/cli
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:*
         version: link:../packages/config
-      '@testament/contract':
+      '@optestra/contract':
         specifier: workspace:*
         version: link:../packages/contract
-      '@testament/decide':
+      '@optestra/decide':
         specifier: workspace:*
         version: link:../packages/decide
-      '@testament/models':
+      '@optestra/models':
         specifier: workspace:*
         version: link:../packages/models
-      '@testament/report':
+      '@optestra/report':
         specifier: workspace:*
         version: link:../packages/report
-      '@testament/spec':
+      '@optestra/spec':
         specifier: workspace:*
         version: link:../packages/spec
       '@types/markdown-it':
@@ -109,29 +109,29 @@ importers:
 
   packages/android:
     dependencies:
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/browser':
+      '@optestra/browser':
         specifier: workspace:^
         version: link:../browser
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:^
         version: link:../config
-      '@testament/contract':
+      '@optestra/contract':
         specifier: workspace:^
         version: link:../contract
-      '@testament/recording':
+      '@optestra/recording':
         specifier: workspace:^
         version: link:../recording
       zod:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
-      '@testament/fixture-android':
+      '@optestra/fixture-android':
         specifier: workspace:*
         version: link:../../bench/fixtures/android
-      '@testament/fixture-shop':
+      '@optestra/fixture-shop':
         specifier: workspace:*
         version: link:../../bench/fixtures/shop
       yaml:
@@ -140,23 +140,23 @@ importers:
 
   packages/auth:
     dependencies:
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:^
         version: link:../config
-      '@testament/spec':
+      '@optestra/spec':
         specifier: workspace:^
         version: link:../spec
       zod:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
-      '@testament/browser':
+      '@optestra/browser':
         specifier: workspace:*
         version: link:../browser
-      '@testament/fixture-shop':
+      '@optestra/fixture-shop':
         specifier: workspace:*
         version: link:../../bench/fixtures/shop
 
@@ -164,109 +164,109 @@ importers:
 
   packages/browser:
     dependencies:
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:^
         version: link:../config
-      '@testament/contract':
+      '@optestra/contract':
         specifier: workspace:^
         version: link:../contract
-      '@testament/recording':
+      '@optestra/recording':
         specifier: workspace:^
         version: link:../recording
       playwright:
         specifier: 1.63.0
         version: 1.63.0
     devDependencies:
-      '@testament/fixture-shop':
+      '@optestra/fixture-shop':
         specifier: workspace:*
         version: link:../../bench/fixtures/shop
 
   packages/cli:
     dependencies:
-      '@testament/android':
+      '@optestra/android':
         specifier: workspace:^
         version: link:../android
-      '@testament/auth':
+      '@optestra/auth':
         specifier: workspace:^
         version: link:../auth
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/browser':
+      '@optestra/browser':
         specifier: workspace:^
         version: link:../browser
-      '@testament/codegen':
+      '@optestra/codegen':
         specifier: workspace:^
         version: link:../codegen
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:^
         version: link:../config
-      '@testament/contract':
+      '@optestra/contract':
         specifier: workspace:^
         version: link:../contract
-      '@testament/core':
+      '@optestra/core':
         specifier: workspace:^
         version: link:../core
-      '@testament/decide':
+      '@optestra/decide':
         specifier: workspace:^
         version: link:../decide
-      '@testament/mcp':
+      '@optestra/mcp':
         specifier: workspace:^
         version: link:../mcp
-      '@testament/models':
+      '@optestra/models':
         specifier: workspace:^
         version: link:../models
-      '@testament/recording':
+      '@optestra/recording':
         specifier: workspace:^
         version: link:../recording
-      '@testament/report':
+      '@optestra/report':
         specifier: workspace:^
         version: link:../report
-      '@testament/spec':
+      '@optestra/spec':
         specifier: workspace:^
         version: link:../spec
       commander:
         specifier: ^15.0.0
         version: 15.0.0
     devDependencies:
-      '@testament/fixture-shop':
+      '@optestra/fixture-shop':
         specifier: workspace:*
         version: link:../../bench/fixtures/shop
 
   packages/codegen:
     dependencies:
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:^
         version: link:../config
-      '@testament/recording':
+      '@optestra/recording':
         specifier: workspace:^
         version: link:../recording
-      '@testament/spec':
+      '@optestra/spec':
         specifier: workspace:^
         version: link:../spec
       zod:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
+      '@optestra/fixture-shop':
+        specifier: workspace:*
+        version: link:../../bench/fixtures/shop
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
-      '@testament/fixture-shop':
-        specifier: workspace:*
-        version: link:../../bench/fixtures/shop
       yaml:
         specifier: ^2.9.1
         version: 2.9.1
 
   packages/config:
     dependencies:
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
       yaml:
@@ -284,59 +284,59 @@ importers:
 
   packages/core:
     dependencies:
-      '@testament/android':
+      '@optestra/android':
         specifier: workspace:^
         version: link:../android
-      '@testament/auth':
+      '@optestra/auth':
         specifier: workspace:^
         version: link:../auth
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/browser':
+      '@optestra/browser':
         specifier: workspace:^
         version: link:../browser
-      '@testament/codegen':
+      '@optestra/codegen':
         specifier: workspace:^
         version: link:../codegen
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:^
         version: link:../config
-      '@testament/contract':
+      '@optestra/contract':
         specifier: workspace:^
         version: link:../contract
-      '@testament/decide':
+      '@optestra/decide':
         specifier: workspace:^
         version: link:../decide
-      '@testament/models':
+      '@optestra/models':
         specifier: workspace:^
         version: link:../models
-      '@testament/recording':
+      '@optestra/recording':
         specifier: workspace:^
         version: link:../recording
-      '@testament/spec':
+      '@optestra/spec':
         specifier: workspace:^
         version: link:../spec
       zod:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
-      '@testament/fixture-android':
+      '@optestra/fixture-android':
         specifier: workspace:*
         version: link:../../bench/fixtures/android
-      '@testament/fixture-shop':
+      '@optestra/fixture-shop':
         specifier: workspace:*
         version: link:../../bench/fixtures/shop
 
   packages/decide:
     dependencies:
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:^
         version: link:../config
-      '@testament/contract':
+      '@optestra/contract':
         specifier: workspace:^
         version: link:../contract
       zod:
@@ -345,35 +345,35 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:^
         version: link:../config
-      '@testament/contract':
+      '@optestra/contract':
         specifier: workspace:^
         version: link:../contract
-      '@testament/core':
+      '@optestra/core':
         specifier: workspace:^
         version: link:../core
-      '@testament/models':
+      '@optestra/models':
         specifier: workspace:^
         version: link:../models
-      '@testament/recording':
+      '@optestra/recording':
         specifier: workspace:^
         version: link:../recording
-      '@testament/report':
+      '@optestra/report':
         specifier: workspace:^
         version: link:../report
-      '@testament/spec':
+      '@optestra/spec':
         specifier: workspace:^
         version: link:../spec
       zod:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
-      '@testament/fixture-shop':
+      '@optestra/fixture-shop':
         specifier: workspace:*
         version: link:../../bench/fixtures/shop
       ajv:
@@ -400,13 +400,13 @@ importers:
       '@ai-sdk/openai-compatible':
         specifier: ^3.0.57
         version: 3.0.57(zod@4.6.5)
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:^
         version: link:../config
-      '@testament/contract':
+      '@optestra/contract':
         specifier: workspace:^
         version: link:../contract
       ai:
@@ -421,10 +421,10 @@ importers:
 
   packages/recording:
     dependencies:
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/spec':
+      '@optestra/spec':
         specifier: workspace:^
         version: link:../spec
       zod:
@@ -433,10 +433,10 @@ importers:
 
   packages/report:
     dependencies:
-      '@testament/brand':
+      '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
-      '@testament/contract':
+      '@optestra/contract':
         specifier: workspace:^
         version: link:../contract
     devDependencies:
@@ -452,10 +452,10 @@ importers:
 
   packages/spec:
     dependencies:
-      '@testament/config':
+      '@optestra/config':
         specifier: workspace:^
         version: link:../config
-      '@testament/contract':
+      '@optestra/contract':
         specifier: workspace:^
         version: link:../contract
       yaml:

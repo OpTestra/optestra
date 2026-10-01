@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { inboxEmailDomain } from "@testament/auth";
-import { type LaunchedBrowser, launchBrowser, openSession } from "@testament/browser";
-import { type Config, hasErrors } from "@testament/config";
+import { inboxEmailDomain } from "@optestra/auth";
+import { type LaunchedBrowser, launchBrowser, openSession } from "@optestra/browser";
+import { type Config, hasErrors } from "@optestra/config";
 import {
   dotenvSource,
   loadProject,
@@ -10,9 +10,9 @@ import {
   projectFile,
   resolveSecrets,
   type SecretSource,
-} from "@testament/config/node";
-import { BudgetMeter, createModels, type Models, projectUsageStore } from "@testament/models";
-import { loadTests, nodeFileReader } from "@testament/spec/node";
+} from "@optestra/config/node";
+import { BudgetMeter, createModels, type Models, projectUsageStore } from "@optestra/models";
+import { loadTests, nodeFileReader } from "@optestra/spec/node";
 import { type DraftEvent, type DraftLimits, type DraftResult, exploreDraft } from "./draft.js";
 import { slugOf } from "./phrasing.js";
 import { exploreStarters, type StarterSuggestions } from "./starters.js";

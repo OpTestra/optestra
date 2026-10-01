@@ -1,4 +1,4 @@
-import { registerSecretType, type SecretTypeDefinition } from "@testament/config/node";
+import { registerSecretType, type SecretTypeDefinition } from "@optestra/config/node";
 import "./section.js";
 import { freshTotp, parseTotpSeed } from "./totp.js";
 

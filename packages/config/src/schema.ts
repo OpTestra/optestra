@@ -166,7 +166,7 @@ export interface EnvironmentSettings {
 
 /**
  * Top-level sections. Phases that register a section extend this interface:
- * `declare module "@testament/config" { interface ConfigSections { models: ModelSettings } }`
+ * `declare module "@optestra/config" { interface ConfigSections { models: ModelSettings } }`
  */
 export interface ConfigSections {
   project: ProjectSettings;

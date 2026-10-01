@@ -61,7 +61,7 @@ jobs:
           working-directory: bench/fixtures/shop
           tests: ${{ env.DOGFOOD_TESTS }}
           # brand:next check-name: "{productName} (dogfood)"
-          check-name: "Testament (dogfood)"
+          check-name: "Optestra (dogfood)"
           artifact-prefix: dogfood
 
   shard:
@@ -118,5 +118,5 @@ jobs:
           working-directory: bench/fixtures/shop
           merge: ../../../shards
           # brand:next check-name: "{productName} (dogfood, 4 shards)"
-          check-name: "Testament (dogfood, 4 shards)"
+          check-name: "Optestra (dogfood, 4 shards)"
           artifact-prefix: dogfood-sharded

@@ -1,8 +1,8 @@
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import { brand } from "@testament/brand";
-import { hasErrors } from "@testament/config";
+import { brand } from "@optestra/brand";
+import { hasErrors } from "@optestra/config";
 import {
   dotenvSource,
   findProject,
@@ -10,9 +10,9 @@ import {
   processEnvSource,
   projectFile,
   resolveSecrets,
-} from "@testament/config/node";
-import { hasSpecErrors } from "@testament/spec";
-import { loadTest } from "@testament/spec/node";
+} from "@optestra/config/node";
+import { hasSpecErrors } from "@optestra/spec";
+import { loadTest } from "@optestra/spec/node";
 import type { CommandIo } from "./config.js";
 import { formatSpecDiagnostic } from "./tests.js";
 
@@ -59,7 +59,7 @@ export async function runAuthorCommand(
     return 2;
   }
   // Registers the models section before the config is loaded.
-  const models = await import("@testament/models");
+  const models = await import("@optestra/models");
   const loaded = loadProject(dir, { environment: options.env, env: io.env });
   if (hasErrors(loaded.diagnostics)) {
     for (const d of loaded.diagnostics.filter((d) => d.severity === "error")) {
@@ -74,7 +74,7 @@ export async function runAuthorCommand(
     return 2;
   }
   const config = loaded.config;
-  const coreNode = await import("@testament/core/node");
+  const coreNode = await import("@optestra/core/node");
   // The target (MOB-1): a browser on the environment's baseUrl, or the app on an emulator.
   const resolved = await coreNode.resolveTarget(dir, config, environment, {
     ...(options.browser ? { browser: options.browser as "chromium" | "firefox" | "webkit" } : {}),
@@ -87,7 +87,7 @@ export async function runAuthorCommand(
   }
   const target = resolved.target;
   const path = posix(relative(dir, absolute));
-  const auth = await import("@testament/auth");
+  const auth = await import("@optestra/auth");
   const usesInbox = config.inbox !== undefined && config.inbox.provider !== "none";
   const test = await loadTest(dir, path, config, {
     environment: environment.name,
@@ -110,8 +110,8 @@ export async function runAuthorCommand(
 
   const sources = [processEnvSource(io.env), dotenvSource(dir)];
   const secrets = resolveSecrets(config, sources, { environment: environment.name });
-  const core = await import("@testament/core");
-  const { readRecording, recordingPath } = await import("@testament/recording/node");
+  const core = await import("@optestra/core");
+  const { readRecording, recordingPath } = await import("@optestra/recording/node");
 
   const budget = models.BudgetMeter.forRun(config);
   const client = models.createModels({
@@ -129,7 +129,7 @@ export async function runAuthorCommand(
   }
 
   // The test inbox (SEC-5): read_inbox and {{inbox.code}} / {{inbox.link}}.
-  let inbox: import("@testament/core").TestInbox | undefined;
+  let inbox: import("@optestra/core").TestInbox | undefined;
   if (usesInbox) {
     const created = auth.createInbox(config, { sources, environment: environment.name });
     if (created.ok)
@@ -170,7 +170,7 @@ export async function runAuthorCommand(
     return 2;
   }
 
-  let worker: import("@testament/core/node").TargetWorker;
+  let worker: import("@optestra/core/node").TargetWorker;
   try {
     worker = await coreNode.launchWorker(target, cell, { headless: !options.headed });
   } catch (error) {
@@ -194,8 +194,8 @@ export async function runAuthorCommand(
   const session = opened.session;
   const web = opened.web;
   const openLogin = worker.openLoginSession;
-  const { createDecisions } = await import("@testament/decide");
-  const { ulid } = await import("@testament/contract");
+  const { createDecisions } = await import("@optestra/decide");
+  const { ulid } = await import("@optestra/contract");
   const prepare =
     profileName && profile && web && openLogin
       ? coreNode.authoringLogin({
@@ -237,7 +237,7 @@ export async function runAuthorCommand(
   let result: Awaited<ReturnType<typeof core.authorTest>>;
   let closed: Awaited<ReturnType<typeof session.close>> | undefined;
   try {
-    const { defaultRedactor } = await import("@testament/config/node");
+    const { defaultRedactor } = await import("@optestra/config/node");
     result = await core.authorTest(test.expanded, {
       session,
       hookContext: {
@@ -327,7 +327,7 @@ export async function runAuthorCommand(
   // Playwright spec, or for Android a Maestro flow (MOB-6).
   const specNotes: string[] = [];
   try {
-    const { generateAfterRecording } = await import("@testament/codegen/node");
+    const { generateAfterRecording } = await import("@optestra/codegen/node");
     const generated = await generateAfterRecording(dir, path, {
       environment: environment.name,
       env: io.env,

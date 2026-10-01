@@ -1,9 +1,9 @@
 import { spawn } from "node:child_process";
 import { existsSync, realpathSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
-import type { SecretValue } from "@testament/config/node";
-import { revealSecret } from "@testament/config/reveal";
-import { type HooksSettings, matchGlob } from "@testament/spec";
+import type { SecretValue } from "@optestra/config/node";
+import { revealSecret } from "@optestra/config/reveal";
+import { type HooksSettings, matchGlob } from "@optestra/spec";
 
 // `run:` and `sql:` hooks (AUT-10). Declared, scoped and safe:
 // - run: only a command listed in `hooks.run.allow` (a program on the PATH, or

@@ -1,4 +1,4 @@
-import { stepLabel } from "@testament/contract";
+import { stepLabel } from "@optestra/contract";
 import { escapeXml as x, escapeXmlAttr as xa } from "./escape.js";
 import {
   buildModel,

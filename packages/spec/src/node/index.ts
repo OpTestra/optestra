@@ -1,7 +1,7 @@
 /** Node entry: finding and loading the tests of a project on disk. */
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
-import type { Config } from "@testament/config";
+import type { Config } from "@optestra/config";
 import { type SpecDiagnostic, sortDiagnostics } from "../diagnostics.js";
 import { type ExpandedTest, expandTest, type FileReader, normalizePath } from "../expand.js";
 import type { GeneratorRegistry } from "../generators.js";

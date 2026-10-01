@@ -1,4 +1,4 @@
-# @testament/recording
+# @optestra/recording
 
 The recording format (REP-1). For each test, one file lists what was done for
 every step (the commands, with locators, fingerprints, templates and learned
@@ -9,15 +9,15 @@ says a step passed.
 
 | Import | Use | Runs in |
 |---|---|---|
-| `@testament/recording` | zod schemas and types, `serializeRecording` / `parseRecording`, `routeOf`, `stepKey`, `checkKey`, `RECORDING_EPOCH`, templates (`toTemplate`, `templateParts`, `templateRefs`), `describeCheck` / `describeLocator` (check summaries), `bindCheck` | browser and Node (the apps display recordings) |
-| `@testament/recording/node` | `recordingPath`, `readRecording`, `writeRecording` (atomic) | Node |
+| `@optestra/recording` | zod schemas and types, `serializeRecording` / `parseRecording`, `routeOf`, `stepKey`, `checkKey`, `RECORDING_EPOCH`, templates (`toTemplate`, `templateParts`, `templateRefs`), `describeCheck` / `describeLocator` (check summaries), `bindCheck` | browser and Node (the apps display recordings) |
+| `@optestra/recording/node` | `recordingPath`, `readRecording`, `writeRecording` (atomic) | Node |
 
 ## Where it lives
 
-`<tests dir>/.testament/<testId>.steps.json`, next to the tests. The folder
+`<tests dir>/.optestra/<testId>.steps.json`, next to the tests. The folder
 name comes from brand, and the file is committed to git. `testId` is the
 contract's `testIdFromPath`, e.g. `tests__login`. The authoring reports live in
-the project's own data folder (`.testament/authoring/`), which stays local.
+the project's own data folder (`.optestra/authoring/`), which stays local.
 
 ## Shape
 
@@ -66,7 +66,7 @@ only real changes.
 
 - **action**: a LOOP-0 action (`goto click dblclick fill select check uncheck
   press hover scroll upload back reload waitFor`). Its target is always a
-  locator (`LocatorSchema`, the same shape as `@testament/browser`'s
+  locator (`LocatorSchema`, the same shape as `@optestra/browser`'s
   `LocatorSpec`, with an optional iframe path), never a ref.
 - **fingerprint**: what re-finding the element without AI needs (HEAL-1).
   - `primary` is the top unique locator candidate.
@@ -76,7 +76,7 @@ only real changes.
 - **expectPost**: what replay should see after the command (VER-5). Every string
   in it is a template. `reordered: true` records an action that only reordered
   the page (a table sort). At replay, some of it must show up (see
-  `@testament/core`, "How a run works").
+  `@optestra/core`, "How a run works").
 - **wait**: how long the page took to settle (LRN-4). Replay waits this long
   (at least 400 ms, at most 3 s) before a second look when the effect hasn't
   shown yet. `until` is for learned wait conditions (not written yet).
@@ -101,7 +101,7 @@ value ever enters it.
 
 Every Expect / Soft line, and every `Exact:` expect op, has one check: a typed
 op that plain code evaluates on every run (VER-1, VER-2). LOOP-2 compiles
-them; see `@testament/core`'s README ("How Expect lines become checks").
+them; see `@optestra/core`'s README ("How Expect lines become checks").
 
 | `type` | Fields | Passes when |
 |---|---|---|
@@ -151,7 +151,7 @@ to a secret is refused: secrets are never check values.
   So `/orders/1042/items/?x=1` becomes `/orders/:id/items`. Non-http pages
   keep their scheme (`about:blank`).
 - **`key`** is `stepKey(textKey, route, epoch)`: FNV-1a 64-bit hex of
-  `["s1", textKey, route, epoch]`. `textKey` comes from `@testament/spec`:
+  `["s1", textKey, route, epoch]`. `textKey` comes from `@optestra/spec`:
   - it is built from the step's text with variables by name, its flow chain
     and its occurrence;
   - values never enter it;

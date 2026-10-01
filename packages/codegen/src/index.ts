@@ -3,7 +3,7 @@
  * `<tests dir>/<data dir>/<testId>.spec.ts` plus the shared fixtures module and
  * Playwright config. The output imports only `@playwright/test` and the files
  * next to it. Node only (the runtime templates are read from disk);
- * `@testament/codegen/node` finds tests and recordings in a project and writes
+ * `@optestra/codegen/node` finds tests and recordings in a project and writes
  * the files.
  */
 export { DOCS_URL, type FileState, fileState, type Header, withHeader } from "./header.js";

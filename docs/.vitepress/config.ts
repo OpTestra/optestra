@@ -1,4 +1,4 @@
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { defineConfig } from "vitepress";
 import { brandText, REPO } from "./brand.ts";
 import { writeLlmsFiles } from "./llms.ts";

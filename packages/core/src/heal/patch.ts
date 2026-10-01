@@ -5,7 +5,7 @@ import {
   type Fingerprint,
   type Locator,
   type Recording,
-} from "@testament/recording";
+} from "@optestra/recording";
 import { z } from "zod";
 import type { ElementFacts } from "../target/harness.js";
 

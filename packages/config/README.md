@@ -1,19 +1,19 @@
-# @testament/config
+# @optestra/config
 
 Project settings, environments and secrets. Read by the CLI, the desktop app's
 Settings screen, the cloud API and workers, and every engine phase.
 
-The project file is YAML (`testament.config.yaml`; the name comes from brand.json).
+The project file is YAML (`optestra.config.yaml`; the name comes from brand.json).
 Loading is pure parsing: no code in config is ever executed.
 
 ## Entry points
 
 | Import | Use | Runs in |
 |---|---|---|
-| `@testament/config` | schema, types, defaults, `resolveConfig`, diagnostics, `configJsonSchema`, `registerSection` | browser and Node |
-| `@testament/config/node` | `findProject`, `loadProject`, `saveProject`, `createProject`, `.env` parsing, secret sources, `resolveSecrets`, `Redactor`, the redacting logger (`createLogger`, `logger`; core re-exports them) | Node |
-| `@testament/config/reveal` | `revealSecret`: **restricted** (see below) | Node |
-| `@testament/config/schema.json` | JSON Schema of the project file (generated at build) | editors, settings forms |
+| `@optestra/config` | schema, types, defaults, `resolveConfig`, diagnostics, `configJsonSchema`, `registerSection` | browser and Node |
+| `@optestra/config/node` | `findProject`, `loadProject`, `saveProject`, `createProject`, `.env` parsing, secret sources, `resolveSecrets`, `Redactor`, the redacting logger (`createLogger`, `logger`; core re-exports them) | Node |
+| `@optestra/config/reveal` | `revealSecret`: **restricted** (see below) | Node |
+| `@optestra/config/schema.json` | JSON Schema of the project file (generated at build) | editors, settings forms |
 
 ## Resolution order
 
@@ -27,7 +27,7 @@ Lowest to highest. Objects merge key by key; arrays and plain values replace;
    (today `run` and `secrets`) can be set inside an environment, e.g.
    `environments.production.run.retries: 0`.
 4. **Environment variables.** `PREFIX_` is the upper-cased CLI name plus `_`
-   (`TESTAMENT_` today):
+   (`OPTESTRA_` today):
    - `PREFIX_ENVIRONMENT` chooses the environment.
    - `PREFIX_<SECTION>_<FIELD>` sets a plain value, e.g. `PREFIX_RUN_RETRIES=0`
      or `PREFIX_RUN_BUDGET_MAX_PER_RUN_USD=2`. Lists are comma-separated.
@@ -73,7 +73,7 @@ URL-encoded, form-encoded, JSON-escaped and base64/base64url forms) is registere
 with the process-wide `defaultRedactor`. The engine logger in `core` passes every
 line through it.
 
-**`@testament/config/reveal` is restricted.** Only these places may import it
+**`@optestra/config/reveal` is restricted.** Only these places may import it
 (`test/guards.test.ts` lists the files):
 - the browser and Android drivers, to type a value into an allowed domain;
 - `packages/models`, to send a provider key to that provider's own host;
@@ -91,7 +91,7 @@ before typing).
 A declaration may set `type` (default `text`). Other types are registered by the
 package that owns them, like config sections
 (`registerSecretType({ type, check, producer })` in `/node`):
-- `totp` (from `@testament/auth`): the value is a TOTP seed (base32 or an
+- `totp` (from `@optestra/auth`): the value is a TOTP seed (base32 or an
   `otpauth://` URI) and typing it types the current code.
 
 `resolveSecrets` checks each typed value with the type's `check`. A bad value is
@@ -125,13 +125,13 @@ values) and `.gitignore` lines. It never overwrites a file and only appends
 missing `.gitignore` lines, so running it twice changes nothing. The lines
 ignore `.env`, `.env.*` (but not `.env.example`) and the local data folder,
 and re-include `/<testsDir>/<data dir>/` (recordings and generated specs are
-committed) except its `authoring/` folder. `testament init` and the apps' "New
+committed) except its `authoring/` folder. `optestra init` and the apps' "New
 project" use it.
 
 ## Adding a section (later phases)
 
 ```ts
-import { registerSection } from "@testament/config";
+import { registerSection } from "@optestra/config";
 import { z } from "zod";
 
 registerSection({
@@ -141,7 +141,7 @@ registerSection({
   environmentOverride: true,
 });
 
-declare module "@testament/config" {
+declare module "@optestra/config" {
   interface ConfigSections {
     models: { provider: string; maxTokens: number };
   }
@@ -154,13 +154,13 @@ loader or merge change is needed. Register it when the owning package loads,
 before any config is loaded. Values in `defaults.yaml` under the same key win
 over `defaults`.
 
-Registered sections today: `models` (from `@testament/models`), `tests` (where
-the test files are) and `lint` (rule levels, strict) from `@testament/spec`,
+Registered sections today: `models` (from `@optestra/models`), `tests` (where
+the test files are) and `lint` (rule levels, strict) from `@optestra/spec`,
 `decisions` (decision backend and its jev/kev/laya settings, thresholds, time limits,
-cache) from `@testament/decide`, and `auth` (login profiles, TOTP) and `inbox` (test
-email inboxes) from `@testament/auth`. Import the owning package before
+cache) from `@optestra/decide`, and `auth` (login profiles, TOTP) and `inbox` (test
+email inboxes) from `@optestra/auth`. Import the owning package before
 loading config, or the section is reported as unknown. The full schema
-including `models` is `@testament/models/schema.json`.
+including `models` is `@optestra/models/schema.json`.
 
 After editing `defaults.yaml`, run `pnpm --filter ./packages/config gen:defaults`.
 A test fails if you forget.

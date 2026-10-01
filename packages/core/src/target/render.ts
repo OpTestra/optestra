@@ -1,8 +1,5 @@
-import { renderForModel as renderAndroid } from "@testament/android";
-import {
-  renderForModel as renderWeb,
-  type Observation as WebObservation,
-} from "@testament/browser";
+import { renderForModel as renderAndroid } from "@optestra/android";
+import { renderForModel as renderWeb, type Observation as WebObservation } from "@optestra/browser";
 import type { HarnessObservation } from "./harness.js";
 
 /**

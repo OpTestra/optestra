@@ -2,8 +2,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { brand } from "@testament/brand";
-import { ENV_PREFIX } from "@testament/config";
+import { brand } from "@optestra/brand";
+import { ENV_PREFIX } from "@optestra/config";
 import devicesData from "./devices.json" with { type: "json" };
 import versionsData from "./versions.json" with { type: "json" };
 

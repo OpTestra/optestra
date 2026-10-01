@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { brand } from "@testament/brand";
+import { brand } from "@optestra/brand";
 import { brandText } from "./brand.ts";
 import { SECTIONS } from "./pages.ts";
 

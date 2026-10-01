@@ -1,5 +1,5 @@
-import type { ModelCall } from "@testament/contract";
-import { createDecisions } from "@testament/decide";
+import type { ModelCall } from "@optestra/contract";
+import { createDecisions } from "@optestra/decide";
 import {
   type Command,
   checkKey,
@@ -10,8 +10,8 @@ import {
   type Recording,
   routeOf,
   stepKey,
-} from "@testament/recording";
-import { type ExpandedTest, expandTest, mapReader, parseTest } from "@testament/spec";
+} from "@optestra/recording";
+import { type ExpandedTest, expandTest, mapReader, parseTest } from "@optestra/spec";
 import type {
   ActOptions,
   ActionOutcome,

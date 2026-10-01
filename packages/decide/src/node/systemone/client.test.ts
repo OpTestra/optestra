@@ -1,9 +1,9 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { defaultRegistry } from "@testament/config";
-import { memorySource, Redactor } from "@testament/config/node";
-import type { DecisionRecord } from "@testament/contract";
+import { defaultRegistry } from "@optestra/config";
+import { memorySource, Redactor } from "@optestra/config/node";
+import type { DecisionRecord } from "@optestra/contract";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 import { createDecisions, type DecisionMeta, type DecisionsSettings } from "../../index.js";
 import { createSystemOneBackend } from "./client.js";

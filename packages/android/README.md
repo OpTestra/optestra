@@ -1,15 +1,15 @@
-# @testament/android
+# @optestra/android
 
 The Android harness: the one safe, controlled emulator session that the agent
 and the replayer (MOB-1) drive, the Android counterpart of
-[`@testament/browser`](../browser/README.md). It boots and resets emulators,
+[`@optestra/browser`](../browser/README.md). It boots and resets emulators,
 installs the APK under test fresh for every session, enforces the allowed domains
 at the network layer, observes screens through the accessibility tree, offers a
 closed set of actions, types secrets and captures evidence. It makes no AI calls
 and reads no test files. Node only.
 
 ```ts
-import { launchEmulator, openAndroidSession, renderForModel } from "@testament/android";
+import { launchEmulator, openAndroidSession, renderForModel } from "@optestra/android";
 
 const emulator = await launchEmulator({ androidVersion: "16", device: "pixel-8" }); // one per worker
 const opened = await openAndroidSession({                                          // one per test
@@ -55,7 +55,7 @@ emulator).
 1. **Same shapes as the web harness.** `Observation`, targets and
    `LocatorSpec`, `ActionOutcome` with `post` and `changed`, `candidates(ref)` with
    `ElementFacts`, `SettleResult`, `CheckEvaluation` and screenshots are
-   `@testament/browser`'s types. Android adds actions, `AndroidPostState`
+   `@optestra/browser`'s types. Android adds actions, `AndroidPostState`
    (`toasts`, `app`) and the `outside_app` refusal.
 2. **Fresh and isolated (MOB-2, SAF-7).** Every AVD has a clean snapshot, made once
    per AVD and driver build: calm settings (no animations, no password echo, no
@@ -308,7 +308,7 @@ the web names of shared actions: `goto` (a deep link; a URL needs its scheme),
 takes `baseUrl` for the hooks.
 
 The package registers the `android` config section (light entry point
-`@testament/android/section`):
+`@optestra/android/section`):
 
 ```yaml
 android:
@@ -349,9 +349,9 @@ Java at run time). A session reports `matrixEntry()` →
 ## Setup
 
 ```bash
-testament android setup [--android 16 17] [--install [--yes]] [--json]
-testament android doctor [--json]
-testament android snapshot app.apk --allow 10.0.2.2:4180 [--window] [--screenshot out.png]
+optestra android setup [--android 16 17] [--install [--yes]] [--json]
+optestra android doctor [--json]
+optestra android snapshot app.apk --allow 10.0.2.2:4180 [--window] [--screenshot out.png]
 ```
 
 - `setup` lists what is missing (adb, the emulator, a system image per version),
@@ -361,7 +361,7 @@ testament android snapshot app.apk --allow 10.0.2.2:4180 [--window] [--screensho
 - `doctor` checks the SDK, the emulator, hardware acceleration, the system images,
   the driver and the prepared emulators, and changes nothing.
 
-The driver APK is built from source: `pnpm --filter @testament/android build:driver`
+The driver APK is built from source: `pnpm --filter @optestra/android build:driver`
 (needs Java 17+ and Gradle; no wrapper jar is committed). Published packages will
 ship it as `driver.apk`.
 
@@ -383,7 +383,7 @@ MOB-2's target is a cloud emulator ready in under 60 s.
   `src/*.test.ts`. The hierarchy, locator and check tests use real dumps of the
   fixture's screens in `src/fixtures/`, captured with
   `node --experimental-strip-types scripts/capture-dumps.mts`.
-- `pnpm --filter @testament/android test:android` runs `e2e/` on an emulator
+- `pnpm --filter @optestra/android test:android` runs `e2e/` on an emulator
   against the Acme Shop Android fixture (`bench/fixtures/android`), with the
   shop's server on port 4180:
   - `android.test.ts`: the harness itself;

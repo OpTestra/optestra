@@ -1,4 +1,4 @@
-import { defaultRegistry, SECRET_NAME } from "@testament/config";
+import { defaultRegistry, SECRET_NAME } from "@optestra/config";
 import { z } from "zod";
 
 // The `auth` and `inbox` config sections (SEC-3, SEC-4, SEC-5). Defaults live in
@@ -145,7 +145,7 @@ export const inboxSchema = z
 if (!defaultRegistry.has("auth")) defaultRegistry.register({ key: "auth", schema: authSchema });
 if (!defaultRegistry.has("inbox")) defaultRegistry.register({ key: "inbox", schema: inboxSchema });
 
-declare module "@testament/config" {
+declare module "@optestra/config" {
   interface ConfigSections {
     auth: AuthSettings;
     inbox: InboxSettings;

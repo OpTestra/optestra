@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { brand } from "@testament/brand";
-import { findProject, projectFile } from "@testament/config/node";
+import { brand } from "@optestra/brand";
+import { findProject, projectFile } from "@optestra/config/node";
 import type { CommandIo } from "./config.js";
 
 // `generate [tests…]`: writes the plain Playwright spec of every recorded test
@@ -35,7 +35,7 @@ export async function runGenerateCommand(
     io.stdout(`No ${brand.configFileName} found. Run this inside a project, or pass --dir.\n`);
     return 2;
   }
-  const { generateProject } = await import("@testament/codegen/node");
+  const { generateProject } = await import("@optestra/codegen/node");
   const result = await generateProject({
     projectDir: dir,
     tests,

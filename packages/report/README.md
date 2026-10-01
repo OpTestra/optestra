@@ -1,4 +1,4 @@
-# @testament/report
+# @optestra/report
 
 Turns a run folder (the [results contract](../contract/README.md)) into what
 people and tools read: an offline HTML report, JUnit XML, a JSON summary for
@@ -14,16 +14,16 @@ never carry a value that isn't already in the (scrubbed) documents.
 
 | Import | Use | Runs in |
 |---|---|---|
-| `@testament/report` | `renderHtmlReport`, `renderJunit`, `renderJsonSummary` / `buildResultsSummary`, `renderMarkdownSummary`, `fillArtifactLinks`, `formatTestLine` / `formatRunSummary` / `formatTerminal`, `buildModel`, `defaultTokens` | browser and Node |
-| `@testament/report/node` | `loadRunData`, `writeHtmlReport`, `writeFileAtomic`, `latestRunDir`, `runsDir`, `shouldUseColor`, `openFile` | Node |
-| `@testament/report/schema/results-summary.json` | JSON Schema of the JSON summary (generated at build) | other languages, tools |
+| `@optestra/report` | `renderHtmlReport`, `renderJunit`, `renderJsonSummary` / `buildResultsSummary`, `renderMarkdownSummary`, `fillArtifactLinks`, `formatTestLine` / `formatRunSummary` / `formatTerminal`, `buildModel`, `defaultTokens` | browser and Node |
+| `@optestra/report/node` | `loadRunData`, `writeHtmlReport`, `writeFileAtomic`, `latestRunDir`, `runsDir`, `shouldUseColor`, `openFile` | Node |
+| `@optestra/report/schema/results-summary.json` | JSON Schema of the JSON summary (generated at build) | other languages, tools |
 
 All renderers take `RunData = { run, tests, diagnostics? }`, which is what
-`readRun` from `@testament/contract/node` returns (`loadRunData` wraps it).
+`readRun` from `@optestra/contract/node` returns (`loadRunData` wraps it).
 
 ```ts
-import { renderMarkdownSummary } from "@testament/report";
-import { loadRunData, writeHtmlReport } from "@testament/report/node";
+import { renderMarkdownSummary } from "@optestra/report";
+import { loadRunData, writeHtmlReport } from "@optestra/report/node";
 
 const loaded = loadRunData(runDir);
 if (loaded.ok) {
@@ -35,8 +35,8 @@ if (loaded.ok) {
 ## CLI
 
 ```
-testament report [runDir] [--out dir] [--open] [-C dir]
-testament results <runDir> [--junit file] [--json [file]] [--markdown file]
+optestra report [runDir] [--out dir] [--open] [-C dir]
+optestra results <runDir> [--junit file] [--json [file]] [--markdown file]
 ```
 
 `report` defaults to the newest finished run in the project's data folder
@@ -157,7 +157,7 @@ Control characters in contract text are stripped.
   Markdown cap on a 5,000-test run, escaping, and the planted-secret test:
   a secret written into every artifact, log and event (and the environment)
   appears in no output, and every output is byte-identical to the clean run's.
-- `e2e/report.browser.test.ts` (`pnpm --filter @testament/report test:browser`,
+- `e2e/report.browser.test.ts` (`pnpm --filter @optestra/report test:browser`,
   in the CI `fixtures` job): each fixture's report opened from disk in Chromium
   with axe (light and dark), zero network requests, images loading, JS disabled,
   the first screen showing the headline and screenshot, and the filters.

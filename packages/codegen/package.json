@@ -1,5 +1,5 @@
 {
-  "name": "@testament/codegen",
+  "name": "@optestra/codegen",
   "version": "0.1.0",
   "description": "Generates plain Playwright specs from recordings: portable test code you own, no runtime needed.",
   "license": "MIT",
@@ -24,15 +24,15 @@
     "test:browser": "tsc -b ../../bench/fixtures/shop . && vitest run --config vitest.config.ts"
   },
   "dependencies": {
-    "@testament/brand": "workspace:^",
-    "@testament/config": "workspace:^",
-    "@testament/recording": "workspace:^",
-    "@testament/spec": "workspace:^",
+    "@optestra/brand": "workspace:^",
+    "@optestra/config": "workspace:^",
+    "@optestra/recording": "workspace:^",
+    "@optestra/spec": "workspace:^",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
-    "@testament/fixture-shop": "workspace:*",
+    "@optestra/fixture-shop": "workspace:*",
     "yaml": "^2.9.1"
   },
   "engines": {

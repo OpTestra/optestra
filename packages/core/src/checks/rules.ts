@@ -1,4 +1,4 @@
-import type { CheckOp, Locator } from "@testament/recording";
+import type { CheckOp, Locator } from "@optestra/recording";
 import type { Observation } from "../target/harness.js";
 import phrases from "./phrases.json" with { type: "json" };
 

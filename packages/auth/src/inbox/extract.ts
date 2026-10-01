@@ -1,7 +1,7 @@
 import patterns from "./patterns.json" with { type: "json" };
 
 // Code and link extraction from test emails (SEC-5). Pure: no Node APIs, so the
-// apps can use it too (`@testament/auth/extract`). Word lists: patterns.json.
+// apps can use it too (`@optestra/auth/extract`). Word lists: patterns.json.
 
 export interface ExtractableMessage {
   subject?: string;
