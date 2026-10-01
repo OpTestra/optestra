@@ -64,6 +64,11 @@ export const SECTIONS: Section[] = [
         description: "Reusable steps included with Use:, with params.",
       },
       {
+        text: "Mocking the network",
+        link: "/writing/mocks",
+        description: "Mock: steps, and recorded API traffic replayed for determinism.",
+      },
+      {
         text: "Describe a test",
         link: "/writing/describe",
         description: "new: draft a test from one sentence; init --suggest for starter tests.",
@@ -114,6 +119,16 @@ export const SECTIONS: Section[] = [
         text: "Explain a failure",
         link: "/runs/explain",
         description: "explain: a diagnosis from the run's evidence, rules only or one AI call.",
+      },
+      {
+        text: "Muting a test",
+        link: "/runs/quarantine",
+        description: "mute and unmute: a known failure that doesn't count, until a date.",
+      },
+      {
+        text: "Accessibility warnings",
+        link: "/runs/accessibility",
+        description: "accessibility: warn: axe-core WCAG 2 A/AA on every page, never a failure.",
       },
       {
         text: "Recordings",

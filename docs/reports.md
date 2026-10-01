@@ -17,8 +17,8 @@ One `index.html` in the run folder, with inline CSS and JavaScript only: no CDN,
 2. **What went wrong:** failed, flaky and blocked tests grouped by what went wrong ("… · affects 7 tests"). Each group leads with the headline, the check's expected and actual, and the screenshot.
 3. **Summary:** verdict counts, duration, AI calls and tokens, cost ("N calls via your subscription" where that applies), environment, versions.
 4. **Fixes to review:** every heal proposal with its change and confidence.
-5. **Soft-check warnings,** listed apart: never failures.
-6. **Tests,** with verdict and tag filters and search. Per test: the headline and screenshot; the cause with its evidence; what was checked; AI use over the test's last runs; then each attempt: steps with before and after screenshots, checks with expected and actual, heals with their signals and diff, AI calls, decisions, the video (with a chapter per step), the trace (with the `npx playwright show-trace` command), console and network logs.
+5. **Soft-check warnings,** listed apart: never failures. Then **muted tests** ([Muting a test](./runs/quarantine.md)) and **accessibility warnings** ([Accessibility warnings](./runs/accessibility.md)), also apart.
+6. **Tests,** with verdict and tag filters and search. Per test: the headline and screenshot; the cause with its evidence; what was checked; responses that came from a [mock](./writing/mocks.md); AI use over the test's last runs; then each attempt: steps with before and after screenshots, checks with expected and actual, heals with their signals and diff, AI calls, decisions, the video (with a chapter per step), the trace (with the `npx playwright show-trace` command), console and network logs.
 
 Collapsed sections use `<details>`, so the report works with JavaScript off (only the filters need it). It is keyboard accessible and checked with axe in light and dark mode. Its look comes from one tokens file, like this site's.
 
@@ -33,6 +33,9 @@ Collapsed sections use `<details>`, so the report works with JavaScript off (onl
 | flaky | passes, with properties `flaky=true`, the headline and the cause; the failed attempt's check in `system-out` |
 | failed | `<failure message="headline" type="cause">` with the check, expected, actual, step, file and screenshot |
 | blocked | `<skipped message="Blocked (reason: message)">` |
+| muted, and didn't pass | `<skipped message="Muted until date (verdict): reason">`, with properties `muted`, `muted.until`, `muted.reason` |
+
+Mocked responses add the property `mocked.responses`; accessibility checks add `<property name="accessibility.pages">`, `<property name="accessibility.warnings">` and one `<property name="accessibility.warning">` per problem.
 
 Validated against the Jenkins/Surefire/GitLab JUnit schema.
 
