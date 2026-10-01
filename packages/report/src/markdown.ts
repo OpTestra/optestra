@@ -185,6 +185,19 @@ function mutedBlock(parts: Parts, limit: number): string {
   return `<details><summary>Muted tests (${model.muted.length}; they ran, their results don't count)</summary>\n\n${rows.join("\n")}\n\n</details>`;
 }
 
+function accessibilityBlock(parts: Parts, limit: number): string {
+  const list = parts.model.accessibility;
+  if (list.length === 0) return "";
+  const rows = list
+    .slice(0, limit)
+    .map(
+      ({ test, violation: v }) =>
+        `- ${md(test.name)}, ${code(v.page)}: ${md(v.help)} (${code(v.rule)}${v.impact ? `, ${v.impact}` : ""})`,
+    );
+  if (list.length > limit) rows.push(`- and ${plural(list.length - limit, "more warning")}`);
+  return `<details><summary>Accessibility warnings (${list.length} on ${plural(parts.model.accessibilityPages, "page")} checked, never failures)</summary>\n\n${rows.join("\n")}\n\n</details>`;
+}
+
 function aiBlock(parts: Parts, limit: number): string {
   const rows = parts.model.tests
     .filter((t) => t.result?.ai.recent || t.ref.aiCalls > 0)
@@ -244,6 +257,7 @@ function compose(parts: Parts, level: (typeof LEVELS)[number]): string {
     level.list > 0 ? healsBlock(parts, level.list) : "",
     level.list > 0 ? warningsBlock(parts, level.list) : "",
     level.list > 0 ? mutedBlock(parts, level.list) : "",
+    level.list > 0 ? accessibilityBlock(parts, level.list) : "",
     level.list > 0 ? aiBlock(parts, level.list) : "",
     level.list > 0 ? testsBlock(parts, level.list) : "",
     footer(parts),

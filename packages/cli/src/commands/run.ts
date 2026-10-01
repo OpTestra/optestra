@@ -34,6 +34,7 @@ export interface RunCommandOptions {
   android?: string | string[];
   video?: boolean;
   recordNetwork?: boolean;
+  accessibility?: boolean;
   liveNetwork?: boolean;
   verbose?: boolean;
   dir?: string;
@@ -175,6 +176,7 @@ export async function runRunCommand(
       ...(options.evidence ? { evidence: options.evidence as (typeof EVIDENCE)[number] } : {}),
       ...(androidVersions.length ? { androidVersions } : {}),
       ...(options.video === false ? { video: false } : {}),
+      ...(options.accessibility ? { accessibility: "warn" as const } : {}),
       ...(options.recordNetwork
         ? { network: "record" as const }
         : options.liveNetwork

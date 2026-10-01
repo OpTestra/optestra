@@ -60,6 +60,7 @@
       },
       "result": "tests/tests__android__login/result.json",
       "mocks": [],
+      "accessibility": null,
       "muted": null,
       "muteExpired": null,
       "muteSuggested": null

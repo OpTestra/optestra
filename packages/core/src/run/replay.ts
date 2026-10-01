@@ -39,6 +39,8 @@ import type { BoundText, ExactOp, ExpandedStep } from "@optestra/spec";
 import { runActionStep } from "../author/agent.js";
 import { authorCheck, exactCheck, runExactOp, runHook } from "../author/author.js";
 import { applyMock, isMockOp, type MockOp, type MockSession } from "../mock/mock.js";
+import type { AccessibilityViolation } from "@optestra/contract";
+import type { Session } from "@optestra/browser";
 import { parseGuard } from "../author/guards.js";
 import { inboxMemberOfAction, prepareInbox } from "../author/inbox.js";
 import { DEFAULT_LIMITS } from "../author/types.js";
@@ -383,6 +385,26 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
         prepared.step?.index ?? null,
       );
   }
+  // EVD-6: axe-core warnings, once per distinct page (route), never part of the verdict.
+  const a11y = options.accessibility
+    ? { pages: new Set<string>(), ms: 0, violations: new Map<string, AccessibilityViolation>() }
+    : undefined;
+  const scanPage = async () => {
+    const scan = (session as { accessibility?: Session["accessibility"] }).accessibility;
+    if (!a11y || !scan || stop?.kind === "blocked") return;
+    const page = routeOf(session.url);
+    if (a11y.pages.has(page)) return;
+    a11y.pages.add(page);
+    const result = await scan.call(session);
+    a11y.ms += result.ms;
+    for (const v of result.violations) {
+      const key = `${page}\u0000${v.rule}`;
+      const seen = a11y.violations.get(key);
+      if (seen) seen.nodes = Math.max(seen.nodes, v.nodes);
+      else a11y.violations.set(key, { ...v, page });
+    }
+  };
+
   if (!stop && test.start) {
     const url = test.start.display;
     // The start page's effect is the page loading: its document answered.
@@ -399,6 +421,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       stop = block(outcome.reason ?? "disallowed_domain", outcome.message ?? url, null);
     else if (outcome.status !== "ok")
       stop = block("app_down", `Could not open ${url}: ${outcome.message ?? outcome.status}`, null);
+    if (!stop) await scanPage();
   }
 
   // ── one recorded command ────────────────────────────────────────────────────
@@ -1656,6 +1679,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       result.status === "failed" || result.status === "blocked",
     );
     push(result);
+    if (result.status === "passed") await scanPage();
     chapters.push({
       index: step.index,
       title: step.text,
@@ -1708,6 +1732,16 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     healedWithoutAi,
     healedByFixer,
     patches,
+    ...(a11y
+      ? {
+          accessibility: {
+            standard: "wcag2aa" as const,
+            pages: a11y.pages.size,
+            ms: a11y.ms,
+            violations: [...a11y.violations.values()],
+          },
+        }
+      : {}),
   };
 }
 

@@ -109,6 +109,12 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 |---|---|---|---|
 | `quarantine` | list of object | `[]` | Muted tests: they still run, but a failure doesn't fail the run. Each mute ends on its date. |
 
+## accessibility
+
+| Key | Type | Default | |
+|---|---|---|---|
+| `accessibility` | "off" \| "warn" | `"off"` | Accessibility checks (axe-core, WCAG 2 A/AA) on every page a run visits: off, or warn (shown apart, never a failure). |
+
 ## models
 
 | Key | Type | Default | |

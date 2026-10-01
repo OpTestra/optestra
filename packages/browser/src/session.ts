@@ -29,6 +29,7 @@ import {
   RequestMark,
 } from "./check.js";
 import { deviceOptions } from "./devices.js";
+import { type AccessibilityScan, type AccessibilityViolation, axeScript } from "./accessibility.js";
 import { Evidence } from "./evidence.js";
 import { type MockRule, type MockUse, Mocks, RECORDED_TYPES, Traffic } from "./network.js";
 import { BrowserSetupError, browserOf, type LaunchedBrowser, launchBrowser } from "./launch.js";
@@ -587,6 +588,42 @@ export class Session {
       };
     this.#mocks.add({ ...rule, url });
     return { ok: true };
+  }
+
+  /**
+   * EVD-6: axe-core's WCAG 2 A/AA rules on the current page. Warnings only;
+   * targets and texts are scrubbed. Never throws: a page axe can't check is
+   * `status: "error"`.
+   */
+  async accessibility(options: { timeoutMs?: number } = {}): Promise<AccessibilityScan> {
+    const started = Date.now();
+    if (this.#unusable())
+      return { status: "error", ms: 0, violations: [], message: "The page is closed." };
+    try {
+      const run = this.#page.evaluate(axeScript()) as Promise<AccessibilityViolation[]>;
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("timed out")), options.timeoutMs ?? 20_000).unref(),
+      );
+      const violations = await Promise.race([run, timeout]);
+      return {
+        status: "ok",
+        ms: Date.now() - started,
+        violations: violations.map((v) => ({
+          ...v,
+          help: this.#redact(v.help),
+          targets: v.targets.map((t) => this.#redact(t).slice(0, 200)),
+        })),
+      };
+    } catch (error) {
+      return {
+        status: "error",
+        ms: Date.now() - started,
+        violations: [],
+        message: this.#redact(
+          error instanceof Error ? (error.message.split("\n")[0] ?? "") : String(error),
+        ),
+      };
+    }
   }
 
   /** ENV-4: what mocks and recorded traffic answered so far. */

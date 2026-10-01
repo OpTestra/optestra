@@ -159,6 +159,8 @@ export interface RunTestsOptions {
    * that file when it exists (`replay`); `live`: never.
    */
   network?: "record" | "replay" | "live";
+  /** EVD-6: `warn` scans every page visited with axe-core (default: the project's `accessibility`). */
+  accessibility?: "off" | "warn";
   /** Record a video per attempt (default true, EVD-1). */
   video?: boolean;
   /**
@@ -964,6 +966,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
           result = await where.run({ testId, attempt, sink }, () =>
             replayAttempt({
               projectDir,
+              accessibility: (options.accessibility ?? config.accessibility ?? "off") === "warn",
               hookContext,
               inbox: attemptInbox,
               ...(prepare ? { prepare } : {}),
@@ -1009,6 +1012,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
             }),
           );
           replayed = result;
+          if (result.accessibility) attemptExtras.accessibility = result.accessibility;
         } finally {
           // `failures`: a first attempt that passed cleanly doesn't keep its trace and network log.
           const clean =

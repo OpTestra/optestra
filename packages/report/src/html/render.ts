@@ -242,6 +242,19 @@ function mutedSection(ctx: Ctx): string {
   return `<section id="muted" aria-labelledby="muted-h"><h2 id="muted-h">Muted tests</h2><p class="muted">Muted tests still run and keep their evidence. Their results don't count toward the run.</p><ul>${items}</ul></section>`;
 }
 
+function accessibilitySection(ctx: Ctx): string {
+  const list = ctx.model.accessibility;
+  if (ctx.model.accessibilityPages === 0) return "";
+  const items = list
+    .map(
+      ({ test, violation: v }) =>
+        `<li><a href="#${h(test.anchor)}">${h(test.name)}</a>, <code>${h(v.page)}</code>: ${h(v.help)} ${meta([h(v.rule), v.impact ? h(v.impact) : null, `${v.nodes} element${v.nodes === 1 ? "" : "s"}`])}${v.targets.length ? ` <code>${h(v.targets.join(", "))}</code>` : ""}</li>`,
+    )
+    .join("");
+  const pages = `${ctx.model.accessibilityPages} page${ctx.model.accessibilityPages === 1 ? "" : "s"} checked (WCAG 2 A/AA)`;
+  return `<section id="accessibility" aria-labelledby="accessibility-h"><h2 id="accessibility-h">Accessibility warnings</h2><p class="muted">${h(pages)}. These are warnings, never failures.</p>${items ? `<ul>${items}</ul>` : `<p>No problems found.</p>`}</section>`;
+}
+
 function expectedActual(check: CheckResult): string {
   if (check.expected === null && check.actual === null) return "";
   return `<dl class="expected-actual"><dt>Expected</dt><dd>${h(check.expected ?? "—")}</dd><dt>Actual</dt><dd>${h(check.actual ?? "—")}</dd></dl>`;
@@ -531,7 +544,7 @@ ${blockedBanner(ctx)}
 ${failuresSection(ctx)}
 ${summarySection(ctx)}
 ${healsSection(ctx)}
-${warningsSection(ctx)}${mutedSection(ctx)}
+${warningsSection(ctx)}${mutedSection(ctx)}${accessibilitySection(ctx)}
 ${diagnosticsSection(ctx)}
 ${testsSection(ctx)}
 </main>

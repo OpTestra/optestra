@@ -402,6 +402,7 @@ run tests: replay each recording with no AI, evaluate every check, write a resul
 | `--no-video` | don't record a video per attempt |  |
 | `--record-network` | keep each test's API answers (fetch/XHR, scrubbed) so later runs replay them for determinism |  |
 | `--live-network` | don't answer from recorded network traffic: every request goes to the app |  |
+| `--accessibility` | check every page visited with axe-core (WCAG 2 A/AA): warnings only, apart from pass/fail |  |
 | `--verbose` | print every step, heal and warning |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
 

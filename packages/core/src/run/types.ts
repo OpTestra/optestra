@@ -48,6 +48,8 @@ export type ReplayEvent =
 
 export interface ReplayOptions {
   test: ExpandedTest;
+  /** EVD-6: scan each distinct page with axe-core (WCAG 2 A/AA) as warnings. */
+  accessibility?: boolean;
   /** The project folder: `Mock:` body files are read from it (ENV-4). */
   projectDir?: string;
   /** What run:/sql: hooks need (AUT-10); without it they block the test (config_error). */
@@ -145,6 +147,8 @@ export interface ReplayResult extends AttemptRecord {
   healedWithoutAi: number;
   /** Steps the fixer model healed. */
   healedByFixer: number;
+  /** EVD-6: accessibility warnings of the pages visited (when turned on). */
+  accessibility?: import("@optestra/contract").AccessibilityReport;
   /** What each heal changes in the recording, by heal id (applied on accept, or now under `auto`). */
   patches: HealPatch[];
 }

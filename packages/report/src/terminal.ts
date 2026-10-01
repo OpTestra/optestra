@@ -114,6 +114,15 @@ export function formatRunSummary(data: RunData, options: TerminalOptions = {}): 
   if (toReview > 0) lines.push(`  ${plural(toReview, "fix", "fixes")} to review`, "");
   if (model.softWarnings.length > 0)
     lines.push(`  ${plural(model.softWarnings.length, "soft-check warning")} (not failures)`, "");
+  if (model.accessibilityPages > 0) {
+    const rules = [...new Set(model.accessibility.map((a) => a.violation.rule))];
+    lines.push(
+      model.accessibility.length
+        ? `  ${plural(model.accessibility.length, "accessibility warning")} on ${plural(model.accessibilityPages, "page")} checked (not failures): ${rules.join(", ")}`
+        : `  Accessibility: no problems on ${plural(model.accessibilityPages, "page")} checked`,
+      "",
+    );
+  }
   const ai = plural(summary.aiCalls, "AI call");
   lines.push(
     `  ${summary.line} · ${formatDuration(summary.durationMs)} · ${ai} · ${costText(summary.costUsd, summary.unpricedCalls, model.subscriptionCalls, formatUsd)}`,

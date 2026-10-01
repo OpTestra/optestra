@@ -46,6 +46,10 @@ lint:
   # Warnings count as errors for the exit code (CI).
   strict: false
 
+# Accessibility warnings (EVD-6): off, or warn (axe-core, WCAG 2 A/AA, on every page a run visits;
+# shown apart, never a failure). The spec package registers this section.
+accessibility: off
+
 # Muted tests (DIA-5): { test, reason, until }. The spec package registers this section.
 quarantine: []
 

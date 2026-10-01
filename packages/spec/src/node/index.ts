@@ -13,6 +13,7 @@ import "../section.js";
 import "../lint/section.js";
 import "../hooks-section.js";
 import "../quarantine-section.js";
+import "../accessibility-section.js";
 
 export {
   type DatasetRow,

@@ -122,6 +122,16 @@ Machine-readable summary of one run, version 1.2. Additive changes bump the mino
 | `tests[].mocks[].status` | integer \| null | yes |  |
 | `tests[].mocks[].hits` | integer | yes |  |
 | `tests[].mocks[].file` | string \| null | yes |  |
+| `tests[].accessibility` | null \| object | yes | 1.2 (EVD-6): axe-core warnings (WCAG 2 A/AA), one per page and rule; null when not checked. |
+| `tests[].accessibility.pages` | integer | yes |  |
+| `tests[].accessibility.ms` | number | yes |  |
+| `tests[].accessibility.violations` | list of object | yes |  |
+| `tests[].accessibility.violations[].rule` | string | yes |  |
+| `tests[].accessibility.violations[].impact` | string \| null | yes |  |
+| `tests[].accessibility.violations[].help` | string | yes |  |
+| `tests[].accessibility.violations[].helpUrl` | string | yes |  |
+| `tests[].accessibility.violations[].page` | string | yes |  |
+| `tests[].accessibility.violations[].nodes` | integer | yes |  |
 | `tests[].muted` | null \| object | yes | 1.2 (DIA-5): muted until a date; its verdict doesn't count. |
 | `tests[].muted.reason` | string | yes |  |
 | `tests[].muted.until` | string | yes |  |

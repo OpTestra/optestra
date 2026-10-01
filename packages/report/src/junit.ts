@@ -71,6 +71,13 @@ function testcase(test: TestView, name: string): string {
 
   const mocked = test.mocks.reduce((n, m) => n + m.hits, 0);
   if (test.mocks.length > 0) props.push(property("mocked.responses", mocked));
+  // EVD-6: warnings only, never a failure.
+  if (test.accessibility) {
+    props.push(property("accessibility.pages", test.accessibility.pages));
+    props.push(property("accessibility.warnings", test.accessibility.violations.length));
+    for (const v of test.accessibility.violations)
+      props.push(property("accessibility.warning", `${v.page} ${v.rule}: ${v.help}`));
+  }
   let outcome = "";
   if (test.muted) {
     props.push(property("muted", true));

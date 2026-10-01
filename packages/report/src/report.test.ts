@@ -494,3 +494,66 @@ describe("mocked responses (ENV-4)", () => {
     expect(out.markdown).toContain("(mocked)");
   });
 });
+
+describe("accessibility warnings (EVD-6)", () => {
+  const base = load(join(FIXTURES, "all-passed"));
+  const accessibility = {
+    standard: "wcag2aa" as const,
+    pages: 3,
+    ms: 120,
+    violations: [
+      {
+        rule: "color-contrast",
+        impact: "serious" as const,
+        help: "Elements must meet minimum color contrast ratio thresholds",
+        helpUrl: "https://dequeuniversity.com/rules/axe/4.13/color-contrast",
+        page: "/settings",
+        nodes: 1,
+        targets: [".hint"],
+      },
+    ],
+  };
+  const data: RunData = {
+    ...base,
+    tests: base.tests.map((t, i) =>
+      i === 0 ? { ...t, attempts: t.attempts.map((a) => ({ ...a, accessibility })) } : t,
+    ),
+  };
+  const out = outputs(data);
+
+  it("shows the warnings apart from pass/fail in every format", () => {
+    const summary = JSON.parse(out.json);
+    expect(summary.exitCode).toBe(0);
+    expect(summary.tests[0].verdict).toBe("passed");
+    expect(summary.tests[0].accessibility).toEqual({
+      pages: 3,
+      ms: 120,
+      violations: [
+        {
+          rule: "color-contrast",
+          impact: "serious",
+          help: "Elements must meet minimum color contrast ratio thresholds",
+          helpUrl: "https://dequeuniversity.com/rules/axe/4.13/color-contrast",
+          page: "/settings",
+          nodes: 1,
+        },
+      ],
+    });
+    expect(summary.tests[1].accessibility).toBeNull();
+    expect(out.html).toContain('<section id="accessibility"');
+    expect(out.html).toContain("3 pages checked (WCAG 2 A/AA)");
+    expect(out.junit).toContain('name="accessibility.warnings" value="1"');
+    expect(out.junit).toContain("/settings color-contrast");
+    expect(out.junit).not.toContain("<failure");
+    expect(out.markdown).toContain("Accessibility warnings (1 on 3 pages checked, never failures)");
+    expect(out.terminal).toContain(
+      "1 accessibility warning on 3 pages checked (not failures): color-contrast",
+    );
+  });
+
+  it("says nothing when the run didn't check accessibility", () => {
+    const plain = outputs(base);
+    expect(plain.html).not.toContain('id="accessibility"');
+    expect(plain.terminal).not.toContain("ccessibility");
+  });
+});

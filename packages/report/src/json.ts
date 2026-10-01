@@ -92,6 +92,19 @@ export interface SummaryTest {
     hits: number;
     file: string | null;
   }[];
+  /** 1.2 (EVD-6): axe-core warnings (WCAG 2 A/AA), one per page and rule; null when not checked. Never a failure. */
+  accessibility: {
+    pages: number;
+    ms: number;
+    violations: {
+      rule: string;
+      impact: string | null;
+      help: string;
+      helpUrl: string;
+      page: string;
+      nodes: number;
+    }[];
+  } | null;
   /** 1.2 (DIA-5): muted until a date: the verdict doesn't count toward exitCode. */
   muted: { reason: string; until: string } | null;
   /** 1.2: its mute ended before this run (it counts again). */
@@ -204,6 +217,20 @@ function testOf(test: TestView, cliName: string): SummaryTest {
       hits: m.hits,
       file: m.file,
     })),
+    accessibility: test.accessibility
+      ? {
+          pages: test.accessibility.pages,
+          ms: test.accessibility.ms,
+          violations: test.accessibility.violations.map((v) => ({
+            rule: v.rule,
+            impact: v.impact,
+            help: v.help,
+            helpUrl: v.helpUrl,
+            page: v.page,
+            nodes: v.nodes,
+          })),
+        }
+      : null,
     muted: test.muted ? { reason: test.muted.reason, until: test.muted.until } : null,
     muteExpired: test.muteExpired
       ? { reason: test.muteExpired.reason, until: test.muteExpired.until }
@@ -420,6 +447,28 @@ export function resultsSummaryJsonSchema(): Record<string, unknown> {
               hits: count,
               file: nullableStr,
             }),
+          },
+          accessibility: {
+            description:
+              "1.2 (EVD-6): axe-core warnings (WCAG 2 A/AA), one per page and rule; null when not checked.",
+            oneOf: [
+              { type: "null" },
+              obj({
+                pages: count,
+                ms,
+                violations: {
+                  type: "array",
+                  items: obj({
+                    rule: str,
+                    impact: nullableStr,
+                    help: str,
+                    helpUrl: str,
+                    page: str,
+                    nodes: count,
+                  }),
+                },
+              }),
+            ],
           },
           muted: {
             description: "1.2 (DIA-5): muted until a date; its verdict doesn't count.",

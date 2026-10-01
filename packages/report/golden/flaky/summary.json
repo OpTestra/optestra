@@ -78,6 +78,7 @@
       },
       "result": "tests/tests__search__search-products/result.json",
       "mocks": [],
+      "accessibility": null,
       "muted": null,
       "muteExpired": null,
       "muteSuggested": null

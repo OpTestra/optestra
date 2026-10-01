@@ -74,6 +74,7 @@
       },
       "result": "tests/tests__account__sign-up/result.json",
       "mocks": [],
+      "accessibility": null,
       "muted": null,
       "muteExpired": null,
       "muteSuggested": null

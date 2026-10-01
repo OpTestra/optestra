@@ -45,6 +45,7 @@ const RUN_TESTS_OPTIONS = [
   "checkTimeoutMs",
   "inbox",
   "network",
+  "accessibility",
 ] as const satisfies readonly (keyof RunTestsOptions)[];
 
 // Every option of RunTestsOptions is in the list above (a compile error otherwise).
@@ -78,6 +79,8 @@ export const ENGINE_CAPABILITIES = {
     mocks: true,
     /** ADV-1 (DIA-5): `quarantine` mutes; TestResult `muted`. */
     quarantine: true,
+    /** ADV-1 (EVD-6): `accessibility: off | warn`; Attempt `accessibility`. */
+    accessibility: ["off", "warn"],
   },
   targets: ["web", "android"],
   /** HEAL-0: heal policies, review and accept (`listHeals`, `applyHeals`). */

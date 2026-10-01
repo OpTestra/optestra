@@ -64,6 +64,7 @@
       },
       "result": "tests/tests__checkout__guest-checkout/result.json",
       "mocks": [],
+      "accessibility": null,
       "muted": null,
       "muteExpired": null,
       "muteSuggested": null
@@ -98,6 +99,7 @@
       },
       "result": "tests/tests__search__search-products/result.json",
       "mocks": [],
+      "accessibility": null,
       "muted": null,
       "muteExpired": null,
       "muteSuggested": null

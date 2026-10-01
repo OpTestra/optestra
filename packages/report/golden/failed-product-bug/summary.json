@@ -87,6 +87,7 @@
       },
       "result": "tests/tests__checkout__discount-code/result.json",
       "mocks": [],
+      "accessibility": null,
       "muted": null,
       "muteExpired": null,
       "muteSuggested": null
@@ -122,6 +123,7 @@
       },
       "result": "tests/tests__checkout__guest-checkout/result.json",
       "mocks": [],
+      "accessibility": null,
       "muted": null,
       "muteExpired": null,
       "muteSuggested": null

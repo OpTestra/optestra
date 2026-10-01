@@ -13,6 +13,8 @@ import {
   type TestResult,
   VERDICTS,
   type Verdict,
+  type AccessibilityReport,
+  type AccessibilityViolation,
   type MockUse,
   type Mute,
   type MuteSuggestion,
@@ -72,6 +74,8 @@ export interface TestView {
   softWarnings: FailingCheck[];
   /** ENV-4: responses of the final attempt that came from mocks or recorded traffic. */
   mocks: MockUse[];
+  /** EVD-6: axe-core warnings of the final attempt (per page and rule), when the run checked accessibility. */
+  accessibility: AccessibilityReport | null;
   /** DIA-5: muted (its verdict doesn't count), the mute that ended, a suggestion to mute. */
   muted: Mute | null;
   muteExpired: Mute | null;
@@ -99,6 +103,10 @@ export interface ReportModel {
   softWarnings: { test: TestView; warning: FailingCheck }[];
   /** DIA-5: muted tests, shown apart (they ran; their verdicts don't count). */
   muted: TestView[];
+  /** EVD-6: accessibility warnings, apart from pass/fail; already one per page and rule. */
+  accessibility: { test: TestView; violation: AccessibilityViolation }[];
+  /** Pages checked for accessibility, over all tests (0 when no test was checked). */
+  accessibilityPages: number;
   /** Model calls paid by the user's own AI plan (MOD-6). */
   subscriptionCalls: number;
   tags: string[];
@@ -267,6 +275,7 @@ function viewOf(ref: RunTestRef, result: TestResult | null, anchor: string): Tes
     heals: last?.heals ?? [],
     modelCalls: result?.attempts.flatMap((a) => a.modelCalls) ?? [],
     mocks: last?.mocks ?? [],
+    accessibility: last?.accessibility ?? null,
     muted: result?.muted ?? (ref.muted ? { reason: "muted", until: "", source: "" } : null),
     muteExpired: result?.muteExpired ?? null,
     muteSuggested: result?.muteSuggested ?? null,
@@ -336,6 +345,10 @@ export function buildModel(data: RunData): ReportModel {
     heals: tests.flatMap((test) => test.heals.map((heal) => ({ test, heal }))),
     softWarnings: tests.flatMap((test) => test.softWarnings.map((warning) => ({ test, warning }))),
     muted: tests.filter((test) => test.muted),
+    accessibility: tests.flatMap((test) =>
+      (test.accessibility?.violations ?? []).map((violation) => ({ test, violation })),
+    ),
+    accessibilityPages: tests.reduce((n, t) => n + (t.accessibility?.pages ?? 0), 0),
     subscriptionCalls: calls.filter((c) => c.billing === "subscription").length,
     tags: [...new Set(tests.flatMap((t) => t.tags))].sort(),
     diagnostics: (data.diagnostics ?? []).filter((d) => d.severity !== "info"),

@@ -8,6 +8,7 @@ import "./section.js";
 import "./lint/section.js";
 import "./hooks-section.js";
 import "./quarantine-section.js";
+import "./accessibility-section.js";
 
 export { type CheckContext, type CheckResult, checkTest, isParseProblem } from "./check.js";
 export {
@@ -48,6 +49,7 @@ export { globToRegExp, matchesAny, matchGlob } from "./glob.js";
 export { hash16 } from "./hash.js";
 export { type HooksSettings, hooksSchema } from "./hooks-section.js";
 export { type QuarantineEntry, quarantineSchema } from "./quarantine-section.js";
+export { type AccessibilitySetting, accessibilitySchema } from "./accessibility-section.js";
 export {
   KeyCounter,
   normalizeTemplate,

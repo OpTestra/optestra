@@ -504,6 +504,10 @@ export function createProgram(): Command {
       "--live-network",
       "don't answer from recorded network traffic: every request goes to the app",
     )
+    .option(
+      "--accessibility",
+      "check every page visited with axe-core (WCAG 2 A/AA): warnings only, apart from pass/fail",
+    )
     .option("--verbose", "print every step, heal and warning")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (tests: string[], options: RunCommandOptions) => {
