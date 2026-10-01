@@ -15,6 +15,7 @@ export {
 } from "./common.js";
 export * from "./enums.js";
 export * from "./events.js";
+export * from "./extras.js";
 export { FoldError, type FoldResult, foldEvents } from "./fold.js";
 export {
   HEAL_CHANGE_TARGETS,
@@ -42,7 +43,7 @@ export * from "./run.js";
 export { serializeDocument, serializeEvent } from "./serialize.js";
 export { type StepResult, StepResultSchema, stepLabel } from "./step.js";
 export * from "./summary.js";
-export * from "./test-result.js";
 export { testIdFromPath } from "./test-id.js";
+export * from "./test-result.js";
 export { isUlid, ulid } from "./ulid.js";
 export { CONTRACT_MAJOR, CONTRACT_VERSION } from "./version.js";

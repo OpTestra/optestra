@@ -213,6 +213,8 @@ export function foldEvents(events: readonly Event[]): FoldResult {
         decisions: a.decisions,
         heals: a.heals,
         artifacts: a.artifacts,
+        ...(end.mocks?.length ? { mocks: end.mocks } : {}),
+        ...(end.accessibility ? { accessibility: end.accessibility } : {}),
       };
     });
     return validated(
@@ -235,6 +237,9 @@ export function foldEvents(events: readonly Event[]): FoldResult {
         durationMs: elapsed(state.start.ts, finish.ts),
         ai: { ...usage(attempts.flatMap((a) => a.modelCalls)), recent: finish.recentAi },
         ...(finish.recentHeals ? { recentHeals: finish.recentHeals } : {}),
+        ...(finish.muted ? { muted: finish.muted } : {}),
+        ...(finish.muteExpired ? { muteExpired: finish.muteExpired } : {}),
+        ...(finish.muteSuggested ? { muteSuggested: finish.muteSuggested } : {}),
         attempts,
       },
       `test "${state.start.testId}"`,
@@ -270,6 +275,7 @@ export function foldEvents(events: readonly Event[]): FoldResult {
         failed: count("failed"),
         flaky: count("flaky"),
         blocked: count("blocked"),
+        ...(results.some((t) => t.muted) ? { muted: results.filter((t) => t.muted).length } : {}),
       },
       cost: {
         usd: total.costUsd,
@@ -289,6 +295,7 @@ export function foldEvents(events: readonly Event[]): FoldResult {
         aiCalls: t.ai.calls,
         costUsd: t.ai.costUsd,
         result: runLayout.testResult(t.testId),
+        ...(t.muted ? { muted: true } : {}),
       })),
       modelCalls: runCalls,
       decisions: runDecisions,
