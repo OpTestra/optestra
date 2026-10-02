@@ -5,6 +5,25 @@ commit, OS, model ids, prompt versions, date and the exact command. Costs are
 at list API prices (`packages/models/prices.yaml`), also for calls that went
 through a subscription CLI.
 
+## 2026-10-02-android-open-models.json (EVAL-1, Android)
+
+```bash
+node packages/cli/bin/cli.js bench --compare ollama-cloud:deepseek-v4.1-flash --fixture android --model-budget 1 --yes
+```
+
+Engine at ab268c8, the same Mac; Android 16 emulator (pixel-8, google_apis
+arm64). DeepSeek-V4.1-Flash only, Android only (no shop, drafts or explains:
+`--fixture android`), after the no-AI Android replay passed (42/42, 0 mismatch,
+0 AI). 75 calls, $0.020 of Ollama credit.
+
+| Model | Passed after authoring | Wrong pass | Wrong fail | Cosmetic passed or healed | Fixer heals | $/test medium · complex | $/heal | s/test authoring | Authoring calls · $ |
+|---|---|---|---|---|---|---|---|---|---|
+| deepseek-v4.1-flash | 7/7 | 0/10 | 0/25 | 7/7 | 4 | $0.0024 · $0.0030 | $0.0006 | 31 | 69 · $0.017 |
+| *claude-sonnet-5-5 (EVAL-0)* | *7/7* | *0/10* | *0/25* | *7/7* | *4* | *$0.044 · $0.062* | *$0.0078* | *45* | *68 · $0.328* |
+
+The same quality as Sonnet 5.5 on every number, at about a nineteenth of the
+authoring cost: the Android default stands with the web one.
+
 ## 2026-10-02-open-models.json (EVAL-1)
 
 ```bash
@@ -37,7 +56,7 @@ wrong passes and no more wrong fails than Sonnet 5.5 (0/62).
 - **deepseek-v4.1-flash passes for planner and fixer** and is the cheapest and
   fastest of the two that pass: it is now first in the default planner and fixer
   pools, used when an `OLLAMA_API_KEY` is set (about a fifteenth of Sonnet 5.5's
-  cost per authored test). Measured on the web shop only; Android not yet.
+  cost per authored test). Android was measured afterwards: see below.
 - glm-5.3 passes too, at about 5× DeepSeek's cost for the same result: no default.
 - kimi-k3 (sort-orders recorded wrong: 6/62) and minimax-m3 (checkout-trial and
   sort-orders: 11/62) fail; both are marked unsupported as planner (and drafter)

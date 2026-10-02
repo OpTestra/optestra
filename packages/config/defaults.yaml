@@ -114,7 +114,8 @@ models:
     # Writes and re-records tests. First: DeepSeek-V4.1-Flash on Ollama Cloud (with an
     # OLLAMA_API_KEY). EVAL-1 (bench/results/2026-10-02-open-models.json): 11/11
     # authored, 0/15 wrong passes, 0/62 wrong fails, like Sonnet 5.5, at about a
-    # fifteenth of the cost. The Claude default stays pinned to Sonnet 5.5 for both
+    # fifteenth of the cost; on Android 7/7, 0/10, 0/25 (2026-10-02-android-open-models.json).
+    # The Claude default stays pinned to Sonnet 5.5 for both
     # roles (EVAL-0, bench/results/2026-10-01-model-comparison.json). Change only
     # after a new model comparison (`bench --compare`) passes the rule in docs/ai/models.md.
     planner:
