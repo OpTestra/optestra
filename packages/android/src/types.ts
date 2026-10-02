@@ -274,6 +274,12 @@ export interface SessionTimings {
   driverRestarts: number;
   /** Waiting for the system to be idle (launcher up, no system dialog) before launching the app. */
   readyMs: number;
+  /**
+   * Waiting for the device's network after the reset (MOB-3): on a slow machine
+   * the restored snapshot's network comes up seconds later, and an app request
+   * made before that fails on the device without reaching the guard.
+   */
+  networkMs: number;
   launchMs: number;
   totalMs: number;
   /**

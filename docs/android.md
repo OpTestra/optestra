@@ -90,4 +90,24 @@ A video recorded by the emulator, `logcat.txt` (every line scrubbed), and a netw
 
 On an Apple M5 with Android 16 (Google APIs, arm64, pixel-8): an emulator is ready from its snapshot in 1.2–4.6 s; a session starts on a fresh emulator in about 5–6.5 s (install, firewall, driver, idle system, launch); reading a screen takes 15–50 ms. The first run per emulator prepares the clean snapshot (a cold boot of about 19–46 s).
 
+## Running Android on a Linux server
+
+The x86_64 emulator needs hardware virtualization: KVM, so `/dev/kvm` must exist and be usable by the user running %cli% (`emulator -accel-check` says so). On a bare Linux machine that's the `kvm` group or a udev rule. On a cloud VM the hypervisor must pass virtualization through: **nested virtualization**. On Google Cloud that is an Intel machine type (N2, for example) created with `--enable-nested-virtualization`; the image needs no change. Without it the emulator doesn't start.
+
+What to expect on a 4-vCPU `n2-standard-4` (Android 16, Google APIs x86_64, measured in MOB-3), next to an Apple M5:
+
+| | n2-standard-4 | Apple M5 |
+|---|---|---|
+| First boot (makes the clean snapshot, once per machine image) | 61–65 s | 19–46 s |
+| Boot from the clean snapshot | 5.7–9.2 s | 1.2–4.6 s |
+| Reset between sessions (reboot from the snapshot) | 6–7 s | about 6 s |
+| A session start (reset, install, firewall, driver, network, launch) | 22–31 s | 5–6.5 s |
+
+Two things differ from a laptop, and %Name% handles both:
+
+- **The network comes back late.** After a restore, the emulator re-creates the device's Wi-Fi 5–11 s later on such a host, and its mobile data connects 20–30 s later, on the same subnet, and can become the default network. An app request made in between fails on the device (the app only says it can't connect, and the network guard sees nothing). So mobile data is off on the device, and a session starts only once the app has a route to `10.0.2.2` over a default network that has stayed the same for a second; a long wait is in the session's notes. If an action still finds the device offline, the outcome says so.
+- **Launches are slow.** A first launch takes 4–25 s. %Name% starts the app and waits up to 90 s for its screen (clearing other packages' system dialogs meanwhile), and a launch that fails says why.
+
+To set up such a machine from scratch, run the suite and measure it, see `scripts/android-vm/` in the engine repository: it creates a spot VM on Google Cloud, installs everything CI has, makes a reusable disk image, and writes the timings as JSON.
+
 Known limits of the Android harness are listed with the others in [Known limits](./security/limits.md#android).

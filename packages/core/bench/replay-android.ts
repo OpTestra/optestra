@@ -12,8 +12,16 @@
 // Android SDK. One emulator serves every variant; the shop's server (the app's
 // backend) runs `correct` on port 4180, as the APKs are built for.
 
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import {
+  cpSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { cpus, tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { launchEmulator } from "@optestra/android";
@@ -91,6 +99,20 @@ async function failingStep(dir: string, result: TestResult): Promise<number | nu
   return loaded?.expanded.steps[step.index]?.origin[0]?.number ?? null;
 }
 
+/** CPU time of every core so far (ms): a run's delta is what it cost the machine. */
+const machineCpuMs = () =>
+  cpus().reduce((sum, c) => sum + c.times.user + c.times.nice + c.times.sys + c.times.irq, 0);
+
+/** Bytes under a folder (the runs' evidence). */
+function folderBytes(dir: string): number {
+  let total = 0;
+  for (const name of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, name.name);
+    total += name.isDirectory() ? folderBytes(path) : statSync(path).size;
+  }
+  return total;
+}
+
 type Score = "match" | "healed" | "needs_ai" | "mismatch";
 
 interface Row {
@@ -153,10 +175,13 @@ const emulator = await launchEmulator({
 process.stdout.write(`Emulator ready in ${((Date.now() - booted) / 1000).toFixed(1)}s.\n`);
 const all: Row[] = [];
 const times: Record<string, number> = {};
+/** Per variant: machine-wide CPU and evidence bytes (for the cost meter). */
+const cost: Record<string, { tests: number; machineCpuMs: number; evidenceBytes: number }> = {};
 try {
   for (const variant of variants) {
     const dir = project();
     const started = Date.now();
+    const cpu0 = machineCpuMs();
     try {
       const run = await runTests({
         projectDir: dir,
@@ -182,6 +207,11 @@ try {
         },
       });
       times[variant] = Date.now() - started;
+      cost[variant] = {
+        tests: run.tests.length,
+        machineCpuMs: Math.round(machineCpuMs() - cpu0),
+        evidenceBytes: folderBytes(run.dir),
+      };
       if (run.run.blocked)
         throw new Error(`${variant}: the run was blocked: ${run.run.blocked.message}`);
       const rows: Row[] = [];
@@ -245,6 +275,8 @@ const summary = {
     testsNeedingAi: cosmetic.filter((r) => r.score === "needs_ai").length,
   },
   times,
+  emulator: emulator.timings,
+  cost,
 };
 process.stdout.write(`\n${JSON.stringify(summary, null, 2)}\n`);
 if (values.json) writeFileSync(values.json, `${JSON.stringify({ summary, rows: all }, null, 2)}\n`);

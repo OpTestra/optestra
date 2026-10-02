@@ -8,7 +8,7 @@ import { COUNTERS_COMMAND, firewallRules, parseCounters, resetRules } from "./fi
 import * as api from "./index.js";
 import { Logcat } from "./logcat.js";
 import { ANDROID_VERSIONS, DEVICE_PROFILES, findSdk, systemImages } from "./sdk.js";
-import { AndroidSession } from "./session.js";
+import { AndroidSession, hostNetwork, launchFailure } from "./session.js";
 import { androidSetupPlan } from "./setup.js";
 import {
   ADB_COMMANDS,
@@ -114,6 +114,7 @@ describe("the adb wrapper (guarantee 5)", () => {
       "logcat-clear",
       "logcat-mark",
       "prepare-device",
+      "route-check",
       "firewall",
       "timezone-auto-off",
       "set-timezone",
@@ -399,5 +400,56 @@ describe("data: versions and device profiles (TGT-4, TGT-6)", () => {
     ]);
     expect(plan.downloadMb).toBeGreaterThan(1000);
     expect(plan.commands.at(-1)).toMatch(/sdkmanager.* "system-images;android-36;google_apis;/);
+  });
+});
+
+describe("launch failures (MOB-3)", () => {
+  it("says no launcher screen only when the driver found none, and names the real cause otherwise", () => {
+    expect(launchFailure("com.acme.shop", { reason: "no_launcher_activity" })).toBe(
+      "com.acme.shop has no launcher screen.",
+    );
+    expect(
+      launchFailure("com.acme.shop", {
+        reason: "driver_error",
+        output: "driver call launch timed out",
+      }),
+    ).toBe(
+      "Starting com.acme.shop failed: the driver didn't answer (driver call launch timed out).",
+    );
+    expect(
+      launchFailure("com.acme.shop", {
+        reason: "no_activity",
+        output:
+          "Starting: Intent { cmp=com.acme.shop/.SignInActivity }\nError: Activity not started",
+      }),
+    ).toBe(
+      "Starting com.acme.shop failed: Starting: Intent { cmp=com.acme.shop/.SignInActivity } Error: Activity not started",
+    );
+  });
+});
+
+describe("the device's network (MOB-3)", () => {
+  it("asks the device for a route to the host alias, as the app's uid", () => {
+    expect(adbArgs({ name: "route-check", uid: 10217 })).toEqual([
+      "shell",
+      "ip route get 10.0.2.2 uid 10217 ; dumpsys connectivity | grep -m1 'Active default network'",
+    ]);
+    expect(() => adbArgs({ name: "route-check", uid: 0 })).toThrow(InvalidToolCommand);
+    expect(() => adbArgs({ name: "route-check", uid: "1; reboot" as never })).toThrow(
+      InvalidToolCommand,
+    );
+  });
+
+  it("reads the default network to the host alias, and none while the network isn't back", () => {
+    const route = "10.0.2.2 dev wlan0 table wlan0 src 10.0.2.16 uid 10217 \n    cache \n";
+    expect(hostNetwork({ stdout: `${route}Active default network: 101\n` })).toBe("101");
+    // A restored snapshot: the old route still shows, but there is no default network.
+    expect(hostNetwork({ stdout: `${route}Active default network: none\n` })).toBeNull();
+    expect(
+      hostNetwork({
+        stdout: "RTNETLINK answers: Network is unreachable\nActive default network: none\n",
+      }),
+    ).toBeNull();
+    expect(hostNetwork({ stdout: "" })).toBeNull();
   });
 });

@@ -14,3 +14,6 @@ coverage/
 !**/tests/.optestra/
 # brand:next **/tests/{dataDirName}/authoring/
 **/tests/.optestra/authoring/
+
+# Android VM script output (scripts/android-vm)
+android-vm-results/

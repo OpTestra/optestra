@@ -97,6 +97,8 @@ object Api {
     try {
       block()
     } catch (error: java.io.IOException) {
+      // The cause goes to the device log: "can't reach" alone hides what failed.
+      android.util.Log.w("AcmeShop", "request failed", error)
       Result.Failed(UNREACHABLE)
     }
 }

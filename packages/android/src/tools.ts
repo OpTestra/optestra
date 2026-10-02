@@ -24,6 +24,7 @@ export const ADB_COMMANDS = [
   "logcat-clear",
   "logcat-mark",
   "prepare-device",
+  "route-check",
   "firewall",
   "timezone-auto-off",
   "set-timezone",
@@ -61,6 +62,8 @@ export type AdbCommand =
   | { name: "logcat-clear" }
   | { name: "logcat-mark"; mark: number }
   | { name: "prepare-device" }
+  /** Can the app (by its uid) reach the host alias, and over which default network? */
+  | { name: "route-check"; uid: number }
   | { name: "firewall"; rules: readonly (readonly string[])[] }
   /** ENV-5: the device's timezone (an IANA id) and the app's language (BCP 47 tags). */
   | { name: "timezone-auto-off" }
@@ -94,6 +97,12 @@ export const DEVICE_SETTINGS: readonly (readonly [string, string, string])[] = [
   ["global", "stay_on_while_plugged_in", "7"],
   ["secure", "show_ime_with_hard_keyboard", "0"],
   ["global", "package_verifier_user_consent", "-1"],
+  // One network (MOB-3): no mobile data, so Wi-Fi stays the default. On a slow
+  // x86 host the emulator's mobile data came up ~20-30 s after a restore, on the
+  // same subnet, and an app request made then failed on the device. `svc data
+  // disable` alone doesn't hold right after a restore; these settings do.
+  ["global", "mobile_data", "0"],
+  ["global", "mobile_data1", "0"],
 ];
 
 /** On-screen keyboards of the supported system images, disabled before the clean snapshot. */
@@ -186,6 +195,13 @@ export function adbArgs(command: AdbCommand): string[] {
       if (!Number.isInteger(command.mark) || command.mark < 0)
         throw new InvalidToolCommand("invalid mark");
       return ["shell", "log", "-t", "uih", `mark-${command.mark}`];
+    case "route-check":
+      if (!Number.isInteger(command.uid) || command.uid <= 0)
+        throw new InvalidToolCommand("invalid uid");
+      return [
+        "shell",
+        `ip route get 10.0.2.2 uid ${command.uid} ; dumpsys connectivity | grep -m1 'Active default network'`,
+      ];
     case "prepare-device":
       return [
         "shell",
@@ -193,6 +209,8 @@ export function adbArgs(command: AdbCommand): string[] {
           ...DEVICE_SETTINGS.map(([ns, key, value]) => `settings put ${ns} ${key} ${value}`),
           // No on-screen keyboard: text is set through accessibility, and a keyboard would cover the app.
           ...ON_SCREEN_KEYBOARDS.map((ime) => `ime disable ${ime}`),
+          // With the mobile_data settings above (MOB-3).
+          "svc data disable",
         ].join(" ; "),
       ];
     case "firewall": {

@@ -608,6 +608,57 @@ describe("actions", () => {
   });
 });
 
+describe("the device's network on slow machines (MOB-3)", () => {
+  // On a slow x86 machine the restored snapshot's network came back seconds after
+  // the session started: the app's sign-in failed on the device, the guard saw
+  // nothing ("requests []"), and the app only said "Can't reach Acme Shop". The
+  // test (not the harness) takes the network down with raw adb to make that state.
+  const adb = (...args: string[]) =>
+    spawnSync(emulator.sdk.adb, ["-s", emulator.serial, ...args], { encoding: "utf8" });
+  const routes = () => adb("shell", "ip route get 10.0.2.2").status === 0;
+
+  it("starts a session only once the device's network is up", async () => {
+    const session = await open();
+    try {
+      expect(routes()).toBe(true);
+      expect(session.timings().networkMs).toBeGreaterThanOrEqual(0);
+      const signedIn = await signIn(session);
+      expect(signedIn.post.requests.length).toBeGreaterThan(0);
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("names the cause when the app's request can't leave an offline device", async () => {
+    const session = await open();
+    try {
+      adb("shell", "svc data disable; svc wifi disable");
+      for (let i = 0; i < 40 && routes(); i++) await sleep(250);
+      expect(routes()).toBe(false);
+      await session.act({
+        type: "type",
+        target: { kind: "role", role: "textbox", name: "Email" },
+        value: "ada@example.com",
+      });
+      await session.act({
+        type: "type",
+        target: { kind: "role", role: "textbox", name: "Password" },
+        value: { secret: "SHOP_PASSWORD" },
+      });
+      const tapped = await session.act({
+        type: "tap",
+        target: { kind: "role", role: "button", name: "Sign in" },
+      });
+      expect(tapped.post.requests).toEqual([]);
+      expect(tapped.message).toMatch(/device had no network after tap/);
+      expect(session.timings().notes.join("\n")).toMatch(/device had no network/);
+    } finally {
+      adb("shell", "svc data enable; svc wifi enable");
+      await session.close();
+    }
+  });
+});
+
 describe("the foreground on slow machines (mob-0-ci2)", () => {
   // The test (not the harness) sends a HOME intent with raw adb, as the launcher
   // coming to the front by itself after a cold boot does on a slow CI emulator.
