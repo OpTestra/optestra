@@ -1,0 +1,5 @@
+Run 01M3EK2W60P3DMMQM6D60NDCA0  demo-shop · local · web
+
+  PASSED     40.5s       2 AI   $0.0092  Search finds a product
+
+  1 passed · 10.6s + 30.0s waiting for AI · 2 AI calls · $0.0092

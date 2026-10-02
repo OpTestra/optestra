@@ -380,4 +380,17 @@ export function costText(
   return text;
 }
 
+/**
+ * A duration with the time AI calls spent waiting for their providers (rate
+ * limits, slots) shown apart: "1m 40s + 1m 30s waiting for AI" (PROV-0).
+ */
+export function timeText(
+  durationMs: number,
+  waitMs: number | undefined,
+  format: (ms: number) => string,
+): string {
+  if (!waitMs) return format(durationMs);
+  return `${format(Math.max(0, durationMs - waitMs))} + ${format(waitMs)} waiting for AI`;
+}
+
 export const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;

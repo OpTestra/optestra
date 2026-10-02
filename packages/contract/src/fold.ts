@@ -48,7 +48,9 @@ function usage(calls: readonly ModelCall[]): Omit<AiUsage, "recent"> {
   const tokens: Tokens = { input: 0, output: 0, cached: 0, cacheWrite: 0 };
   let costUsd = 0;
   let unpricedCalls = 0;
+  let waitMs = 0;
   for (const call of calls) {
+    waitMs += call.waitMs ?? 0;
     tokens.input += call.tokens.input;
     tokens.output += call.tokens.output;
     tokens.cached += call.tokens.cached;
@@ -56,7 +58,13 @@ function usage(calls: readonly ModelCall[]): Omit<AiUsage, "recent"> {
     if (call.costUsd === null) unpricedCalls++;
     else costUsd += call.costUsd;
   }
-  return { calls: calls.length, costUsd: roundUsd(costUsd), unpricedCalls, tokens };
+  return {
+    calls: calls.length,
+    costUsd: roundUsd(costUsd),
+    unpricedCalls,
+    tokens,
+    ...(waitMs > 0 ? { waitMs } : {}),
+  };
 }
 
 function validated<T>(schema: z.ZodType<T>, value: unknown, what: string): T {
@@ -191,6 +199,7 @@ export function foldEvents(events: readonly Event[]): FoldResult {
         finished = event;
         break;
       case "log":
+      case "model.waiting":
         break;
     }
   }
@@ -282,6 +291,7 @@ export function foldEvents(events: readonly Event[]): FoldResult {
         unpricedCalls: total.unpricedCalls,
         aiCalls: total.calls,
         tokens: total.tokens,
+        ...(total.waitMs ? { aiWaitMs: total.waitMs } : {}),
       },
       git: runStart.git,
       tests: results.map((t) => ({

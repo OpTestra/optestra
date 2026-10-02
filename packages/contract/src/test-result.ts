@@ -93,6 +93,8 @@ export const AiUsageSchema = z.object({
   tokens: TokensSchema,
   /** LRN-5: AI calls in this test's last `runs` runs. Filled from history; null when unknown. */
   recent: z.object({ runs: CountSchema, calls: CountSchema }).nullable(),
+  /** 1.6 (PROV-0): time the calls waited for providers (rate limits, slots); outside the test's time limit. */
+  waitMs: MillisecondsSchema.optional(),
 });
 export type AiUsage = z.infer<typeof AiUsageSchema>;
 

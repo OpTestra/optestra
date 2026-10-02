@@ -1,5 +1,13 @@
 import { formatDuration, formatUsd, stepLabel, summarize, type Verdict } from "@optestra/contract";
-import { buildModel, CAUSE_LABEL, costText, plural, type RunData, words } from "./model.js";
+import {
+  buildModel,
+  CAUSE_LABEL,
+  costText,
+  plural,
+  type RunData,
+  timeText,
+  words,
+} from "./model.js";
 
 // Quiet terminal output (CLI-4): one line per test, then a summary and the
 // failure groups. Plain text unless `color` is on; colour only ever repeats
@@ -125,7 +133,7 @@ export function formatRunSummary(data: RunData, options: TerminalOptions = {}): 
   }
   const ai = plural(summary.aiCalls, "AI call");
   lines.push(
-    `  ${summary.line} · ${formatDuration(summary.durationMs)} · ${ai} · ${costText(summary.costUsd, summary.unpricedCalls, model.subscriptionCalls, formatUsd)}`,
+    `  ${summary.line} · ${timeText(summary.durationMs, model.run.cost.aiWaitMs, formatDuration)} · ${ai} · ${costText(summary.costUsd, summary.unpricedCalls, model.subscriptionCalls, formatUsd)}`,
   );
   return lines.join("\n");
 }

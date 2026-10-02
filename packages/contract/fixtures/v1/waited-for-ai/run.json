@@ -1,0 +1,52 @@
+{
+  "contractVersion": "1.6",
+  "runId": "01M3EK2W60P3DMMQM6D60NDCA0",
+  "engineVersion": "0.1.0",
+  "project": "demo-shop",
+  "environment": "local",
+  "target": "web",
+  "trigger": "cli",
+  "mode": "normal",
+  "startedAt": "2026-09-26T10:10:00.000Z",
+  "finishedAt": "2026-09-26T10:10:40.625Z",
+  "durationMs": 40625,
+  "blocked": null,
+  "totals": {
+    "tests": 1,
+    "passed": 1,
+    "healed": 0,
+    "failed": 0,
+    "flaky": 0,
+    "blocked": 0
+  },
+  "cost": {
+    "usd": 0.00924,
+    "unpricedCalls": 0,
+    "aiCalls": 2,
+    "tokens": {
+      "input": 12400,
+      "output": 280,
+      "cached": 10200,
+      "cacheWrite": 0
+    },
+    "aiWaitMs": 30000
+  },
+  "git": null,
+  "tests": [
+    {
+      "testId": "tests__search",
+      "name": "Search finds a product",
+      "file": "tests/search.md",
+      "verdict": "passed",
+      "headline": null,
+      "durationMs": 40545,
+      "attempts": 1,
+      "aiCalls": 2,
+      "costUsd": 0.00924,
+      "result": "tests/tests__search/result.json"
+    }
+  ],
+  "modelCalls": [],
+  "decisions": [],
+  "artifacts": []
+}

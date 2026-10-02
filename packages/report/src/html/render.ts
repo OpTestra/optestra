@@ -26,6 +26,7 @@ import {
   type RunData,
   runStatus,
   type TestView,
+  timeText,
   VERDICT_LABEL,
   VERDICTS,
   words,
@@ -129,7 +130,7 @@ function summarySection(ctx: Ctx): string {
 <h2 id="summary-h">Summary</h2>
 <ul class="tiles" aria-label="Verdict counts"><li><strong>${run.totals.tests}</strong>tests</li>${tiles}</ul>
 <dl class="facts">
-<dt>Duration</dt><dd>${h(formatDuration(run.durationMs))}</dd>
+<dt>Duration</dt><dd>${h(timeText(run.durationMs, run.cost.aiWaitMs, formatDuration))}</dd>
 <dt>AI calls</dt><dd>${run.cost.aiCalls}${tokens.input + tokens.output > 0 ? ` <span class="muted">(${tokens.input.toLocaleString("en-US")} tokens in, ${tokens.output.toLocaleString("en-US")} out)</span>` : ""}</dd>
 <dt>Cost</dt><dd>${h(costText(run.cost.usd, run.cost.unpricedCalls, subscriptionCalls, formatUsd))}</dd>
 <dt>Environment</dt><dd>${h(run.environment ?? "default")} · ${h(run.target)}</dd>
@@ -462,6 +463,10 @@ function testBody(ctx: Ctx, test: TestView): string {
   const aiParts = [
     `${h(aiText(ai.calls))}, ${h(costText(ai.costUsd, ai.unpricedCalls, test.modelCalls.filter((c) => c.billing === "subscription").length, formatUsd))}`,
   ];
+  if (ai.waitMs)
+    aiParts.push(
+      `waited ${h(formatDuration(ai.waitMs))} for AI providers (rate limits or busy slots; not counted against the time limit)`,
+    );
   if (ai.recent)
     aiParts.push(
       `this test used AI ${h(plural(ai.recent.calls, "time"))} in its last ${h(plural(ai.recent.runs, "run"))}`,

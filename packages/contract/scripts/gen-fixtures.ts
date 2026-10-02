@@ -901,6 +901,78 @@ const fixtures: Record<string, (f: Fixture) => void> = {
     f.emit({ type: "run.finished" }, 50);
   },
 
+  // 1.6 (PROV-0): a call waited out a provider's rate limit; the wait is shown on
+  // its own and isn't part of the test's time limit or its verdict.
+  "waited-for-ai"(f) {
+    runStarted(f, { environment: "local", trigger: "cli", mode: "normal", git: null });
+    const testId = startTest(f, "tests/search.md", "Search finds a product", ["search"], CHROMIUM);
+    const planner = (extra: Json) => ({
+      role: "planner",
+      provider: "openrouter",
+      model: "anthropic/claude-sonnet-5.5",
+      tokens: { input: 6_200, output: 140, cached: 5_100, cacheWrite: 0 },
+      costUsd: 0.00462,
+      listCostUsd: 0.00462,
+      reportedCostUsd: 0.00462,
+      latencyMs: 2_400,
+      ...extra,
+    });
+    attempt(f, testId, 1, (ctx) => {
+      step(ctx, {
+        index: 0,
+        text: "Search for 'lamp'",
+        recovery: "none",
+        locator: { used: "primary", value: "getByRole('searchbox')" },
+        postState: { status: "verified", expected: "results for lamp", observed: "3 results" },
+        durationMs: 2_900,
+        settledMs: 300,
+        modelCalls: [planner({})],
+      });
+      f.emit(
+        {
+          type: "model.waiting",
+          testId,
+          attempt: 1,
+          provider: "openrouter",
+          model: "anthropic/claude-sonnet-5.5",
+          reason: "rate_limited",
+          resumesAt: "2026-09-26T10:10:34.000Z",
+          message:
+            "openrouter is rate-limiting anthropic/claude-sonnet-5.5: waiting 30 s, resumes at 2026-09-26T10:10:34.000Z.",
+        },
+        5,
+      );
+      f.tick(30_000);
+      step(ctx, {
+        index: 1,
+        text: "Open the first result",
+        recovery: "none",
+        locator: { used: "primary", value: "getByRole('link', { name: 'Desk lamp' })" },
+        postState: {
+          status: "verified",
+          expected: "product page",
+          observed: "/products/desk-lamp",
+        },
+        durationMs: 2_700,
+        settledMs: 280,
+        modelCalls: [planner({ waitMs: 30_000, attempts: 2 })],
+      });
+      webArtifacts(ctx);
+      return "passed";
+    });
+    f.emit(
+      {
+        type: "test.finished",
+        testId,
+        verdict: "passed",
+        decidedBy: [{ kind: "step", attempt: 1, stepIndex: 1 }],
+        checkedSummary: ["The product page for 'Desk lamp' opened."],
+      },
+      10,
+    );
+    f.emit({ type: "run.finished" }, 50);
+  },
+
   android(f) {
     runStarted(f, { target: "android", trigger: "cloud", git: null });
     const matrix = { target: "android", androidVersion: "14", device: "Pixel 7" };
@@ -997,6 +1069,7 @@ const STARTS: Record<string, string> = {
   "blocked-missing-secret": "2026-09-26T09:40:00.000Z",
   "blocked-budget-exceeded": "2026-09-26T09:50:00.000Z",
   android: "2026-09-26T10:00:00.000Z",
+  "waited-for-ai": "2026-09-26T10:10:00.000Z",
 };
 
 for (const [name, build] of Object.entries(fixtures)) {

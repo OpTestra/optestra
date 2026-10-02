@@ -36,6 +36,16 @@ export const ModelCallSchema = z.object({
   billing: z.enum(["api", "subscription"]).optional(),
   /** 1.2: the model's short reasoning for this call (EVD-1), scrubbed. Absent before 1.2. */
   note: z.string().max(500).optional(),
+  /**
+   * 1.6 (PROV-0): time spent waiting for the provider (a rate limit's Retry-After,
+   * or no free slot under its concurrency limit). Not part of latencyMs, and not
+   * counted against the test's time limit.
+   */
+  waitMs: MillisecondsSchema.optional(),
+  /** 1.6: the call at list price (the shipped price table); null when unknown. */
+  listCostUsd: UsdSchema.nullable().optional(),
+  /** 1.6: what the provider says it charged (OpenRouter's usage.cost); costUsd uses it when present. */
+  reportedCostUsd: UsdSchema.optional(),
 });
 export type ModelCall = z.infer<typeof ModelCallSchema>;
 
