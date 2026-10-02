@@ -129,22 +129,33 @@ describe("complete: request types", () => {
 });
 
 describe("complete: failover", () => {
-  it.each([
-    ["429", fails(429)],
-    ["5xx", fails(503)],
-  ])("moves to the next entry after retries on %s", async (_label, step) => {
-    const a = scripted(step);
+  it("moves to the next entry after retries on 5xx", async () => {
+    const a = scripted(fails(503));
     const b = scripted(text("from b"));
     const { client, records } = setup({ a, b });
     const result = await client.complete("planner", ask);
     expect(result.ok && result.provider).toBe("b");
     expect(a.calls).toHaveLength(3);
     expect(records[0]?.attempts.map((x) => [x.provider, x.attempt, x.outcome])).toEqual([
-      ["a", 1, _label === "429" ? "rate_limited" : "server_error"],
-      ["a", 2, _label === "429" ? "rate_limited" : "server_error"],
-      ["a", 3, _label === "429" ? "rate_limited" : "server_error"],
+      ["a", 1, "server_error"],
+      ["a", 2, "server_error"],
+      ["a", 3, "server_error"],
       ["b", 1, "ok"],
     ]);
+  });
+
+  it("moves to the next entry on 429 when waiting would pass models.maxWaitMinutes", async () => {
+    const a = scripted(fails(429, "", { "retry-after": "120" }));
+    const b = scripted(text("from b"));
+    const { client, records } = setup(
+      { a, b },
+      { config: testConfig({ maxWaitMinutes: 1 }), pause: async () => true },
+    );
+    const result = await client.complete("planner", ask);
+    expect(result.ok && result.provider).toBe("b");
+    expect(a.calls).toHaveLength(1);
+    expect(records[0]?.attempts[0]).toMatchObject({ outcome: "rate_limited" });
+    expect(records[0]?.attempts[0]?.message).toContain("models.maxWaitMinutes");
   });
 
   it("moves on after a timeout", async () => {

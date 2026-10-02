@@ -8,6 +8,7 @@ import {
   RunIdSchema,
   TimestampSchema,
 } from "./common.js";
+import { openEnum } from "./enums.js";
 import {
   AttemptStatusSchema,
   FailureCauseSchema,
@@ -49,6 +50,7 @@ export const EVENT_TYPES = [
   "step.finished",
   "check.evaluated",
   "model.called",
+  "model.waiting",
   "decision.made",
   "heal.proposed",
   "artifact.written",
@@ -129,6 +131,22 @@ export const ModelCalledEventSchema = z.object({
   call: ModelCallSchema,
 });
 
+/**
+ * 1.6 (PROV-0), live view only: an AI call is waiting for its provider (a rate
+ * limit, or no free slot). The wait shows on the call (waitMs) when it's done.
+ */
+export const ModelWaitingEventSchema = z.object({
+  ...base,
+  type: z.literal("model.waiting"),
+  ...maybeInAttempt,
+  provider: z.string(),
+  model: z.string(),
+  reason: openEnum(["rate_limited", "concurrency"]),
+  /** When the call expects to go ahead; null when unknown (waiting for a free slot). */
+  resumesAt: TimestampSchema.nullable(),
+  message: z.string(),
+});
+
 export const DecisionMadeEventSchema = z.object({
   ...base,
   type: z.literal("decision.made"),
@@ -204,6 +222,7 @@ export const EventSchema = z.discriminatedUnion("type", [
   StepFinishedEventSchema,
   CheckEvaluatedEventSchema,
   ModelCalledEventSchema,
+  ModelWaitingEventSchema,
   DecisionMadeEventSchema,
   HealProposedEventSchema,
   ArtifactWrittenEventSchema,

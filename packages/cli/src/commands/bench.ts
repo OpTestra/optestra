@@ -26,6 +26,8 @@ export interface BenchCommandOptions {
   yes?: boolean;
   /** EVAL-0: compare these models (pool entries) and measure the cost facts. */
   compare?: string[];
+  /** For --compare: AI budget per model, USD. */
+  modelBudget?: number;
   /** COST-0: run the real-developer corpus (bench/corpus). */
   corpus?: boolean;
   /** For --corpus: only lint and the phrase rules (no browser, no model). */

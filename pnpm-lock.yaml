@@ -403,6 +403,9 @@ importers:
       '@ai-sdk/openai-compatible':
         specifier: ^3.0.57
         version: 3.0.57(zod@4.6.5)
+      '@openrouter/ai-sdk-provider':
+        specifier: ^3.1.0
+        version: 3.1.0(ai@7.0.116(zod@4.6.5))(zod@4.6.5)
       '@optestra/brand':
         specifier: workspace:^
         version: link:../brand
@@ -942,6 +945,13 @@ packages:
     cpu: [x64]
     os: [linux]
     libc: [glibc]
+
+  '@openrouter/ai-sdk-provider@3.1.0':
+    resolution: {integrity: sha512-BQy1TA9fKrh47s9ivsO6FY5QimN7GUF0i8Qon3pkxQclEgShso0dClpcWn8OIyPLEZZPFaFKgI8TW4S/O0p0Dw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      ai: ^7.0.0
+      zod: ^3.25.76 || ^4.1.8
 
   '@oxc-project/types@0.151.0':
     resolution: {integrity: sha512-J1yXrIlNDZVzE3ada310xeAw7nH8yCAyLPuUIsjKatFPmfn5bS1oW+cM+QsGOtVWd5nhSpbwZWx/rue+r5Z+PA==}
@@ -2593,6 +2603,11 @@ snapshots:
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
+
+  '@openrouter/ai-sdk-provider@3.1.0(ai@7.0.116(zod@4.6.5))(zod@4.6.5)':
+    dependencies:
+      ai: 7.0.116(zod@4.6.5)
+      zod: 4.6.5
 
   '@oxc-project/types@0.151.0': {}
 

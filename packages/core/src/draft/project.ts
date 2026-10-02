@@ -135,7 +135,7 @@ export async function prepare(
       usageStore: projectUsageStore(dir),
       env,
     });
-    if (!models.pool("planner").some((entry) => entry.usable)) models = undefined;
+    if (!models.pool("drafter").some((entry) => entry.usable)) models = undefined;
   }
   if (needModels && !models)
     throw new DraftSetupError(

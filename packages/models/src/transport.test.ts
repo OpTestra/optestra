@@ -10,7 +10,10 @@ interface Fake {
   server: Server;
   host: string;
   seen: IncomingHttpHeaders[];
-  respond: (path: string, headers: IncomingHttpHeaders) => { status: number; body: unknown };
+  respond: (
+    path: string,
+    headers: IncomingHttpHeaders,
+  ) => { status: number; body: unknown; headers?: Record<string, string> };
 }
 
 const completion = (text: string, cost?: number) => ({
@@ -33,8 +36,8 @@ async function fake(respond: Fake["respond"]): Promise<Fake> {
     req.resume();
     req.on("end", () => {
       state.seen.push(req.headers);
-      const { status, body } = state.respond(req.url ?? "", req.headers);
-      res.writeHead(status, { "content-type": "application/json" });
+      const { status, body, headers } = state.respond(req.url ?? "", req.headers);
+      res.writeHead(status, { "content-type": "application/json", ...headers });
       res.end(JSON.stringify(body));
     });
   });
@@ -54,36 +57,73 @@ afterAll(() => {
   b.server.close();
 });
 
-const loopbackConfig = () =>
+const loopbackConfig = (extra: Record<string, unknown> = {}) =>
   testConfig({
     providers: {
       a: { kind: "openai-compatible", baseUrl: `http://${a.host}/v1`, keySecret: "A_KEY" },
       b: { kind: "openai-compatible", baseUrl: `http://${b.host}/v1`, keySecret: "B_KEY" },
     },
+    ...extra,
   });
 
 describe("real transport over loopback", () => {
-  it("fails over from a 429 provider to the next, with every attempt recorded", async () => {
-    const client = createModels({ config: loopbackConfig(), sources: keySources(), backoffMs: 0 });
+  it("fails over from a 429 provider when its wait is longer than allowed, with every attempt recorded", async () => {
+    const client = createModels({
+      config: loopbackConfig({ maxWaitMinutes: 0 }),
+      sources: keySources(),
+      backoffMs: 0,
+    });
     const result = await client.complete("planner", {
       messages: [{ role: "user", content: "hi" }],
     });
     expect(result.ok && result.text).toBe("from b");
     expect(result.attempts.map((x) => [x.provider, x.outcome, x.status])).toEqual([
       ["a", "rate_limited", 429],
-      ["a", "rate_limited", 429],
-      ["a", "rate_limited", 429],
       ["b", "ok", undefined],
     ]);
   });
 
-  it("prefers provider-reported cost over the price table", async () => {
-    const client = createModels({ config: loopbackConfig(), sources: keySources(), backoffMs: 0 });
+  it("waits out a 429's Retry-After header, then the same provider answers", async () => {
+    let calls = 0;
+    const slow = await fake(() =>
+      ++calls === 1
+        ? {
+            status: 429,
+            body: { error: { message: "slow down" } },
+            headers: { "retry-after": "1" },
+          }
+        : { status: 200, body: completion("after the wait") },
+    );
+    const config = testConfig({
+      providers: {
+        a: { kind: "openai-compatible", baseUrl: `http://${slow.host}/v1`, keySecret: "A_KEY" },
+      },
+      roles: { planner: [{ provider: "a", model: "gpt-6-sol" }], fixer: [] },
+    });
+    const client = createModels({ config, sources: keySources(), backoffMs: 0 });
+    const result = await client.complete("planner", {
+      messages: [{ role: "user", content: "hi" }],
+    });
+    slow.server.close();
+    expect(result.ok && result.text).toBe("after the wait");
+    expect(result.attempts.map((x) => x.outcome)).toEqual(["rate_limited", "ok"]);
+    expect(result.record.waitMs).toBeGreaterThanOrEqual(990);
+    expect(result.record.latencyMs).toBeLessThan(result.record.waitMs);
+  });
+
+  it("prefers provider-reported cost over the price table, keeping the list price beside it", async () => {
+    const client = createModels({
+      config: loopbackConfig({ maxWaitMinutes: 0 }),
+      sources: keySources(),
+      backoffMs: 0,
+    });
     const result = await client.complete("planner", {
       messages: [{ role: "user", content: "hi" }],
     });
     // gpt-6-sol is in prices.yaml, but the provider said 0.0042.
     expect(result.ok && result.costUsd).toBe(0.0042);
+    expect(result.record.reportedCostUsd).toBe(0.0042);
+    expect(result.record.listCostUsd).toBeCloseTo((10 * 2 + 2 * 10) / 1e6, 12);
   });
 
   it("sends each key only to its own provider's host", () => {
@@ -162,6 +202,59 @@ describe("checkProviders", () => {
     expect(good.seen.every((h) => h.authorization !== undefined)).toBe(true);
     expect(JSON.stringify(checks)).not.toContain(KEYS.B_KEY);
     good.server.close();
+  });
+
+  it("openrouter: checks the key on /key and shows its credit", async () => {
+    const router = await fake((path, headers) =>
+      path === "/api/v1/key" && headers.authorization === `Bearer ${KEYS.A_KEY}`
+        ? {
+            status: 200,
+            body: {
+              data: { label: "sk-or-v1-abc...", limit: 20, limit_remaining: 12.5, usage: 7.5 },
+            },
+          }
+        : { status: 401, body: { error: { message: "No auth credentials found" } } },
+    );
+    const config = testConfig({
+      providers: {
+        router: { kind: "openrouter", baseUrl: `http://${router.host}/api/v1`, keySecret: "A_KEY" },
+        wrong: { kind: "openrouter", baseUrl: `http://${router.host}/api/v1`, keySecret: "B_KEY" },
+      },
+      roles: { planner: [], fixer: [] },
+    });
+    const checks = await checkProviders(config, { sources: keySources() });
+    const ok = checks.find((c) => c.provider === "router");
+    expect(ok).toMatchObject({
+      status: "valid",
+      credit: { usedUsd: 7.5, limitUsd: 20, remainingUsd: 12.5 },
+    });
+    expect(ok?.message).toContain("$12.50 of this key's $20.00 limit left (used $7.50)");
+    expect(checks.find((c) => c.provider === "wrong")?.status).toBe("invalid_key");
+    router.server.close();
+  });
+
+  it("ollama-cloud: checks the key with a chat request that names no model (nothing runs)", async () => {
+    const seen: Array<{ path: string }> = [];
+    const ollama = await fake((path, headers) => {
+      seen.push({ path });
+      return headers.authorization === `Bearer ${KEYS.A_KEY}`
+        ? { status: 400, body: { error: { message: "model is required" } } }
+        : { status: 401, body: { error: { message: "Unauthorized" } } };
+    });
+    const config = testConfig({
+      providers: {
+        ollama: { kind: "ollama-cloud", baseUrl: `http://${ollama.host}/v1`, keySecret: "A_KEY" },
+        wrong: { kind: "ollama-cloud", baseUrl: `http://${ollama.host}/v1`, keySecret: "B_KEY" },
+      },
+      roles: { planner: [], fixer: [] },
+    });
+    const checks = await checkProviders(config, { sources: keySources() });
+    const ok = checks.find((c) => c.provider === "ollama");
+    expect(ok?.status).toBe("valid");
+    expect(ok?.message).toContain("ollama.com/settings/usage");
+    expect(checks.find((c) => c.provider === "wrong")?.status).toBe("invalid_key");
+    expect(seen.every((s) => s.path === "/v1/chat/completions")).toBe(true);
+    ollama.server.close();
   });
 
   it("uses each provider's own auth header", async () => {

@@ -43,6 +43,7 @@ import {
   type StopReason,
 } from "./types.js";
 import { type StepVariables, segmentsTemplate, stepVariables } from "./variables.js";
+import { Deadline } from "../run/deadline.js";
 
 // authorTest (LOOP-1): runs a test's expanded steps once with the AI agent and
 // returns the recording (what was done, for replay without AI) and an authoring
@@ -107,7 +108,8 @@ export async function authorTest(
   const startedAt = now().toISOString();
   const screenshots = new Map<string, Uint8Array>();
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(new Error("timeout")), options.timeoutMs);
+  // The time limit leaves out time spent waiting for AI providers (PROV-0).
+  const disarm = new Deadline(options.timeoutMs).arm(controller);
 
   const hooks: HookReport[] = [];
   const steps: StepReport[] = [];
@@ -384,7 +386,7 @@ export async function authorTest(
       }
     }
   } finally {
-    clearTimeout(timer);
+    disarm();
   }
 
   const recording = assemble(test, options, recorded, compiled, model, now);

@@ -1,5 +1,5 @@
 import type { Redactor } from "@optestra/config/node";
-import { APICallError, NoObjectGeneratedError } from "ai";
+import { APICallError, NoObjectGeneratedError, NoOutputGeneratedError } from "ai";
 import { BlockedHostError } from "./transport.js";
 import type { AttemptOutcome } from "./types.js";
 
@@ -7,6 +7,8 @@ export interface ClassifiedError {
   outcome: AttemptOutcome;
   status?: number;
   message: string;
+  /** Response headers of an HTTP error (Retry-After and the like). */
+  headers?: Record<string, string>;
 }
 
 /** Maps any error from a provider call to an attempt outcome, with a redacted message. */
@@ -26,6 +28,9 @@ export function classifyError(
       message: redact(`The reply did not match the output schema: ${cause}`),
     };
   }
+  // An answer with no text and no tool call (a model that spent its turn thinking).
+  if (NoOutputGeneratedError.isInstance(error))
+    return { outcome: "invalid_output", message: "The model answered with nothing." };
   if (error instanceof BlockedHostError)
     return { outcome: "blocked_host", message: redact(error.message) };
   if (APICallError.isInstance(error)) {
@@ -37,16 +42,23 @@ export function classifyError(
     const outcome: AttemptOutcome =
       status === 401 || status === 403
         ? "auth_failed"
-        : status === 429
-          ? "rate_limited"
-          : status === 408
-            ? "timeout"
-            : status === 404
-              ? "not_found"
-              : status >= 500
-                ? "server_error"
-                : "bad_request";
-    return { outcome, status, message };
+        : status === 402
+          ? "out_of_credit"
+          : status === 429
+            ? "rate_limited"
+            : status === 408
+              ? "timeout"
+              : status === 404
+                ? "not_found"
+                : status >= 500
+                  ? "server_error"
+                  : "bad_request";
+    return {
+      outcome,
+      status,
+      message,
+      ...(error.responseHeaders ? { headers: error.responseHeaders } : {}),
+    };
   }
   const message = error instanceof Error ? error.message : String(error);
   return { outcome: "network_error", message: redact(message) };

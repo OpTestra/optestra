@@ -1,4 +1,4 @@
-import type { LanguageModel } from "ai";
+import { APICallError, type LanguageModel } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
 import type { PoolEntry } from "./keys.js";
 
@@ -12,6 +12,8 @@ export interface ScriptedReply {
   toolCalls?: Array<{ name: string; input: unknown }>;
   /** Default 100 input / 20 output tokens. */
   usage?: { input: number; output: number };
+  /** Answer with an HTTP error instead, e.g. { status: 429, headers: { "retry-after": "2" } }. */
+  error?: { status: number; headers?: Record<string, string>; body?: string };
 }
 
 /** What the model was asked, for assertions (system prompt, messages, tool names). */
@@ -44,6 +46,16 @@ export function scriptedModel(...steps: ScriptStep[]): ScriptedModel {
       const step = steps[Math.min(index, steps.length - 1)];
       if (!step) throw new Error("scriptedModel: no steps");
       const reply = typeof step === "function" ? step(call, index) : step;
+      if (reply.error)
+        throw new APICallError({
+          message: `HTTP ${reply.error.status}`,
+          url: "https://scripted.test/v1/chat/completions",
+          requestBodyValues: {},
+          statusCode: reply.error.status,
+          responseBody: reply.error.body ?? "",
+          isRetryable: reply.error.status === 429 || reply.error.status >= 500,
+          ...(reply.error.headers ? { responseHeaders: reply.error.headers } : {}),
+        });
       const content = [
         ...(reply.text ? [{ type: "text" as const, text: reply.text }] : []),
         ...(reply.toolCalls ?? []).map((tool) => ({

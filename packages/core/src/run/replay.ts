@@ -67,6 +67,7 @@ import { bindAction, retarget, targetOf } from "./bind.js";
 import { checkResult, evaluationText, unusableCheck } from "./checks.js";
 import { fixerProposal, healFacts, healProposal } from "./heal.js";
 import { checkable, lateMatch, type PostCheck, verifyOutcome } from "./post-state.js";
+import { Deadline } from "./deadline.js";
 import type { Chapter, ReplayOptions, ReplayResult } from "./types.js";
 import type { AttemptBlock, AttemptFailure } from "./verdict.js";
 
@@ -170,7 +171,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
   const decisions = options.decisions;
   const recording = mode === "rerecord" ? undefined : options.recording;
   const started = Date.now();
-  const deadline = started + options.timeoutMs;
+  // The time limit leaves out time spent waiting for AI providers (PROV-0).
+  const deadline = new Deadline(options.timeoutMs);
   const checkTimeoutMs = options.checkTimeoutMs ?? 5_000;
 
   const steps: StepResult[] = [];
@@ -581,7 +583,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     const member = inboxMemberOfAction(bound.action);
     if (member) {
       const read = await prepareInbox(options.inbox, test, step, member, {
-        signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
+        signal: AbortSignal.timeout(Math.max(1, deadline.remainingMs)),
       });
       if (!read.ok)
         return read.outcome === "blocked"
@@ -938,10 +940,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
     const models = options.models as NonNullable<typeof options.models>;
     await settlePage();
     const controller = stoppable();
-    const timer = setTimeout(
-      () => controller.abort(new Error("timeout")),
-      Math.max(1, deadline - Date.now()),
-    );
+    const disarm = deadline.arm(controller);
     const replaced = recorded.commands.slice(from);
     const recordedEffect = mergedEffect(replaced);
     const missedElement = replaced[0]?.fingerprint;
@@ -967,7 +966,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       step,
       variables,
       { recorded, command: from, reason: missed.reason },
-    ).finally(() => clearTimeout(timer));
+    ).finally(disarm);
     const calls = fixed.modelCalls;
     for (const call of calls) emitCall(call);
     if (fixed.status !== "recorded") {
@@ -1149,7 +1148,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       stop = block("aborted", "The run was stopped before this test finished.", step.index);
       continue;
     }
-    if (Date.now() > deadline) {
+    if (deadline.expired) {
       const failure: AttemptFailure = {
         decider: { kind: "step", attempt, stepIndex: step.index },
         headline: `${where(step)} "${step.text}": the test's time limit (${Math.round(options.timeoutMs / 1000)}s) was reached.`,
@@ -1471,10 +1470,7 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
       } else {
         await settlePage();
         const controller = stoppable();
-        const timer = setTimeout(
-          () => controller.abort(new Error("timeout")),
-          Math.max(1, deadline - Date.now()),
-        );
+        const disarm = deadline.arm(controller);
         const authored =
           step.kind === "exact" && step.exact?.form === "op"
             ? await runExactOp(session, step, step.exact.op as ExactOp<BoundText>, variables)
@@ -1493,8 +1489,8 @@ export async function replayAttempt(options: ReplayOptions): Promise<ReplayResul
                 },
                 step,
                 variables,
-              ).finally(() => clearTimeout(timer));
-        clearTimeout(timer);
+              ).finally(disarm);
+        disarm();
         for (const call of authored.modelCalls) emitCall(call);
         base.modelCallIds = authored.modelCalls.map((c) => c.id);
         if (authored.model) authoredModel = authored.model;

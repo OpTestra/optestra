@@ -53,6 +53,15 @@ ms, violations }`, each violation `rule impact help helpUrl page nodes targets`;
 EVD-6), carried by `attempt.finished`; the mute fields by `test.finished`. All
 optional: 1.0–1.4 documents parse as before, and older readers ignore them.
 
+**1.6** (PROV-0): ModelCall `waitMs` (time the call waited for its provider: a
+rate limit's Retry-After or no free slot; not in `latencyMs`, not counted against
+the test's time limit), `listCostUsd` (at list price; null when unknown) and
+`reportedCostUsd` (what the provider says it charged, e.g. OpenRouter's
+`usage.cost`; `costUsd` uses it when present). AiUsage `waitMs` and RunCost
+`aiWaitMs` sum the waits. New live event `model.waiting` (`provider`, `model`,
+`reason rate_limited|concurrency`, `resumesAt`, `message`). All optional: older
+documents parse as before, and older readers skip the event.
+
 `fixtures/v1/` is frozen once released: `pnpm gen:fixtures` skips folders that
 exist. `_future-minor/` is a 1.9 run with extra fields and an unknown event, to
 prove 1.0 readers still read it.

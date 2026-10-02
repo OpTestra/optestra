@@ -58,6 +58,12 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
         kind: "google",
         keySecret: "GEMINI_API_KEY",
       },
+      openrouter: {
+        kind: "openrouter",
+      },
+      "ollama-cloud": {
+        kind: "ollama-cloud",
+      },
       "claude-code": {
         kind: "claude-code",
       },
@@ -67,6 +73,10 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
     },
     roles: {
       planner: [
+        {
+          provider: "ollama-cloud",
+          model: "deepseek-v4.1-flash",
+        },
         {
           provider: "anthropic",
           model: "claude-sonnet-5-5",
@@ -80,6 +90,10 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
           model: "gemini-3.8-flash",
         },
         {
+          provider: "openrouter",
+          model: "anthropic/claude-sonnet-5.5",
+        },
+        {
           provider: "claude-code",
           model: "claude-sonnet-5-5",
         },
@@ -89,6 +103,10 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
         },
       ],
       fixer: [
+        {
+          provider: "ollama-cloud",
+          model: "deepseek-v4.1-flash",
+        },
         {
           provider: "anthropic",
           model: "claude-sonnet-5-5",
@@ -102,6 +120,10 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
           model: "gemini-3.5-flash-lite",
         },
         {
+          provider: "openrouter",
+          model: "anthropic/claude-sonnet-5.5",
+        },
+        {
           provider: "claude-code",
           model: "claude-sonnet-5-5",
         },
@@ -113,6 +135,7 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
     },
     prices: {},
     timeoutSeconds: 120,
+    maxWaitMinutes: 30,
     allowDelegated: true,
     delegatedCallsPerRun: 60,
   },

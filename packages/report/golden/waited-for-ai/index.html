@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src &#39;self&#39; file: data:; media-src &#39;self&#39; file:; style-src &#39;unsafe-inline&#39;; script-src &#39;unsafe-inline&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;">
+<meta name="referrer" content="no-referrer">
+<title>Passed: demo-shop · Product report</title>
+<style>:root{color-scheme:light dark;--c-background:#ffffff;--c-surface:#f6f8fa;--c-text:#1f2328;--c-muted:#57606a;--c-border:#d0d7de;--c-accent:#0550ae;--c-code:#eff2f5;--c-passed:#116329;--c-passed-bg:#dafbe1;--c-healed:#0550ae;--c-healed-bg:#ddf4ff;--c-failed:#a40e26;--c-failed-bg:#ffebe9;--c-flaky:#7d4e00;--c-flaky-bg:#fff8c5;--c-blocked:#424a53;--c-blocked-bg:#eaeef2;--c-warn:#7d4e00;--c-warn-bg:#fff8c5;--font-body:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;--font-mono:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;--font-size:15px;--font-small:13px;--line-height:1.5;--s-xs:4px;--s-sm:8px;--s-md:12px;--s-lg:20px;--s-xl:32px;--radius:6px;--max-width:1100px;}@media (prefers-color-scheme:dark){:root{--c-background:#0d1117;--c-surface:#161b22;--c-text:#e6edf3;--c-muted:#9da7b3;--c-border:#30363d;--c-accent:#6cb6ff;--c-code:#1c2128;--c-passed:#7ee2a8;--c-passed-bg:#0f2d1c;--c-healed:#9ccbff;--c-healed-bg:#0c2d4a;--c-failed:#ffa198;--c-failed-bg:#3d1214;--c-flaky:#f2cc60;--c-flaky-bg:#332600;--c-blocked:#c9d1d9;--c-blocked-bg:#262c34;--c-warn:#f2cc60;--c-warn-bg:#332600;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--c-background);color:var(--c-text);font:var(--font-size)/var(--line-height) var(--font-body)}
+a{color:var(--c-accent)}
+a:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px}
+code,pre,kbd{font-family:var(--font-mono);font-size:var(--font-small)}
+code,kbd{background:var(--c-code);padding:0 var(--s-xs);border-radius:var(--radius)}
+pre{background:var(--c-code);padding:var(--s-sm) var(--s-md);border-radius:var(--radius);overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+h1,h2,h3,h4{line-height:1.25;margin:0 0 var(--s-sm)}
+h1{font-size:1.5em}h2{font-size:1.2em;margin-top:var(--s-xl)}h3{font-size:1em;display:inline}h4{font-size:.95em;margin-top:var(--s-lg)}
+.skip{position:absolute;left:-9999px}.skip:focus{left:var(--s-md);top:var(--s-md);background:var(--c-background);padding:var(--s-sm)}
+header,main,footer{max-width:var(--max-width);margin:0 auto;padding:0 var(--s-lg)}
+header{padding-top:var(--s-lg);padding-bottom:var(--s-md);border-bottom:1px solid var(--c-border)}
+footer{color:var(--c-muted);font-size:var(--font-small);padding-top:var(--s-xl);padding-bottom:var(--s-xl)}
+.muted{color:var(--c-muted)}
+.meta{color:var(--c-muted);font-size:var(--font-small)}
+.meta span+span::before{content:" · "}
+.tiles{display:flex;flex-wrap:wrap;gap:var(--s-sm);list-style:none;padding:0;margin:var(--s-md) 0}
+.tiles li{border:1px solid var(--c-border);border-radius:var(--radius);padding:var(--s-sm) var(--s-md);min-width:7em;background:var(--c-surface)}
+.tiles strong{display:block;font-size:1.4em}
+.facts{display:grid;grid-template-columns:max-content 1fr;gap:var(--s-xs) var(--s-lg);margin:0}
+.facts dt{color:var(--c-muted)}.facts dd{margin:0}
+.badge{display:inline-block;border-radius:var(--radius);padding:0 var(--s-sm);font-size:var(--font-small);font-weight:600;white-space:nowrap}
+.v-passed{color:var(--c-passed);background:var(--c-passed-bg)}
+.v-healed{color:var(--c-healed);background:var(--c-healed-bg)}
+.v-failed{color:var(--c-failed);background:var(--c-failed-bg)}
+.v-flaky{color:var(--c-flaky);background:var(--c-flaky-bg)}
+.v-blocked,.v-skipped,.v-none{color:var(--c-blocked);background:var(--c-blocked-bg)}
+.v-warned,.v-warn{color:var(--c-warn);background:var(--c-warn-bg)}
+.banner{border-radius:var(--radius);padding:var(--s-md);margin:var(--s-md) 0}
+.card{border:1px solid var(--c-border);border-radius:var(--radius);padding:var(--s-md);margin:var(--s-md) 0;background:var(--c-surface)}
+.headline{font-size:1.1em;font-weight:600;margin:0 0 var(--s-sm)}
+figure{margin:var(--s-sm) 0}
+figure img{width:min(100%,640px);height:auto;max-height:400px;object-fit:contain;object-position:left top;border:1px solid var(--c-border);border-radius:var(--radius);background:var(--c-background)}
+figcaption{color:var(--c-muted);font-size:var(--font-small)}
+.shots{display:flex;gap:var(--s-xs)}
+.shots img{max-width:120px;max-height:80px;border:1px solid var(--c-border);border-radius:var(--radius)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:var(--font-small)}
+th,td{text-align:left;vertical-align:top;padding:var(--s-xs) var(--s-sm);border-bottom:1px solid var(--c-border)}
+th{color:var(--c-muted);font-weight:600}
+details{margin:var(--s-sm) 0}
+summary{cursor:pointer}
+article.test{border:1px solid var(--c-border);border-radius:var(--radius);margin:var(--s-sm) 0;background:var(--c-background)}
+article.test>details{margin:0}
+article.test>details>summary{padding:var(--s-sm) var(--s-md);display:flex;flex-wrap:wrap;gap:var(--s-sm);align-items:baseline}
+article.test>details>div{padding:0 var(--s-md) var(--s-md);border-top:1px solid var(--c-border)}
+.attempt{border-left:3px solid var(--c-border);padding-left:var(--s-md)}
+.expected-actual{display:grid;grid-template-columns:max-content 1fr;gap:0 var(--s-md);margin:var(--s-xs) 0}
+.expected-actual dt{color:var(--c-muted)}.expected-actual dd{margin:0}
+.filters{display:flex;flex-wrap:wrap;gap:var(--s-md);align-items:end;margin:var(--s-md) 0}
+.filters label{display:flex;flex-direction:column;font-size:var(--font-small);color:var(--c-muted)}
+.filters input,.filters select{font:inherit;color:var(--c-text);background:var(--c-background);border:1px solid var(--c-border);border-radius:var(--radius);padding:var(--s-xs) var(--s-sm)}
+ul.plain{list-style:none;padding:0}
+[hidden]{display:none !important}
+@media print{details{display:block}summary{list-style:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#tests">Skip to the tests</a>
+<header>
+<p class="muted">Product run report</p>
+<h1>demo-shop · local <span class="badge v-passed">Passed</span></h1>
+<span class="meta"><span>run <code>01M3EK2W60P3DMMQM6D60NDCA0</code></span><span>Sat, 26 Sep 2026 10:10:00 GMT</span><span>web</span><span>cli trigger</span><span>normal mode</span></span>
+</header>
+<main>
+
+
+<section aria-labelledby="summary-h">
+<h2 id="summary-h">Summary</h2>
+<ul class="tiles" aria-label="Verdict counts"><li><strong>1</strong>tests</li><li class="v-passed"><strong>1</strong>passed</li><li class="v-healed"><strong>0</strong>healed</li><li class="v-failed"><strong>0</strong>failed</li><li class="v-flaky"><strong>0</strong>flaky</li><li class="v-blocked"><strong>0</strong>blocked</li></ul>
+<dl class="facts">
+<dt>Duration</dt><dd>10.6s + 30.0s waiting for AI</dd>
+<dt>AI calls</dt><dd>2 <span class="muted">(12,400 tokens in, 280 out)</span></dd>
+<dt>Cost</dt><dd>$0.0092</dd>
+<dt>Environment</dt><dd>local · web</dd>
+<dt>Engine</dt><dd>0.1.0 · results contract 1.6</dd>
+</dl>
+</section>
+
+
+
+<section id="tests" aria-labelledby="tests-h">
+<h2 id="tests-h">Tests (1)</h2>
+<form id="filters" class="filters" role="search" aria-label="Filter tests" hidden>
+<label for="f-verdict">Verdict<select id="f-verdict"><option value="">All</option><option value="passed">Passed (1)</option></select></label>
+<label for="f-tag">Tag<select id="f-tag"><option value="">All</option><option value="search">search</option></select></label>
+<label for="f-search">Search<input id="f-search" type="search" placeholder="Name, file or message"></label>
+<output id="f-count" aria-live="polite"></output>
+</form>
+<article class="test" id="test-tests__search" data-verdict="passed" data-tags="[&quot;search&quot;]" data-search="search finds a product tests/search.md  search">
+<details><summary><span class="badge v-passed">Passed</span> <h3>Search finds a product</h3> <span class="meta"><span>tests/search.md</span><span>chromium</span><span>40.5s</span><span>2 AI calls</span><span>$0.0092</span></span></summary>
+<div><h4>What was checked</h4><ul><li>The product page for &#39;Desk lamp&#39; opened.</li></ul>
+<dl class="facts"><dt>File</dt><dd><code>tests/search.md</code></dd><dt>Runs on</dt><dd>chromium</dd><dt>Tags</dt><dd><code>search</code></dd><dt>AI</dt><dd>2 AI calls, $0.0092; waited 30.0s for AI providers (rate limits or busy slots; not counted against the time limit)</dd></dl>
+<details class="attempt" open><summary>Attempt 1: <span class="badge v-passed">passed</span> 40.5s</summary><div class="scroll" role="region" aria-label="Steps of attempt 1 of Search finds a product" tabindex="0"><table><thead><tr><th scope="col">#</th><th scope="col">Step</th><th scope="col">Kind</th><th scope="col">Status</th><th scope="col">Recovery</th><th scope="col">Time</th><th scope="col">Screenshots</th></tr></thead><tbody><tr><td>1</td><td>Search for &#39;lamp&#39;<div class="muted">primary locator <code>getByRole(&#39;searchbox&#39;)</code></div><div class="muted">page after: verified, expected results for lamp, saw 3 results</div></td><td>action</td><td><span class="badge v-passed">passed</span></td><td>—</td><td>5.3s</td><td><div class="shots"><a href="tests/tests__search/1/steps/0-before.png"><img src="tests/tests__search/1/steps/0-before.png" alt="Before step 1" loading="lazy"></a><a href="tests/tests__search/1/steps/0-after.png"><img src="tests/tests__search/1/steps/0-after.png" alt="After step 1" loading="lazy"></a></div></td></tr><tr><td>2</td><td>Open the first result<div class="muted">primary locator <code>getByRole(&#39;link&#39;, { name: &#39;Desk lamp&#39; })</code></div><div class="muted">page after: verified, expected product page, saw /products/desk-lamp</div></td><td>action</td><td><span class="badge v-passed">passed</span></td><td>—</td><td>5.1s</td><td><div class="shots"><a href="tests/tests__search/1/steps/1-before.png"><img src="tests/tests__search/1/steps/1-before.png" alt="Before step 2" loading="lazy"></a><a href="tests/tests__search/1/steps/1-after.png"><img src="tests/tests__search/1/steps/1-after.png" alt="After step 2" loading="lazy"></a></div></td></tr></tbody></table></div>
+<h4>AI calls</h4><div class="scroll" role="region" aria-label="AI calls of attempt 1 of Search finds a product" tabindex="0"><table><thead><tr><th scope="col">Role</th><th scope="col">Model</th><th scope="col">Tokens</th><th scope="col">Cost</th><th scope="col">Time</th><th scope="col">Outcome</th></tr></thead><tbody><tr><td>planner</td><td>openrouter / anthropic/claude-sonnet-5.5</td><td>6,200 in / 140 out (5,100 cached)</td><td>$0.0046</td><td>2.4s</td><td>ok</td></tr><tr><td>planner</td><td>openrouter / anthropic/claude-sonnet-5.5</td><td>6,200 in / 140 out (5,100 cached)</td><td>$0.0046</td><td>2.4s</td><td>ok after 2 tries</td></tr></tbody></table></div>
+<h4>Evidence files</h4><ul><li>Video: <a href="tests/tests__search/1/video.webm">tests/tests__search/1/video.webm</a><br><video controls preload="none" width="480" src="tests/tests__search/1/video.webm" aria-label="Screen recording of attempt 1"></video></li><li>Trace: <a href="tests/tests__search/1/trace.zip">tests/tests__search/1/trace.zip</a>. Open it from the run folder with <kbd>npx playwright show-trace tests/tests__search/1/trace.zip</kbd></li><li>Console log: <a href="tests/tests__search/1/console.log">tests/tests__search/1/console.log</a></li><li>Network log: <a href="tests/tests__search/1/network.har">tests/tests__search/1/network.har</a></li></ul></details></div>
+</details>
+</article>
+</section>
+</main>
+<footer>Made by Product 0.1.0 from run <code>01M3EK2W60P3DMMQM6D60NDCA0</code> (results contract 1.6). Open it again with <kbd>product report</kbd>.</footer>
+<script>(function(){
+var form=document.getElementById("filters");
+var tests=Array.prototype.slice.call(document.querySelectorAll("article.test"));
+function openHash(){
+  var id=decodeURIComponent(location.hash.slice(1));
+  var el=id&&document.getElementById(id);
+  if(!el)return;
+  var d=el.closest("details")||el.querySelector("details");
+  while(d){d.open=true;d=d.parentElement&&d.parentElement.closest("details");}
+}
+window.addEventListener("hashchange",openHash);
+openHash();
+if(!form)return;
+form.hidden=false;
+var verdict=document.getElementById("f-verdict"),tag=document.getElementById("f-tag"),search=document.getElementById("f-search"),count=document.getElementById("f-count");
+function apply(){
+  var v=verdict.value,t=tag?tag.value:"",q=search.value.trim().toLowerCase(),shown=0;
+  tests.forEach(function(a){
+    var tags=JSON.parse(a.getAttribute("data-tags")||"[]");
+    var ok=(!v||a.getAttribute("data-verdict")===v)&&(!t||tags.indexOf(t)>=0)&&(!q||(a.getAttribute("data-search")||"").indexOf(q)>=0);
+    a.hidden=!ok;if(ok)shown++;
+  });
+  count.textContent=shown+" of "+tests.length+" tests shown";
+}
+form.addEventListener("input",apply);
+form.addEventListener("change",apply);
+form.addEventListener("submit",function(e){e.preventDefault();});
+apply();
+})();</script>
+</body>
+</html>

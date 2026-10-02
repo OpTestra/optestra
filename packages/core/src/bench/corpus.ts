@@ -824,36 +824,46 @@ const FALLBACK = {
 
 function basisFrom(benchDir: string, model: string): CorpusEstimate["basis"] {
   const dir = join(benchDir, "results");
+  // Model comparisons (EVAL-0's -model-comparison, EVAL-1's -open-models), newest first.
   const files = existsSync(dir)
     ? readdirSync(dir)
-        .filter((f) => f.endsWith("-model-comparison.json"))
+        .filter((f) => f.endsWith("-model-comparison.json") || f.endsWith("-open-models.json"))
         .sort()
+        .reverse()
     : [];
-  const newest = files.at(-1);
   const basis: CorpusEstimate["basis"] = {
     file: null,
     model,
     fixture: { shop: { ...FALLBACK.shop }, android: { ...FALLBACK.android } },
     draft: { ...FALLBACK.draft },
   };
-  if (!newest) return basis;
-  try {
-    const parsed = JSON.parse(readFileSync(join(dir, newest), "utf8")) as {
-      models: Array<{
-        model: string;
-        fixtures: Array<{
-          fixture: CorpusFixture;
-          quality: { tests: number };
-          authoring: { calls: number; listUsd: number | null; wallMs: number };
-          heals: { calls: number; listUsd: number | null };
-        }>;
-        drafts?: Array<{ calls: number; listUsd: number | null; wallMs: number }>;
+  type Parsed = {
+    models: Array<{
+      model: string;
+      fixtures: Array<{
+        fixture: CorpusFixture;
+        quality: { tests: number };
+        authoring: { calls: number; listUsd: number | null; wallMs: number };
+        heals: { calls: number; listUsd: number | null };
       }>;
-    };
-    const m = parsed.models.find((x) => x.model.endsWith(`:${model}`) || x.model === model);
-    if (!m) return basis;
-    basis.file = `bench/results/${newest}`;
+      drafts?: Array<{ calls: number; listUsd: number | null; wallMs: number }>;
+    }>;
+  };
+  // Each fixture (and the drafts) from the newest comparison that measured it.
+  const seen = new Set<string>();
+  for (const file of files) {
+    let m: Parsed["models"][number] | undefined;
+    try {
+      const parsed = JSON.parse(readFileSync(join(dir, file), "utf8")) as Parsed;
+      m = parsed.models.find((x) => x.model.endsWith(`:${model}`) || x.model === model);
+    } catch {
+      m = undefined;
+    }
+    if (!m) continue;
     for (const f of m.fixtures) {
+      if (seen.has(f.fixture)) continue;
+      seen.add(f.fixture);
+      basis.file ??= `bench/results/${file}`;
       const n = Math.max(1, f.quality.tests);
       basis.fixture[f.fixture] = {
         callsPerTest: f.authoring.calls / n,
@@ -863,7 +873,8 @@ function basisFrom(benchDir: string, model: string): CorpusEstimate["basis"] {
         healUsd: f.heals.listUsd ?? 0,
       };
     }
-    if (m.drafts?.length) {
+    if (m.drafts?.length && !seen.has("draft")) {
+      seen.add("draft");
       const d = m.drafts;
       basis.draft = {
         calls: d.reduce((s, x) => s + x.calls, 0) / d.length,
@@ -871,8 +882,6 @@ function basisFrom(benchDir: string, model: string): CorpusEstimate["basis"] {
         s: d.reduce((s, x) => s + x.wallMs, 0) / 1000 / d.length,
       };
     }
-  } catch {
-    // Unreadable: the fallback numbers stand.
   }
   return basis;
 }

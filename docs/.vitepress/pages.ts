@@ -156,6 +156,17 @@ export const SECTIONS: Section[] = [
         description: "Planner and fixer, provider kinds, pinned defaults and failover.",
       },
       {
+        text: "Use OpenRouter",
+        link: "/ai/openrouter",
+        description:
+          "Every model on prepaid credit: pinned routing, caching, reported cost, credit check.",
+      },
+      {
+        text: "Use Ollama Cloud",
+        link: "/ai/ollama-cloud",
+        description: "Open-weight models on Ollama's credit: key, models, limits, per-token cost.",
+      },
+      {
         text: "Use your AI subscription",
         link: "/ai/subscription",
         description: "Claude Code and Codex instead of an API key, locked down; why not Google.",

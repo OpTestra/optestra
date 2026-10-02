@@ -50,6 +50,8 @@ export const RunCostSchema = z.object({
   unpricedCalls: CountSchema,
   aiCalls: CountSchema,
   tokens: TokensSchema,
+  /** 1.6 (PROV-0): time AI calls waited for providers (rate limits, slots), over all tests. */
+  aiWaitMs: MillisecondsSchema.optional(),
 });
 export type RunCost = z.infer<typeof RunCostSchema>;
 

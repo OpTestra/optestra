@@ -213,7 +213,7 @@ export async function exploreStarters(options: StarterOptions): Promise<StarterS
     return { proposals, drafts, notes, modelCalls };
   }
   if (proposals.length < count) {
-    const reply = await options.models.complete("planner", {
+    const reply = await options.models.complete("drafter", {
       system: prompt.starters_system,
       messages: [
         {

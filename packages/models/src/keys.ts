@@ -1,8 +1,16 @@
 import type { Config } from "@optestra/config";
 import { processEnvSource, type SecretSource, type SecretValue } from "@optestra/config/node";
-import { isDelegatedKind, MODEL_ROLES, type ModelRole, type ProviderSettings } from "./config.js";
+import { supportFor } from "./capabilities.js";
+import {
+  isDelegatedKind,
+  MODEL_ROLES,
+  type ModelRole,
+  OPTIONAL_ROLES,
+  type PoolEntrySettings,
+  type ProviderSettings,
+} from "./config.js";
 import { findBinary, type ResolvedBinary } from "./delegated/process.js";
-import { keyOptional, providerBaseUrl } from "./providers.js";
+import { DEFAULT_KEY_SECRETS, keyOptional, providerBaseUrl } from "./providers.js";
 
 export type KeyStatus = "set" | "missing" | "not_needed" | "not_allowed";
 
@@ -25,6 +33,8 @@ export interface PoolEntry {
   index: number;
   provider: string;
   model: string;
+  /** The entry as configured (routing, vision, allowUnsupported). */
+  settings?: PoolEntrySettings;
   usable: boolean;
   keyStatus: KeyStatus | "unknown_provider";
   problem: string | undefined;
@@ -57,7 +67,11 @@ export function resolveProviders(
   node?: string,
 ): Map<string, ResolvedProvider> {
   const out = new Map<string, ResolvedProvider>();
-  for (const [id, settings] of Object.entries(config.models?.providers ?? {})) {
+  for (const [id, configured] of Object.entries(config.models?.providers ?? {})) {
+    // Named providers (openrouter, ollama-cloud) know their own key's name.
+    const defaultKey = DEFAULT_KEY_SECRETS[configured.kind];
+    const settings: ProviderSettings =
+      configured.keySecret || !defaultKey ? configured : { ...configured, keySecret: defaultKey };
     if (isDelegatedKind(settings.kind)) {
       // No key and no host: the user's own signed-in CLI, found on PATH (MOD-6).
       const allowed = config.models?.allowDelegated !== false;
@@ -124,8 +138,12 @@ export function resolvePools(
 ): Record<ModelRole, PoolEntry[]> {
   const roles = config.models?.roles;
   const pools = {} as Record<ModelRole, PoolEntry[]>;
-  for (const role of MODEL_ROLES) {
-    pools[role] = (roles?.[role] ?? []).map((entry, index) => {
+  const roleNames = [...MODEL_ROLES, ...(Object.keys(OPTIONAL_ROLES) as ModelRole[])];
+  for (const role of roleNames) {
+    const own = (roles as Partial<Record<ModelRole, PoolEntrySettings[]>> | undefined)?.[role];
+    const fallback = (OPTIONAL_ROLES as Partial<Record<ModelRole, ModelRole>>)[role];
+    const configured = own?.length || !fallback ? (own ?? []) : (roles?.[fallback] ?? []);
+    pools[role] = configured.map((entry, index) => {
       const provider = providers.get(entry.provider);
       if (!provider) {
         return {
@@ -136,18 +154,26 @@ export function resolvePools(
           usable: false,
           keyStatus: "unknown_provider",
           problem: `provider "${entry.provider}" is not defined in models.providers`,
+          settings: entry,
         };
       }
+      // A model a model eval found unfit for this role can't be picked silently.
+      const support = supportFor(provider.settings.kind, entry.model, role);
+      const unsupported =
+        support && !support.supported && !entry.allowUnsupported
+          ? `${entry.model} is marked unsupported as ${role}: ${support.evidence}`
+          : undefined;
       const keyProblem =
         provider.keyStatus === "missing"
           ? `key ${provider.settings.keySecret ?? ""} is not set`.trim()
           : undefined;
-      const problem = provider.problem ?? keyProblem;
+      const problem = provider.problem ?? keyProblem ?? unsupported;
       return {
         role,
         index,
         provider: entry.provider,
         model: entry.model,
+        settings: entry,
         usable: problem === undefined,
         keyStatus: provider.keyStatus,
         problem,

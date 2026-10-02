@@ -29,6 +29,7 @@ export {
   isDelegatedKind,
   MODEL_ROLES,
   type ModelRole,
+  OPTIONAL_ROLES,
   type ModelsSettings,
   modelsSchema,
   type PoolEntrySettings,
@@ -36,8 +37,36 @@ export {
   type PriceSettings,
   type ProviderKind,
   type ProviderSettings,
+  type RoutingSettings,
 } from "./config.js";
-export { basePrices, computeCost, priceFor } from "./cost.js";
+export {
+  MODEL_SUPPORT,
+  type ModelCapabilities,
+  probeCapabilities,
+  type RoleSupport,
+  resetCapabilityProbes,
+  supportFor,
+} from "./capabilities.js";
+export { basePrices, computeCost, priceAt, priceFor } from "./cost.js";
+export {
+  AiWaits,
+  aiWaitScope,
+  rateLimitWaitMs,
+  resetLimiters,
+  retryAfterMs,
+  Slots,
+  slotsFor,
+  type WaitInfo,
+  type WaitReason,
+  withAiWaits,
+} from "./limits.js";
+export {
+  AUTHOR_ENDPOINTS,
+  DEFAULT_CONCURRENCY,
+  DEFAULT_KEY_SECRETS,
+  openRouterRouting,
+  type ResolvedRouting,
+} from "./providers.js";
 export {
   type KeyStatus,
   type PoolEntry,

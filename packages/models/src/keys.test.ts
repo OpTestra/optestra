@@ -25,19 +25,23 @@ describe("pools", () => {
         PATH: "",
       }),
     );
-    // The default Claude model is pinned to Sonnet 5.5 for planner and fixer (a user
-    // choice, 2026-10-01, from the EVAL-0 comparison). Change only on purpose.
+    // DeepSeek-V4.1-Flash on Ollama first (EVAL-1, 2026-10-02), used only with an
+    // Ollama key; the Claude default stays pinned to Sonnet 5.5 (EVAL-0). Change only on purpose.
     expect(pools.planner.map((e) => [e.provider, e.model, e.usable])).toEqual([
+      ["ollama-cloud", "deepseek-v4.1-flash", false],
       ["anthropic", "claude-sonnet-5-5", true],
       ["openai", "gpt-6-sol", false],
       ["google", "gemini-3.8-flash", false],
+      ["openrouter", "anthropic/claude-sonnet-5.5", false],
       ["claude-code", "claude-sonnet-5-5", false],
       ["codex", "default", false],
     ]);
     expect(pools.fixer.map((e) => [e.provider, e.model, e.usable])).toEqual([
+      ["ollama-cloud", "deepseek-v4.1-flash", false],
       ["anthropic", "claude-sonnet-5-5", true],
       ["openai", "gpt-6-luna", false],
       ["google", "gemini-3.5-flash-lite", false],
+      ["openrouter", "anthropic/claude-sonnet-5.5", false],
       ["claude-code", "claude-sonnet-5-5", false],
       ["codex", "default", false],
     ]);

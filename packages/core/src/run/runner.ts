@@ -64,7 +64,14 @@ import {
   groupFailures,
 } from "@optestra/decide";
 import { createProjectDecisions } from "@optestra/decide/node";
-import { BudgetMeter, createModels, type Models, projectUsageStore } from "@optestra/models";
+import {
+  AiWaits,
+  BudgetMeter,
+  createModels,
+  type Models,
+  projectUsageStore,
+  withAiWaits,
+} from "@optestra/models";
 import {
   type CheckRecording,
   RECORDING_EPOCH,
@@ -565,6 +572,19 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     attempt: number;
     sink: DecisionRecord[];
   }>();
+  /**
+   * Runs one attempt with its decisions routed to it and its AI waits measured
+   * (left out of its time limit) and shown live as model.waiting events.
+   */
+  const inAttempt = <T>(
+    here: { testId: string; attempt: number; sink: DecisionRecord[] },
+    fn: () => T,
+  ): T => {
+    const waits = new AiWaits((info) =>
+      emit({ type: "model.waiting", testId: here.testId, attempt: here.attempt, ...info }),
+    );
+    return where.run(here, () => withAiWaits(waits, fn));
+  };
   const onDecision = (record: DecisionRecord) => {
     const here = where.getStore();
     here?.sink.push(record);
@@ -831,7 +851,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
 
       let result: ReplayResult;
       if (hasCode) {
-        result = await where.run({ testId, attempt, sink }, () =>
+        result = await inAttempt({ testId, attempt, sink }, () =>
           runSpecTest({
             projectDir,
             testPath: plan.path,
@@ -980,7 +1000,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
         try {
           if (options.beforeAttempt)
             await options.beforeAttempt({ testId, attempt, session: open });
-          result = await where.run({ testId, attempt, sink }, () =>
+          result = await inAttempt({ testId, attempt, sink }, () =>
             replayAttempt({
               projectDir,
               accessibility: (options.accessibility ?? config.accessibility ?? "off") === "warn",

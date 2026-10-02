@@ -129,7 +129,7 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 |---|---|---|---|
 | `models` | object |  | AI models. |
 | `models.providers` | map of object |  | AI providers, by id. |
-| `models.providers.<id>.kind` | "anthropic" \| "openai" \| "google" \| "openai-compatible" \| "azure" \| "bedrock" \| "claude-code" \| "codex" |  | Provider type. |
+| `models.providers.<id>.kind` | "anthropic" \| "openai" \| "google" \| "openai-compatible" \| "azure" \| "bedrock" \| "openrouter" \| "ollama-cloud" \| "claude-code" \| "codex" |  | Provider type. |
 | `models.providers.<id>.baseUrl` | string |  | API base URL. Required for openai-compatible; optional for others. |
 | `models.providers.<id>.keySecret` | string |  | Name of the secret holding the API key. Local servers may have none. |
 | `models.providers.<id>.caps` | object |  | Usage caps. At 90% of any cap, calls move to the next provider. |
@@ -141,19 +141,51 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `models.providers.<id>.caps.perMonth.usd` | number |  | Spend cap in USD. |
 | `models.providers.<id>.options` | map of string |  | Provider-specific settings: azure resourceName/apiVersion, bedrock region. |
 | `models.providers.<id>.binary` | string |  | claude-code / codex: path to the CLI. Default: found on PATH (claude, codex). |
+| `models.providers.<id>.concurrency` | integer |  | Most requests in flight to this provider at once; more wait their turn. Default: openrouter 8, ollama-cloud 3 (Pro plan), others unlimited. |
+| `models.providers.<id>.concurrencyPerModel` | integer |  | Most requests in flight per model at this provider. Default unlimited. |
+| `models.providers.<id>.routing` | object |  | openrouter: which upstream providers may serve the calls (per entry too). |
+| `models.providers.<id>.routing.order` | list of string |  | Upstream providers to use, in order (e.g. [anthropic]). Default: the model author's own endpoint when known. |
+| `models.providers.<id>.routing.allowFallbacks` | boolean |  | Let OpenRouter use another upstream provider when these fail. Default false. |
+| `models.providers.<id>.routing.dataCollection` | "allow" \| "deny" |  | deny (default): only upstream providers that don't store or train on prompts. |
+| `models.providers.<id>.routing.zdr` | boolean |  | Only zero-data-retention endpoints. Default false. |
 | `models.roles` | object |  | Ordered pool per role: the first healthy entry answers. |
-| `models.roles.planner` | list of object | `[{"provider":"anthropic","model":"claude-sonnet-5-5"},{"provider":"openai","model":"gpt-6-sol"},{"provider":"google","model":"gemini-3.8-flash"},{"provider":"claude-code","model":"claude-sonnet-5-5"},{"provider":"codex","model":"default"}]` | Writes and re-records tests. |
+| `models.roles.planner` | list of object | `[{"provider":"ollama-cloud","model":"deepseek-v4.1-flash"},{"provider":"anthropic","model":"claude-sonnet-5-5"},{"provider":"openai","model":"gpt-6-sol"},{"provider":"google","model":"gemini-3.8-flash"},{"provider":"openrouter","model":"anthropic/claude-sonnet-5.5"},{"provider":"claude-code","model":"claude-sonnet-5-5"},{"provider":"codex","model":"default"}]` | Writes and re-records tests. |
 | `models.roles.planner.[].provider` | string |  | Provider id from models.providers. |
 | `models.roles.planner.[].model` | string |  | Model id at that provider. |
-| `models.roles.fixer` | list of object | `[{"provider":"anthropic","model":"claude-sonnet-5-5"},{"provider":"openai","model":"gpt-6-luna"},{"provider":"google","model":"gemini-3.5-flash-lite"},{"provider":"claude-code","model":"claude-sonnet-5-5"},{"provider":"codex","model":"default"}]` | Cheap, fast single-step heals. |
+| `models.roles.planner.[].routing` | object |  | openrouter: overrides the provider's routing. |
+| `models.roles.planner.[].routing.order` | list of string |  | Upstream providers to use, in order (e.g. [anthropic]). Default: the model author's own endpoint when known. |
+| `models.roles.planner.[].routing.allowFallbacks` | boolean |  | Let OpenRouter use another upstream provider when these fail. Default false. |
+| `models.roles.planner.[].routing.dataCollection` | "allow" \| "deny" |  | deny (default): only upstream providers that don't store or train on prompts. |
+| `models.roles.planner.[].routing.zdr` | boolean |  | Only zero-data-retention endpoints. Default false. |
+| `models.roles.planner.[].vision` | boolean |  | Whether the model reads images (screenshots). Default: what the provider says about the model. |
+| `models.roles.planner.[].allowUnsupported` | boolean |  | Use the model even for a role it is marked unsupported for (model evals only). |
+| `models.roles.fixer` | list of object | `[{"provider":"ollama-cloud","model":"deepseek-v4.1-flash"},{"provider":"anthropic","model":"claude-sonnet-5-5"},{"provider":"openai","model":"gpt-6-luna"},{"provider":"google","model":"gemini-3.5-flash-lite"},{"provider":"openrouter","model":"anthropic/claude-sonnet-5.5"},{"provider":"claude-code","model":"claude-sonnet-5-5"},{"provider":"codex","model":"default"}]` | Cheap, fast single-step heals. |
 | `models.roles.fixer.[].provider` | string |  | Provider id from models.providers. |
 | `models.roles.fixer.[].model` | string |  | Model id at that provider. |
+| `models.roles.fixer.[].routing` | object |  | openrouter: overrides the provider's routing. |
+| `models.roles.fixer.[].routing.order` | list of string |  | Upstream providers to use, in order (e.g. [anthropic]). Default: the model author's own endpoint when known. |
+| `models.roles.fixer.[].routing.allowFallbacks` | boolean |  | Let OpenRouter use another upstream provider when these fail. Default false. |
+| `models.roles.fixer.[].routing.dataCollection` | "allow" \| "deny" |  | deny (default): only upstream providers that don't store or train on prompts. |
+| `models.roles.fixer.[].routing.zdr` | boolean |  | Only zero-data-retention endpoints. Default false. |
+| `models.roles.fixer.[].vision` | boolean |  | Whether the model reads images (screenshots). Default: what the provider says about the model. |
+| `models.roles.fixer.[].allowUnsupported` | boolean |  | Use the model even for a role it is marked unsupported for (model evals only). |
+| `models.roles.drafter` | list of object |  | Drafts new tests from a sentence. Default: the planner's pool. |
+| `models.roles.drafter.[].provider` | string |  | Provider id from models.providers. |
+| `models.roles.drafter.[].model` | string |  | Model id at that provider. |
+| `models.roles.drafter.[].routing` | object |  | openrouter: overrides the provider's routing. |
+| `models.roles.drafter.[].routing.order` | list of string |  | Upstream providers to use, in order (e.g. [anthropic]). Default: the model author's own endpoint when known. |
+| `models.roles.drafter.[].routing.allowFallbacks` | boolean |  | Let OpenRouter use another upstream provider when these fail. Default false. |
+| `models.roles.drafter.[].routing.dataCollection` | "allow" \| "deny" |  | deny (default): only upstream providers that don't store or train on prompts. |
+| `models.roles.drafter.[].routing.zdr` | boolean |  | Only zero-data-retention endpoints. Default false. |
+| `models.roles.drafter.[].vision` | boolean |  | Whether the model reads images (screenshots). Default: what the provider says about the model. |
+| `models.roles.drafter.[].allowUnsupported` | boolean |  | Use the model even for a role it is marked unsupported for (model evals only). |
 | `models.prices` | map of object | `{}` | Price overrides by model id, USD per million tokens. |
 | `models.prices.<model>.input` | number |  |  |
 | `models.prices.<model>.output` | number |  |  |
 | `models.prices.<model>.cachedInput` | number |  |  |
 | `models.prices.<model>.cacheWrite` | number |  |  |
 | `models.timeoutSeconds` | number | `120` | Maximum time for one model request. |
+| `models.maxWaitMinutes` | number | `30` | Longest one call waits for a rate-limited provider (429, Retry-After) before trying the next one. Default 30. Waits never count against a test's time limit. |
 | `models.allowDelegated` | boolean | `true` | Allow claude-code / codex (your own AI subscription through its CLI). The cloud sets false. |
 | `models.delegatedCallsPerRun` | integer | `60` | Most calls one run may make through each subscription CLI (plans assume ordinary individual use). |
 

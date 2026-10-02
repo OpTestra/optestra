@@ -10,6 +10,7 @@ import {
   type ReportModel,
   type RunData,
   runStatus,
+  timeText,
   VERDICT_LABEL,
   VERDICTS,
   words,
@@ -81,7 +82,7 @@ function statusTable(model: ReportModel): string {
 
 function costLine(model: ReportModel): string {
   const { run } = model;
-  return `${plural(run.totals.tests, "test")} in ${formatDuration(run.durationMs)} · ${plural(run.cost.aiCalls, "AI call")} · ${md(costText(run.cost.usd, run.cost.unpricedCalls, model.subscriptionCalls, formatUsd))}`;
+  return `${plural(run.totals.tests, "test")} in ${timeText(run.durationMs, run.cost.aiWaitMs, formatDuration)} · ${plural(run.cost.aiCalls, "AI call")} · ${md(costText(run.cost.usd, run.cost.unpricedCalls, model.subscriptionCalls, formatUsd))}`;
 }
 
 function groupBlock(parts: Parts, group: FailureGroup, withTests: boolean): string {

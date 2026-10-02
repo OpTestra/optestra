@@ -43,6 +43,7 @@ export const AI_CHOICES = [
   "openai",
   "google",
   "openrouter",
+  "ollama-cloud",
   "openai-compatible",
   "later",
 ] as const;
@@ -55,6 +56,7 @@ const AI_LABELS: Record<AiChoice, string> = {
   openai: "OpenAI API key",
   google: "Google Gemini API key",
   openrouter: "OpenRouter API key",
+  "ollama-cloud": "Ollama Cloud API key",
   "openai-compatible": "Another OpenAI-compatible API (base URL + key)",
   later: "Set up later",
 };
@@ -65,10 +67,13 @@ const KEY_NAMES: Partial<Record<AiChoice, string>> = {
   openai: "OPENAI_API_KEY",
   google: "GEMINI_API_KEY",
   openrouter: "OPENROUTER_API_KEY",
+  "ollama-cloud": "OLLAMA_API_KEY",
   "openai-compatible": "OPENAI_COMPATIBLE_API_KEY",
 };
 
 const DEFAULT_OPENROUTER_MODEL = "anthropic/claude-sonnet-5.5";
+/** The Ollama Cloud model that passed the model eval (EVAL-1, bench/results/2026-10-02-open-models.json). */
+const DEFAULT_OLLAMA_MODEL = "deepseek-v4.1-flash";
 
 export interface InitCommandOptions {
   yes?: boolean;
@@ -207,18 +212,27 @@ function modelsPatch(choice: AiChoice, baseUrl?: string, model?: string): Config
           },
         },
       } as ConfigPatch;
+    // Named providers know their base URL and key name; only the model is chosen.
     case "openrouter":
+    case "ollama-cloud": {
+      const entry = {
+        provider: choice,
+        model:
+          model ?? (choice === "ollama-cloud" ? DEFAULT_OLLAMA_MODEL : DEFAULT_OPENROUTER_MODEL),
+      };
+      return {
+        models: {
+          providers: { [choice]: { kind: choice } },
+          roles: { planner: [entry], fixer: [entry] },
+        },
+      } as ConfigPatch;
+    }
     case "openai-compatible": {
-      const id = choice === "openrouter" ? "openrouter" : "compatible";
-      const entry = { provider: id, model: model ?? DEFAULT_OPENROUTER_MODEL };
+      const entry = { provider: "compatible", model: model ?? DEFAULT_OPENROUTER_MODEL };
       return {
         models: {
           providers: {
-            [id]: {
-              kind: "openai-compatible",
-              baseUrl: choice === "openrouter" ? "https://openrouter.ai/api/v1" : baseUrl,
-              keySecret: KEY_NAMES[choice],
-            },
+            compatible: { kind: "openai-compatible", baseUrl, keySecret: KEY_NAMES[choice] },
           },
           roles: { planner: [entry], fixer: [entry] },
         },
@@ -485,6 +499,11 @@ export async function runInitCommand(
     }
     aiBaseUrl = await ask.text("API base URL (e.g. http://localhost:11434/v1)", "");
   }
+  if (ai === "ollama-cloud" && !aiModel) {
+    aiModel = ask
+      ? await ask.text("Ollama Cloud model (see ollama.com/search?c=cloud)", DEFAULT_OLLAMA_MODEL)
+      : DEFAULT_OLLAMA_MODEL;
+  }
   if ((ai === "openai-compatible" || ai === "openrouter") && !aiModel) {
     aiModel = ask
       ? await ask.text("Model", ai === "openrouter" ? DEFAULT_OPENROUTER_MODEL : "")
@@ -633,7 +652,10 @@ export function registerInitCommand(program: Command, io: () => CommandIo): void
     .option("--app <path>", "android: the APK path")
     .option("--ai <setup>", `AI setup: ${AI_CHOICES.join(", ")}`)
     .option("--ai-base-url <url>", "for --ai openai-compatible: the API base URL")
-    .option("--ai-model <model>", "for --ai openrouter or openai-compatible: the model")
+    .option(
+      "--ai-model <model>",
+      "for --ai openrouter, ollama-cloud or openai-compatible: the model",
+    )
     .option("--key-stdin", "read the API key for --ai from stdin (it goes to .env only)")
     .option("--no-doctor", "don't run the doctor checks at the end")
     .option(

@@ -24,5 +24,8 @@ export function toModelCall(record: ModelCallRecord): ModelCall {
     attempts: record.attempts.filter((attempt) => attempt.attempt > 0).length,
     outcome: record.outcome,
     billing: record.billing,
+    ...(record.waitMs > 0 ? { waitMs: record.waitMs } : {}),
+    ...(record.billing === "api" ? { listCostUsd: record.listCostUsd } : {}),
+    ...(record.reportedCostUsd !== undefined ? { reportedCostUsd: record.reportedCostUsd } : {}),
   };
 }

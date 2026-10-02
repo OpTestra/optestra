@@ -33,10 +33,18 @@ export interface ModelEntry {
   model: string;
 }
 
-/** Router providers the eval knows without project config (openai-compatible). */
-export const ROUTER_PROVIDERS: Record<string, { baseUrl: string; keySecret: string }> = {
-  openrouter: { baseUrl: "https://openrouter.ai/api/v1", keySecret: "OPENROUTER_API_KEY" },
-  opencode: { baseUrl: "https://opencode.ai/zen/v1", keySecret: "OPENCODE_API_KEY" },
+/**
+ * Providers the eval knows without project config: the named ones (their own
+ * kind: routing pins, limits, credit checks) and OpenAI-compatible routers.
+ */
+export const ROUTER_PROVIDERS: Record<string, Record<string, string>> = {
+  openrouter: { kind: "openrouter" },
+  "ollama-cloud": { kind: "ollama-cloud" },
+  opencode: {
+    kind: "openai-compatible",
+    baseUrl: "https://opencode.ai/zen/v1",
+    keySecret: "OPENCODE_API_KEY",
+  },
 };
 
 /** "provider:model" (the model may contain "/" and ":"), e.g. openrouter:z-ai/glm-4.6. */
@@ -140,14 +148,15 @@ function evalConfig(config: Config, entry: ModelEntry, scripted: boolean): Confi
   const router = ROUTER_PROVIDERS[entry.provider];
   if (scripted)
     providers[entry.provider] = { kind: "openai-compatible", baseUrl: "http://127.0.0.1:9/v1" };
-  else if (router && !providers[entry.provider])
-    providers[entry.provider] = { kind: "openai-compatible", ...router };
+  else if (router && !providers[entry.provider]) providers[entry.provider] = { ...router };
+  // An eval scores the model even where an earlier eval marked it unsupported.
+  const candidate = { ...entry, allowUnsupported: true };
   return {
     ...config,
     models: {
       ...models,
       providers,
-      roles: { planner: [entry], fixer: [entry] },
+      roles: { planner: [candidate], fixer: [candidate] },
       // The stand-in costs nothing (and says so, rather than "unknown").
       ...(scripted
         ? {

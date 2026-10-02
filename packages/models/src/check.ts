@@ -31,6 +31,8 @@ export interface ProviderCheck {
   fix: string;
   /** Delegated CLIs: the installed version, when known. */
   version?: string;
+  /** Prepaid providers that report it (OpenRouter's /key): the key's spend so far and what's left. */
+  credit?: { usedUsd: number; limitUsd: number | null; remainingUsd: number | null };
 }
 
 export interface CheckOptions {
@@ -48,9 +50,22 @@ export interface CheckOptions {
 function listRequest(
   provider: ResolvedProvider,
   apiKey: string | undefined,
-): { url: string; headers: Record<string, string> } {
+): { url: string; headers: Record<string, string>; method?: string; body?: string } {
   const base = (provider.baseUrl ?? "").replace(/\/+$/, "");
   switch (provider.settings.kind) {
+    // The key endpoint: checks the key and gives its credit (openrouter.ai/docs/api-reference/limits).
+    case "openrouter":
+      return { url: `${base}/key`, headers: { authorization: `Bearer ${apiKey ?? ""}` } };
+    // Ollama's model list is public, so the key is checked with a chat request that
+    // names no model: the key is checked first (401 if wrong), then the request is
+    // refused before any model runs. Nothing is spent.
+    case "ollama-cloud":
+      return {
+        url: `${base}/chat/completions`,
+        method: "POST",
+        headers: { authorization: `Bearer ${apiKey ?? ""}`, "content-type": "application/json" },
+        body: JSON.stringify({ model: "", messages: [] }),
+      };
     case "anthropic":
       return {
         url: `${base}/models?limit=1`,
@@ -171,7 +186,7 @@ export async function checkProviders(
       let body = "";
       if (provider.settings.kind === "azure" || provider.settings.kind === "bedrock") {
         const model = Object.values(config.models?.roles ?? {})
-          .flat()
+          .flatMap((pool) => pool ?? [])
           .find((entry) => entry.provider === provider.id)?.model;
         if (!model) {
           return {
@@ -193,10 +208,39 @@ export async function checkProviders(
         });
         status = 200;
       } else {
-        const { url, headers } = listRequest(provider, apiKey);
-        const response = await request(url, { headers, signal });
+        const { url, headers, method, body: payload } = listRequest(provider, apiKey);
+        const response = await request(url, {
+          headers,
+          signal,
+          ...(method ? { method } : {}),
+          ...(payload ? { body: payload } : {}),
+        });
         status = response.status;
-        if (!response.ok) body = await response.text();
+        body = await response.text();
+      }
+      const kind = provider.settings.kind;
+      const keyEndpoint = kind === "openrouter" || provider.host === "openrouter.ai";
+      if (status >= 200 && status < 300 && keyEndpoint) {
+        const credit = openRouterCredit(body);
+        return {
+          ...base,
+          status: "valid",
+          message: `Key accepted by ${provider.host}.${credit ? ` ${creditText(credit)}` : ""}`,
+          fix:
+            credit?.remainingUsd !== null && credit && credit.remainingUsd < 1
+              ? "Add credit or raise the key's limit at openrouter.ai/settings/keys."
+              : "Nothing to do.",
+          ...(credit ? { credit } : {}),
+        };
+      }
+      // A key Ollama accepted, for a request it then refused (no model named).
+      if (kind === "ollama-cloud" && (status === 400 || status === 404) && /^\s*[{[]/.test(body)) {
+        return {
+          ...base,
+          status: "valid",
+          message: `Key accepted by ${provider.host}. Ollama shows the credit left only on its site: ollama.com/settings/usage.`,
+          fix: "Nothing to do.",
+        };
       }
       if (status >= 200 && status < 300) {
         return {
@@ -206,7 +250,8 @@ export async function checkProviders(
           fix: "Nothing to do.",
         };
       }
-      return classifyStatus(base, status, redact(body), provider, keyName);
+      body = redact(body);
+      return classifyStatus(base, status, body, provider, keyName);
     } catch (error) {
       const status = (error as { statusCode?: unknown }).statusCode;
       if (typeof status === "number")
@@ -228,6 +273,30 @@ export async function checkProviders(
     }
   });
   return Promise.all(checks);
+}
+
+/** The credit fields of OpenRouter's GET /key answer. */
+function openRouterCredit(body: string): ProviderCheck["credit"] | undefined {
+  try {
+    const data = (JSON.parse(body) as { data?: Record<string, unknown> }).data;
+    if (!data || typeof data.usage !== "number") return undefined;
+    const num = (value: unknown) => (typeof value === "number" ? value : null);
+    return {
+      usedUsd: data.usage,
+      limitUsd: num(data.limit),
+      remainingUsd: num(data.limit_remaining),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+const dollars = (usd: number) => `$${usd.toFixed(2)}`;
+
+function creditText(credit: NonNullable<ProviderCheck["credit"]>): string {
+  if (credit.limitUsd === null)
+    return `This key has no spend limit; it has used ${dollars(credit.usedUsd)} (the account's credit is at openrouter.ai/settings/credits).`;
+  return `${dollars(credit.remainingUsd ?? 0)} of this key's ${dollars(credit.limitUsd)} limit left (used ${dollars(credit.usedUsd)}).`;
 }
 
 function classifyStatus(

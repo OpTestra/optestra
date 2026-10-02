@@ -11,7 +11,7 @@ import { cpus } from "node:os";
 import { join } from "node:path";
 import { ENV_PREFIX } from "@optestra/config";
 import type { ModelCall, TestResult } from "@optestra/contract";
-import { BudgetMeter, computeCost, priceFor } from "@optestra/models";
+import { BudgetMeter, computeCost, priceAt } from "@optestra/models";
 import { loadTest } from "@optestra/spec/node";
 import { draftTest } from "../draft/project.js";
 import { explainRun } from "../explain/explain.js";
@@ -211,15 +211,20 @@ export function totals(calls: readonly ModelCall[], model: string): CallTotals {
     tokens.cacheWrite += call.tokens.cacheWrite ?? 0;
     latencyMs += call.latencyMs;
     if (call.billing === "subscription") subscriptionCalls++;
-    const usd = computeCost(
-      {
-        inputTokens: call.tokens.input,
-        outputTokens: call.tokens.output,
-        cachedInputTokens: call.tokens.cached,
-        cacheWriteTokens: call.tokens.cacheWrite ?? 0,
-      },
-      priceFor(call.model ?? model),
-    );
+    // The call's own list price when it has one (1.6); else priced here, the
+    // provider's own price first (ollama-cloud:kimi-k3), then the bare model id.
+    const usd =
+      typeof call.listCostUsd === "number"
+        ? call.listCostUsd
+        : computeCost(
+            {
+              inputTokens: call.tokens.input,
+              outputTokens: call.tokens.output,
+              cachedInputTokens: call.tokens.cached,
+              cacheWriteTokens: call.tokens.cacheWrite ?? 0,
+            },
+            priceAt(call.provider ?? "", call.model ?? model),
+          );
     listUsd = listUsd === null || usd === null ? null : listUsd + usd;
   }
   return { calls: calls.length, tokens, listUsd, subscriptionCalls, latencyMs };
@@ -958,6 +963,8 @@ function decisionFacts(benchDir: string): Record<string, unknown> {
 export interface ComparisonOptions {
   entries: readonly ModelEntry[];
   android?: boolean;
+  /** Run the shop (authoring, replays, cosmetic, drafts, explains). Default true; false = Android only. */
+  shop?: boolean;
   scripted?: boolean;
   /** Measure the non-model facts too (default true). */
   facts?: boolean;
@@ -980,7 +987,8 @@ export async function runComparison(options: ComparisonOptions): Promise<Compari
   const models: ModelComparison[] = [];
   const date = (options.now?.() ?? new Date()).toISOString();
   const prices: Record<string, unknown> = {};
-  for (const entry of options.entries) prices[entry.model] = priceFor(entry.model) ?? null;
+  for (const entry of options.entries)
+    prices[entry.model] = priceAt(entry.provider, entry.model) ?? null;
   const snapshot = (facts: NonModelFacts | null, factsProblem: string | null): ComparisonFile => ({
     comparisonVersion: COMPARISON_VERSION,
     kind: "model-comparison",
@@ -1023,13 +1031,15 @@ export async function runComparison(options: ComparisonOptions): Promise<Compari
           continue;
         }
       }
-      const shopR = await shopRunner(shop, useMailpit);
-      const onShop = await compareOnFixture(shopR, entry, options, budget, say);
-      comparison.fixtures.push(onShop.result);
-      comparison.problem = onShop.problem;
-      comparison.explains = await explains(onShop.failedRun, onShop.dir, entry, options, budget);
-      rmSync(onShop.dir, { recursive: true, force: true });
-      comparison.drafts = await drafts(shop, entry, options, budget, say);
+      if (options.shop !== false) {
+        const shopR = await shopRunner(shop, useMailpit);
+        const onShop = await compareOnFixture(shopR, entry, options, budget, say);
+        comparison.fixtures.push(onShop.result);
+        comparison.problem = onShop.problem;
+        comparison.explains = await explains(onShop.failedRun, onShop.dir, entry, options, budget);
+        rmSync(onShop.dir, { recursive: true, force: true });
+        comparison.drafts = await drafts(shop, entry, options, budget, say);
+      }
       if (android) {
         const runner = await androidRunner(android, shop);
         try {

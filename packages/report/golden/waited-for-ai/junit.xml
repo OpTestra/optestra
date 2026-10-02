@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="demo-shop · local" tests="1" failures="0" errors="0" skipped="0" time="40.625">
+  <testsuite name="demo-shop · local" tests="1" failures="0" errors="0" skipped="0" time="40.625" timestamp="2026-09-26T10:10:00" id="01M3EK2W60P3DMMQM6D60NDCA0">
+    <properties><property name="runId" value="01M3EK2W60P3DMMQM6D60NDCA0"/><property name="project" value="demo-shop"/><property name="environment" value="local"/><property name="target" value="web"/><property name="trigger" value="cli"/><property name="mode" value="normal"/><property name="engineVersion" value="0.1.0"/><property name="contractVersion" value="1.6"/><property name="aiCalls" value="2"/><property name="costUsd" value="0.00924"/><property name="totals.passed" value="1"/><property name="totals.healed" value="0"/><property name="totals.flaky" value="0"/></properties>
+    <testcase name="Search finds a product" classname="tests/search.md" file="tests/search.md" time="40.545">
+      <properties><property name="verdict" value="passed"/><property name="testId" value="tests__search"/><property name="matrix" value="chromium"/><property name="tag" value="search"/><property name="aiCalls" value="2"/><property name="costUsd" value="0.00924"/></properties>
+    </testcase>
+  </testsuite>
+</testsuites>

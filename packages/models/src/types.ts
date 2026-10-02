@@ -40,6 +40,8 @@ export interface CompletionRequest<T = unknown> {
   tags?: Record<string, string>;
 }
 
+export type { WaitInfo, WaitReason } from "./limits.js";
+
 export interface TokenUsage {
   /** All input tokens, including cached ones. */
   inputTokens: number;
@@ -63,6 +65,8 @@ export type AttemptOutcome =
   | "not_found"
   | "blocked_host"
   | "auth_failed"
+  /** The provider's prepaid credit or the key's spend limit is used up (HTTP 402). */
+  | "out_of_credit"
   | "bad_request"
   | "invalid_output"
   | "aborted"
@@ -91,10 +95,18 @@ export interface Attempt {
   message?: string;
   latencyMs: number;
   usage?: TokenUsage;
+  /** What the call cost: the provider's reported cost when it gives one, else the list price. */
   costUsd?: number | null;
+  /** At list price (prices.yaml); null when the price is unknown. */
+  listCostUsd?: number | null;
   billing?: Billing;
-  /** Delegated CLIs: the tool's own cost estimate, for information only (never charged). */
+  /**
+   * The provider's own figure: OpenRouter's `usage.cost` (what it charged), or a
+   * delegated CLI's estimate (information only, never charged).
+   */
   reportedCostUsd?: number;
+  /** Time spent waiting before this try: a free slot, or a rate limit's Retry-After. */
+  waitMs?: number;
 }
 
 export type FailureReason =
@@ -110,7 +122,10 @@ export interface ModelCallRecord {
   id: string;
   role: ModelRole;
   startedAt: string;
+  /** Time spent talking to providers; waits are not included (see waitMs). */
   latencyMs: number;
+  /** Time spent waiting for a provider slot or a rate limit, summed over attempts. */
+  waitMs: number;
   outcome: "ok" | FailureReason;
   /** The entry that answered (success only). */
   provider: string | null;
@@ -119,6 +134,10 @@ export interface ModelCallRecord {
   usage: TokenUsage;
   /** Summed over all attempts; null when any attempt's cost is unknown. */
   costUsd: number | null;
+  /** At list price, summed; null when any price is unknown. */
+  listCostUsd: number | null;
+  /** The provider's reported cost, summed, when every priced attempt had one. */
+  reportedCostUsd?: number;
   attempts: Attempt[];
   tags: Record<string, string>;
   /** "subscription" when the answer came through a delegated CLI (cost 0 to budgets). */

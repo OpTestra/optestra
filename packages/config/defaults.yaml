@@ -84,7 +84,7 @@ android:
 # AI models (MOD-7): the ONLY place default model ids live. The models package
 # registers this section. A pool entry is used only when its provider's key is
 # available, so these pools switch on by themselves when the standard key env
-# var is set (ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY).
+# var is set (ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY).
 models:
   providers:
     anthropic:
@@ -96,6 +96,13 @@ models:
     google:
       kind: google
       keySecret: GEMINI_API_KEY
+    # Named providers (PROV-0): their base URL, key name (OPENROUTER_API_KEY,
+    # OLLAMA_API_KEY) and concurrency (8 and 3) are built in. OpenRouter pins each
+    # model to its author's own endpoint, with no fallbacks and no data collection.
+    openrouter:
+      kind: openrouter
+    ollama-cloud:
+      kind: ollama-cloud
     # Your own AI subscription through the vendor's official CLI (MOD-6). Used only
     # when the CLI is installed and signed in, after the API-key entries.
     claude-code:
@@ -104,26 +111,37 @@ models:
       kind: codex
   # Ordered pool per role: the first healthy entry answers (MOD-8).
   roles:
-    # Writes and re-records tests. The Claude default is pinned to Sonnet 5.5 for both
-    # roles: it beat Sonnet 4.6 on quality and cost in the EVAL-0 comparison
-    # (bench/results/2026-10-01-model-comparison.json). Change only after a new model comparison (`bench --models`).
+    # Writes and re-records tests. First: DeepSeek-V4.1-Flash on Ollama Cloud (with an
+    # OLLAMA_API_KEY). EVAL-1 (bench/results/2026-10-02-open-models.json): 11/11
+    # authored, 0/15 wrong passes, 0/62 wrong fails, like Sonnet 5.5, at about a
+    # fifteenth of the cost; on Android 7/7, 0/10, 0/25 (2026-10-02-android-open-models.json).
+    # The Claude default stays pinned to Sonnet 5.5 for both
+    # roles (EVAL-0, bench/results/2026-10-01-model-comparison.json). Change only
+    # after a new model comparison (`bench --compare`) passes the rule in docs/ai/models.md.
     planner:
+      - { provider: ollama-cloud, model: deepseek-v4.1-flash }
       - { provider: anthropic, model: claude-sonnet-5-5 }
       - { provider: openai, model: gpt-6-sol }
       - { provider: google, model: gemini-3.8-flash }
+      - { provider: openrouter, model: anthropic/claude-sonnet-5.5 }
       - { provider: claude-code, model: claude-sonnet-5-5 }
       - { provider: codex, model: default }
-    # Single-step heals (Sonnet 5.5 heals cost ~$0.006 each, EVAL-0).
+    # Single-step heals: DeepSeek-V4.1-Flash ~$0.0004 each (EVAL-1), Sonnet 5.5 ~$0.006 (EVAL-0).
     fixer:
+      - { provider: ollama-cloud, model: deepseek-v4.1-flash }
       - { provider: anthropic, model: claude-sonnet-5-5 }
       - { provider: openai, model: gpt-6-luna }
       - { provider: google, model: gemini-3.5-flash-lite }
+      - { provider: openrouter, model: anthropic/claude-sonnet-5.5 }
       - { provider: claude-code, model: claude-sonnet-5-5 }
       - { provider: codex, model: default }
   # Per-model price overrides (USD per million tokens); the base table ships with the models package.
   prices: {}
   # Maximum time for one model request, in seconds.
   timeoutSeconds: 120
+  # Longest one call waits out a provider's rate limit (429, Retry-After) before the
+  # next provider is tried. Waits never count against a test's time limit.
+  maxWaitMinutes: 30
   # Allow claude-code / codex (the user's own subscription). the cloud sets false.
   allowDelegated: true
   # Most calls one run may make through each subscription CLI.

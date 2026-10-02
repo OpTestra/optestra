@@ -30,6 +30,8 @@ import { compileCheck } from "../checks/compile.js";
 import prompt from "./drafter-prompt.json" with { type: "json" };
 import { type DraftedAction, labelOf, nameFromSentence, slugOf, stepText } from "./phrasing.js";
 import { DRAFT_TOOLS, type DraftToolCall, parseDraftCall } from "./tools.js";
+import { AiWaits, aiWaitScope, withAiWaits } from "@optestra/models";
+import { Deadline } from "../run/deadline.js";
 
 // Drafting a test from one sentence (AUT-7, AGT-1). The planner explores the app
 // through the harness (the closed action set, the allowlist, untrusted page
@@ -520,7 +522,13 @@ export async function finishDraft(input: {
 }
 
 /** Explores the app from `start` and drafts a test for `sentence`. Saves nothing. */
-export async function exploreDraft(sentence: string, options: DraftOptions): Promise<DraftResult> {
+export function exploreDraft(sentence: string, options: DraftOptions): Promise<DraftResult> {
+  // Its own AI waits scope, so its time limit leaves out waits for a provider.
+  const waits = aiWaitScope.getStore() ?? new AiWaits();
+  return withAiWaits(waits, () => explore(sentence, options));
+}
+
+async function explore(sentence: string, options: DraftOptions): Promise<DraftResult> {
   const now = options.now ?? Date.now;
   const began = now();
   const limits = { ...DRAFT_LIMITS, ...options.limits };
@@ -538,7 +546,8 @@ export async function exploreDraft(sentence: string, options: DraftOptions): Pro
   const history: string[] = [];
   const modelCalls: ModelCall[] = [];
   const note = (line: string) => history.push(`${history.length + 1}. ${line}`);
-  const timer = AbortSignal.timeout(limits.timeMs);
+  // A wall-clock limit that stops while a model call waits for its provider.
+  const timer = new Deadline(limits.timeMs).signal().signal;
   const signal = options.signal ? AbortSignal.any([options.signal, timer]) : timer;
 
   let status: DraftStatus = "incomplete";
@@ -604,7 +613,7 @@ export async function exploreDraft(sentence: string, options: DraftOptions): Pro
           content.push({ type: "image", data: shot.bytes, mediaType: shot.contentType });
       }
       wantShot = false;
-      const reply = await options.models.complete("planner", {
+      const reply = await options.models.complete("drafter", {
         system: P.system,
         messages: [{ role: "user", content }],
         tools: DRAFT_TOOLS,

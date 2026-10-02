@@ -124,6 +124,7 @@ score the engine on the repository's Bench fixtures: false pass/fail and flake r
 | `--out <dir>` | for --meter: where to write the report (default bench/results) |  |
 | `--scripted` | run the model evals with a scripted stand-in (no AI; for CI) |  |
 | `--yes` | for --models and --compare: don't ask before the real-model run |  |
+| `--model-budget <usd>` | for --compare: AI budget per model in dollars; a model that reaches it stops (default 50) |  |
 | `--measures` | print the success measures (application section 10) from real data |  |
 | `--json` | print machine-readable JSON |  |
 
@@ -641,9 +642,9 @@ set up a project in this repository: project file, an example test, .env.example
 | `--url <url>` | base URL of the app (default: from the framework, e.g. http://localhost:3000) |  |
 | `--target <target>` | web (default) or android |  |
 | `--app <path>` | android: the APK path |  |
-| `--ai <setup>` | AI setup: claude-code, codex, anthropic, openai, google, openrouter, openai-compatible, later |  |
+| `--ai <setup>` | AI setup: claude-code, codex, anthropic, openai, google, openrouter, ollama-cloud, openai-compatible, later |  |
 | `--ai-base-url <url>` | for --ai openai-compatible: the API base URL |  |
-| `--ai-model <model>` | for --ai openrouter or openai-compatible: the model |  |
+| `--ai-model <model>` | for --ai openrouter, ollama-cloud or openai-compatible: the model |  |
 | `--key-stdin` | read the API key for --ai from stdin (it goes to .env only) |  |
 | `--no-doctor` | don't run the doctor checks at the end |  |
 | `--suggest` | explore the running app and propose 3 starter tests (AI); each is saved only when you say yes |  |
