@@ -11,6 +11,14 @@ else
   image=(--image-family ubuntu-2404-lts-amd64 --image-project ubuntu-os-cloud)
 fi
 
+# ttl-minutes (the VM hard rule): the same limit as --max-run-duration, in minutes.
+ttl=$(node -e '
+  const t = process.argv[1]; let m = 0;
+  for (const [, n, u] of t.matchAll(/(\d+)([dhms])/g)) m += Number(n) * { d: 1440, h: 60, m: 1, s: 1 / 60 }[u];
+  if (!m) process.exit(1);
+  process.stdout.write(String(Math.ceil(m)));
+' "$ANDROID_VM_MAX_RUN") || { echo "ANDROID_VM_MAX_RUN must look like 3h, 90m or 1h30m." >&2; exit 2; }
+
 started=$(now_ms)
 "${GCLOUD[@]}" compute instances create "$ANDROID_VM_NAME" \
   --zone "$ANDROID_VM_ZONE" \
@@ -23,7 +31,7 @@ started=$(now_ms)
   --boot-disk-size "${ANDROID_VM_DISK_GB}GB" \
   --boot-disk-type pd-balanced \
   --boot-disk-auto-delete \
-  --labels "$LABELS"
+  --labels "$LABELS,ttl-minutes=$ttl"
 created=$(now_ms)
 phase createMs $((created - started))
 

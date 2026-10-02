@@ -135,6 +135,7 @@ step gradle gradle
 step androidSdk android_sdk
 step build engine
 step firstBoot first_boot
+[ -e "$HOME/repo" ] || ln -s "$ENGINE" "$HOME/repo"
 record setupTotalMs $(($(ms) - all))
 record diskUsedMb "$(df -m --output=used / | tail -1 | tr -d ' ')"
 echo "Setup finished."

@@ -5,7 +5,11 @@ set -euo pipefail
 # shellcheck disable=SC1091
 . "$HOME/.android-vm-env"
 cd "$HOME/engine"
-rm -rf "$HOME/results" && mkdir -p "$HOME/results"
+# ~/repo: the name callers use for the repo copy.
+[ -e "$HOME/repo" ] || ln -s "$HOME/engine" "$HOME/repo"
+rm -rf "$HOME/results" && mkdir -p "$HOME/results/out"
+# Where the command writes its results; run.sh copies them back.
+export ANDROID_VM_OUT="$HOME/results/out"
 # The first boot setup.sh did on this disk (absent on a disk from a reusable image).
 [ -f "$HOME/first-boot.json" ] && cp "$HOME/first-boot.json" "$HOME/results/"
 

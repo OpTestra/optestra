@@ -1,5 +1,6 @@
 // Merges what create.sh, setup.sh and run.sh recorded into one file for the cost
-// meter (COST-0): <out>/android-vm-run.json. Shape: see the README.
+// meter (COST-0): <out>/vm-run.json (not android-*.json: those are the command's
+// own measurements). Shape: see the README.
 //
 //   node report.mjs <out dir> <replay|command> <command> <exit status>
 import { execFileSync } from "node:child_process";
@@ -110,4 +111,4 @@ const file = {
         : null,
   },
 };
-writeFileSync(join(out, "android-vm-run.json"), `${JSON.stringify(file, null, 2)}\n`);
+writeFileSync(join(out, "vm-run.json"), `${JSON.stringify(file, null, 2)}\n`);
