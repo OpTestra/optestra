@@ -37,14 +37,23 @@ Each call is priced at the model's credit rate from Ollama's pricing page (the p
 | Model | Input | Cached input | Output |
 |---|---|---|---|
 | `kimi-k3` | $3.00 | $0.30 | $15.00 |
-| `glm-5.3` | $1.40 | $0.26 | $4.40 |
+| `glm-5.3`, `glm-5.2` | $1.40 | $0.26 | $4.40 |
 | `deepseek-v4-pro` | $1.32 | $0.044 | $3.96 |
-| `deepseek-v4.1-flash` | $0.30 | $0.006 | $1.20 |
+| `kimi-k2.7-code` | $0.95 | $0.19 | $4.00 |
+| `kimi-k2.6` | $0.95 | $0.16 | $4.00 |
+| `minimax-m3` | $0.60 | $0.12 | $2.40 |
 | `mistral-large-3` | $0.50 | – | $1.50 |
+| `deepseek-v4.1-flash` | $0.30 | $0.006 | $1.20 |
+| `minimax-m2.7` | $0.30 | $0.06 | $1.20 |
+| `glm-5.3-flash` | $0.15 | $0.03 | $0.50 |
+| `gpt-oss:120b` | $0.15 | $0.014 | $0.60 |
 | `gemma4` | $0.14 | $0.05 | $0.40 |
+| `nemotron-3-ultra` | $0.10 | $0.10 | $3.00 |
+| `gpt-oss:20b` | $0.07 | $0.035 | $0.30 |
 | `nemotron-3-nano` | $0.06 | – | $0.24 |
+| `nemotron-3-super` | $0.015 | $0.015 | $0.60 |
 
-Ollama charges less off-peak (outside 12:00–18:00 UTC on weekdays, and all weekend) and doesn't report a call's cost, so these rates are an upper bound. A model missing from the table gets cost "unknown" and a warning; add its rate under `models.prices` as `ollama-cloud:<model>`.
+The DeepSeek models cost half off-peak (outside 12:00–18:00 UTC on weekdays, and all weekend); their prices above are the peak ones, an upper bound. Ollama doesn't report a call's cost. A model missing from the table gets cost "unknown" and a warning; add its rate under `models.prices` as `ollama-cloud:<model>`.
 
 ## Limits
 

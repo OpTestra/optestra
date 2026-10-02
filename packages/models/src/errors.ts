@@ -1,5 +1,5 @@
 import type { Redactor } from "@optestra/config/node";
-import { APICallError, NoObjectGeneratedError } from "ai";
+import { APICallError, NoObjectGeneratedError, NoOutputGeneratedError } from "ai";
 import { BlockedHostError } from "./transport.js";
 import type { AttemptOutcome } from "./types.js";
 
@@ -28,6 +28,9 @@ export function classifyError(
       message: redact(`The reply did not match the output schema: ${cause}`),
     };
   }
+  // An answer with no text and no tool call (a model that spent its turn thinking).
+  if (NoOutputGeneratedError.isInstance(error))
+    return { outcome: "invalid_output", message: "The model answered with nothing." };
   if (error instanceof BlockedHostError)
     return { outcome: "blocked_host", message: redact(error.message) };
   if (APICallError.isInstance(error)) {

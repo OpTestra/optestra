@@ -35,7 +35,8 @@ export async function runCompareCommand(
       entries: list,
       android,
       scripted: options.scripted ?? false,
-      command: `bench --compare ${list.map(bench.entryId).join(" ")}${android ? " --fixture all" : ""}${options.scripted ? " --scripted" : ""}`,
+      ...(options.modelBudget !== undefined ? { budgetUsd: options.modelBudget } : {}),
+      command: `bench --compare ${list.map(bench.entryId).join(" ")}${android ? " --fixture all" : ""}${options.modelBudget !== undefined ? ` --model-budget ${options.modelBudget}` : ""}${options.scripted ? " --scripted" : ""}`,
       onProgress: options.json ? () => {} : (line) => io.stdout(`${line}\n`),
       // Saved after every model, so a crash later never loses spent calls.
       onSave: (partial) => {

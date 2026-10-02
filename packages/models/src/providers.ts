@@ -167,6 +167,9 @@ export function createLanguageModel(
         name: id,
         baseURL: baseURL ?? DEFAULT_BASE_URLS["ollama-cloud"] ?? "",
         includeUsage: true,
+        // Ollama honours a JSON schema (response_format json_schema); without this
+        // the SDK sends only json_object and the model never sees the schema.
+        supportsStructuredOutputs: true,
         ...defined({ apiKey, fetch }),
       })(model);
     case "openai-compatible": {

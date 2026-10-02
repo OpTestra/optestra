@@ -359,6 +359,94 @@ describe("ollama-cloud", () => {
     expect(show?.headers.authorization).toBeUndefined();
   });
 
+  it("structured output sends the JSON schema (json_schema), not just json_object", async () => {
+    const { fetch, seen } = fakeFetch((req) =>
+      req.url.endsWith("/api/show")
+        ? { body: ollamaShow(["tools"]) }
+        : {
+            body: {
+              ...ollamaToolCall(),
+              choices: [
+                {
+                  index: 0,
+                  finish_reason: "stop",
+                  message: { role: "assistant", content: '{"same":true,"confidence":1}' },
+                },
+              ],
+            },
+          },
+    );
+    const models = createModels({ config: ollamaConfig(), sources: keySources(KEYS), fetch });
+    const result = await models.complete("fixer", {
+      messages: [{ role: "user", content: "Same element?" }],
+      output: z.object({ same: z.boolean(), confidence: z.number() }),
+    });
+    expect(result.ok && result.object).toEqual({ same: true, confidence: 1 });
+    const chat = seen.find((s) => s.url.endsWith("/chat/completions"));
+    expect(chat?.body?.response_format).toMatchObject({
+      type: "json_schema",
+      json_schema: { schema: { properties: { same: { type: "boolean" } } } },
+    });
+    // Ollama doesn't enforce the schema for its cloud models, so the prompt says it too.
+    const messages = chat?.body?.messages as Array<{ role: string; content: string }>;
+    expect(messages[0]?.role).toBe("system");
+    expect(messages[0]?.content).toContain(
+      "Reply with only a JSON object that matches this JSON Schema",
+    );
+    expect(messages[0]?.content).toContain('"same":{"type":"boolean"}');
+  });
+
+  it("an empty answer is invalid output (retried once with the reason), not a network error", async () => {
+    const { fetch } = fakeFetch((req, index) =>
+      req.url.endsWith("/api/show")
+        ? { body: ollamaShow(["tools"]) }
+        : index === 1
+          ? {
+              body: {
+                ...ollamaToolCall(),
+                choices: [
+                  {
+                    index: 0,
+                    finish_reason: "length",
+                    message: { role: "assistant", content: "" },
+                  },
+                ],
+              },
+            }
+          : {
+              body: {
+                ...ollamaToolCall(),
+                choices: [
+                  {
+                    index: 0,
+                    finish_reason: "stop",
+                    message: { role: "assistant", content: '{"ok":true}' },
+                  },
+                ],
+              },
+            },
+    );
+    const models = createModels({ config: ollamaConfig(), sources: keySources(KEYS), fetch });
+    const result = await models.complete("fixer", {
+      messages: [{ role: "user", content: "ok?" }],
+      output: z.object({ ok: z.boolean() }),
+    });
+    expect(result.attempts.map((a) => a.outcome)).toEqual(["invalid_output", "ok"]);
+    expect(result.ok && result.object).toEqual({ ok: true });
+  });
+
+  it("a model that thinks gets room for its thinking in the output budget", async () => {
+    const { fetch, seen } = fakeFetch((req) =>
+      req.url.endsWith("/api/show")
+        ? { body: ollamaShow(["tools", "thinking"]) }
+        : { body: ollamaToolCall() },
+    );
+    const models = createModels({ config: ollamaConfig(), sources: keySources(KEYS), fetch });
+    await models.complete("planner", { ...plannerAsk, maxOutputTokens: 500 });
+    const chat = seen.find((s) => s.url.endsWith("/chat/completions"));
+    expect(chat?.body?.max_tokens).toBe(4_096);
+  });
+
   it("a model that can't call tools is skipped for the tool path, never picked silently", async () => {
     const { fetch, seen } = fakeFetch(() => ({ body: ollamaShow(["completion"]) }));
     const models = createModels({

@@ -162,6 +162,11 @@ export function createProgram(): Command {
     .option("--out <dir>", "for --meter: where to write the report (default bench/results)")
     .option("--scripted", "run the model evals with a scripted stand-in (no AI; for CI)")
     .option("--yes", "for --models and --compare: don't ask before the real-model run")
+    .option(
+      "--model-budget <usd>",
+      "for --compare: AI budget per model in dollars; a model that reaches it stops (default 50)",
+      Number,
+    )
     .option("--measures", "print the success measures (application section 10) from real data")
     .option("--json", "print machine-readable JSON")
     .action(async (options: BenchCommandOptions) => {

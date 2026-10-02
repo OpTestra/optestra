@@ -34,6 +34,8 @@ export interface ModelCapabilities {
   tools?: boolean;
   /** Reads images. */
   vision?: boolean;
+  /** Reasons before it answers, out of the same output budget (Ollama "thinking", OpenRouter "reasoning"). */
+  thinking?: boolean;
   /** Honours a JSON schema for structured output (OpenRouter's endpoint flag). */
   structuredOutput?: boolean;
   /** openrouter: false when the pinned upstream doesn't serve the model (calls would fail). */
@@ -89,7 +91,11 @@ async function ollama(
   const body = (await response.json()) as { capabilities?: unknown };
   if (!Array.isArray(body.capabilities)) return {};
   const caps = body.capabilities.filter((c): c is string => typeof c === "string");
-  return { tools: caps.includes("tools"), vision: caps.includes("vision") };
+  return {
+    tools: caps.includes("tools"),
+    vision: caps.includes("vision"),
+    thinking: caps.includes("thinking"),
+  };
 }
 
 interface Endpoint {
@@ -125,7 +131,9 @@ async function openRouter(
   if (pinned) out.pinServed = serving.length > 0;
   const tools = has("tools");
   const structured = has("structured_outputs");
+  const thinking = has("reasoning");
   if (tools !== undefined) out.tools = tools;
+  if (thinking !== undefined) out.thinking = thinking;
   if (structured !== undefined) out.structuredOutput = structured;
   if (Array.isArray(modalities)) out.vision = modalities.includes("image");
   return out;

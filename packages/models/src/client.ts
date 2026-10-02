@@ -19,6 +19,7 @@ import {
   type ModelMessage as SdkMessage,
   type ToolSet,
 } from "ai";
+import { z } from "zod";
 import { BudgetMeter } from "./budget.js";
 import { type ModelCapabilities, probeCapabilities } from "./capabilities.js";
 import { isDelegatedKind, type ModelRole } from "./config.js";
@@ -97,6 +98,12 @@ export interface Models {
 const MAX_TRIES_PER_ENTRY = 3; // one try + two retries
 /** A slot wait shorter than this isn't announced (it is still measured). */
 const ANNOUNCE_SLOT_WAIT_MS = 2_000;
+/**
+ * Output budget floor for models that think before answering: the thinking comes
+ * out of the same budget, and the engine's caps (200-500 tokens) are sized for
+ * answers alone. Only tokens actually produced are paid for.
+ */
+const THINKING_OUTPUT_FLOOR = 4_096;
 /** Backoff for a 429 without Retry-After: 2 s, doubling, at most a minute. */
 const RATE_LIMIT_BACKOFF_MS = 2_000;
 const RATE_LIMIT_BACKOFF_CAP_MS = 60_000;
@@ -166,6 +173,17 @@ function pause(ms: number, signal?: AbortSignal): Promise<boolean> {
     }, ms);
     signal?.addEventListener("abort", onAbort, { once: true });
   });
+}
+
+/** The output schema in words, for models whose provider doesn't enforce it. */
+function schemaInstruction(output: z.ZodType): string {
+  let schema: unknown;
+  try {
+    schema = z.toJSONSchema(output);
+  } catch {
+    return "Reply with only a JSON object, with no other text.";
+  }
+  return `Reply with only a JSON object that matches this JSON Schema, with no other text, no markdown and no code fence:\n${JSON.stringify(schema)}`;
 }
 
 const NO_VISION_NOTE =
@@ -309,6 +327,7 @@ export function createModels(options: ModelsOptions): Models {
     tryNumber: number,
     request: CompletionRequest<T>,
     messages: SdkMessage[],
+    schemaHint = false,
   ): Promise<AttemptResult<T>> {
     const provider = providers.get(entry.provider) as ResolvedProvider;
     if (isDelegatedKind(provider.settings.kind))
@@ -390,14 +409,19 @@ export function createModels(options: ModelsOptions): Models {
             ]),
           )
         : undefined;
-      const system = request.system
+      // Providers that don't enforce a JSON schema get it spelled out in the prompt too.
+      const systemText =
+        schemaHint && request.output
+          ? [request.system, schemaInstruction(request.output)].filter(Boolean).join("\n\n")
+          : request.system;
+      const system = systemText
         ? request.cache
           ? {
               role: "system" as const,
-              content: request.system,
+              content: systemText,
               providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } },
             }
-          : request.system
+          : systemText
         : undefined;
       const call = generateText({
         model,
@@ -672,7 +696,19 @@ export function createModels(options: ModelsOptions): Models {
         continue;
       }
       const vision = entry.settings?.vision ?? caps.vision;
+      const kind = providers.get(entry.provider)?.settings.kind;
+      const schemaHint =
+        kind === "ollama-cloud" ||
+        kind === "openai-compatible" ||
+        (kind === "openrouter" && caps.structuredOutput === false);
 
+      const asked =
+        caps.thinking && request.maxOutputTokens !== undefined
+          ? {
+              ...request,
+              maxOutputTokens: Math.max(request.maxOutputTokens, THINKING_OUTPUT_FLOOR),
+            }
+          : request;
       let messages = toSdkMessages(request.messages);
       if (vision === false && hasImages(request.messages)) messages = withoutImages(messages);
       let retriedInvalid = false;
@@ -687,7 +723,7 @@ export function createModels(options: ModelsOptions): Models {
         if (!slots) return aborted();
         let result: AttemptResult<T>;
         try {
-          result = await attemptOnce(entry, tryNumber, request, messages);
+          result = await attemptOnce(entry, tryNumber, asked, messages, schemaHint);
         } finally {
           slots.release();
         }
