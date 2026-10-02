@@ -963,6 +963,8 @@ function decisionFacts(benchDir: string): Record<string, unknown> {
 export interface ComparisonOptions {
   entries: readonly ModelEntry[];
   android?: boolean;
+  /** Run the shop (authoring, replays, cosmetic, drafts, explains). Default true; false = Android only. */
+  shop?: boolean;
   scripted?: boolean;
   /** Measure the non-model facts too (default true). */
   facts?: boolean;
@@ -1029,13 +1031,15 @@ export async function runComparison(options: ComparisonOptions): Promise<Compari
           continue;
         }
       }
-      const shopR = await shopRunner(shop, useMailpit);
-      const onShop = await compareOnFixture(shopR, entry, options, budget, say);
-      comparison.fixtures.push(onShop.result);
-      comparison.problem = onShop.problem;
-      comparison.explains = await explains(onShop.failedRun, onShop.dir, entry, options, budget);
-      rmSync(onShop.dir, { recursive: true, force: true });
-      comparison.drafts = await drafts(shop, entry, options, budget, say);
+      if (options.shop !== false) {
+        const shopR = await shopRunner(shop, useMailpit);
+        const onShop = await compareOnFixture(shopR, entry, options, budget, say);
+        comparison.fixtures.push(onShop.result);
+        comparison.problem = onShop.problem;
+        comparison.explains = await explains(onShop.failedRun, onShop.dir, entry, options, budget);
+        rmSync(onShop.dir, { recursive: true, force: true });
+        comparison.drafts = await drafts(shop, entry, options, budget, say);
+      }
       if (android) {
         const runner = await androidRunner(android, shop);
         try {

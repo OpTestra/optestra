@@ -849,24 +849,21 @@ function basisFrom(benchDir: string, model: string): CorpusEstimate["basis"] {
       drafts?: Array<{ calls: number; listUsd: number | null; wallMs: number }>;
     }>;
   };
-  let newest: string | undefined;
-  let m: Parsed["models"][number] | undefined;
+  // Each fixture (and the drafts) from the newest comparison that measured it.
+  const seen = new Set<string>();
   for (const file of files) {
+    let m: Parsed["models"][number] | undefined;
     try {
       const parsed = JSON.parse(readFileSync(join(dir, file), "utf8")) as Parsed;
       m = parsed.models.find((x) => x.model.endsWith(`:${model}`) || x.model === model);
     } catch {
       m = undefined;
     }
-    if (m) {
-      newest = file;
-      break;
-    }
-  }
-  if (!newest || !m) return basis;
-  try {
-    basis.file = `bench/results/${newest}`;
+    if (!m) continue;
     for (const f of m.fixtures) {
+      if (seen.has(f.fixture)) continue;
+      seen.add(f.fixture);
+      basis.file ??= `bench/results/${file}`;
       const n = Math.max(1, f.quality.tests);
       basis.fixture[f.fixture] = {
         callsPerTest: f.authoring.calls / n,
@@ -876,7 +873,8 @@ function basisFrom(benchDir: string, model: string): CorpusEstimate["basis"] {
         healUsd: f.heals.listUsd ?? 0,
       };
     }
-    if (m.drafts?.length) {
+    if (m.drafts?.length && !seen.has("draft")) {
+      seen.add("draft");
       const d = m.drafts;
       basis.draft = {
         calls: d.reduce((s, x) => s + x.calls, 0) / d.length,
@@ -884,8 +882,6 @@ function basisFrom(benchDir: string, model: string): CorpusEstimate["basis"] {
         s: d.reduce((s, x) => s + x.wallMs, 0) / 1000 / d.length,
       };
     }
-  } catch {
-    // Unreadable: the fallback numbers stand.
   }
   return basis;
 }

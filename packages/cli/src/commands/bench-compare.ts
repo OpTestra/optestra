@@ -21,9 +21,11 @@ export async function runCompareCommand(
   }
   const list = entries.map((e) => e.entry as NonNullable<(typeof e)["entry"]>);
   const android = options.fixture === "android" || options.fixture === "all";
+  // --fixture android: Android only (no shop, drafts or explains; no replay facts).
+  const androidOnly = options.fixture === "android";
   if (!options.scripted && !options.yes) {
     io.stdout(
-      `A model comparison makes real AI calls, each model once: per model about 160–225 on the shop (authoring every test, fixer heals, 3 drafts, 2 explains, 1 CLI check)${android ? " and 75–95 on Android" : ""}. Models: ${list.map(bench.entryId).join(", ")}.\nRun again with --yes to spend them.\n`,
+      `A model comparison makes real AI calls, each model once: per model ${androidOnly ? "about 75–95 on Android (authoring every test, fixer heals) and 1 CLI check" : `about 160–225 on the shop (authoring every test, fixer heals, 3 drafts, 2 explains, 1 CLI check)${android ? " and 75–95 on Android" : ""}`}. Models: ${list.map(bench.entryId).join(", ")}.\nRun again with --yes to spend them.\n`,
     );
     return 2;
   }
@@ -34,9 +36,10 @@ export async function runCompareCommand(
     file = await bench.runComparison({
       entries: list,
       android,
+      ...(androidOnly ? { shop: false, facts: false } : {}),
       scripted: options.scripted ?? false,
       ...(options.modelBudget !== undefined ? { budgetUsd: options.modelBudget } : {}),
-      command: `bench --compare ${list.map(bench.entryId).join(" ")}${android ? " --fixture all" : ""}${options.modelBudget !== undefined ? ` --model-budget ${options.modelBudget}` : ""}${options.scripted ? " --scripted" : ""}`,
+      command: `bench --compare ${list.map(bench.entryId).join(" ")}${androidOnly ? " --fixture android" : android ? " --fixture all" : ""}${options.modelBudget !== undefined ? ` --model-budget ${options.modelBudget}` : ""}${options.scripted ? " --scripted" : ""}`,
       onProgress: options.json ? () => {} : (line) => io.stdout(`${line}\n`),
       // Saved after every model, so a crash later never loses spent calls.
       onSave: (partial) => {
