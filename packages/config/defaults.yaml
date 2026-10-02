@@ -111,18 +111,23 @@ models:
       kind: codex
   # Ordered pool per role: the first healthy entry answers (MOD-8).
   roles:
-    # Writes and re-records tests. The Claude default is pinned to Sonnet 5.5 for both
-    # roles: it beat Sonnet 4.6 on quality and cost in the EVAL-0 comparison
-    # (bench/results/2026-10-01-model-comparison.json). Change only after a new model comparison (`bench --models`).
+    # Writes and re-records tests. First: DeepSeek-V4.1-Flash on Ollama Cloud (with an
+    # OLLAMA_API_KEY). EVAL-1 (bench/results/2026-10-02-open-models.json): 11/11
+    # authored, 0/15 wrong passes, 0/62 wrong fails, like Sonnet 5.5, at about a
+    # fifteenth of the cost. The Claude default stays pinned to Sonnet 5.5 for both
+    # roles (EVAL-0, bench/results/2026-10-01-model-comparison.json). Change only
+    # after a new model comparison (`bench --compare`) passes the rule in docs/ai/models.md.
     planner:
+      - { provider: ollama-cloud, model: deepseek-v4.1-flash }
       - { provider: anthropic, model: claude-sonnet-5-5 }
       - { provider: openai, model: gpt-6-sol }
       - { provider: google, model: gemini-3.8-flash }
       - { provider: openrouter, model: anthropic/claude-sonnet-5.5 }
       - { provider: claude-code, model: claude-sonnet-5-5 }
       - { provider: codex, model: default }
-    # Single-step heals (Sonnet 5.5 heals cost ~$0.006 each, EVAL-0).
+    # Single-step heals: DeepSeek-V4.1-Flash ~$0.0004 each (EVAL-1), Sonnet 5.5 ~$0.006 (EVAL-0).
     fixer:
+      - { provider: ollama-cloud, model: deepseek-v4.1-flash }
       - { provider: anthropic, model: claude-sonnet-5-5 }
       - { provider: openai, model: gpt-6-luna }
       - { provider: google, model: gemini-3.5-flash-lite }

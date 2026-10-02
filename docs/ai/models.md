@@ -16,14 +16,15 @@ All default model ids live in one file, the engine's `defaults.yaml`, never in c
 
 | Pool order | `planner` | `fixer` |
 |---|---|---|
-| 1. Anthropic API | `claude-sonnet-5-5` | `claude-sonnet-5-5` |
-| 2. OpenAI API | `gpt-6-sol` | `gpt-6-luna` |
-| 3. Google API | `gemini-3.8-flash` | `gemini-3.5-flash-lite` |
-| 4. [OpenRouter](./openrouter.md) | `anthropic/claude-sonnet-5.5` | `anthropic/claude-sonnet-5.5` |
-| 5. Claude Code (your subscription) | `claude-sonnet-5-5` | `claude-sonnet-5-5` |
-| 6. Codex (your subscription) | the tool's default | the tool's default |
+| 1. [Ollama Cloud](./ollama-cloud.md) | `deepseek-v4.1-flash` | `deepseek-v4.1-flash` |
+| 2. Anthropic API | `claude-sonnet-5-5` | `claude-sonnet-5-5` |
+| 3. OpenAI API | `gpt-6-sol` | `gpt-6-luna` |
+| 4. Google API | `gemini-3.8-flash` | `gemini-3.5-flash-lite` |
+| 5. [OpenRouter](./openrouter.md) | `anthropic/claude-sonnet-5.5` | `anthropic/claude-sonnet-5.5` |
+| 6. Claude Code (your subscription) | `claude-sonnet-5-5` | `claude-sonnet-5-5` |
+| 7. Codex (your subscription) | the tool's default | the tool's default |
 
-The Claude defaults are pinned to Sonnet 5.5 for both roles. It authored every Bench test correctly at about half the cost of Sonnet 4.6 (the 2026-10-01 model comparison in `bench/results/`). No other Claude model is used unless you choose it.
+With an `OLLAMA_API_KEY`, DeepSeek-V4.1-Flash answers first. In the EVAL-1 model comparison it authored every Bench shop test, with no wrong pass and no wrong fail, the same as Sonnet 5.5, at about a fifteenth of the cost ($0.003 vs $0.047 a test) and in half the time. Without an Ollama key the pools start at the Anthropic API, as before. The Claude defaults are pinned to Sonnet 5.5 for both roles; it authored every Bench test correctly at about half the cost of Sonnet 4.6 (EVAL-0). No other Claude model is used unless you choose it. Both results are in `bench/results/`. DeepSeek-V4.1-Flash has been measured on the web shop only, not yet on Android.
 
 ## Providers
 
@@ -90,11 +91,11 @@ The page is shown as an accessibility snapshot first (cheap, deterministic), wra
 
 ## Model evals
 
-A model becomes a default for a role only after `%cli% bench --models` (MOD-9) scores it on Bench's demo shop as planner and fixer, and only if it has **no wrong passes** and **no more wrong fails** than the current default, Sonnet 5.5 (0 of 62 on the shop, EVAL-0). A model can be the fixer default without being the planner default. The results, with the exact command, engine commit and date, are committed in `bench/results/`.
+A model becomes a default for a role only after `%cli% bench --compare` (MOD-9) scores it on Bench's demo shop as planner and fixer, and only if it has **no wrong passes** and **no more wrong fails** than the current default, Sonnet 5.5 (0 of 62 on the shop, EVAL-0). A model can be the fixer default without being the planner default. The results, with the exact command, engine commit and date, are committed in `bench/results/`.
 
 | Eval | Date | Models | Result |
 |---|---|---|---|
 | EVAL-0 | 2026-10-01 | Sonnet 4.6, Sonnet 5.5, GPT-6 Luna | Sonnet 5.5 became the default for both roles: 11/11 tests authored, 0 wrong passes, 0/62 wrong fails, about $0.047 a test. Luna: 34/62 wrong fails. |
-| EVAL-1 | not run yet | open-weight models through OpenRouter or Ollama Cloud | no change: Sonnet 5.5 stays the default for every role. |
+| EVAL-1 | 2026-10-02 | DeepSeek-V4.1-Flash, GLM-5.3, Kimi-K3, MiniMax-M3 on Ollama Cloud | DeepSeek-V4.1-Flash became the first default for both roles (with an Ollama key): 11/11, 0 wrong passes, 0/62 wrong fails, $0.0032 a test, 15 s a test. GLM-5.3 also passed (11/11, 0/62, $0.018 a test) but costs more for the same result. Kimi-K3 (6/62 wrong fails) and MiniMax-M3 (11/62) are marked unsupported as planner. |
 
 A model an eval finds unfit for a role is marked unsupported for it in the models package, with the evidence. It can't be picked for that role by accident; a pool entry can still use it with `allowUnsupported: true`.

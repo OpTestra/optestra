@@ -72,6 +72,8 @@ const KEY_NAMES: Partial<Record<AiChoice, string>> = {
 };
 
 const DEFAULT_OPENROUTER_MODEL = "anthropic/claude-sonnet-5.5";
+/** The Ollama Cloud model that passed the model eval (EVAL-1, bench/results/2026-10-02-open-models.json). */
+const DEFAULT_OLLAMA_MODEL = "deepseek-v4.1-flash";
 
 export interface InitCommandOptions {
   yes?: boolean;
@@ -213,7 +215,11 @@ function modelsPatch(choice: AiChoice, baseUrl?: string, model?: string): Config
     // Named providers know their base URL and key name; only the model is chosen.
     case "openrouter":
     case "ollama-cloud": {
-      const entry = { provider: choice, model: model ?? DEFAULT_OPENROUTER_MODEL };
+      const entry = {
+        provider: choice,
+        model:
+          model ?? (choice === "ollama-cloud" ? DEFAULT_OLLAMA_MODEL : DEFAULT_OPENROUTER_MODEL),
+      };
       return {
         models: {
           providers: { [choice]: { kind: choice } },
@@ -494,14 +500,9 @@ export async function runInitCommand(
     aiBaseUrl = await ask.text("API base URL (e.g. http://localhost:11434/v1)", "");
   }
   if (ai === "ollama-cloud" && !aiModel) {
-    // No Ollama model has passed the model eval yet, so there is no default to offer.
-    if (!ask) {
-      io.stdout(
-        "--ai ollama-cloud needs --ai-model (an Ollama Cloud model, e.g. from ollama.com/search?c=cloud).\n",
-      );
-      return 2;
-    }
-    aiModel = await ask.text("Ollama Cloud model (see ollama.com/search?c=cloud)", "");
+    aiModel = ask
+      ? await ask.text("Ollama Cloud model (see ollama.com/search?c=cloud)", DEFAULT_OLLAMA_MODEL)
+      : DEFAULT_OLLAMA_MODEL;
   }
   if ((ai === "openai-compatible" || ai === "openrouter") && !aiModel) {
     aiModel = ask

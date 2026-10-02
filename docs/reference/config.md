@@ -149,7 +149,7 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `models.providers.<id>.routing.dataCollection` | "allow" \| "deny" |  | deny (default): only upstream providers that don't store or train on prompts. |
 | `models.providers.<id>.routing.zdr` | boolean |  | Only zero-data-retention endpoints. Default false. |
 | `models.roles` | object |  | Ordered pool per role: the first healthy entry answers. |
-| `models.roles.planner` | list of object | `[{"provider":"anthropic","model":"claude-sonnet-5-5"},{"provider":"openai","model":"gpt-6-sol"},{"provider":"google","model":"gemini-3.8-flash"},{"provider":"openrouter","model":"anthropic/claude-sonnet-5.5"},{"provider":"claude-code","model":"claude-sonnet-5-5"},{"provider":"codex","model":"default"}]` | Writes and re-records tests. |
+| `models.roles.planner` | list of object | `[{"provider":"ollama-cloud","model":"deepseek-v4.1-flash"},{"provider":"anthropic","model":"claude-sonnet-5-5"},{"provider":"openai","model":"gpt-6-sol"},{"provider":"google","model":"gemini-3.8-flash"},{"provider":"openrouter","model":"anthropic/claude-sonnet-5.5"},{"provider":"claude-code","model":"claude-sonnet-5-5"},{"provider":"codex","model":"default"}]` | Writes and re-records tests. |
 | `models.roles.planner.[].provider` | string |  | Provider id from models.providers. |
 | `models.roles.planner.[].model` | string |  | Model id at that provider. |
 | `models.roles.planner.[].routing` | object |  | openrouter: overrides the provider's routing. |
@@ -159,7 +159,7 @@ Values are resolved in this order, lowest first: the built-in defaults, the proj
 | `models.roles.planner.[].routing.zdr` | boolean |  | Only zero-data-retention endpoints. Default false. |
 | `models.roles.planner.[].vision` | boolean |  | Whether the model reads images (screenshots). Default: what the provider says about the model. |
 | `models.roles.planner.[].allowUnsupported` | boolean |  | Use the model even for a role it is marked unsupported for (model evals only). |
-| `models.roles.fixer` | list of object | `[{"provider":"anthropic","model":"claude-sonnet-5-5"},{"provider":"openai","model":"gpt-6-luna"},{"provider":"google","model":"gemini-3.5-flash-lite"},{"provider":"openrouter","model":"anthropic/claude-sonnet-5.5"},{"provider":"claude-code","model":"claude-sonnet-5-5"},{"provider":"codex","model":"default"}]` | Cheap, fast single-step heals. |
+| `models.roles.fixer` | list of object | `[{"provider":"ollama-cloud","model":"deepseek-v4.1-flash"},{"provider":"anthropic","model":"claude-sonnet-5-5"},{"provider":"openai","model":"gpt-6-luna"},{"provider":"google","model":"gemini-3.5-flash-lite"},{"provider":"openrouter","model":"anthropic/claude-sonnet-5.5"},{"provider":"claude-code","model":"claude-sonnet-5-5"},{"provider":"codex","model":"default"}]` | Cheap, fast single-step heals. |
 | `models.roles.fixer.[].provider` | string |  | Provider id from models.providers. |
 | `models.roles.fixer.[].model` | string |  | Model id at that provider. |
 | `models.roles.fixer.[].routing` | object |  | openrouter: overrides the provider's routing. |

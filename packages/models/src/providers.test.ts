@@ -114,12 +114,12 @@ const endpoints = (model: string, input: string[], list: Array<[string, string[]
   },
 });
 
-/** Ollama Cloud (OpenAI-compatible /v1): a tool call from kimi-k3. */
+/** Ollama Cloud (OpenAI-compatible /v1): a tool call from deepseek-v4.1-flash. */
 const ollamaToolCall = () => ({
   id: "chatcmpl-412",
   object: "chat.completion",
   created: 1759400000,
-  model: "kimi-k3",
+  model: "deepseek-v4.1-flash",
   system_fingerprint: "fp_ollama",
   choices: [
     {
@@ -161,7 +161,7 @@ function openRouterConfig(
   });
 }
 
-function ollamaConfig(model = "kimi-k3", provider: Record<string, unknown> = {}) {
+function ollamaConfig(model = "deepseek-v4.1-flash", provider: Record<string, unknown> = {}) {
   return testConfig({
     providers: { ollama: { kind: "ollama-cloud", ...provider } },
     roles: {
@@ -183,7 +183,7 @@ describe("openrouter", () => {
       allowFallbacks: false,
       dataCollection: "deny",
     });
-    expect(openRouterRouting("moonshotai/kimi-k3").order).toEqual(["moonshotai"]);
+    expect(openRouterRouting("moonshotai/deepseek-v4.1-flash").order).toEqual(["moonshotai"]);
     expect(openRouterRouting("qwen/qwen3.8-max-0902").order).toEqual(["alibaba"]);
     expect(openRouterRouting("someone/unknown-model").order).toBeUndefined();
     // The entry beats the provider, which beats the default.
@@ -348,14 +348,17 @@ describe("ollama-cloud", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.toolCalls).toEqual([{ id: "call_x7k2", name: "click", input: { ref: "e1" } }]);
-    // kimi-k3 on Ollama credits: $3 in / $15 out per million (ollama.com/pricing).
-    expect(result.costUsd).toBeCloseTo((5_380 * 3 + 31 * 15) / 1e6, 10);
+    // deepseek-v4.1-flash on Ollama credits: $0.30 in / $1.20 out per million (ollama.com/pricing).
+    expect(result.costUsd).toBeCloseTo((5_380 * 0.3 + 31 * 1.2) / 1e6, 10);
     expect(result.record.reportedCostUsd).toBeUndefined();
     const chat = seen.find((s) => s.url === "https://ollama.com/v1/chat/completions");
     expect(chat?.headers.authorization).toBe(`Bearer ${KEYS.OLLAMA_API_KEY}`);
-    expect(chat?.body).toMatchObject({ model: "kimi-k3", tools: [{ type: "function" }] });
+    expect(chat?.body).toMatchObject({
+      model: "deepseek-v4.1-flash",
+      tools: [{ type: "function" }],
+    });
     const show = seen.find((s) => s.url === "https://ollama.com/api/show");
-    expect(show?.body).toEqual({ model: "kimi-k3" });
+    expect(show?.body).toEqual({ model: "deepseek-v4.1-flash" });
     expect(show?.headers.authorization).toBeUndefined();
   });
 
@@ -507,7 +510,7 @@ describe("limits", () => {
       return { body: ollamaToolCall() };
     });
     const models = createModels({
-      config: ollamaConfig("kimi-k3", { concurrency: 2 }),
+      config: ollamaConfig("deepseek-v4.1-flash", { concurrency: 2 }),
       sources: keySources(KEYS),
       fetch,
     });
@@ -572,7 +575,7 @@ describe("limits", () => {
     expect(waits).toHaveLength(2);
     expect(waits[0]).toMatchObject({
       provider: "ollama",
-      model: "kimi-k3",
+      model: "deepseek-v4.1-flash",
       reason: "rate_limited",
       resumesAt: new Date(1_000_000 + 45_000).toISOString(),
     });
@@ -633,7 +636,7 @@ describe("roles and support", () => {
     );
     const models = createModels({ config: ollamaConfig(), sources: keySources(KEYS), fetch });
     expect(models.pool("drafter").map((e) => [e.role, e.provider, e.model])).toEqual([
-      ["drafter", "ollama", "kimi-k3"],
+      ["drafter", "ollama", "deepseek-v4.1-flash"],
     ]);
     const result = await models.complete("drafter", plannerAsk);
     expect(result.ok && result.record.role).toBe("drafter");
@@ -642,7 +645,7 @@ describe("roles and support", () => {
     const own = testConfig({
       providers: { ollama: { kind: "ollama-cloud" } },
       roles: {
-        planner: [{ provider: "ollama", model: "kimi-k3" }],
+        planner: [{ provider: "ollama", model: "deepseek-v4.1-flash" }],
         fixer: [],
         drafter: [{ provider: "ollama", model: "glm-5.3" }],
       },

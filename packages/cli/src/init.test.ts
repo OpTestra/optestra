@@ -231,26 +231,34 @@ describe("init", { timeout: 30_000 }, () => {
     expect(out).toContain("stored as OPENROUTER_API_KEY in .env");
   });
 
-  it("Ollama Cloud: needs a model named (none has passed the model eval to be a default)", async () => {
+  it("Ollama Cloud: the evaluated model by default, or the one named", async () => {
     const dir = temp({});
     let out = "";
     const io = { cwd: dir, env: {}, stdout: (text: string) => (out += text) };
-    expect(
-      await runInitCommand(undefined, { yes: true, ai: "ollama-cloud", doctor: false }, io),
-    ).toBe(2);
-    expect(out).toContain("--ai ollama-cloud needs --ai-model");
     const code = await runInitCommand(
       undefined,
-      { yes: true, ai: "ollama-cloud", aiModel: "kimi-k3", doctor: false },
+      { yes: true, ai: "ollama-cloud", doctor: false },
       io,
     );
     expect(code).toBe(0);
+    const named = temp({});
+    expect(
+      await runInitCommand(
+        undefined,
+        { yes: true, ai: "ollama-cloud", aiModel: "glm-5.3", doctor: false },
+        { cwd: named, env: {}, stdout: () => {} },
+      ),
+    ).toBe(0);
+    expect(loadProject(named, { env: {} }).config.models.roles.planner[0]).toEqual({
+      provider: "ollama-cloud",
+      model: "glm-5.3",
+    });
     const loaded = loadProject(dir, { env: {} });
     expect(loaded.diagnostics).toEqual([]);
     expect(loaded.config.models.providers["ollama-cloud"]).toMatchObject({ kind: "ollama-cloud" });
     expect(loaded.config.models.roles.fixer[0]).toEqual({
       provider: "ollama-cloud",
-      model: "kimi-k3",
+      model: "deepseek-v4.1-flash",
     });
   });
 });

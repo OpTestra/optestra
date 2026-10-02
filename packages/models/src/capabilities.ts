@@ -17,7 +17,23 @@ export interface RoleSupport {
  * for a role is skipped for it (unless the pool entry sets allowUnsupported, as
  * model evals do). Models not listed have no verdict and are used as configured.
  */
-export const MODEL_SUPPORT: Record<string, Partial<Record<ModelRole, RoleSupport>>> = {};
+export const MODEL_SUPPORT: Record<string, Partial<Record<ModelRole, RoleSupport>>> = {
+  // EVAL-1, bench/results/2026-10-02-open-models.json (the shop, one run each).
+  "ollama-cloud:kimi-k3": {
+    planner: {
+      supported: false,
+      evidence:
+        "EVAL-1 (2026-10-02): 6/62 wrong fails on the shop (its sort-orders recording fails on every variant); 10/11 passed after authoring",
+    },
+  },
+  "ollama-cloud:minimax-m3": {
+    planner: {
+      supported: false,
+      evidence:
+        "EVAL-1 (2026-10-02): 11/62 wrong fails on the shop (checkout-trial and sort-orders recordings); 9/11 passed after authoring",
+    },
+  },
+};
 
 /** The eval verdict for a model in a role (the drafter shares the planner's), if any. */
 export function supportFor(

@@ -27,10 +27,10 @@ describe("models command", { timeout: 30_000 }, () => {
     const result = run({ ANTHROPIC_API_KEY: "sk-ant-cli-test-9f8e7d" });
     expect(result.status).toBe(0);
     expect(result.stdout).toMatch(
-      /1\s+anthropic\s+claude-sonnet-5-5\s+ANTHROPIC_API_KEY set\s+-\s+ready/,
+      /2\s+anthropic\s+claude-sonnet-5-5\s+ANTHROPIC_API_KEY set\s+-\s+ready/,
     );
     expect(result.stdout).toMatch(
-      /1\s+anthropic\s+claude-sonnet-5-5\s+ANTHROPIC_API_KEY set\s+-\s+ready/,
+      /2\s+anthropic\s+claude-sonnet-5-5\s+ANTHROPIC_API_KEY set\s+-\s+ready/,
     );
     expect(result.stdout).not.toContain("sk-ant-cli-test");
   });
@@ -40,13 +40,13 @@ describe("models command", { timeout: 30_000 }, () => {
     expect(result.status).toBe(2);
     expect(result.stdout).toContain("No usable model for the planner role.");
     expect(result.stdout).toContain(
-      "Fix: Set one of ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY",
+      "Fix: Set one of OLLAMA_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY",
     );
   });
 
   it("prints JSON with --json", () => {
     const output = JSON.parse(run({ GEMINI_API_KEY: "gm-test-123456" }, "--json").stdout);
-    expect(output.roles.planner[2]).toMatchObject({
+    expect(output.roles.planner[3]).toMatchObject({
       provider: "google",
       model: "gemini-3.8-flash",
       usable: true,

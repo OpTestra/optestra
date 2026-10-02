@@ -74,6 +74,10 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
     roles: {
       planner: [
         {
+          provider: "ollama-cloud",
+          model: "deepseek-v4.1-flash",
+        },
+        {
           provider: "anthropic",
           model: "claude-sonnet-5-5",
         },
@@ -99,6 +103,10 @@ export const BUILT_IN_DEFAULTS: Readonly<Record<string, unknown>> = {
         },
       ],
       fixer: [
+        {
+          provider: "ollama-cloud",
+          model: "deepseek-v4.1-flash",
+        },
         {
           provider: "anthropic",
           model: "claude-sonnet-5-5",

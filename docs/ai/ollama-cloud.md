@@ -3,7 +3,7 @@
 [Ollama Cloud](https://ollama.com/cloud) runs open-weight models (Kimi, GLM, DeepSeek, MiniMax, Qwen, gpt-oss and others) on Ollama's servers. You pay by the token, out of your plan's monthly credit: Pro is $20 a month for $60 of credit. Ollama says prompts and responses are never logged or trained on. %Name% has it as a named provider, `ollama-cloud`.
 
 ```sh
-npx %cli% init --ai ollama-cloud --ai-model kimi-k3
+npx %cli% init --ai ollama-cloud --ai-model deepseek-v4.1-flash
 ```
 
 Create the key at ollama.com/settings/keys. Put it in the git-ignored `.env` as `OLLAMA_API_KEY=…` (`init` does this for you), never in %config%.
@@ -16,12 +16,12 @@ models:
       kind: ollama-cloud
   roles:
     planner:
-      - { provider: ollama-cloud, model: kimi-k3 }
+      - { provider: ollama-cloud, model: deepseek-v4.1-flash }
     fixer:
-      - { provider: ollama-cloud, model: kimi-k3 }
+      - { provider: ollama-cloud, model: deepseek-v4.1-flash }
 ```
 
-Model names are the ones in ollama.com/api/tags (`kimi-k3`, `glm-5.3`, `deepseek-v4.1-flash`, `minimax-m3`, …). Ollama isn't in the default pools: no Ollama model has yet passed the [model eval](./models.md#model-evals) that a default needs, so you choose the model yourself.
+Model names are the ones in ollama.com/api/tags (`deepseek-v4.1-flash`, `glm-5.3`, `kimi-k3`, `minimax-m3`, …). With only the key set, nothing else is needed: **`deepseek-v4.1-flash` is first in the default pools** for the planner and fixer. It passed the [model eval](./models.md#model-evals) (EVAL-1: every shop test authored, no wrong pass or fail, about $0.003 a test). `kimi-k3` and `minimax-m3` are marked unsupported as planner (they recorded tests that then failed on a correct app); `glm-5.3` passed too.
 
 ## How %Name% talks to it
 
