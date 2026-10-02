@@ -80,7 +80,7 @@ const DEFAULT_SETTLE = { timeoutMs: 10_000, quietMs: 300 };
 const AFTER_NETWORK_QUIET_MS = 800;
 /** Launchers and Google apps that may take the foreground on their own after a boot. */
 const FOREGROUND_THIEVES =
-  /^(?:com\.google\.android\.(?:apps\.[\w.]+|googlequicksearchbox|setupwizard|gms)|com\.android\.launcher3?)$/;
+  /^(?:com\.google\.android\.(?:apps\.[\w.]+|googlequicksearchbox|setupwizard|gms|calendar)|com\.android\.launcher3?)$/;
 /** How often a session brings the app back to the front before leaving it to the test. */
 const MAX_FOREGROUND_RESTORES = 3;
 /** How long to wait before looking again at an action that seemed to change nothing. */

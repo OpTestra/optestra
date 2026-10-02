@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Makes a reusable image from a set-up VM's disk, so later VMs boot with the
+# Makes a reusable image from a set-up VM's disk, once the screen stays put after
+# a boot from the AVD's clean snapshot (settled.mjs), so later VMs boot with the
 # SDK, the build and the AVD's clean snapshot in place and skip setup.sh:
 #   ANDROID_VM_IMAGE=<name printed here> ./create.sh && ./run.sh
 # Stops the VM first (a clean disk), then creates the image in the
@@ -7,6 +8,17 @@
 # storage until deleted (delete.sh --images); its ttl-minutes label (default
 # 10080, 7 days; ANDROID_VM_IMAGE_TTL_MINUTES) says when that is due.
 . "$(dirname "$0")/common.sh"
+
+# Only a settled disk: boot from the AVD's clean snapshot and watch the screen
+# (settled.mjs). If anything takes the foreground, no image.
+to_vm "$VM_SCRIPTS/settled.mjs" "$ANDROID_VM_NAME:engine/scripts/android-vm/settled.mjs"
+if ! on_vm ". ~/.android-vm-env && cd ~/engine && ANDROID_VM_SETTLED_SECONDS=${ANDROID_VM_SETTLED_SECONDS:-60} node scripts/android-vm/settled.mjs" \
+  > "$ANDROID_VM_OUT/settled.json"; then
+  echo "Not taking an image: something took the foreground after a boot from the snapshot:" >&2
+  cat "$ANDROID_VM_OUT/settled.json" >&2
+  exit 1
+fi
+echo "Settled: $(cat "$ANDROID_VM_OUT/settled.json")"
 
 name="${ANDROID_VM_IMAGE_FAMILY}-$(date +%Y%m%d-%H%M%S)"
 started=$(now_ms)

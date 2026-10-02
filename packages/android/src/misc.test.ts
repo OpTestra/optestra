@@ -16,6 +16,7 @@ import {
   emulatorArgs,
   InvalidToolCommand,
   isTransient,
+  parseForeground,
   SAFE_TOKEN,
 } from "./tools.js";
 import { ANDROID_ACTION_TYPES } from "./types.js";
@@ -115,6 +116,8 @@ describe("the adb wrapper (guarantee 5)", () => {
       "logcat-mark",
       "prepare-device",
       "route-check",
+      "foreground",
+      "home",
       "firewall",
       "timezone-auto-off",
       "set-timezone",
@@ -451,5 +454,23 @@ describe("the device's network (MOB-3)", () => {
       }),
     ).toBeNull();
     expect(hostNetwork({ stdout: "" })).toBeNull();
+  });
+});
+
+describe("a settled first boot (MOB-3)", () => {
+  it("reads the resumed activity from the activity manager", () => {
+    expect(
+      parseForeground(
+        "  topResumedActivity=ActivityRecord{1a2b3c u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t2}\n",
+      ),
+    ).toBe("com.google.android.apps.nexuslauncher/.NexusLauncherActivity");
+    expect(parseForeground("")).toBeNull();
+  });
+
+  it("marks setup done and disables the first-run apps before the clean snapshot", () => {
+    const script = adbArgs({ name: "prepare-device" })[1] ?? "";
+    expect(script).toContain("settings put secure user_setup_complete 1");
+    expect(script).toContain("pm disable-user --user 0 com.google.android.calendar");
+    expect(script).toContain("settings put global mobile_data 0");
   });
 });
