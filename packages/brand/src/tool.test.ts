@@ -94,6 +94,17 @@ describe("brand-sync", () => {
     expect(problems.some((p) => p.message.includes("out of sync"))).toBe(true);
   });
 
+  it("skips local .env files but still checks .env.example", () => {
+    const root = fixture();
+    write(root, ".env", "ALPHA_PROJECT=alpha\n");
+    write(root, "services/.env.local", "ALPHA_PROJECT=alpha\n");
+    expect(checkBrand(root, brandFor("Alpha"))).toEqual([]);
+    write(root, ".env.example", "PROJECT=alpha\n");
+    expect(checkBrand(root, brandFor("Alpha"))).toEqual([
+      { file: ".env.example", line: 1, message: expect.stringContaining('"alpha"') },
+    ]);
+  });
+
   it("flags a stray product-name literal in code", () => {
     const root = fixture();
     write(root, "cli/src/banner.ts", 'export const banner = "Welcome to ALPHA";\n');

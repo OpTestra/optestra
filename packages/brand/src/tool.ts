@@ -30,6 +30,9 @@ const SKIP_DIRS = new Set([
 /** Gradle's output folder, next to its build script (Android driver and fixture app). */
 const isGradleOutput = (dir: string, name: string) =>
   name === "build" && existsSync(join(dir, "build.gradle.kts"));
+/** Local, git-ignored settings (`.env`, `.env.local`, …); the committed `.env.example` is still checked. */
+const isLocalEnvFile = (name: string) =>
+  (name === ".env" || name.startsWith(".env.")) && name !== ".env.example";
 const LOCKFILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.lock"]);
 const MARKER = /^\s*(?:#|\/\/)\s*brand:next (.+)$/;
 
@@ -64,7 +67,12 @@ export function listFiles(root: string, extraSkipDirs: readonly string[] = []): 
       if (entry.name === ".git") continue;
       if (entry.isDirectory()) {
         if (!skip.has(entry.name) && !isGradleOutput(dir, entry.name)) walk(path);
-      } else if (entry.isFile() && !skip.has(entry.name) && !entry.name.endsWith(".tsbuildinfo")) {
+      } else if (
+        entry.isFile() &&
+        !skip.has(entry.name) &&
+        !entry.name.endsWith(".tsbuildinfo") &&
+        !isLocalEnvFile(entry.name)
+      ) {
         // Skipped names apply to files too: a git worktree's `.git` is a file with an absolute path.
         files.push(path);
       }
