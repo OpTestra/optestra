@@ -51,7 +51,11 @@ models:
     my-local-model: { input: 0, output: 0 }
 ```
 
-A cost the provider reports itself (OpenRouter's) wins over the table. A model with no known price gets cost "unknown" and a warning, **never a guess**.
+Prices are looked up as `<provider kind>:<model>` first (the same model costs differently at [OpenRouter](./openrouter.md)'s pinned host or on [Ollama Cloud](./ollama-cloud.md)'s credit), then by the bare model id. A cost the provider reports itself (OpenRouter's) wins over the table: each call records both, `costUsd` (what was charged) and `listCostUsd` (at list price), and a gap of more than 5% logs a warning. A model with no known price gets cost "unknown" and a warning, **never a guess**.
+
+## Waiting for a provider
+
+A rate-limited provider (429) is waited out instead of failing (see [Failover](./models.md#failover)). The time spent waiting is not part of a call's latency or a test's time limit. It is reported on its own: `waitMs` on each call, `ai.waitMs` per test and `cost.aiWaitMs` for the run. The report shows it as "1m 40s + 1m 30s waiting for AI".
 
 ## Where costs show
 

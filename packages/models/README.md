@@ -15,10 +15,38 @@ else block(result.reason, result.message, result.fix); // never throws on provid
 
 ## Providers
 
-Kinds: `anthropic`, `openai`, `google`, `openai-compatible` (OpenRouter, OpenCode
-Zen/Go, Ollama, vLLM, LM Studio, our future hosted AI), `azure` (needs
-`options.resourceName` or `baseUrl`; optional `options.apiVersion`) and `bedrock`
-(needs `options.region`; the key is a Bedrock API key).
+Kinds: `anthropic`, `openai`, `google`, `openai-compatible` (OpenCode Zen/Go, a
+local Ollama, vLLM, LM Studio), `azure` (needs `options.resourceName` or
+`baseUrl`; optional `options.apiVersion`) and `bedrock` (needs `options.region`;
+the key is a Bedrock API key).
+
+Named providers (PROV-0) know their base URL, key name and limits:
+
+- `openrouter` (`@openrouter/ai-sdk-provider`, OpenRouter's official AI SDK
+  provider: it sends provider routing, reads cache and cost fields, and passes
+  the Anthropic cache breakpoint): `OPENROUTER_API_KEY`, 8 at once. Routing per
+  provider or entry (`routing: { order, allowFallbacks, dataCollection, zdr }`),
+  default: pinned to the model author's endpoint (`AUTHOR_ENDPOINTS`), no
+  fallbacks, `data_collection: deny`.
+- `ollama-cloud` (`https://ollama.com/v1`, the OpenAI-compatible API Ollama
+  documents for its cloud, tools included; no extra dependency):
+  `OLLAMA_API_KEY`, 3 at once (Pro).
+
+Limits (`limits.ts`): `concurrency` / `concurrencyPerModel` slots, shared per
+process; a 429 is waited out (Retry-After or X-RateLimit-Reset, else 2 s
+doubling to 60 s) up to `models.maxWaitMinutes` without using a try; a 402 is
+`out_of_credit` and disables the provider. Waits go to `onWait` and to the
+`aiWaitScope` the call runs in (`AiWaits`), which the engine's deadlines read so
+waiting never counts against a time limit. Records carry `waitMs`,
+`listCostUsd` and `reportedCostUsd`.
+
+Capabilities (`capabilities.ts`): tools and images per model from the
+provider's public metadata (Ollama `/api/show`, OpenRouter
+`/models/<id>/endpoints` for the pinned host), asked once per process; no tools
+→ skipped for the tool path, no images → screenshots replaced by a note.
+`MODEL_SUPPORT` holds model eval verdicts per role; an unsupported entry is
+unusable unless it sets `allowUnsupported`. The `drafter` role uses the
+planner's pool when it has none of its own.
 
 Plus `claude-code` and `codex`: your own AI subscription through its official CLI (see [Use your AI subscription](#use-your-ai-subscription-mod-6)).
 
@@ -189,8 +217,11 @@ model, usage, cost, latency, every attempt and outcome, and tags.
 ## Key check
 
 `checkProviders(config, { sources })` makes the cheapest call per provider:
-- **anthropic, openai, google, openai-compatible:** list models, or `GET /key`
-  for OpenRouter, whose model list is public.
+- **anthropic, openai, google, openai-compatible:** list models.
+- **openrouter:** `GET /key` (its model list is public); the key's usage, limit
+  and what is left come back as `credit`.
+- **ollama-cloud:** a chat request naming no model: a wrong key gets 401, a
+  right one 400 before any model runs. No credit API (ollama.com/settings/usage).
 - **azure, bedrock:** a 1-token completion.
 
 Each provider is reported as `valid`, `invalid_key`, `unreachable`, `no_key`,

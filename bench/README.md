@@ -73,9 +73,10 @@ Each `provider:model` entry is used as both planner and fixer, on the shop:
 Reported per model: steps and checks authored, tests passing after authoring,
 false passes/fails, fixer heals and cosmetic tests passing, calls (and those via
 a subscription), tokens, cost and time. Providers come from the project config
-(`anthropic`, `openai`, `google`, `claude-code`, `codex`), plus `openrouter`
-(`OPENROUTER_API_KEY`) and `opencode` (`OPENCODE_API_KEY`) as OpenAI-compatible
-routers. A per-model budget of $5 applies; subscription calls cost 0 to it.
+(`anthropic`, `openai`, `google`, `claude-code`, `codex`), plus the named
+`openrouter` (`OPENROUTER_API_KEY`) and `ollama-cloud` (`OLLAMA_API_KEY`), and
+`opencode` (`OPENCODE_API_KEY`) as an OpenAI-compatible router. A candidate is
+scored even where an earlier eval marked it unsupported. A per-model budget of $5 applies; subscription calls cost 0 to it.
 
 Real models spend calls: without `--yes` the command prints the estimate (about
 60–140 calls per model on the shop) and stops, so a person decides first. Each
