@@ -98,10 +98,10 @@ What to expect on a 4-vCPU `n2-standard-4` (Android 16, Google APIs x86_64, meas
 
 | | n2-standard-4 | Apple M5 |
 |---|---|---|
-| First boot (makes the clean snapshot, once per machine image) | 61–65 s | 19–46 s |
+| First boot (makes the clean snapshot, once per machine image) | 61–68 s | 19–46 s |
 | Boot from the clean snapshot | 5.7–9.2 s | 1.2–4.6 s |
 | Reset between sessions (reboot from the snapshot) | 6–7 s | about 6 s |
-| A session start (reset, install, firewall, driver, network, launch) | 22–31 s | 5–6.5 s |
+| A session start (reset, install, firewall, driver, network, launch) | 22–35 s | 5–6.5 s |
 
 Two things differ from a laptop, and %Name% handles both:
 
