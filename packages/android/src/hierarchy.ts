@@ -135,6 +135,28 @@ export interface ScreenContext {
 }
 
 /** One dump, understood. */
+/**
+ * The activity on screen: the activity manager's resumed one, unless the top
+ * application window's own Activity class says otherwise. On a slow device the
+ * new activity's window (and its content) shows before the activity manager
+ * reports it resumed, and the stale name would put the old URL next to the new
+ * screen (MOB-3).
+ */
+export function screenActivity(dump: Pick<Dump, "activity" | "windows">): string | null {
+  const resumed = dump.activity;
+  const pkg = resumed?.split("/")[0];
+  if (!pkg) return resumed;
+  const top = [...dump.windows]
+    .filter((w) => w.type === "application" && w.package === pkg)
+    .sort((a, b) => b.layer - a.layer)[0];
+  const cls = top?.cls;
+  if (!cls?.startsWith(`${pkg}.`) || !/Activity$/.test(cls)) return resumed;
+  // `pkg/.Name` or `pkg/pkg.Name`: the same class either way.
+  const [, name = ""] = (resumed ?? "").split("/");
+  const resumedClass = name.startsWith(".") ? `${pkg}${name}` : name;
+  return resumedClass === cls ? resumed : `${pkg}/${cls.slice(pkg.length)}`;
+}
+
 export class Screen {
   readonly dump: Dump;
   readonly nodes: ScreenNode[];
@@ -224,7 +246,7 @@ export class Screen {
         }
       }
     }
-    const activity = dump.activity;
+    const activity = screenActivity(dump);
     this.url = activity
       ? `android-app://${activity}`
       : `android-app://${this.frames[0]?.package ?? context.appPackage}`;

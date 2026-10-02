@@ -16,7 +16,7 @@ import {
   type Sdk,
   type SystemImage,
 } from "./sdk.js";
-import { adbArgs, type Running, runAdb, startEmulator } from "./tools.js";
+import { adbArgs, parseForeground, type Running, runAdb, startEmulator } from "./tools.js";
 
 // Emulators the harness owns (MOB-2, SAF-7). Each version × device profile gets
 // an AVD in the harness's own folder, written from the data files (no Java, no
@@ -431,6 +431,49 @@ async function bootOnce(
 }
 
 /** Prepares the clean snapshot for an AVD (a cold boot, once per AVD and driver build). */
+/** How long the foreground must stay the same before the clean snapshot is saved. */
+const SNAPSHOT_QUIET_MS = 30_000;
+const SNAPSHOT_SETTLE_MAX_MS = 240_000;
+
+/**
+ * Presses home and waits until home (the launcher) has stayed in front for
+ * `quietMs`; whatever else comes to the front is noted and sent home again. At
+ * most `maxMs`. Returns what was in front at the end and everything that came up.
+ */
+export async function waitForQuietForeground(
+  sdk: Sdk,
+  serial: string,
+  options: { quietMs: number; maxMs: number },
+): Promise<{ quiet: boolean; front: string | null; changes: string[] }> {
+  const started = Date.now();
+  const changes: string[] = [];
+  const foreground = async () =>
+    parseForeground((await runAdb(sdk, serial, { name: "foreground" }, 10_000)).stdout);
+  await runAdb(sdk, serial, { name: "home" }, 10_000);
+  await sleep(1_000);
+  let home = await foreground();
+  let front = home;
+  let since = Date.now();
+  while (Date.now() - started < options.maxMs) {
+    await sleep(1_000);
+    front = await foreground();
+    if (home === null) {
+      // Not read yet (the activity manager was busy): the first answer is home.
+      home = front;
+      since = Date.now();
+      continue;
+    }
+    if (front === home) {
+      if (Date.now() - since >= options.quietMs) return { quiet: true, front, changes };
+      continue;
+    }
+    changes.push(front ?? "nothing");
+    await runAdb(sdk, serial, { name: "home" }, 10_000);
+    since = Date.now();
+  }
+  return { quiet: false, front, changes };
+}
+
 async function prepareSnapshot(
   sdk: Sdk,
   avd: Avd,
@@ -472,8 +515,18 @@ async function prepareSnapshot(
           "Rebuild the driver.",
         );
       }
-      // Let the system settle after first boot before freezing it.
-      await sleep(3_000);
+      // Let the system settle after first boot before freezing it: home, then the
+      // same screen in front for a while. On a slow host first-run apps (the
+      // launcher, Calendar) kept coming to the front, and every session restored
+      // that from the snapshot (MOB-3).
+      const quiet = await waitForQuietForeground(sdk, serial, {
+        quietMs: SNAPSHOT_QUIET_MS,
+        maxMs: SNAPSHOT_SETTLE_MAX_MS,
+      });
+      if (!quiet.quiet)
+        options.onProgress?.(
+          `The screen didn't stay put before the snapshot (in front last: ${quiet.front ?? "nothing"}); saving it anyway.`,
+        );
       const saved = await runAdb(
         sdk,
         serial,

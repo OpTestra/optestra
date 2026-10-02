@@ -17,3 +17,6 @@ coverage/
 
 # Cost runs (COST-0): results downloaded from the bucket, local stand-in output.
 bench/cloud/out/
+
+# Android VM script output (scripts/android-vm)
+android-vm-results/

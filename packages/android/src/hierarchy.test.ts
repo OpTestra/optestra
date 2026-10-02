@@ -1,7 +1,13 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { Dump } from "./driver.js";
-import { buildObservation, diffElements, PASSWORD_MASK, Screen } from "./hierarchy.js";
+import {
+  buildObservation,
+  diffElements,
+  PASSWORD_MASK,
+  Screen,
+  screenActivity,
+} from "./hierarchy.js";
 import { candidatesFor, matchAll, parseCss, resolveLocator } from "./locators.js";
 import { renderForModel } from "./render.js";
 
@@ -227,5 +233,44 @@ describe("locators and candidates", () => {
     expect(JSON.stringify(result)).not.toContain("ada@example.com");
     const css = result.candidates.find((c) => c.locator.kind === "css");
     expect(css?.locator).toMatchObject({ kind: "css" });
+  });
+});
+
+describe("the activity on screen (MOB-3)", () => {
+  const win = (cls: string | null, layer = 1, pkg = "com.acme.shop") => ({
+    id: layer,
+    type: "application" as const,
+    layer,
+    active: true,
+    focused: true,
+    title: null,
+    package: pkg,
+    cls,
+    bounds: [0, 0, 1080, 2400] as [number, number, number, number],
+  });
+  it("trusts the top app window's Activity over a stale resumed name", () => {
+    expect(
+      screenActivity({
+        activity: "com.acme.shop/.SignInActivity",
+        windows: [win("com.acme.shop.SignInActivity", 1), win("com.acme.shop.ProjectsActivity", 2)],
+      }),
+    ).toBe("com.acme.shop/.ProjectsActivity");
+  });
+  it("keeps the resumed name when they agree, or when the window's class isn't an Activity", () => {
+    expect(
+      screenActivity({
+        activity: "com.acme.shop/.ProjectsActivity",
+        windows: [win("com.acme.shop.ProjectsActivity")],
+      }),
+    ).toBe("com.acme.shop/.ProjectsActivity");
+    expect(
+      screenActivity({
+        activity: "com.acme.shop/.ProjectsActivity",
+        windows: [win("android.widget.PopupWindow$PopupDecorView", 3)],
+      }),
+    ).toBe("com.acme.shop/.ProjectsActivity");
+    expect(
+      screenActivity({ activity: null, windows: [win("com.acme.shop.ProjectsActivity")] }),
+    ).toBeNull();
   });
 });

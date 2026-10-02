@@ -35,7 +35,7 @@ import {
 import { sendHookRequest } from "./hooks.js";
 import { candidatesFor, factsOf, resolveLocator } from "./locators.js";
 import { Logcat } from "./logcat.js";
-import { AndroidSetupError } from "./sdk.js";
+import { AndroidSetupError, type Sdk } from "./sdk.js";
 import { findSystemDialogs } from "./system-dialogs.js";
 import { PACKAGE_NAME, type Running, runAdb, startAdb } from "./tools.js";
 import type {
@@ -80,7 +80,7 @@ const DEFAULT_SETTLE = { timeoutMs: 10_000, quietMs: 300 };
 const AFTER_NETWORK_QUIET_MS = 800;
 /** Launchers and Google apps that may take the foreground on their own after a boot. */
 const FOREGROUND_THIEVES =
-  /^(?:com\.google\.android\.(?:apps\.[\w.]+|googlequicksearchbox|setupwizard|gms)|com\.android\.launcher3?)$/;
+  /^(?:com\.google\.android\.(?:apps\.[\w.]+|googlequicksearchbox|setupwizard|gms|calendar)|com\.android\.launcher3?)$/;
 /** How often a session brings the app back to the front before leaving it to the test. */
 const MAX_FOREGROUND_RESTORES = 3;
 /** How long to wait before looking again at an action that seemed to change nothing. */
@@ -228,6 +228,7 @@ interface Init {
   redact: (text: string) => string;
   secretRedactor: Redactor;
   appPackage: string;
+  appUid: number;
   driver: DriverClient;
   instrument: Running;
   forwardPort: number;
@@ -256,6 +257,7 @@ export class AndroidSession {
   readonly #redact: (text: string) => string;
   readonly #secretRedactor: Redactor;
   readonly #appPackage: string;
+  readonly #appUid: number;
   readonly #driver: DriverClient;
   readonly #instrument: Running;
   readonly #forwardPort: number;
@@ -291,6 +293,7 @@ export class AndroidSession {
     this.#redact = init.redact;
     this.#secretRedactor = init.secretRedactor;
     this.#appPackage = init.appPackage;
+    this.#appUid = init.appUid;
     this.#driver = init.driver;
     this.#instrument = init.instrument;
     this.#forwardPort = init.forwardPort;
@@ -404,6 +407,20 @@ export class AndroidSession {
     }
   }
 
+  /**
+   * After a launch: the app's window in front (the driver's launch no longer waits
+   * for it), with other packages' system dialogs cleared meanwhile; null if it isn't.
+   */
+  async #appInFront(timeoutMs: number): Promise<Screen | null> {
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+      const screen = await this.#systemDialogs.clear();
+      if (screen?.url.startsWith(`android-app://${this.#appPackage}/`)) return screen;
+      if (Date.now() > deadline || this.#problem()) return null;
+      await sleep(250);
+    }
+  }
+
   /** A fresh screen with foreign system dialogs dismissed first (the one the guard checked). */
   async #clearScreen(): Promise<Screen | null> {
     if (this.#problem()) return null;
@@ -417,6 +434,7 @@ export class AndroidSession {
         `${thief} came to the front by itself; the app was brought back (${this.#restores}).`,
       );
       await this.#driver.call("launch", { package: this.#appPackage }, 30_000).catch(() => {});
+      await this.#appInFront(30_000);
       await this.settle({ timeoutMs: 5_000 });
       screen = await this.#systemDialogs.clear();
     }
@@ -697,12 +715,37 @@ export class AndroidSession {
     // after a tap with nothing in between (no event, no request, no log line), so
     // settle can't see it coming. A tap that really does nothing (the VER-5 trap)
     // still reports changed: false, one look later.
-    if (result.status === "ok" && !post.changed && action.type !== "waitFor" && !this.#problem()) {
+    // So is a change that is only a request: on a slow device the screen the
+    // response leads to (a new activity) can come after settle has ended (MOB-3).
+    const onlyRequests =
+      post.requests.length > 0 &&
+      post.urlBefore === post.urlAfter &&
+      post.added.length === 0 &&
+      post.removed.length === 0;
+    if (
+      result.status === "ok" &&
+      (!post.changed || onlyRequests) &&
+      action.type !== "waitFor" &&
+      !this.#problem()
+    ) {
       await sleep(SECOND_LOOK_MS);
       const again = await this.settle();
       settle.settledMs += SECOND_LOOK_MS + again.settledMs;
       settle.timedOut = again.timedOut;
       ({ post, app, appEvents } = await look());
+    }
+    // Nothing reached the guard after an action that usually sends something: was
+    // the device offline? Then say so, rather than leave a bare "requests []" (MOB-3).
+    if (
+      result.status === "ok" &&
+      post.requests.length === 0 &&
+      REQUEST_ACTIONS.has(action.type) &&
+      !this.#problem() &&
+      !(await appCanReachHost(this.#emulator.sdk, this.#emulator.serial, this.#appUid))
+    ) {
+      const said = `The device had no network after ${action.type}: the app's requests could not leave it (no route to 10.0.2.2).`;
+      this.#timings.notes.push(said);
+      result = { ...result, message: said };
     }
     if (result.status === "ok" && (app === "crashed" || app === "not_responding")) {
       const detail = appEvents[appEvents.length - 1]?.detail;
@@ -905,9 +948,14 @@ export class AndroidSession {
         const started = (await this.#driver.call("launch", { package: this.#appPackage })) as {
           started?: boolean;
         };
-        return started.started
+        if (!started.started)
+          return { status: "error", message: "The app has no launcher screen." };
+        return (await this.#appInFront(LAUNCH_WAIT_MS))
           ? ok
-          : { status: "error", message: "The app has no launcher screen." };
+          : {
+              status: "error",
+              message: "The app was started but its screen didn't come to the front.",
+            };
       }
       case "rotate":
         await this.#driver.call("rotate", { degrees: action.orientation === "landscape" ? 90 : 0 });
@@ -1359,6 +1407,61 @@ async function listPackages(emulator: LaunchedEmulator): Promise<Map<string, num
  * only setup problems (no SDK, no system image, bad options) throw
  * AndroidSetupError.
  */
+
+/** Actions after which an app usually talks to its server. */
+const REQUEST_ACTIONS: ReadonlySet<string> = new Set([
+  "tap",
+  "long_press",
+  "press",
+  "launch_app",
+  "open_deep_link",
+]);
+
+/** How long a session waits for the app's first screen after starting it. */
+const LAUNCH_WAIT_MS = 90_000;
+const RELAUNCH_AFTER_MS = 20_000;
+
+/** How long a session waits for the device's network after the reset (MOB-3). */
+export const NETWORK_WAIT_MS = 90_000;
+/** The default network must stay the same this long to count as up. */
+const NETWORK_STABLE_MS = 1_000;
+/** A wait longer than this is noted: on a fast machine the network is up at once. */
+const NETWORK_NOTE_MS = 3_000;
+
+/**
+ * The default network the app's connections to the host alias would use, from
+ * `route-check`: its id when there is a route and a default network, else null.
+ */
+export function hostNetwork(result: { stdout: string }): string | null {
+  if (!/^10\.0\.2\.2 .*\bdev \S+/m.test(result.stdout)) return null;
+  return /Active default network: (\d+)/.exec(result.stdout)?.[1] ?? null;
+}
+
+async function networkToHost(sdk: Sdk, serial: string, uid: number): Promise<string | null> {
+  const result = await runAdb(sdk, serial, { name: "route-check", uid }, 10_000).catch(() => null);
+  return result ? hostNetwork(result) : null;
+}
+
+async function appCanReachHost(sdk: Sdk, serial: string, uid: number): Promise<boolean> {
+  return (await networkToHost(sdk, serial, uid)) !== null;
+}
+
+/** Why the app didn't start, in words: "no launcher screen" only when that is what the driver found. */
+export function launchFailure(
+  appPackage: string,
+  launched: { reason?: string; output?: string },
+): string {
+  const said = launched.output ? launched.output.trim().split("\n").slice(-3).join(" ") : "";
+  switch (launched.reason) {
+    case "no_launcher_activity":
+      return `${appPackage} has no launcher screen.`;
+    case "driver_error":
+      return `Starting ${appPackage} failed: the driver didn't answer (${said}).`;
+    default:
+      return `Starting ${appPackage} failed${said ? `: ${said}` : "."}`;
+  }
+}
+
 export async function openAndroidSession(
   options: AndroidSessionOptions,
 ): Promise<OpenSessionResult> {
@@ -1600,20 +1703,70 @@ export async function openAndroidSession(
   await waitForIdleSystem(driver, guard);
   const readyMs = Date.now() - readyStarted;
 
+  // 7b. The device's network (MOB-3). A restored snapshot brings it back seconds
+  // later on a slow machine; an app request before that fails on the device and
+  // never reaches the guard ("requests []"), so the app only says it can't connect.
+  // Up means: a route to the host alias over a default network that stayed the same
+  // for a second (after a restore the old one can still show before it is replaced).
+  const networkStarted = Date.now();
+  let seenId: string | null = null;
+  let seenSince = 0;
+  for (;;) {
+    const id = await networkToHost(sdk, serial, appUid);
+    if (id !== null && id === seenId && Date.now() - seenSince >= NETWORK_STABLE_MS) break;
+    if (id !== seenId) {
+      seenId = id;
+      seenSince = Date.now();
+    }
+    if (Date.now() - networkStarted > NETWORK_WAIT_MS)
+      return abort(
+        "emulator_failed",
+        `The device has no network ${Math.round(NETWORK_WAIT_MS / 1000)} s after the reset: the app can't reach 10.0.2.2.`,
+      );
+    await sleep(250);
+  }
+  const networkMs = Date.now() - networkStarted;
+  if (networkMs > NETWORK_NOTE_MS)
+    notes.push(
+      `The device's network came up ${(networkMs / 1000).toFixed(1)} s after the reset; the session waited for it.`,
+    );
+
   // 8. Launch the app.
   const launchStarted = Date.now();
   const launched = (await driver
     .call("launch", { package: appPackage }, 60_000)
-    .catch(() => ({}))) as {
-    started?: boolean;
-  };
-  if (!launched.started) return abort("app_launch_failed", `${appPackage} has no launcher screen.`);
+    .catch((error: unknown) => ({
+      reason: "driver_error",
+      output: error instanceof Error ? error.message : String(error),
+    }))) as { started?: boolean; reason?: string; output?: string };
+  if (!launched.started) return abort("app_launch_failed", launchFailure(appPackage, launched));
+  // Until the app's window is in front, with other packages' system dialogs cleared
+  // meanwhile; a launcher that took the front back gets the app started once more.
+  const appUrl = `android-app://${appPackage}/`;
+  let front = "";
+  let relaunched = false;
+  for (;;) {
+    front = (await guard.clear())?.url ?? "";
+    if (front.startsWith(appUrl)) break;
+    const waited = Date.now() - launchStarted;
+    if (waited > LAUNCH_WAIT_MS)
+      return abort(
+        "app_launch_failed",
+        `${appPackage} was started but its screen didn't come to the front in ${LAUNCH_WAIT_MS / 1000} s (in front: ${front || "nothing"}).`,
+      );
+    if (!relaunched && waited > RELAUNCH_AFTER_MS) {
+      relaunched = true;
+      await driver.call("launch", { package: appPackage }, 30_000).catch(() => {});
+    }
+    await sleep(250);
+  }
   const timings: SessionTimings = {
     resetMs,
     installMs,
     driverMs,
     driverRestarts,
     readyMs,
+    networkMs,
     launchMs: 0,
     totalMs: 0,
     systemDialogs,
@@ -1628,6 +1781,7 @@ export async function openAndroidSession(
     redact,
     secretRedactor: own,
     appPackage,
+    appUid,
     driver,
     instrument,
     forwardPort,

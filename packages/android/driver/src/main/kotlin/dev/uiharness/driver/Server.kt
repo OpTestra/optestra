@@ -36,6 +36,7 @@ private val URI = Regex("^[A-Za-z][A-Za-z0-9+.-]*:[^\\s'\"`]+$")
 private val COMPONENT = Regex("^[A-Za-z0-9_.]+/[A-Za-z0-9_.$]+$")
 private const val MAX_NODES = 4000
 private const val MAX_DEPTH = 80
+private const val ACTIVITY_SETTLE_MS = 2_000L
 
 /** Thrown for a bad request; answered as `{ ok: false, error }`, never fatal. */
 private class BadRequest(message: String) : Exception(message)
@@ -50,6 +51,7 @@ class Server(
 
   @Volatile private var lastEventAt = SystemClock.uptimeMillis()
   @Volatile private var windowStateChanges = 0
+  @Volatile private var lastWindowStateChangeAt = 0L
   private val toasts = mutableListOf<JSONObject>()
   /** The class of each window's latest state change: an Activity, or a dialog class. */
   private val windowClasses = java.util.concurrent.ConcurrentHashMap<Int, String>()
@@ -95,6 +97,7 @@ class Server(
       }
       AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
         windowStateChanges++
+        lastWindowStateChangeAt = SystemClock.uptimeMillis()
         val cls = event.className?.toString()
         if (cls != null && event.windowId >= 0) windowClasses[event.windowId] = cls
       }
@@ -333,9 +336,14 @@ class Server(
 
   private fun rect(r: Rect): JSONArray = JSONArray().put(r.left).put(r.top).put(r.right).put(r.bottom)
 
-  /** The resumed activity, re-read only after a window state change. */
+  /**
+   * The resumed activity, re-read after a window state change, and for a while
+   * after it: on a slow device the event can come before the activity manager
+   * has the new activity resumed, and a stale name would stick (MOB-3).
+   */
   private fun currentActivity(): String? {
-    if (activityCheckedAt == windowStateChanges && activity != null) return activity
+    val settled = SystemClock.uptimeMillis() - lastWindowStateChangeAt > ACTIVITY_SETTLE_MS
+    if (activityCheckedAt == windowStateChanges && activity != null && settled) return activity
     activityCheckedAt = windowStateChanges
     val text = shell("dumpsys activity activities")
     val match =
@@ -570,12 +578,16 @@ class Server(
         ?: return JSONObject().put("started", false).put("reason", "no_launcher_activity")
     val component = intent.component?.flattenToShortString() ?: throw BadRequest("no component")
     if (!COMPONENT.matches(component)) throw BadRequest("bad component")
-    return started(shell("am start -W -n $component"))
+    // No -W: on a slow machine `am start -W` can block for minutes behind other work.
+    // The caller waits for the app's window itself (and clears system dialogs meanwhile).
+    return started(shell("am start -n $component"))
   }
 
   private fun started(output: String): JSONObject {
     val failed = output.contains("Error") || output.contains("does not exist") || output.contains("unable to resolve")
-    return if (failed) JSONObject().put("started", false).put("reason", "no_activity") else JSONObject().put("started", true)
+    // What `am start` said, so a failure names its cause (the last lines are enough).
+    return if (failed) JSONObject().put("started", false).put("reason", "no_activity").put("output", output.takeLast(500))
+    else JSONObject().put("started", true)
   }
 
   /** The app's label as the system shows it (e.g. in "<label> isn't responding"). */
