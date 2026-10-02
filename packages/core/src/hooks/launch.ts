@@ -37,8 +37,12 @@ export type LaunchPlan =
   | { ok: false; message: string };
 
 const NODE = new Set([".js", ".mjs", ".cjs", ".ts", ".mts", ".cts"]);
-/** What may appear in an argument of a batch file: nothing cmd would expand or split on. */
-const BATCH_SAFE = /^[A-Za-z0-9 _.,:=+@()\\/-]*$/;
+/**
+ * What may appear in an argument of a batch file: nothing cmd would expand or split on.
+ * `~` is allowed because Windows short paths use it (`C:\\Users\\RUNNER~1`); cmd only treats it
+ * specially after `%`, which stays refused. `' # $ [ ] { }` are plain characters to cmd.
+ */
+const BATCH_SAFE = /^[A-Za-z0-9 _.,:=+@()\\/~'#$[\]{}-]*$/;
 
 /** One cmd.exe word: quoted when it has a space (cmd keeps everything inside quotes). */
 const cmdWord = (word: string) => (/[ ,=()]/.test(word) || word === "" ? `"${word}"` : word);
@@ -48,7 +52,7 @@ function viaCmd(file: string, args: string[], env: LaunchEnv): LaunchPlan {
   if (bad !== undefined)
     return {
       ok: false,
-      message: `run: a batch file's arguments may only use letters, digits, spaces and _ . , : = + @ ( ) \\ / - (cmd.exe would expand or split "${bad}"). Use a .js script for anything else.`,
+      message: `run: a batch file's arguments may only use letters, digits, spaces and _ . , : = + @ ( ) \\ / ~ ' # $ [ ] { } - (cmd.exe would expand or split "${bad}"). Use a .js script for anything else.`,
     };
   // /s /c "…": cmd strips exactly the outer quotes and runs the line inside.
   const line = [file, ...args].map(cmdWord).join(" ");

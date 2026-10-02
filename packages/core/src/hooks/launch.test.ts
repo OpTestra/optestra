@@ -198,4 +198,23 @@ describe("this machine as Windows (process.platform stubbed)", () => {
       rmSync(bin, { recursive: true, force: true });
     }
   });
+
+  it("runs a shim from a Windows short path (RUNNER~1), but still refuses % and !", () => {
+    Object.defineProperty(process, "platform", { value: "win32" });
+    const bin = mkdtempSync(join(tmpdir(), "win-short-"));
+    try {
+      const short = join(bin, "RUNNER~1", "npm");
+      mkdirSync(short, { recursive: true });
+      writeFileSync(join(short, "pnpm.cmd"), "@echo off");
+      const env = launchEnv({ Path: short, PATHEXT: ".EXE;.CMD", ComSpec: "C:\\cmd.exe" });
+      expect(launchPlan("pnpm", ["seed", "O'Brien#1"], env, false)).toMatchObject({
+        ok: true,
+        via: "cmd",
+      });
+      expect(launchPlan("pnpm", ["%PATH%"], env, false)).toMatchObject({ ok: false });
+      expect(launchPlan("pnpm", ["hi!"], env, false)).toMatchObject({ ok: false });
+    } finally {
+      rmSync(bin, { recursive: true, force: true });
+    }
+  });
 });
