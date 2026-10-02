@@ -23,6 +23,25 @@ export function priceFor(
   return overrides[model] ?? basePrices()[model];
 }
 
+/**
+ * Price for a model at a provider: `<kind>:<model>` first (the same model costs
+ * differently at OpenRouter's pinned upstream or on Ollama's credits), then the
+ * bare model id. Overrides win at each step.
+ */
+export function priceAt(
+  kind: string,
+  model: string,
+  overrides: Record<string, PriceSettings> = {},
+): PriceSettings | undefined {
+  // Ollama names carry a size tag (gemma4:31b); its price list doesn't.
+  const untagged = kind === "ollama-cloud" ? model.split(":")[0] : undefined;
+  return (
+    priceFor(`${kind}:${model}`, overrides) ??
+    (untagged && untagged !== model ? priceFor(`${kind}:${untagged}`, overrides) : undefined) ??
+    priceFor(model, overrides)
+  );
+}
+
 /** USD for the usage, or null when the price is unknown. */
 export function computeCost(usage: TokenUsage, price: PriceSettings | undefined): number | null {
   if (!price) return null;

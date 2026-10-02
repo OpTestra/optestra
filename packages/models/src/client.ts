@@ -20,12 +20,14 @@ import {
   type ToolSet,
 } from "ai";
 import { BudgetMeter } from "./budget.js";
+import { type ModelCapabilities, probeCapabilities } from "./capabilities.js";
 import { isDelegatedKind, type ModelRole } from "./config.js";
 import { type ProbeResult, probeBinary, runDelegated } from "./delegated/run.js";
-import { addUsage, computeCost, priceFor, reportedCost, ZERO_USAGE } from "./cost.js";
+import { addUsage, computeCost, priceAt, reportedCost, ZERO_USAGE } from "./cost.js";
 import { classifyError, RETRYABLE } from "./errors.js";
 import { type PoolEntry, type ResolvedProvider, resolvePools, resolveProviders } from "./keys.js";
-import { createLanguageModel } from "./providers.js";
+import { aiWaitScope, rateLimitWaitMs, slotsFor, type WaitInfo } from "./limits.js";
+import { createLanguageModel, DEFAULT_CONCURRENCY, openRouterRouting } from "./providers.js";
 import { type FetchLike, guardedFetch, platformFetch } from "./transport.js";
 import type {
   Attempt,
@@ -57,12 +59,19 @@ export interface ModelsOptions {
   budgets?: BudgetMeter[];
   /** Receives every call record, success or failure. */
   onCall?: (record: ModelCallRecord) => void;
+  /**
+   * Told when a call starts waiting (a rate limit, or no free slot for a few
+   * seconds). The waits scope the call runs in (`aiWaitScope`) is told too.
+   */
+  onWait?: (info: WaitInfo) => void;
   logger?: Logger;
   redactor?: Redactor;
   /** Base delay between retries on one entry; doubles each retry. Default 250 ms. */
   backoffMs?: number;
   /** Underlying fetch function; tests pass a fake. Always wrapped by the host guard. */
   fetch?: FetchLike;
+  /** Test hook: how a rate-limit wait sleeps (resolves false when the signal aborted). */
+  pause?: (ms: number, signal?: AbortSignal) => Promise<boolean>;
   /** Test hook: build the model for an entry instead of using a real provider. */
   languageModel?: (entry: PoolEntry, apiKey: string | undefined) => LanguageModel;
   now?: () => number;
@@ -86,6 +95,11 @@ export interface Models {
 }
 
 const MAX_TRIES_PER_ENTRY = 3; // one try + two retries
+/** A slot wait shorter than this isn't announced (it is still measured). */
+const ANNOUNCE_SLOT_WAIT_MS = 2_000;
+/** Backoff for a 429 without Retry-After: 2 s, doubling, at most a minute. */
+const RATE_LIMIT_BACKOFF_MS = 2_000;
+const RATE_LIMIT_BACKOFF_CAP_MS = 60_000;
 
 function toSdkMessages(messages: readonly ModelMessage[]): SdkMessage[] {
   return messages.map((message): SdkMessage => {
@@ -138,6 +152,48 @@ function toUsage(usage: {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Sleeps, or stops early when the signal aborts (resolves false then). */
+function pause(ms: number, signal?: AbortSignal): Promise<boolean> {
+  if (signal?.aborted) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    const onAbort = () => {
+      clearTimeout(timer);
+      resolve(false);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve(true);
+    }, ms);
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+const NO_VISION_NOTE =
+  "[A screenshot was taken here, but this model can't read images; use the page snapshot.]";
+
+/** Replaces images with a note, for models that can't read them. */
+function withoutImages(messages: SdkMessage[]): SdkMessage[] {
+  return messages.map((message) => {
+    if (message.role !== "user" || typeof message.content === "string") return message;
+    return {
+      ...message,
+      content: message.content.map((part) =>
+        part.type === "file" && part.mediaType.startsWith("image/")
+          ? { type: "text" as const, text: NO_VISION_NOTE }
+          : part,
+      ),
+    };
+  });
+}
+
+const hasImages = (messages: readonly ModelMessage[]) =>
+  messages.some(
+    (m) =>
+      m.role === "user" &&
+      typeof m.content !== "string" &&
+      m.content.some((p) => p.type === "image"),
+  );
+
 interface AttemptResult<T> {
   attempt: Attempt;
   text?: string;
@@ -145,6 +201,8 @@ interface AttemptResult<T> {
   object?: T | undefined;
   /** Raw text of an invalid structured reply, for the retry prompt. */
   invalidText?: string;
+  /** A rate limit's wait (Retry-After or a reset header), when the provider gave one. */
+  retryAfterMs?: number;
 }
 
 /** Creates the models client for a run. */
@@ -171,6 +229,80 @@ export function createModels(options: ModelsOptions): Models {
   const disabled = new Set<string>();
   const warnedPrices = new Set<string>();
   const timeoutDefault = (config.models?.timeoutSeconds ?? 120) * 1000;
+  const maxWaitMs = (config.models?.maxWaitMinutes ?? 30) * 60_000;
+  const warnedCosts = new Set<string>();
+  // Provider metadata is only asked for when requests really go out (not with a test model).
+  const probeAllowed = !options.languageModel || options.fetch !== undefined;
+  const capabilities = (entry: PoolEntry): Promise<ModelCapabilities> => {
+    const provider = providers.get(entry.provider);
+    if (!provider?.baseUrl || !provider.host || !probeAllowed) return Promise.resolve({});
+    const pinned =
+      provider.settings.kind === "openrouter"
+        ? openRouterRouting(entry.model, provider.settings.routing, entry.settings?.routing)
+            .order?.[0]
+        : undefined;
+    return probeCapabilities(
+      provider.settings.kind,
+      provider.baseUrl,
+      entry.model,
+      guardedFetch(provider.host, { base: options.fetch ?? platformFetch }),
+      pinned,
+    );
+  };
+
+  /** Waits for this provider's (and model's) free slots. Returns the release and the wait. */
+  async function takeSlots(
+    entry: PoolEntry,
+    signal: AbortSignal | undefined,
+  ): Promise<{ release: () => void; waitedMs: number } | undefined> {
+    const provider = providers.get(entry.provider) as ResolvedProvider;
+    const perProvider =
+      provider.settings.concurrency ?? DEFAULT_CONCURRENCY[provider.settings.kind];
+    const perModel = provider.settings.concurrencyPerModel;
+    const account = provider.host ?? entry.provider;
+    const pools = [
+      ...(perProvider ? [slotsFor(account, perProvider)] : []),
+      ...(perModel ? [slotsFor(`${account}|${entry.model}`, perModel)] : []),
+    ];
+    if (pools.length === 0) return { release: () => {}, waitedMs: 0 };
+    const started = now();
+    const scope = aiWaitScope.getStore();
+    const busy = pools.some((slots) => !slots.free);
+    let announced = false;
+    const announce = busy
+      ? setTimeout(() => {
+          announced = true;
+          const info: WaitInfo = {
+            provider: entry.provider,
+            model: entry.model,
+            reason: "concurrency",
+            resumesAt: null,
+            message: `Waiting for a free ${entry.provider} slot (its limit is ${perModel ?? perProvider} at once).`,
+          };
+          options.onWait?.(info);
+          scope?.begin(info);
+        }, ANNOUNCE_SLOT_WAIT_MS)
+      : undefined;
+    // A short slot wait still stops the clock, silently.
+    if (busy) scope?.begin();
+    const releases: Array<() => void> = [];
+    try {
+      for (const slots of pools) releases.push(await slots.acquire(signal));
+    } catch {
+      for (const release of releases) release();
+      return undefined;
+    } finally {
+      clearTimeout(announce);
+      if (busy) scope?.end();
+      if (announced) scope?.end();
+    }
+    return {
+      release: () => {
+        for (const release of releases) release();
+      },
+      waitedMs: now() - started,
+    };
+  }
 
   async function attemptOnce<T>(
     entry: PoolEntry,
@@ -192,7 +324,14 @@ export function createModels(options: ModelsOptions): Models {
     const apiKey = provider.key ? revealSecret(provider.key) : undefined;
     const model = options.languageModel
       ? options.languageModel(entry, apiKey)
-      : createLanguageModel(entry.provider, provider.settings, entry.model, apiKey, fetch);
+      : createLanguageModel(
+          entry.provider,
+          provider.settings,
+          entry.model,
+          apiKey,
+          fetch,
+          entry.settings?.routing,
+        );
 
     const controller = new AbortController();
     let timedOut = false;
@@ -207,16 +346,38 @@ export function createModels(options: ModelsOptions): Models {
     });
 
     const started = now();
-    const costOf = (usage: TokenUsage) => {
-      if (providerCost !== undefined) return providerCost;
-      const cost = computeCost(usage, priceFor(entry.model, config.models?.prices));
-      if (cost === null && !warnedPrices.has(entry.model)) {
+    const costOf = (
+      usage: TokenUsage,
+    ): Pick<Attempt, "costUsd" | "listCostUsd" | "reportedCostUsd"> => {
+      const list = computeCost(
+        usage,
+        priceAt(provider.settings.kind, entry.model, config.models?.prices),
+      );
+      if (list === null && providerCost === undefined && !warnedPrices.has(entry.model)) {
         warnedPrices.add(entry.model);
         log.warn(`No price known for model ${entry.model}; its cost is recorded as unknown.`, {
           fix: `Add ${entry.model} under models.prices in ${brand.configFileName}.`,
         });
       }
-      return cost;
+      // The provider's charge vs our list price: a gap means prices.yaml is stale.
+      if (
+        list !== null &&
+        providerCost !== undefined &&
+        providerCost > 0.0001 &&
+        Math.abs(providerCost - list) / providerCost > 0.05 &&
+        !warnedCosts.has(entry.model)
+      ) {
+        warnedCosts.add(entry.model);
+        log.warn(
+          `${entry.provider} charged $${providerCost.toFixed(6)} for a ${entry.model} call; the list price says $${list.toFixed(6)}.`,
+          { fix: `Check the price of ${entry.model} in prices.yaml (or models.prices).` },
+        );
+      }
+      return {
+        costUsd: providerCost ?? list,
+        listCostUsd: list,
+        ...(providerCost !== undefined ? { reportedCostUsd: providerCost } : {}),
+      };
     };
     const base = { provider: entry.provider, model: entry.model, attempt: tryNumber };
 
@@ -253,9 +414,8 @@ export function createModels(options: ModelsOptions): Models {
       const result = await Promise.race([call, stopped]);
       for (const warning of result.warnings ?? []) log.debug("model warning", { warning });
       const usage = toUsage(result.usage);
-      const costUsd = costOf(usage);
       return {
-        attempt: { ...base, outcome: "ok", latencyMs: now() - started, usage, costUsd },
+        attempt: { ...base, outcome: "ok", latencyMs: now() - started, usage, ...costOf(usage) },
         text: result.text,
         toolCalls: result.toolCalls.map((call) => ({
           id: call.toolCallId,
@@ -278,10 +438,14 @@ export function createModels(options: ModelsOptions): Models {
       };
       if (NoObjectGeneratedError.isInstance(error) && error.usage) {
         attempt.usage = toUsage(error.usage);
-        attempt.costUsd = costOf(attempt.usage);
+        Object.assign(attempt, costOf(attempt.usage));
         return { attempt, ...(error.text !== undefined && { invalidText: error.text }) };
       }
-      return { attempt };
+      const wait =
+        classified.outcome === "rate_limited"
+          ? rateLimitWaitMs(classified.headers, now())
+          : undefined;
+      return { attempt, ...(wait !== undefined ? { retryAfterMs: wait } : {}) };
     } finally {
       clearTimeout(timer);
       request.signal?.removeEventListener("abort", onAbort);
@@ -390,16 +554,31 @@ export function createModels(options: ModelsOptions): Models {
     const record = (outcome: ModelCallRecord["outcome"], answered?: Attempt): ModelCallRecord => {
       const withUsage = attempts.filter((a) => a.usage);
       const unknown = withUsage.some((a) => a.costUsd === null || a.costUsd === undefined);
+      const listUnknown = withUsage.some(
+        (a) =>
+          a.listCostUsd === null || (a.listCostUsd === undefined && a.billing !== "subscription"),
+      );
+      const reported = withUsage.filter((a) => a.reportedCostUsd !== undefined);
+      const waitMs = attempts.reduce((sum, a) => sum + (a.waitMs ?? 0), 0);
       const rec: ModelCallRecord = {
         id,
         role,
         startedAt: new Date(startedAt).toISOString(),
-        latencyMs: now() - startedAt,
+        latencyMs: Math.max(0, now() - startedAt - waitMs),
+        waitMs,
         outcome,
         provider: answered?.provider ?? null,
         model: answered?.model ?? null,
         usage: attempts.reduce((sum, a) => addUsage(sum, a.usage), ZERO_USAGE),
         costUsd: unknown ? null : withUsage.reduce((sum, a) => sum + (a.costUsd ?? 0), 0),
+        listCostUsd: listUnknown
+          ? null
+          : withUsage.reduce((sum, a) => sum + (a.listCostUsd ?? a.costUsd ?? 0), 0),
+        ...(reported.length > 0 &&
+        reported.length === withUsage.length &&
+        answered?.billing !== "subscription"
+          ? { reportedCostUsd: reported.reduce((sum, a) => sum + (a.reportedCostUsd ?? 0), 0) }
+          : {}),
         attempts: [...attempts],
         tags: { ...(request.tags ?? {}) },
         billing: (answered ?? attempts.filter((a) => a.attempt > 0).at(-1))?.billing ?? "api",
@@ -474,16 +653,46 @@ export function createModels(options: ModelsOptions): Models {
         skip("skipped_near_cap", capped);
         continue;
       }
+      // What the provider says the model can do: no tools means it can't do this work.
+      const caps = await capabilities(entry);
+      if (request.tools?.length && caps.tools === false) {
+        skip("skipped_unusable", `${entry.model} can't call tools (says ${entry.provider})`);
+        continue;
+      }
+      if (caps.pinServed === false) {
+        const pin = openRouterRouting(
+          entry.model,
+          providers.get(entry.provider)?.settings.routing,
+          entry.settings?.routing,
+        ).order?.[0];
+        skip(
+          "skipped_unusable",
+          `${entry.provider} has no ${pin} endpoint for ${entry.model} (set routing.order for this model)`,
+        );
+        continue;
+      }
+      const vision = entry.settings?.vision ?? caps.vision;
 
       let messages = toSdkMessages(request.messages);
+      if (vision === false && hasImages(request.messages)) messages = withoutImages(messages);
       let retriedInvalid = false;
+      let rateLimited = 0;
+      let waitedForLimits = 0;
       for (let tryNumber = 1; tryNumber <= MAX_TRIES_PER_ENTRY; tryNumber++) {
         const stop = budgetStop();
         if (stop) return stop;
         if (request.signal?.aborted) return aborted();
 
-        const result = await attemptOnce(entry, tryNumber, request, messages);
+        const slots = await takeSlots(entry, request.signal);
+        if (!slots) return aborted();
+        let result: AttemptResult<T>;
+        try {
+          result = await attemptOnce(entry, tryNumber, request, messages);
+        } finally {
+          slots.release();
+        }
         const attempt = result.attempt;
+        if (slots.waitedMs > 0) attempt.waitMs = slots.waitedMs;
         attempts.push(attempt);
         if (attempt.usage) {
           for (const meter of meters) meter.add(attempt.costUsd ?? null);
@@ -516,9 +725,48 @@ export function createModels(options: ModelsOptions): Models {
             "This is a bug in the request, not a provider outage. Report it with the call record.",
           );
         }
-        if (attempt.outcome === "auth_failed" || attempt.outcome === "cli_unavailable") {
+        if (
+          attempt.outcome === "auth_failed" ||
+          attempt.outcome === "cli_unavailable" ||
+          attempt.outcome === "out_of_credit"
+        ) {
           disabled.add(entry.provider);
           break;
+        }
+        // A rate limit is waited out (Retry-After, else a growing backoff), up to
+        // models.maxWaitMinutes for this call; waiting doesn't use up a try.
+        if (attempt.outcome === "rate_limited") {
+          // At least a second, so a "Retry-After: 0" can't turn into a busy loop.
+          const wait = Math.max(
+            1_000,
+            result.retryAfterMs ??
+              Math.min(RATE_LIMIT_BACKOFF_MS * 2 ** rateLimited, RATE_LIMIT_BACKOFF_CAP_MS),
+          );
+          rateLimited++;
+          if (waitedForLimits + wait > maxWaitMs) {
+            attempt.message = `${attempt.message ?? "rate limited"} (the next wait, ${Math.ceil(wait / 1000)} s, would pass models.maxWaitMinutes)`;
+            break;
+          }
+          const resumesAt = new Date(now() + wait).toISOString();
+          const info: WaitInfo = {
+            provider: entry.provider,
+            model: entry.model,
+            reason: "rate_limited",
+            resumesAt,
+            message: `${entry.provider} is rate-limiting ${entry.model}: waiting ${Math.ceil(wait / 1000)} s, resumes at ${resumesAt}.`,
+          };
+          const scope = aiWaitScope.getStore();
+          options.onWait?.(info);
+          scope?.begin(info);
+          const started = now();
+          const finished = await (options.pause ?? pause)(wait, request.signal);
+          scope?.end();
+          const waited = now() - started;
+          waitedForLimits += waited;
+          attempt.waitMs = (attempt.waitMs ?? 0) + waited;
+          if (!finished) return aborted();
+          tryNumber--;
+          continue;
         }
         // The subscription's usage limit: no point retrying this entry; move on.
         if (attempt.outcome === "plan_limit") break;
@@ -578,6 +826,19 @@ export function createModels(options: ModelsOptions): Models {
         "all_providers_failed",
         `Plan limit reached: your AI subscription's usage limit was hit, and no other provider answered: ${summary}.`,
         "Wait for the plan's limit to reset, or add an API key as another provider in the pool (models.roles).",
+      );
+    }
+    if (
+      tried.some((a) => a.outcome === "out_of_credit") &&
+      tried.every((a) => a.outcome !== "ok")
+    ) {
+      const names = [
+        ...new Set(tried.filter((a) => a.outcome === "out_of_credit").map((a) => a.provider)),
+      ];
+      return fail(
+        "all_providers_failed",
+        `Out of AI credit: ${names.join(", ")} said the account's credit or the key's spend limit is used up, and no other provider answered: ${summary}.`,
+        "Add credit (or raise the key's limit) at the provider, or add another provider to the pool (models.roles).",
       );
     }
     const lastPerEntry = new Map(tried.map((a) => [`${a.provider}/${a.model}`, a.outcome]));

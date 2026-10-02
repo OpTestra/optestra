@@ -31,6 +31,7 @@ describe("pools", () => {
       ["anthropic", "claude-sonnet-5-5", true],
       ["openai", "gpt-6-sol", false],
       ["google", "gemini-3.8-flash", false],
+      ["openrouter", "anthropic/claude-sonnet-5.5", false],
       ["claude-code", "claude-sonnet-5-5", false],
       ["codex", "default", false],
     ]);
@@ -38,6 +39,7 @@ describe("pools", () => {
       ["anthropic", "claude-sonnet-5-5", true],
       ["openai", "gpt-6-luna", false],
       ["google", "gemini-3.5-flash-lite", false],
+      ["openrouter", "anthropic/claude-sonnet-5.5", false],
       ["claude-code", "claude-sonnet-5-5", false],
       ["codex", "default", false],
     ]);

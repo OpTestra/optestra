@@ -25,7 +25,7 @@ export const text =
   });
 
 export const fails =
-  (status: number, body = "") =>
+  (status: number, body = "", responseHeaders?: Record<string, string>) =>
   () => {
     throw new APICallError({
       message: `HTTP ${status}`,
@@ -34,6 +34,7 @@ export const fails =
       statusCode: status,
       responseBody: body,
       isRetryable: status === 429 || status >= 500,
+      ...(responseHeaders ? { responseHeaders } : {}),
     });
   };
 

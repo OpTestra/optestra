@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { basePrices, computeCost, priceFor, reportedCost } from "./cost.js";
+import { computeCost, priceAt, priceFor, reportedCost } from "./cost.js";
 
 describe("prices", () => {
   it("covers every default model id", () => {
@@ -14,9 +14,11 @@ describe("prices", () => {
       defaults.models.roles as Record<string, { provider: string; model: string }[]>,
     )
       .flat()
-      .filter((e) => !["claude-code", "codex"].includes(providers[e.provider]?.kind ?? ""))
-      .map((e) => e.model);
-    for (const id of ids) expect(basePrices()[id], id).toBeDefined();
+      .filter((e) => !["claude-code", "codex"].includes(providers[e.provider]?.kind ?? ""));
+    for (const e of ids) {
+      const kind = providers[e.provider]?.kind ?? "";
+      expect(priceAt(kind, e.model), `${kind}:${e.model}`).toBeDefined();
+    }
   });
 
   it("computes cost with cached and cache-write tokens", () => {
@@ -43,5 +45,21 @@ describe("prices", () => {
     ).toBeNull();
     expect(reportedCost({ usage: { cost: 0.5 } })).toBe(0.5);
     expect(reportedCost({ usage: {} })).toBeUndefined();
+  });
+});
+
+describe("priceAt", () => {
+  it("prefers the provider's own price, then the bare model id", () => {
+    expect(priceAt("openrouter", "anthropic/claude-sonnet-5.5")).toMatchObject({
+      input: 2,
+      output: 10,
+    });
+    expect(priceAt("ollama-cloud", "kimi-k3")).toMatchObject({ input: 3, output: 15 });
+    expect(priceAt("ollama-cloud", "gemma4:31b")).toMatchObject({ input: 0.14 });
+    expect(priceAt("anthropic", "claude-sonnet-5-5")).toMatchObject({ input: 2 });
+    expect(priceAt("openrouter", "nobody/unknown")).toBeUndefined();
+    expect(
+      priceAt("ollama-cloud", "kimi-k3", { "ollama-cloud:kimi-k3": { input: 1, output: 1 } }),
+    ).toEqual({ input: 1, output: 1 });
   });
 });

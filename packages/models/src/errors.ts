@@ -7,6 +7,8 @@ export interface ClassifiedError {
   outcome: AttemptOutcome;
   status?: number;
   message: string;
+  /** Response headers of an HTTP error (Retry-After and the like). */
+  headers?: Record<string, string>;
 }
 
 /** Maps any error from a provider call to an attempt outcome, with a redacted message. */
@@ -37,16 +39,23 @@ export function classifyError(
     const outcome: AttemptOutcome =
       status === 401 || status === 403
         ? "auth_failed"
-        : status === 429
-          ? "rate_limited"
-          : status === 408
-            ? "timeout"
-            : status === 404
-              ? "not_found"
-              : status >= 500
-                ? "server_error"
-                : "bad_request";
-    return { outcome, status, message };
+        : status === 402
+          ? "out_of_credit"
+          : status === 429
+            ? "rate_limited"
+            : status === 408
+              ? "timeout"
+              : status === 404
+                ? "not_found"
+                : status >= 500
+                  ? "server_error"
+                  : "bad_request";
+    return {
+      outcome,
+      status,
+      message,
+      ...(error.responseHeaders ? { headers: error.responseHeaders } : {}),
+    };
   }
   const message = error instanceof Error ? error.message : String(error);
   return { outcome: "network_error", message: redact(message) };

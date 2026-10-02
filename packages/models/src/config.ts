@@ -8,6 +8,8 @@ export const PROVIDER_KINDS = [
   "openai-compatible",
   "azure",
   "bedrock",
+  "openrouter",
+  "ollama-cloud",
   "claude-code",
   "codex",
 ] as const;
@@ -27,7 +29,32 @@ export const isDelegatedKind = (kind: string): kind is DelegatedKind =>
 /** Roles in FND-2. The decider (DEC phase) has its own protocol and is added there. */
 export const MODEL_ROLES = ["planner", "fixer"] as const;
 
-export type ModelRole = (typeof MODEL_ROLES)[number];
+/**
+ * Roles with their own optional pool. An empty or absent pool uses the role it
+ * falls back to (the drafter writes new tests from a sentence: the planner's work).
+ */
+export const OPTIONAL_ROLES = { drafter: "planner" } as const;
+
+export type ModelRole = (typeof MODEL_ROLES)[number] | keyof typeof OPTIONAL_ROLES;
+
+/** OpenRouter provider routing (openrouter.ai/docs/features/provider-routing). */
+export const routingSchema = z.strictObject({
+  order: z
+    .array(z.string().min(1))
+    .optional()
+    .describe(
+      "Upstream providers to use, in order (e.g. [anthropic]). Default: the model author's own endpoint when known.",
+    ),
+  allowFallbacks: z
+    .boolean()
+    .optional()
+    .describe("Let OpenRouter use another upstream provider when these fail. Default false."),
+  dataCollection: z
+    .enum(["allow", "deny"])
+    .optional()
+    .describe("deny (default): only upstream providers that don't store or train on prompts."),
+  zdr: z.boolean().optional().describe("Only zero-data-retention endpoints. Default false."),
+});
 
 const capSchema = z.strictObject({ usd: z.number().positive().describe("Spend cap in USD.") });
 
@@ -58,11 +85,39 @@ export const providerSchema = z.strictObject({
     .min(1)
     .optional()
     .describe("claude-code / codex: path to the CLI. Default: found on PATH (claude, codex)."),
+  concurrency: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "Most requests in flight to this provider at once; more wait their turn. Default: openrouter 8, ollama-cloud 3 (Pro plan), others unlimited.",
+    ),
+  concurrencyPerModel: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Most requests in flight per model at this provider. Default unlimited."),
+  routing: routingSchema
+    .optional()
+    .describe("openrouter: which upstream providers may serve the calls (per entry too)."),
 });
 
 export const poolEntrySchema = z.strictObject({
   provider: z.string().min(1).describe("Provider id from models.providers."),
   model: z.string().min(1).describe("Model id at that provider."),
+  routing: routingSchema.optional().describe("openrouter: overrides the provider's routing."),
+  vision: z
+    .boolean()
+    .optional()
+    .describe(
+      "Whether the model reads images (screenshots). Default: what the provider says about the model.",
+    ),
+  allowUnsupported: z
+    .boolean()
+    .optional()
+    .describe("Use the model even for a role it is marked unsupported for (model evals only)."),
 });
 
 export const priceSchema = z.strictObject({
@@ -79,12 +134,23 @@ export const modelsSchema = z
       .strictObject({
         planner: z.array(poolEntrySchema).describe("Writes and re-records tests."),
         fixer: z.array(poolEntrySchema).describe("Cheap, fast single-step heals."),
+        drafter: z
+          .array(poolEntrySchema)
+          .optional()
+          .describe("Drafts new tests from a sentence. Default: the planner's pool."),
       })
       .describe("Ordered pool per role: the first healthy entry answers."),
     prices: z
       .record(z.string(), priceSchema)
       .describe("Price overrides by model id, USD per million tokens."),
     timeoutSeconds: z.number().positive().describe("Maximum time for one model request."),
+    maxWaitMinutes: z
+      .number()
+      .nonnegative()
+      .optional()
+      .describe(
+        "Longest one call waits for a rate-limited provider (429, Retry-After) before trying the next one. Default 30. Waits never count against a test's time limit.",
+      ),
     allowDelegated: z
       .boolean()
       .describe(
@@ -101,6 +167,7 @@ export const modelsSchema = z
   .describe("AI models.");
 
 export type ProviderSettings = z.infer<typeof providerSchema>;
+export type RoutingSettings = z.infer<typeof routingSchema>;
 export type PoolEntrySettings = z.infer<typeof poolEntrySchema>;
 export type PriceSettings = z.infer<typeof priceSchema>;
 export type ModelsSettings = z.infer<typeof modelsSchema>;

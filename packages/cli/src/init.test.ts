@@ -222,11 +222,36 @@ describe("init", { timeout: 30_000 }, () => {
     const loaded = loadProject(dir, { env: {} });
     expect(loaded.diagnostics).toEqual([]);
     expect(loaded.config.project.name).toBe("Asked");
-    expect(loaded.config.models.providers.openrouter).toMatchObject({
-      kind: "openai-compatible",
-      keySecret: "OPENROUTER_API_KEY",
+    // The named provider knows its base URL and key name (PROV-0).
+    expect(loaded.config.models.providers.openrouter).toMatchObject({ kind: "openrouter" });
+    expect(loaded.config.models.roles.planner[0]).toEqual({
+      provider: "openrouter",
+      model: "anthropic/claude-sonnet-5.5",
     });
     expect(out).toContain("stored as OPENROUTER_API_KEY in .env");
+  });
+
+  it("Ollama Cloud: needs a model named (none has passed the model eval to be a default)", async () => {
+    const dir = temp({});
+    let out = "";
+    const io = { cwd: dir, env: {}, stdout: (text: string) => (out += text) };
+    expect(
+      await runInitCommand(undefined, { yes: true, ai: "ollama-cloud", doctor: false }, io),
+    ).toBe(2);
+    expect(out).toContain("--ai ollama-cloud needs --ai-model");
+    const code = await runInitCommand(
+      undefined,
+      { yes: true, ai: "ollama-cloud", aiModel: "kimi-k3", doctor: false },
+      io,
+    );
+    expect(code).toBe(0);
+    const loaded = loadProject(dir, { env: {} });
+    expect(loaded.diagnostics).toEqual([]);
+    expect(loaded.config.models.providers["ollama-cloud"]).toMatchObject({ kind: "ollama-cloud" });
+    expect(loaded.config.models.roles.fixer[0]).toEqual({
+      provider: "ollama-cloud",
+      model: "kimi-k3",
+    });
   });
 });
 
