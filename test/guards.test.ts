@@ -82,6 +82,10 @@ describe("engine guards", () => {
     "packages/android/src/hooks.ts",
     // Bench (BEN-0): is the Android fixture's backend port free? Listens on 127.0.0.1 only.
     "packages/core/src/bench/port.ts",
+    // The hosted cloud (CLI-2 `--cloud`, CLOUD-2): the sync API of the one cloud the user
+    // signed in to (or <PREFIX>CLOUD_URL), redirects refused; `cloud login`'s one-shot
+    // listener for the sign-in code, on 127.0.0.1 only (checked below).
+    "packages/cli/src/commands/cloud.ts",
   ];
   const AI_SDK_PACKAGE = "packages/models/";
 
@@ -96,6 +100,10 @@ describe("engine guards", () => {
     const port = readFileSync(join(root, "packages/core/src/bench/port.ts"), "utf8");
     expect(port).toContain('server.listen(port, "127.0.0.1",');
     expect(port).not.toMatch(/connect\(|fetch|request\(/);
+    const cloud = readFileSync(join(root, "packages/cli/src/commands/cloud.ts"), "utf8");
+    expect(cloud).toContain('server.listen(0, "127.0.0.1",');
+    expect([...cloud.matchAll(/doFetch\(|\(io\.fetch \?\? fetch\)\(/g)]).toHaveLength(2);
+    expect([...cloud.matchAll(/redirect: "error"/g)]).toHaveLength(2);
   });
 
   it("pins the inbox transport to its one host and never follows redirects", () => {

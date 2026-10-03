@@ -35,6 +35,8 @@ Exit codes follow one rule for every command that runs or checks something: **0*
 | [`inbox check`](#inbox-check) | check the configured inbox: reachable and API key valid |
 | [`inbox last`](#inbox-last) | debug: the latest email to an address: subject and the code/link a test would use |
 | [`login`](#login) | show which AI subscription tools (Claude Code, Codex) are ready, and how to sign in to them |
+| [`cloud login`](#cloud-login) | sign in with your browser (the same sign-in as the desktop app); keeps a 90-day token |
+| [`cloud logout`](#cloud-logout) | end the command line's cloud sign-in |
 | [`generate`](#generate) | write the plain Playwright spec of each recorded test next to its recording (runs without this tool) |
 | [`install-browsers`](#install-browsers) | download the browsers tests run in (Chromium; add --firefox, --webkit or --all) |
 | [`snapshot`](#snapshot) | debug: print what the agent sees on a page, and any refused requests |
@@ -416,6 +418,8 @@ run tests: replay each recording with no AI, evaluate every check, write a resul
 | `--live-network` | don't answer from recorded network traffic: every request goes to the app |  |
 | `--accessibility` | check every page visited with axe-core (WCAG 2 A/AA): warnings only, apart from pass/fail |  |
 | `--verbose` | print every step, heal and warning |  |
+| `--cloud` | run on our servers (sign in first: %cli% cloud login; CI: OPTESTRA_TOKEN) |  |
+| `--cloud-url <url>` | the cloud's address (default: the one you signed in to) |  |
 | `-C, --dir <path>` | project folder (default: nearest folder with the project file) |  |
 
 ## mute {#mute}
@@ -566,6 +570,26 @@ show which AI subscription tools (Claude Code, Codex) are ready, and how to sign
 
 ```sh
 %cli% login [options]
+```
+
+## cloud login {#cloud-login}
+
+sign in with your browser (the same sign-in as the desktop app); keeps a 90-day token
+
+```sh
+%cli% cloud login [options]
+```
+
+| Option | | Default |
+|---|---|---|
+| `--cloud-url <url>` | the cloud's address (default: OPTESTRA_CLOUD_URL) |  |
+
+## cloud logout {#cloud-logout}
+
+end the command line's cloud sign-in
+
+```sh
+%cli% cloud logout [options]
 ```
 
 ## generate {#generate}

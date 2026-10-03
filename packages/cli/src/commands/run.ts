@@ -38,6 +38,10 @@ export interface RunCommandOptions {
   liveNetwork?: boolean;
   verbose?: boolean;
   dir?: string;
+  /** CLI-2 / CLOUD-2: run in the hosted cloud instead of on this machine. */
+  cloud?: boolean;
+  /** The cloud's address (default: the signed-in one, or <PREFIX>CLOUD_URL). */
+  cloudUrl?: string;
 }
 
 const posix = (path: string) => path.split(sep).join("/");
@@ -113,6 +117,23 @@ export async function runRunCommand(
     : options.rerecord
       ? "rerecord"
       : undefined;
+
+  if (options.cloud) {
+    for (const [flag, used] of [
+      ["--shard", options.shard !== undefined],
+      ["--headed", options.headed === true],
+      ["--workers", options.workers !== undefined],
+      ["--android", androidVersions.length > 0],
+      ["--record-network", options.recordNetwork === true],
+    ] as const)
+      if (used) {
+        io.stdout(
+          `${flag} isn't used with --cloud: the cloud decides how a run is spread out and shown.\n`,
+        );
+        return 2;
+      }
+    return cloudRun(dir, tests, options, viewport, io);
+  }
 
   const { parseShard, runTests } = await import("@optestra/core/node");
   const shard = options.shard === undefined ? undefined : parseShard(options.shard);
@@ -240,4 +261,93 @@ export async function runRunCommand(
     `\n${formatRunSummary({ run, tests: result.tests }, { color })}\n  Results: ${where} (${brand.cliName} results ${where}, ${brand.cliName} report ${where})\n  exit code ${exitCode}\n`,
   );
   return exitCode;
+}
+
+/** `run --cloud` (CLI-2, CLOUD-2): the same selection and output, run in the hosted cloud. */
+async function cloudRun(
+  dir: string,
+  tests: string[],
+  options: RunCommandOptions,
+  viewport: { width: number; height: number } | undefined,
+  io: CommandIo & { color?: boolean; signal?: AbortSignal },
+): Promise<number> {
+  const { loadProject } = await import("@optestra/config/node");
+  const { loadTests } = await import("@optestra/spec/node");
+  const { exitCodeFor, foldEvents } = await import("@optestra/contract");
+  const { formatRunSummary } = await import("@optestra/report");
+  const { runInCloud } = await import("./cloud.js");
+  const loaded = loadProject(dir, { environment: options.env, env: io.env });
+  const all = await loadTests(dir, loaded.config, { environment: options.env });
+  // The same selection as a local run: files or folders, tags, name.
+  const wanted = tests.map((t) => posix(relative(dir, resolve(io.cwd, t))));
+  const selected = all.tests
+    .filter(
+      (t) =>
+        wanted.length === 0 ||
+        wanted.some((w) => t.path === w || t.path.startsWith(`${w.replace(/\/+$/, "")}/`)),
+    )
+    .filter(
+      (t) =>
+        !options.tag?.length || t.spec.frontmatter.tags.some((tag) => options.tag?.includes(tag)),
+    )
+    .filter(
+      (t) =>
+        !options.grep || t.spec.frontmatter.name.toLowerCase().includes(options.grep.toLowerCase()),
+    )
+    .map((t) => t.path);
+  if (selected.length === 0) {
+    io.stdout("No tests match.\n");
+    return 2;
+  }
+  const names = new Map<string, string>();
+  const browsers = list(options.browser);
+  const devices = list(options.device);
+  return runInCloud(
+    dir,
+    loaded.config.project?.name ?? "project",
+    selected,
+    loaded.config.run.healPolicy === "auto",
+    {
+      ...(options.cloudUrl ? { cloudUrl: options.cloudUrl } : {}),
+      ...(options.env ? { env: options.env } : {}),
+      ...(options.replayOnly ? { replayOnly: true } : {}),
+      ...(options.rerecord ? { rerecord: true } : {}),
+      ...(browsers.length ? { browser: browsers } : {}),
+      ...(devices.length ? { device: devices } : {}),
+      ...(options.locale ? { locale: options.locale } : {}),
+      ...(options.timezone ? { timezone: options.timezone } : {}),
+      ...(options.evidence ? { evidence: options.evidence } : {}),
+      ...(viewport ? { viewport } : {}),
+    },
+    io,
+    {
+      onEvent: (event) => {
+        if (event.type === "run.started")
+          io.stdout(
+            `Running ${event.project}${event.environment ? ` on ${event.environment}` : ""} (${event.mode}, in the cloud)\n`,
+          );
+        if (event.type === "test.started") names.set(event.testId, event.name);
+        if (event.type === "test.finished")
+          io.stdout(`  ${event.verdict.padEnd(7)} ${names.get(event.testId) ?? event.testId}\n`);
+        if (options.verbose && event.type === "log" && event.level !== "debug")
+          io.stdout(`  ${event.message}\n`);
+      },
+      summary: (events) => {
+        let folded: ReturnType<typeof foldEvents>;
+        try {
+          folded = foldEvents(events);
+        } catch {
+          io.stdout("\nThe run's events were incomplete.\n  exit code 2\n");
+          return 2;
+        }
+        const code = exitCodeFor(folded.run, {
+          healedCountsAsPass: loaded.config.run.healPolicy === "auto",
+        });
+        io.stdout(
+          `\n${formatRunSummary({ run: folded.run, tests: folded.tests }, { color: io.color ?? false })}\n  exit code ${code}\n`,
+        );
+        return code;
+      },
+    },
+  );
 }

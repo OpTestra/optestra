@@ -6,22 +6,24 @@ import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import { brand } from "@optestra/brand";
 import { Command } from "commander";
+
+/** <PREFIX>, as the config package spells it (not imported: the program starts fast). */
+const ENV_PREFIX_TEXT = `${brand.cliName.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}_`;
+
 import { registerAndroidCommands } from "./commands/android.js";
 import { registerAuthCommands } from "./commands/auth.js";
 import type { AuthorCommandOptions } from "./commands/author.js";
+import type { BenchCommandOptions } from "./commands/bench.js";
 import { registerBrowserCommands } from "./commands/browser.js";
 import type { ChecksCommandOptions } from "./commands/checks.js";
 import type { ConfigCommandOptions } from "./commands/config.js";
 import type { DeciderSetupOptions } from "./commands/decider.js";
-import type { BenchCommandOptions } from "./commands/bench.js";
-import type { EvalCommandOptions } from "./commands/eval.js";
 import type { DecisionsCommandOptions } from "./commands/decisions.js";
 import type { DoctorCommandOptions } from "./commands/doctor.js";
+import type { EvalCommandOptions } from "./commands/eval.js";
 import type { ExplainCommandOptions } from "./commands/explain.js";
-import type { MuteCommandOptions } from "./commands/mute.js";
 import type { ExploreCommandOptions } from "./commands/explore.js";
 import { registerExportCommand } from "./commands/export.js";
-import { registerRecordingsCommand } from "./commands/recordings.js";
 import type { GenerateCommandOptions } from "./commands/generate.js";
 import type { HealCommandOptions } from "./commands/heal.js";
 import { registerInitCommand } from "./commands/init.js";
@@ -29,8 +31,10 @@ import type { LintCommandOptions } from "./commands/lint.js";
 import type { McpCommandOptions } from "./commands/mcp.js";
 import type { MergeRunsCommandOptions } from "./commands/merge-runs.js";
 import type { ModelsCommandOptions } from "./commands/models.js";
+import type { MuteCommandOptions } from "./commands/mute.js";
 import type { NewCommandOptions } from "./commands/new.js";
 import type { RecordCommandOptions } from "./commands/record.js";
+import { registerRecordingsCommand } from "./commands/recordings.js";
 import type { ReportCommandOptions } from "./commands/report.js";
 import type { ResultsCommandOptions } from "./commands/results.js";
 import type { RunCommandOptions } from "./commands/run.js";
@@ -533,6 +537,11 @@ export function createProgram(): Command {
       "check every page visited with axe-core (WCAG 2 A/AA): warnings only, apart from pass/fail",
     )
     .option("--verbose", "print every step, heal and warning")
+    .option(
+      "--cloud",
+      `run on our servers (sign in first: ${brand.cliName} cloud login; CI: ${ENV_PREFIX_TEXT}TOKEN)`,
+    )
+    .option("--cloud-url <url>", "the cloud's address (default: the one you signed in to)")
     .option("-C, --dir <path>", "project folder (default: nearest folder with the project file)")
     .action(async (tests: string[], options: RunCommandOptions) => {
       const { shouldUseColor } = await import("@optestra/report/node");
@@ -681,6 +690,33 @@ export function createProgram(): Command {
         env: process.env,
         stdout: (text) => process.stdout.write(text),
       });
+    });
+
+  // CLOUD-2 (CLI-2): signing the command line in to the hosted cloud, for `run --cloud`.
+  const cloud = program
+    .command("cloud")
+    .description("sign in to the hosted cloud, where `run --cloud` runs your tests");
+  const cloudIo = () => ({
+    cwd: process.cwd(),
+    env: process.env,
+    stdout: (text: string) => process.stdout.write(text),
+  });
+  cloud
+    .command("login")
+    .description(
+      "sign in with your browser (the same sign-in as the desktop app); keeps a 90-day token",
+    )
+    .option("--cloud-url <url>", `the cloud's address (default: ${ENV_PREFIX_TEXT}CLOUD_URL)`)
+    .action(async (options: { cloudUrl?: string }) => {
+      const { runCloudLogin } = await import("./commands/cloud.js");
+      process.exitCode = await runCloudLogin(options, cloudIo());
+    });
+  cloud
+    .command("logout")
+    .description("end the command line's cloud sign-in")
+    .action(async () => {
+      const { runCloudLogout } = await import("./commands/cloud.js");
+      process.exitCode = await runCloudLogout(cloudIo());
     });
 
   program
