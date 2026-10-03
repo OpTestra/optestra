@@ -1,0 +1,237 @@
+{
+  "kind": "cost-measurement",
+  "version": 1,
+  "costRun": "baseline-20261003",
+  "where": "cloud-run",
+  "task": {
+    "index": 0,
+    "count": 1,
+    "execution": "cost-baseline-20261003-ls2mn",
+    "region": "us-east4"
+  },
+  "shape": {
+    "vcpu": 2,
+    "memoryGiB": 4,
+    "parallel": 1
+  },
+  "slice": {
+    "fixture": "shop",
+    "phase": "heal",
+    "variants": ["cosmetic"],
+    "evidence": "failures",
+    "reruns": 1,
+    "style": null
+  },
+  "timing": {
+    "startedAt": "2026-10-03T06:31:25.423Z",
+    "containerStartMs": null,
+    "processStartMs": 228,
+    "setupMs": 156,
+    "teardownMs": 11831,
+    "taskWallMs": 56147,
+    "testsWallMs": 41803
+  },
+  "resources": {
+    "cpuSeconds": 29.3,
+    "cpuSource": "machine",
+    "peakMemoryBytes": 362147840,
+    "memorySource": "process"
+  },
+  "tests": [
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "avatar-upload",
+      "verdict": "healed",
+      "durationMs": 2220,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 237227,
+      "evidenceFiles": 7
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "billing-zero-due",
+      "verdict": "healed",
+      "durationMs": 1231,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 66584,
+      "evidenceFiles": 5
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "checkout-trial",
+      "verdict": "healed",
+      "durationMs": 2195,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 390971,
+      "evidenceFiles": 7
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "create-project",
+      "verdict": "healed",
+      "durationMs": 4527,
+      "aiCalls": 1,
+      "tokens": {
+        "input": 2216,
+        "output": 76,
+        "cached": 1792,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.000229152,
+      "evidenceBytes": 267265,
+      "evidenceFiles": 8
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "declined-card",
+      "verdict": "healed",
+      "durationMs": 2173,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 320810,
+      "evidenceFiles": 7
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "delete-account-guard",
+      "verdict": "healed",
+      "durationMs": 2454,
+      "aiCalls": 1,
+      "tokens": {
+        "input": 2402,
+        "output": 58,
+        "cached": 1792,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.00026335199999999995,
+      "evidenceBytes": 211788,
+      "evidenceFiles": 7
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "login",
+      "verdict": "healed",
+      "durationMs": 982,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 128770,
+      "evidenceFiles": 6
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "settings-profile",
+      "verdict": "failed",
+      "durationMs": 18134,
+      "aiCalls": 2,
+      "tokens": {
+        "input": 4788,
+        "output": 129,
+        "cached": 3584,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.0005375040000000001,
+      "evidenceBytes": 737428,
+      "evidenceFiles": 16
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "signup-email-code",
+      "verdict": "healed",
+      "durationMs": 1792,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 190707,
+      "evidenceFiles": 6
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "signup-validation",
+      "verdict": "healed",
+      "durationMs": 1099,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 91222,
+      "evidenceFiles": 6
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "sort-orders",
+      "verdict": "healed",
+      "durationMs": 2196,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 139489,
+      "evidenceFiles": 6
+    }
+  ],
+  "model": "ollama-cloud:deepseek-v4.1-flash",
+  "vm": null,
+  "env": {
+    "node": "v24.21.0",
+    "engineVersion": "0.1.0",
+    "commit": null,
+    "os": "linux 6.9.12 (AMD EPYC 7B13, 6 cores)"
+  }
+}

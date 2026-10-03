@@ -1,0 +1,91 @@
+{
+  "buildMinutes": 3.73,
+  "tasks": [
+    {
+      "execution": "cost-baseline-20261003-dlqpx",
+      "index": 0,
+      "createTime": "2026-10-03T05:52:52.108217Z",
+      "startTime": "2026-10-03T05:53:24.444634Z"
+    },
+    {
+      "execution": "cost-baseline-20261003-c9xm9",
+      "index": 0,
+      "createTime": "2026-10-03T05:58:10.570138Z",
+      "startTime": "2026-10-03T05:58:24.384683Z"
+    },
+    {
+      "execution": "cost-baseline-20261003-w87gp",
+      "index": 0,
+      "createTime": "2026-10-03T06:03:35.103128Z",
+      "startTime": "2026-10-03T06:03:44.294098Z"
+    },
+    {
+      "execution": "cost-baseline-20261003-8xpz9",
+      "index": 0,
+      "createTime": "2026-10-03T06:08:57.915159Z",
+      "startTime": "2026-10-03T06:09:04.584916Z"
+    },
+    {
+      "execution": "cost-baseline-20261003-2vzr6",
+      "index": 0,
+      "createTime": "2026-10-03T06:15:15.796271Z",
+      "startTime": "2026-10-03T06:15:44.320581Z"
+    },
+    {
+      "execution": "cost-baseline-20261003-nz28h",
+      "index": 0,
+      "createTime": "2026-10-03T06:21:56.854774Z",
+      "startTime": "2026-10-03T06:22:05.943506Z"
+    },
+    {
+      "execution": "cost-baseline-20261003-nz28h",
+      "index": 1,
+      "createTime": "2026-10-03T06:21:56.854775Z",
+      "startTime": "2026-10-03T06:22:24.114225Z"
+    },
+    {
+      "execution": "cost-baseline-20261003-ls2mn",
+      "index": 0,
+      "createTime": "2026-10-03T06:30:59.868674Z",
+      "startTime": "2026-10-03T06:31:24.807105Z"
+    },
+    {
+      "execution": "cost-baseline-20261003-f2tn2",
+      "index": 0,
+      "createTime": "2026-10-03T06:32:34.999345Z",
+      "startTime": "2026-10-03T06:32:45.259532Z"
+    }
+  ],
+  "secretVersions": 1,
+  "imageGiB": 1.24,
+  "idle": {
+    "staging": {
+      "minInstances": 0,
+      "vcpu": 1,
+      "memoryGiB": 1
+    },
+    "reaper": {
+      "invocationsPerMonth": 4383,
+      "secondsPerInvocation": 0.94,
+      "vcpu": 1,
+      "memoryGiB": 0.25,
+      "schedulerJobs": 1
+    },
+    "registryGiB": 0.25,
+    "images": [
+      {
+        "name": "android-vm-20261003-110740",
+        "gib": 7.44,
+        "ttlMinutes": 10080
+      }
+    ]
+  },
+  "notes": [
+    "Run window for the billing export: 2026-10-03 05:00–09:15 UTC, label cost-run=baseline-20261003 (job, bucket, registry repo, secret, VMs, image). The BigQuery export was enabled during the run; if it does not include that window, compare the console's Billing > Reports view filtered by the label instead.",
+    "Ollama: the usage page shows no per-day breakdown, so compare the month-to-date change. The meter estimates 2,247 calls: $0.82 at the peak list rate, $0.41 at the off-peak rate that applies on a Saturday (the whole run).",
+    "The bill will be higher than the per-test prices: the Android VMs were up 6.71 h in total (about $0.42 at list) against about 1.5 h of measured work. A dropped ssh killed two replays' output (re-run detached on the same VMs), the first cold VM's replay hit a gcloud 502, and two corpus VMs stopped early (a 502 before start, then a missing CLI build) before any AI call. Also 3 failed Cloud Builds (about 5 min) and 1 failed job execution (about 4 min, the evidence copy to the bucket mount) before the fixes.",
+    "Flakiness, kept apart from cost: the web 4-lane shapes had 1 flaky test in 110 on both sizes; Android had 0 mismatches in 84 replays (cold 42, image 42: 35 match, 5 healed, 2 need AI each).",
+    "Wrong passes: 0 on every file-route style; 6 on the description route (drafts that dropped a bug-catching check: checkout-trial on broken-total ×4, create-project on broken-not-saved ×2).",
+    "Not run: the OpenRouter slice (no OpenRouter key supplied)."
+  ]
+}

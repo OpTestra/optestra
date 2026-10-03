@@ -1,0 +1,112 @@
+{
+  "kind": "android-vm-run",
+  "version": 1,
+  "date": "2026-10-03T07:49:25.601Z",
+  "commit": "99338145fefbca9e0e3f26a3508cb80943388453",
+  "dirty": true,
+  "vm": {
+    "machineType": "n2-standard-4",
+    "zone": "us-east4-a",
+    "provisioning": "spot",
+    "maxRunDuration": "3h",
+    "diskGb": 30,
+    "image": "ubuntu-2404-lts-amd64",
+    "fromReusableImage": false,
+    "cpus": 4,
+    "memoryMb": 15985,
+    "cpuModel": "Intel(R) Xeon(R) CPU @ 2.80GHz",
+    "kernel": "7.0.0-1011-gcp"
+  },
+  "phases": {
+    "createMs": 14483,
+    "sshReadyMs": 44132,
+    "setupMs": 433729,
+    "setup": {
+      "packagesMs": 37553,
+      "kvmMs": 62,
+      "nodeMs": 2730,
+      "gradleMs": 2306,
+      "androidSdkMs": 66819,
+      "buildMs": 130258,
+      "firstBootMs": 151671,
+      "setupTotalMs": 391769,
+      "diskUsedMb": 14646
+    },
+    "emulatorColdBootMs": 70954,
+    "emulatorSnapshotBootMs": 5335,
+    "buildMs": 5882,
+    "commandMs": 1864597,
+    "imageCreateMs": null
+  },
+  "command": "pnpm bench:replay:android",
+  "exit": 0,
+  "preempted": false,
+  "replay": {
+    "summary": {
+      "tests": 42,
+      "match": 35,
+      "healed": 5,
+      "needsAi": 2,
+      "mismatch": 0,
+      "aiCalls": 0
+    },
+    "wallMsPerTest": {
+      "n": 42,
+      "mean": 44173,
+      "p50": 38340,
+      "p90": 64371,
+      "max": 96938
+    },
+    "machineCpuMsPerTest": 111385,
+    "evidenceBytes": {
+      "total": 93330484,
+      "perTest": 2222154
+    },
+    "variants": {
+      "correct": {
+        "tests": 7,
+        "machineCpuMs": 602570,
+        "evidenceBytes": 12369302
+      },
+      "cosmetic": {
+        "tests": 7,
+        "machineCpuMs": 654290,
+        "evidenceBytes": 13509608
+      },
+      "broken-login": {
+        "tests": 7,
+        "machineCpuMs": 959900,
+        "evidenceBytes": 20610223
+      },
+      "broken-silent-tap": {
+        "tests": 7,
+        "machineCpuMs": 775110,
+        "evidenceBytes": 14822534
+      },
+      "broken-not-saved": {
+        "tests": 7,
+        "machineCpuMs": 800980,
+        "evidenceBytes": 14978047
+      },
+      "broken-crash": {
+        "tests": 7,
+        "machineCpuMs": 885300,
+        "evidenceBytes": 17040770
+      }
+    },
+    "variantWallMs": {
+      "correct": 234047,
+      "cosmetic": 260235,
+      "broken-login": 396993,
+      "broken-silent-tap": 304995,
+      "broken-not-saved": 313810,
+      "broken-crash": 346398
+    },
+    "mismatches": []
+  },
+  "cost": {
+    "vmSeconds": 7585,
+    "hourlyUsd": null,
+    "usd": null
+  }
+}

@@ -1,0 +1,1857 @@
+{
+  "corpusVersion": 1,
+  "kind": "corpus",
+  "date": "2026-10-03T07:19:08.599Z",
+  "engineVersion": "0.1.0",
+  "commit": null,
+  "os": "linux x64 (Intel(R) Xeon(R) CPU @ 2.80GHz, 4 cores)",
+  "scripted": false,
+  "model": "ollama-cloud:deepseek-v4.1-flash",
+  "command": "bench --corpus --models ollama-cloud:deepseek-v4.1-flash --fixture android",
+  "measured": [
+    "Each style runs once on android with ollama-cloud:deepseek-v4.1-flash as planner and fixer; every test is authored from scratch.",
+    "Authoring: the correct build, normal mode, no retries. Replays: every other variant with the recordings that authoring made, no AI. Cosmetic: normal mode, the model as fixer.",
+    "False pass / false fail are scored against the fixture's manifest (verdict and cause), as in Bench. Costs are at list API prices (packages/models/prices.yaml), also for calls billed to a subscription."
+  ],
+  "styles": [
+    {
+      "fixture": "android",
+      "style": "tidy",
+      "route": "file",
+      "entries": 4,
+      "lint": {
+        "clean": 4,
+        "warnings": 0,
+        "rejected": 0,
+        "reasons": {}
+      },
+      "phrases": {
+        "expects": 8,
+        "byRules": 8,
+        "unmarkedChecks": 0
+      },
+      "drafts": {
+        "drafts": 0,
+        "ok": 0,
+        "lintClean": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0,
+        "wallMs": 0
+      },
+      "authoring": {
+        "tests": 4,
+        "passed": 4,
+        "wallMs": 198084,
+        "calls": 42,
+        "tokens": {
+          "input": 90272,
+          "output": 5848,
+          "cached": 77312,
+          "cacheWrite": 0
+        },
+        "listUsd": 0.011369471999999997,
+        "subscriptionCalls": 0,
+        "latencyMs": 29163
+      },
+      "falsePass": {
+        "count": 0,
+        "of": 6,
+        "rate": 0,
+        "cases": []
+      },
+      "falseFail": {
+        "count": 0,
+        "of": 18,
+        "rate": 0,
+        "cases": []
+      },
+      "otherMismatches": [
+        "cosmetic/check-updates: got flaky (environment): Flaky: attempt 1 failed (Step 3 \"Scroll down to \"Check for updates\"\": Element not found: the button 'Check for updates'; the fixer model couldn't redo the step (limit_reached): 2 failed actions in a row. Last: Nothing on the screen scrolls.), attempt 2 passed."
+      ],
+      "cosmetic": {
+        "tests": 4,
+        "passedOrHealed": 3,
+        "healedByFixer": 4,
+        "healsWithoutAi": 21,
+        "needsAi": 0,
+        "calls": 9,
+        "tokens": {
+          "input": 19728,
+          "output": 1918,
+          "cached": 14080,
+          "cacheWrite": 0
+        },
+        "listUsd": 0.004080479999999999,
+        "subscriptionCalls": 0,
+        "latencyMs": 8460
+      },
+      "total": {
+        "calls": 51,
+        "tokens": {
+          "input": 110000,
+          "output": 7766,
+          "cached": 91392,
+          "cacheWrite": 0
+        },
+        "listUsd": 0.015449951999999996,
+        "subscriptionCalls": 0,
+        "latencyMs": 37623,
+        "wallMs": 198084
+      },
+      "perEntry": [
+        {
+          "gold": "check-updates",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 5,
+            "expects": 1,
+            "guards": 0,
+            "expectsByRules": 1,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "passed",
+          "authoring": {
+            "calls": 12,
+            "tokens": {
+              "input": 26486,
+              "output": 1538,
+              "cached": 20480,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.00377028,
+            "subscriptionCalls": 0,
+            "latencyMs": 8179,
+            "wallMs": 50147
+          },
+          "variants": {
+            "correct": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-not-saved": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-crash": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "cosmetic": {
+              "verdict": "flaky",
+              "expected": "passed",
+              "score": "mismatch"
+            }
+          }
+        },
+        {
+          "gold": "create-project",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 8,
+            "expects": 3,
+            "guards": 0,
+            "expectsByRules": 3,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "passed",
+          "authoring": {
+            "calls": 14,
+            "tokens": {
+              "input": 29633,
+              "output": 1313,
+              "cached": 26368,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.0027133079999999998,
+            "subscriptionCalls": 0,
+            "latencyMs": 7747,
+            "wallMs": 58499
+          },
+          "variants": {
+            "correct": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-not-saved": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-crash": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "cosmetic": {
+              "verdict": "healed",
+              "expected": "passed",
+              "score": "healed"
+            }
+          }
+        },
+        {
+          "gold": "sign-in",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 5,
+            "expects": 2,
+            "guards": 0,
+            "expectsByRules": 2,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "passed",
+          "authoring": {
+            "calls": 6,
+            "tokens": {
+              "input": 12771,
+              "output": 518,
+              "cached": 11520,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.00106602,
+            "subscriptionCalls": 0,
+            "latencyMs": 3144,
+            "wallMs": 43722
+          },
+          "variants": {
+            "correct": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-not-saved": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-crash": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "cosmetic": {
+              "verdict": "healed",
+              "expected": "passed",
+              "score": "healed"
+            }
+          }
+        },
+        {
+          "gold": "sign-out",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 5,
+            "expects": 2,
+            "guards": 0,
+            "expectsByRules": 2,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "passed",
+          "authoring": {
+            "calls": 10,
+            "tokens": {
+              "input": 21382,
+              "output": 2479,
+              "cached": 18944,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.003819864,
+            "subscriptionCalls": 0,
+            "latencyMs": 10093,
+            "wallMs": 45580
+          },
+          "variants": {
+            "correct": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-not-saved": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-crash": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "cosmetic": {
+              "verdict": "healed",
+              "expected": "passed",
+              "score": "healed"
+            }
+          }
+        }
+      ],
+      "problem": null
+    },
+    {
+      "fixture": "android",
+      "style": "terse",
+      "route": "file",
+      "entries": 4,
+      "lint": {
+        "clean": 3,
+        "warnings": 1,
+        "rejected": 0,
+        "reasons": {
+          "warning:vague-step": 1
+        }
+      },
+      "phrases": {
+        "expects": 8,
+        "byRules": 4,
+        "unmarkedChecks": 0
+      },
+      "drafts": {
+        "drafts": 0,
+        "ok": 0,
+        "lintClean": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0,
+        "wallMs": 0
+      },
+      "authoring": {
+        "tests": 4,
+        "passed": 2,
+        "wallMs": 230180,
+        "calls": 46,
+        "tokens": {
+          "input": 252608,
+          "output": 6333,
+          "cached": 200576,
+          "cacheWrite": 0
+        },
+        "listUsd": 0.024412656,
+        "subscriptionCalls": 0,
+        "latencyMs": 32071
+      },
+      "falsePass": {
+        "count": 0,
+        "of": 6,
+        "rate": 0,
+        "cases": []
+      },
+      "falseFail": {
+        "count": 10,
+        "of": 18,
+        "rate": 0.5555555555555556,
+        "cases": [
+          "correct/check-updates",
+          "correct/sign-out",
+          "broken-silent-tap/check-updates",
+          "broken-silent-tap/sign-out",
+          "broken-not-saved/check-updates",
+          "broken-not-saved/sign-out",
+          "broken-crash/check-updates",
+          "broken-crash/sign-out",
+          "cosmetic/check-updates",
+          "cosmetic/sign-out"
+        ]
+      },
+      "otherMismatches": [],
+      "cosmetic": {
+        "tests": 4,
+        "passedOrHealed": 2,
+        "healedByFixer": 4,
+        "healsWithoutAi": 26,
+        "needsAi": 0,
+        "calls": 4,
+        "tokens": {
+          "input": 8416,
+          "output": 314,
+          "cached": 5054,
+          "cacheWrite": 0
+        },
+        "listUsd": 0.0014157240000000001,
+        "subscriptionCalls": 0,
+        "latencyMs": 8087
+      },
+      "total": {
+        "calls": 50,
+        "tokens": {
+          "input": 261024,
+          "output": 6647,
+          "cached": 205630,
+          "cacheWrite": 0
+        },
+        "listUsd": 0.02582838,
+        "subscriptionCalls": 0,
+        "latencyMs": 40158,
+        "wallMs": 230180
+      },
+      "perEntry": [
+        {
+          "gold": "check-updates",
+          "lint": {
+            "status": "warnings",
+            "reasons": ["warning:vague-step"],
+            "steps": 5,
+            "expects": 1,
+            "guards": 0,
+            "expectsByRules": 1,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "failed",
+          "authoring": {
+            "calls": 13,
+            "tokens": {
+              "input": 28763,
+              "output": 2431,
+              "cached": 24576,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.004320756,
+            "subscriptionCalls": 0,
+            "latencyMs": 11022,
+            "wallMs": 70570
+          },
+          "variants": {
+            "correct": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-not-saved": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-crash": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "cosmetic": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            }
+          }
+        },
+        {
+          "gold": "create-project",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 8,
+            "expects": 3,
+            "guards": 0,
+            "expectsByRules": 1,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "passed",
+          "authoring": {
+            "calls": 16,
+            "tokens": {
+              "input": 110689,
+              "output": 1941,
+              "cached": 67072,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.015816732,
+            "subscriptionCalls": 0,
+            "latencyMs": 10847,
+            "wallMs": 61866
+          },
+          "variants": {
+            "correct": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-not-saved": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-crash": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "cosmetic": {
+              "verdict": "healed",
+              "expected": "passed",
+              "score": "healed"
+            }
+          }
+        },
+        {
+          "gold": "sign-in",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 5,
+            "expects": 2,
+            "guards": 0,
+            "expectsByRules": 1,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "passed",
+          "authoring": {
+            "calls": 7,
+            "tokens": {
+              "input": 53273,
+              "output": 754,
+              "cached": 51456,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.0017586359999999998,
+            "subscriptionCalls": 0,
+            "latencyMs": 4153,
+            "wallMs": 48529
+          },
+          "variants": {
+            "correct": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-not-saved": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-crash": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "cosmetic": {
+              "verdict": "healed",
+              "expected": "passed",
+              "score": "healed"
+            }
+          }
+        },
+        {
+          "gold": "sign-out",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 5,
+            "expects": 2,
+            "guards": 0,
+            "expectsByRules": 1,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "failed",
+          "authoring": {
+            "calls": 10,
+            "tokens": {
+              "input": 59883,
+              "output": 1207,
+              "cached": 57472,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.002516532,
+            "subscriptionCalls": 0,
+            "latencyMs": 6049,
+            "wallMs": 49151
+          },
+          "variants": {
+            "correct": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-not-saved": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-crash": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "cosmetic": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            }
+          }
+        }
+      ],
+      "problem": null
+    },
+    {
+      "fixture": "android",
+      "style": "terse",
+      "route": "description",
+      "entries": 4,
+      "lint": {
+        "clean": 3,
+        "warnings": 1,
+        "rejected": 0,
+        "reasons": {
+          "warning:vague-step": 1
+        }
+      },
+      "phrases": {
+        "expects": 8,
+        "byRules": 4,
+        "unmarkedChecks": 0
+      },
+      "drafts": {
+        "drafts": 4,
+        "ok": 0,
+        "lintClean": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0,
+        "wallMs": 0
+      },
+      "authoring": {
+        "tests": 0,
+        "passed": 0,
+        "wallMs": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0
+      },
+      "falsePass": {
+        "count": 0,
+        "of": 0,
+        "rate": 0,
+        "cases": []
+      },
+      "falseFail": {
+        "count": 0,
+        "of": 0,
+        "rate": 0,
+        "cases": []
+      },
+      "otherMismatches": [],
+      "cosmetic": {
+        "tests": 0,
+        "passedOrHealed": 0,
+        "healedByFixer": 0,
+        "healsWithoutAi": 0,
+        "needsAi": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0
+      },
+      "total": {
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0,
+        "wallMs": 0
+      },
+      "perEntry": [
+        {
+          "gold": "check-updates",
+          "lint": {
+            "status": "warnings",
+            "reasons": ["warning:vague-step"],
+            "steps": 5,
+            "expects": 1,
+            "guards": 0,
+            "expectsByRules": 1,
+            "unmarkedChecks": 0
+          },
+          "draft": {
+            "status": "not_supported",
+            "lintClean": false,
+            "calls": 0,
+            "listUsd": 0,
+            "wallMs": 0
+          },
+          "authored": null,
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 0
+          },
+          "variants": {}
+        },
+        {
+          "gold": "create-project",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 8,
+            "expects": 3,
+            "guards": 0,
+            "expectsByRules": 1,
+            "unmarkedChecks": 0
+          },
+          "draft": {
+            "status": "not_supported",
+            "lintClean": false,
+            "calls": 0,
+            "listUsd": 0,
+            "wallMs": 0
+          },
+          "authored": null,
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 0
+          },
+          "variants": {}
+        },
+        {
+          "gold": "sign-in",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 5,
+            "expects": 2,
+            "guards": 0,
+            "expectsByRules": 1,
+            "unmarkedChecks": 0
+          },
+          "draft": {
+            "status": "not_supported",
+            "lintClean": false,
+            "calls": 0,
+            "listUsd": 0,
+            "wallMs": 0
+          },
+          "authored": null,
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 0
+          },
+          "variants": {}
+        },
+        {
+          "gold": "sign-out",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 5,
+            "expects": 2,
+            "guards": 0,
+            "expectsByRules": 1,
+            "unmarkedChecks": 0
+          },
+          "draft": {
+            "status": "not_supported",
+            "lintClean": false,
+            "calls": 0,
+            "listUsd": 0,
+            "wallMs": 0
+          },
+          "authored": null,
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 0
+          },
+          "variants": {}
+        }
+      ],
+      "problem": "nothing to author: every draft failed"
+    },
+    {
+      "fixture": "android",
+      "style": "spoken",
+      "route": "description",
+      "entries": 4,
+      "lint": {
+        "clean": 0,
+        "warnings": 0,
+        "rejected": 4,
+        "reasons": {
+          "warning:NO_STEPS": 4,
+          "warning:TEXT_OUTSIDE_STEPS": 4
+        }
+      },
+      "phrases": {
+        "expects": 0,
+        "byRules": 0,
+        "unmarkedChecks": 0
+      },
+      "drafts": {
+        "drafts": 4,
+        "ok": 0,
+        "lintClean": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0,
+        "wallMs": 0
+      },
+      "authoring": {
+        "tests": 0,
+        "passed": 0,
+        "wallMs": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0
+      },
+      "falsePass": {
+        "count": 0,
+        "of": 0,
+        "rate": 0,
+        "cases": []
+      },
+      "falseFail": {
+        "count": 0,
+        "of": 0,
+        "rate": 0,
+        "cases": []
+      },
+      "otherMismatches": [],
+      "cosmetic": {
+        "tests": 0,
+        "passedOrHealed": 0,
+        "healedByFixer": 0,
+        "healsWithoutAi": 0,
+        "needsAi": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0
+      },
+      "total": {
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0,
+        "wallMs": 0
+      },
+      "perEntry": [
+        {
+          "gold": "check-updates",
+          "lint": {
+            "status": "rejected",
+            "reasons": ["warning:NO_STEPS", "warning:TEXT_OUTSIDE_STEPS"],
+            "steps": 0,
+            "expects": 0,
+            "guards": 0,
+            "expectsByRules": 0,
+            "unmarkedChecks": 0
+          },
+          "draft": {
+            "status": "not_supported",
+            "lintClean": false,
+            "calls": 0,
+            "listUsd": 0,
+            "wallMs": 0
+          },
+          "authored": null,
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 0
+          },
+          "variants": {}
+        },
+        {
+          "gold": "create-project",
+          "lint": {
+            "status": "rejected",
+            "reasons": ["warning:NO_STEPS", "warning:TEXT_OUTSIDE_STEPS"],
+            "steps": 0,
+            "expects": 0,
+            "guards": 0,
+            "expectsByRules": 0,
+            "unmarkedChecks": 0
+          },
+          "draft": {
+            "status": "not_supported",
+            "lintClean": false,
+            "calls": 0,
+            "listUsd": 0,
+            "wallMs": 0
+          },
+          "authored": null,
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 0
+          },
+          "variants": {}
+        },
+        {
+          "gold": "sign-in",
+          "lint": {
+            "status": "rejected",
+            "reasons": ["warning:NO_STEPS", "warning:TEXT_OUTSIDE_STEPS"],
+            "steps": 0,
+            "expects": 0,
+            "guards": 0,
+            "expectsByRules": 0,
+            "unmarkedChecks": 0
+          },
+          "draft": {
+            "status": "not_supported",
+            "lintClean": false,
+            "calls": 0,
+            "listUsd": 0,
+            "wallMs": 0
+          },
+          "authored": null,
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 0
+          },
+          "variants": {}
+        },
+        {
+          "gold": "sign-out",
+          "lint": {
+            "status": "rejected",
+            "reasons": ["warning:NO_STEPS", "warning:TEXT_OUTSIDE_STEPS"],
+            "steps": 0,
+            "expects": 0,
+            "guards": 0,
+            "expectsByRules": 0,
+            "unmarkedChecks": 0
+          },
+          "draft": {
+            "status": "not_supported",
+            "lintClean": false,
+            "calls": 0,
+            "listUsd": 0,
+            "wallMs": 0
+          },
+          "authored": null,
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 0
+          },
+          "variants": {}
+        }
+      ],
+      "problem": "nothing to author: every draft failed"
+    },
+    {
+      "fixture": "android",
+      "style": "spoken",
+      "route": "file",
+      "entries": 4,
+      "lint": {
+        "clean": 0,
+        "warnings": 0,
+        "rejected": 4,
+        "reasons": {
+          "warning:NO_STEPS": 4,
+          "warning:TEXT_OUTSIDE_STEPS": 4
+        }
+      },
+      "phrases": {
+        "expects": 0,
+        "byRules": 0,
+        "unmarkedChecks": 0
+      },
+      "drafts": {
+        "drafts": 0,
+        "ok": 0,
+        "lintClean": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0,
+        "wallMs": 0
+      },
+      "authoring": {
+        "tests": 4,
+        "passed": 0,
+        "wallMs": 130422,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0
+      },
+      "falsePass": {
+        "count": 0,
+        "of": 6,
+        "rate": 0,
+        "cases": []
+      },
+      "falseFail": {
+        "count": 18,
+        "of": 18,
+        "rate": 1,
+        "cases": [
+          "correct/check-updates",
+          "correct/create-project",
+          "correct/sign-in",
+          "correct/sign-out",
+          "broken-silent-tap/check-updates",
+          "broken-silent-tap/sign-in",
+          "broken-silent-tap/sign-out",
+          "broken-not-saved/check-updates",
+          "broken-not-saved/sign-in",
+          "broken-not-saved/sign-out",
+          "broken-crash/check-updates",
+          "broken-crash/create-project",
+          "broken-crash/sign-in",
+          "broken-crash/sign-out",
+          "cosmetic/check-updates",
+          "cosmetic/create-project",
+          "cosmetic/sign-in",
+          "cosmetic/sign-out"
+        ]
+      },
+      "otherMismatches": [
+        "broken-login/check-updates: got blocked (blocked): Blocked: The test has no steps to run.",
+        "broken-login/create-project: got blocked (blocked): Blocked: The test has no steps to run.",
+        "broken-login/sign-in: got blocked (blocked): Blocked: The test has no steps to run.",
+        "broken-login/sign-out: got blocked (blocked): Blocked: The test has no steps to run.",
+        "broken-silent-tap/create-project: got blocked (blocked): Blocked: The test has no steps to run.",
+        "broken-not-saved/create-project: got blocked (blocked): Blocked: The test has no steps to run."
+      ],
+      "cosmetic": {
+        "tests": 4,
+        "passedOrHealed": 0,
+        "healedByFixer": 0,
+        "healsWithoutAi": 0,
+        "needsAi": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0
+      },
+      "total": {
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0,
+        "wallMs": 130422
+      },
+      "perEntry": [
+        {
+          "gold": "check-updates",
+          "lint": {
+            "status": "rejected",
+            "reasons": ["warning:NO_STEPS", "warning:TEXT_OUTSIDE_STEPS"],
+            "steps": 0,
+            "expects": 0,
+            "guards": 0,
+            "expectsByRules": 0,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "blocked",
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 34827
+          },
+          "variants": {
+            "correct": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-login": {
+              "verdict": "blocked",
+              "expected": "failed",
+              "score": "mismatch"
+            },
+            "broken-silent-tap": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-not-saved": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-crash": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "cosmetic": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            }
+          }
+        },
+        {
+          "gold": "create-project",
+          "lint": {
+            "status": "rejected",
+            "reasons": ["warning:NO_STEPS", "warning:TEXT_OUTSIDE_STEPS"],
+            "steps": 0,
+            "expects": 0,
+            "guards": 0,
+            "expectsByRules": 0,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "blocked",
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 34453
+          },
+          "variants": {
+            "correct": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-login": {
+              "verdict": "blocked",
+              "expected": "failed",
+              "score": "mismatch"
+            },
+            "broken-silent-tap": {
+              "verdict": "blocked",
+              "expected": "failed",
+              "score": "mismatch"
+            },
+            "broken-not-saved": {
+              "verdict": "blocked",
+              "expected": "failed",
+              "score": "mismatch"
+            },
+            "broken-crash": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "cosmetic": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            }
+          }
+        },
+        {
+          "gold": "sign-in",
+          "lint": {
+            "status": "rejected",
+            "reasons": ["warning:NO_STEPS", "warning:TEXT_OUTSIDE_STEPS"],
+            "steps": 0,
+            "expects": 0,
+            "guards": 0,
+            "expectsByRules": 0,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "blocked",
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 29523
+          },
+          "variants": {
+            "correct": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-login": {
+              "verdict": "blocked",
+              "expected": "failed",
+              "score": "mismatch"
+            },
+            "broken-silent-tap": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-not-saved": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-crash": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "cosmetic": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            }
+          }
+        },
+        {
+          "gold": "sign-out",
+          "lint": {
+            "status": "rejected",
+            "reasons": ["warning:NO_STEPS", "warning:TEXT_OUTSIDE_STEPS"],
+            "steps": 0,
+            "expects": 0,
+            "guards": 0,
+            "expectsByRules": 0,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "blocked",
+          "authoring": {
+            "calls": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "cached": 0,
+              "cacheWrite": 0
+            },
+            "listUsd": 0,
+            "subscriptionCalls": 0,
+            "latencyMs": 0,
+            "wallMs": 31567
+          },
+          "variants": {
+            "correct": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-login": {
+              "verdict": "blocked",
+              "expected": "failed",
+              "score": "mismatch"
+            },
+            "broken-silent-tap": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-not-saved": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-crash": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "cosmetic": {
+              "verdict": "blocked",
+              "expected": "passed",
+              "score": "mismatch"
+            }
+          }
+        }
+      ],
+      "problem": null
+    },
+    {
+      "fixture": "android",
+      "style": "sloppy",
+      "route": "file",
+      "entries": 4,
+      "lint": {
+        "clean": 4,
+        "warnings": 0,
+        "rejected": 0,
+        "reasons": {}
+      },
+      "phrases": {
+        "expects": 8,
+        "byRules": 8,
+        "unmarkedChecks": 0
+      },
+      "drafts": {
+        "drafts": 0,
+        "ok": 0,
+        "lintClean": 0,
+        "calls": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "cacheWrite": 0
+        },
+        "listUsd": 0,
+        "subscriptionCalls": 0,
+        "latencyMs": 0,
+        "wallMs": 0
+      },
+      "authoring": {
+        "tests": 4,
+        "passed": 2,
+        "wallMs": 335347,
+        "calls": 40,
+        "tokens": {
+          "input": 85910,
+          "output": 6593,
+          "cached": 71044,
+          "cacheWrite": 0
+        },
+        "listUsd": 0.012797664,
+        "subscriptionCalls": 0,
+        "latencyMs": 158741
+      },
+      "falsePass": {
+        "count": 0,
+        "of": 6,
+        "rate": 0,
+        "cases": []
+      },
+      "falseFail": {
+        "count": 7,
+        "of": 18,
+        "rate": 0.3888888888888889,
+        "cases": [
+          "correct/create-project",
+          "correct/sign-out",
+          "broken-silent-tap/sign-out",
+          "broken-not-saved/sign-out",
+          "broken-crash/create-project",
+          "broken-crash/sign-out",
+          "cosmetic/sign-out"
+        ]
+      },
+      "otherMismatches": [
+        "broken-not-saved/create-project: cause test_drift, expected product_bug"
+      ],
+      "cosmetic": {
+        "tests": 4,
+        "passedOrHealed": 3,
+        "healedByFixer": 4,
+        "healsWithoutAi": 21,
+        "needsAi": 0,
+        "calls": 6,
+        "tokens": {
+          "input": 12453,
+          "output": 469,
+          "cached": 6912,
+          "cacheWrite": 0
+        },
+        "listUsd": 0.0022665719999999997,
+        "subscriptionCalls": 0,
+        "latencyMs": 3530
+      },
+      "total": {
+        "calls": 46,
+        "tokens": {
+          "input": 98363,
+          "output": 7062,
+          "cached": 77956,
+          "cacheWrite": 0
+        },
+        "listUsd": 0.015064236,
+        "subscriptionCalls": 0,
+        "latencyMs": 162271,
+        "wallMs": 335347
+      },
+      "perEntry": [
+        {
+          "gold": "check-updates",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 4,
+            "expects": 1,
+            "guards": 0,
+            "expectsByRules": 1,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "passed",
+          "authoring": {
+            "calls": 10,
+            "tokens": {
+              "input": 21895,
+              "output": 910,
+              "cached": 16204,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.0028965239999999997,
+            "subscriptionCalls": 0,
+            "latencyMs": 26733,
+            "wallMs": 59228
+          },
+          "variants": {
+            "correct": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-not-saved": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-crash": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "cosmetic": {
+              "verdict": "healed",
+              "expected": "passed",
+              "score": "healed"
+            }
+          }
+        },
+        {
+          "gold": "create-project",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 8,
+            "expects": 3,
+            "guards": 0,
+            "expectsByRules": 3,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "failed",
+          "authoring": {
+            "calls": 15,
+            "tokens": {
+              "input": 31866,
+              "output": 2948,
+              "cached": 27348,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.0050570879999999995,
+            "subscriptionCalls": 0,
+            "latencyMs": 66607,
+            "wallMs": 116502
+          },
+          "variants": {
+            "correct": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-not-saved": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "mismatch"
+            },
+            "broken-crash": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "cosmetic": {
+              "verdict": "healed",
+              "expected": "passed",
+              "score": "healed"
+            }
+          }
+        },
+        {
+          "gold": "sign-in",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 5,
+            "expects": 2,
+            "guards": 0,
+            "expectsByRules": 2,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "passed",
+          "authoring": {
+            "calls": 6,
+            "tokens": {
+              "input": 12787,
+              "output": 1254,
+              "cached": 10822,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.002159232,
+            "subscriptionCalls": 0,
+            "latencyMs": 30853,
+            "wallMs": 75022
+          },
+          "variants": {
+            "correct": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-not-saved": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "broken-crash": {
+              "verdict": "passed",
+              "expected": "passed",
+              "score": "match"
+            },
+            "cosmetic": {
+              "verdict": "healed",
+              "expected": "passed",
+              "score": "healed"
+            }
+          }
+        },
+        {
+          "gold": "sign-out",
+          "lint": {
+            "status": "clean",
+            "reasons": [],
+            "steps": 4,
+            "expects": 2,
+            "guards": 0,
+            "expectsByRules": 2,
+            "unmarkedChecks": 0
+          },
+          "draft": null,
+          "authored": "failed",
+          "authoring": {
+            "calls": 9,
+            "tokens": {
+              "input": 19362,
+              "output": 1481,
+              "cached": 16670,
+              "cacheWrite": 0
+            },
+            "listUsd": 0.0026848199999999997,
+            "subscriptionCalls": 0,
+            "latencyMs": 34548,
+            "wallMs": 84550
+          },
+          "variants": {
+            "correct": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-login": {
+              "verdict": "failed",
+              "expected": "failed",
+              "score": "match"
+            },
+            "broken-silent-tap": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-not-saved": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "broken-crash": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            },
+            "cosmetic": {
+              "verdict": "failed",
+              "expected": "passed",
+              "score": "mismatch"
+            }
+          }
+        }
+      ],
+      "problem": null
+    }
+  ]
+}

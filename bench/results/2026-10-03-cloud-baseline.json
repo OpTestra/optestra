@@ -1,0 +1,1206 @@
+{
+  "baselineVersion": 1,
+  "kind": "cost-baseline",
+  "costRun": "baseline-20261003",
+  "date": "2026-10-03T09:19:44.468Z",
+  "model": "ollama-cloud:deepseek-v4.1-flash",
+  "measured": [
+    "Cost run baseline-20261003: 9 task(s) (cloud-run), 726 test runs.",
+    "Compute is billed on allocation: every task's wall time (container start included when known), rounded up to 100 ms, at least 1 minute, times its vCPU and GiB. Per-test compute is the task time one more test adds; the rest is the fixed per-run overhead.",
+    "Storage per test keeps its evidence 30 days (the product's retention; this run's bucket deletes after 7) plus one Class A write per file. AI at list API prices (packages/models/prices.yaml), also for subscription calls.",
+    "List prices before free tiers, checked 2026-10-01 (bench/cloud/prices.yaml).",
+    "Corpus: every entry authored once on the model as planner and fixer (one pass, no retries); its recordings replayed with no AI on every variant; one cosmetic pass with the fixer. Per-test author cost = AI (drafting included for descriptions) + the cloud's compute for authoring one test.",
+    "Android: MOB-3's spot VM (n2-standard-4, nested virtualization, 30 GiB pd-balanced). Cold = create + setup + replay; image = a VM from the reusable image + replay. Flakiness (tests that didn't give the manifest's verdict) is reported apart from cost; their VM time is in the cost."
+  ],
+  "cloud": {
+    "baselineVersion": 1,
+    "kind": "cloud-baseline",
+    "costRun": "baseline-20261003",
+    "date": "2026-10-03T09:19:44.468Z",
+    "engineVersion": "0.1.0",
+    "commit": null,
+    "command": "bench --meter bench/results/2026-10-03-cost-run",
+    "measured": [
+      "Cost run baseline-20261003: 9 task(s) (cloud-run), 726 test runs.",
+      "Compute is billed on allocation: every task's wall time (container start included when known), rounded up to 100 ms, at least 1 minute, times its vCPU and GiB. Per-test compute is the task time one more test adds; the rest is the fixed per-run overhead.",
+      "Storage per test keeps its evidence 30 days (the product's retention; this run's bucket deletes after 7) plus one Class A write per file. AI at list API prices (packages/models/prices.yaml), also for subscription calls.",
+      "List prices before free tiers, checked 2026-10-01 (bench/cloud/prices.yaml)."
+    ],
+    "prices": {
+      "file": "bench/cloud/prices.yaml",
+      "checked": "2026-10-01",
+      "region": "us-east4"
+    },
+    "where": ["cloud-run"],
+    "measurements": {
+      "tasks": 9,
+      "tests": 726,
+      "wallSeconds": 2599.9,
+      "cpuSeconds": 2126.5,
+      "cpuSources": ["machine"],
+      "peakMemoryMiB": 487,
+      "containerStartMs": {
+        "median": 14357,
+        "max": 32929
+      },
+      "processStartMs": 278,
+      "setupMs": 180,
+      "evidence": [
+        {
+          "fixture": "shop",
+          "mode": "full",
+          "passingMiB": 0.465,
+          "failingMiB": 0.647,
+          "filesPerTest": 12.7
+        },
+        {
+          "fixture": "shop",
+          "mode": "failures",
+          "passingMiB": 0.06,
+          "failingMiB": 0.457,
+          "filesPerTest": 3.4
+        },
+        {
+          "fixture": "shop",
+          "mode": "minimal",
+          "passingMiB": 0.04,
+          "failingMiB": 0.249,
+          "filesPerTest": 4.2
+        }
+      ]
+    },
+    "shapes": [
+      {
+        "shape": "1 vCPU / 2 GiB × 1",
+        "verdicts": {
+          "correctRuns": 110,
+          "passed": 110,
+          "ok": true
+        },
+        "twentyTestsSeconds": 116.5,
+        "good": true,
+        "vcpu": 1,
+        "memoryGiB": 2,
+        "parallel": 1,
+        "tasks": 1,
+        "ratePerSecond": 0.000022,
+        "overheadSeconds": 73.103,
+        "fixedPerRun": 0.0016104,
+        "phases": [
+          {
+            "phase": "replay",
+            "fixture": "shop",
+            "evidence": "failures",
+            "variants": "correct",
+            "tests": 110,
+            "marginalSecondsPerTest": 2.169,
+            "compute": 0.00004773,
+            "storage": 9.7e-7,
+            "operations": 0.000015,
+            "ai": 0,
+            "total": 0.0000637,
+            "aiCalls": 0
+          }
+        ],
+        "perRun": [
+          {
+            "tests": 1,
+            "phase": "replay",
+            "seconds": 75.3,
+            "usd": 0.00167257
+          },
+          {
+            "tests": 10,
+            "phase": "replay",
+            "seconds": 94.8,
+            "usd": 0.0022453
+          },
+          {
+            "tests": 20,
+            "phase": "replay",
+            "seconds": 116.5,
+            "usd": 0.0028824
+          },
+          {
+            "tests": 50,
+            "phase": "replay",
+            "seconds": 181.6,
+            "usd": 0.0047937
+          },
+          {
+            "tests": 100,
+            "phase": "replay",
+            "seconds": 290.1,
+            "usd": 0.0079792
+          }
+        ]
+      },
+      {
+        "shape": "1 vCPU / 2 GiB × 4",
+        "verdicts": {
+          "correctRuns": 110,
+          "passed": 109,
+          "ok": false
+        },
+        "twentyTestsSeconds": 132.8,
+        "good": false,
+        "vcpu": 1,
+        "memoryGiB": 2,
+        "parallel": 4,
+        "tasks": 1,
+        "ratePerSecond": 0.000022,
+        "overheadSeconds": 82.239,
+        "fixedPerRun": 0.0018106,
+        "phases": [
+          {
+            "phase": "replay",
+            "fixture": "shop",
+            "evidence": "failures",
+            "variants": "correct",
+            "tests": 110,
+            "marginalSecondsPerTest": 2.526,
+            "compute": 0.00005557,
+            "storage": 0.00000194,
+            "operations": 0.00001536,
+            "ai": 0,
+            "total": 0.00007287,
+            "aiCalls": 0
+          }
+        ],
+        "perRun": [
+          {
+            "tests": 1,
+            "phase": "replay",
+            "seconds": 84.8,
+            "usd": 0.0018829
+          },
+          {
+            "tests": 10,
+            "phase": "replay",
+            "seconds": 107.5,
+            "usd": 0.002538
+          },
+          {
+            "tests": 20,
+            "phase": "replay",
+            "seconds": 132.8,
+            "usd": 0.0032676
+          },
+          {
+            "tests": 50,
+            "phase": "replay",
+            "seconds": 208.6,
+            "usd": 0.0054542
+          },
+          {
+            "tests": 100,
+            "phase": "replay",
+            "seconds": 334.9,
+            "usd": 0.0090978
+          }
+        ]
+      },
+      {
+        "shape": "2 vCPU / 4 GiB × 1",
+        "verdicts": {
+          "correctRuns": 110,
+          "passed": 110,
+          "ok": true
+        },
+        "twentyTestsSeconds": 125.8,
+        "good": true,
+        "vcpu": 2,
+        "memoryGiB": 4,
+        "parallel": 1,
+        "tasks": 6,
+        "ratePerSecond": 0.000044,
+        "overheadSeconds": 98.055,
+        "fixedPerRun": 0.0043164,
+        "phases": [
+          {
+            "phase": "author",
+            "fixture": "shop",
+            "evidence": "failures",
+            "variants": "correct",
+            "tests": 11,
+            "marginalSecondsPerTest": 10.857,
+            "compute": 0.0004777,
+            "storage": 0.00000228,
+            "operations": 0.000015,
+            "ai": 0.00300911,
+            "total": 0.00350409,
+            "aiCalls": 128
+          },
+          {
+            "phase": "replay",
+            "fixture": "shop",
+            "evidence": "failures",
+            "variants": "correct",
+            "tests": 110,
+            "marginalSecondsPerTest": 1.388,
+            "compute": 0.00006106,
+            "storage": 7.7e-7,
+            "operations": 0.000015,
+            "ai": 0,
+            "total": 0.00007683,
+            "aiCalls": 0
+          },
+          {
+            "phase": "replay",
+            "fixture": "shop",
+            "evidence": "failures",
+            "variants": "correct+cosmetic+broken-signup+broken-total+broken-login-redirect+broken-silent-click+broken-not-saved+env-flaky",
+            "tests": 88,
+            "marginalSecondsPerTest": 3.313,
+            "compute": 0.00014576,
+            "storage": 0.00000254,
+            "operations": 0.00002415,
+            "ai": 0,
+            "total": 0.00017245,
+            "aiCalls": 0
+          },
+          {
+            "phase": "replay",
+            "fixture": "shop",
+            "evidence": "full",
+            "variants": "correct+cosmetic+broken-signup+broken-total+broken-login-redirect+broken-silent-click+broken-not-saved+env-flaky",
+            "tests": 88,
+            "marginalSecondsPerTest": 4.156,
+            "compute": 0.00018286,
+            "storage": 0.00001113,
+            "operations": 0.00006352,
+            "ai": 0,
+            "total": 0.00025751,
+            "aiCalls": 0
+          },
+          {
+            "phase": "replay",
+            "fixture": "shop",
+            "evidence": "minimal",
+            "variants": "correct+cosmetic+broken-signup+broken-total+broken-login-redirect+broken-silent-click+broken-not-saved+env-flaky",
+            "tests": 88,
+            "marginalSecondsPerTest": 3.527,
+            "compute": 0.00015519,
+            "storage": 0.00000183,
+            "operations": 0.00002119,
+            "ai": 0,
+            "total": 0.00017821,
+            "aiCalls": 0
+          },
+          {
+            "phase": "heal",
+            "fixture": "shop",
+            "evidence": "failures",
+            "variants": "cosmetic",
+            "tests": 11,
+            "marginalSecondsPerTest": 3.8,
+            "compute": 0.00016721,
+            "storage": 0.00000534,
+            "operations": 0.00003682,
+            "ai": 0.00009364,
+            "total": 0.00030301,
+            "aiCalls": 4
+          }
+        ],
+        "perRun": [
+          {
+            "tests": 1,
+            "phase": "author",
+            "seconds": 109,
+            "usd": 0.00782239
+          },
+          {
+            "tests": 10,
+            "phase": "author",
+            "seconds": 206.7,
+            "usd": 0.0393587
+          },
+          {
+            "tests": 20,
+            "phase": "author",
+            "seconds": 315.2,
+            "usd": 0.0743966
+          },
+          {
+            "tests": 50,
+            "phase": "author",
+            "seconds": 641,
+            "usd": 0.1795235
+          },
+          {
+            "tests": 100,
+            "phase": "author",
+            "seconds": 1183.8,
+            "usd": 0.3547262
+          },
+          {
+            "tests": 1,
+            "phase": "replay",
+            "seconds": 99.5,
+            "usd": 0.00439377
+          },
+          {
+            "tests": 10,
+            "phase": "replay",
+            "seconds": 112,
+            "usd": 0.0050857
+          },
+          {
+            "tests": 20,
+            "phase": "replay",
+            "seconds": 125.9,
+            "usd": 0.005855
+          },
+          {
+            "tests": 50,
+            "phase": "replay",
+            "seconds": 167.5,
+            "usd": 0.0081585
+          },
+          {
+            "tests": 100,
+            "phase": "replay",
+            "seconds": 236.9,
+            "usd": 0.0120006
+          },
+          {
+            "tests": 1,
+            "phase": "heal",
+            "seconds": 101.9,
+            "usd": 0.0046194
+          },
+          {
+            "tests": 10,
+            "phase": "heal",
+            "seconds": 136.1,
+            "usd": 0.0073464
+          },
+          {
+            "tests": 20,
+            "phase": "heal",
+            "seconds": 174.1,
+            "usd": 0.0103764
+          },
+          {
+            "tests": 50,
+            "phase": "heal",
+            "seconds": 288.1,
+            "usd": 0.0194664
+          },
+          {
+            "tests": 100,
+            "phase": "heal",
+            "seconds": 478.1,
+            "usd": 0.0346164
+          }
+        ]
+      },
+      {
+        "shape": "2 vCPU / 4 GiB × 4",
+        "verdicts": {
+          "correctRuns": 110,
+          "passed": 109,
+          "ok": false
+        },
+        "twentyTestsSeconds": 136,
+        "good": false,
+        "vcpu": 2,
+        "memoryGiB": 4,
+        "parallel": 4,
+        "tasks": 1,
+        "ratePerSecond": 0.000044,
+        "overheadSeconds": 97.879,
+        "fixedPerRun": 0.0043076,
+        "phases": [
+          {
+            "phase": "replay",
+            "fixture": "shop",
+            "evidence": "failures",
+            "variants": "correct",
+            "tests": 110,
+            "marginalSecondsPerTest": 1.907,
+            "compute": 0.00008389,
+            "storage": 0.00000182,
+            "operations": 0.00001536,
+            "ai": 0,
+            "total": 0.00010108,
+            "aiCalls": 0
+          }
+        ],
+        "perRun": [
+          {
+            "tests": 1,
+            "phase": "replay",
+            "seconds": 99.8,
+            "usd": 0.00440838
+          },
+          {
+            "tests": 10,
+            "phase": "replay",
+            "seconds": 117,
+            "usd": 0.0053198
+          },
+          {
+            "tests": 20,
+            "phase": "replay",
+            "seconds": 136.1,
+            "usd": 0.006332
+          },
+          {
+            "tests": 50,
+            "phase": "replay",
+            "seconds": 193.3,
+            "usd": 0.0093642
+          },
+          {
+            "tests": 100,
+            "phase": "replay",
+            "seconds": 288.6,
+            "usd": 0.0144164
+          }
+        ]
+      }
+    ],
+    "perWebTest": {
+      "author": 0.00350409,
+      "replay": 0.0000637,
+      "heal": 0.00030301
+    },
+    "perAndroidTest": {
+      "replay": null,
+      "author": null,
+      "vmHour": null,
+      "fixedPerVm": null
+    },
+    "fixedPerRunOverhead": 0.0016104,
+    "ai": {
+      "calls": 132,
+      "listUsd": 0.03413,
+      "model": "ollama-cloud:deepseek-v4.1-flash"
+    },
+    "oneOff": {
+      "build": 0.02238,
+      "buildMinutes": 3.73
+    },
+    "idleMonthly": {
+      "total": 0.074,
+      "items": [
+        {
+          "item": "Artifact Registry: the runner image",
+          "usd": 0.074,
+          "note": "1.24 GiB, first 0.5 GiB-month free; down.sh deletes it"
+        },
+        {
+          "item": "Secret Manager: the API key",
+          "usd": 0,
+          "note": "1 active version(s), 6 free"
+        },
+        {
+          "item": "Cloud Run Job",
+          "usd": 0,
+          "note": "a job costs nothing between executions"
+        },
+        {
+          "item": "Cloud Storage bucket",
+          "usd": 0,
+          "note": "evidence deleted after 7 days by the lifecycle rule; an empty bucket is free"
+        },
+        {
+          "item": "Neon, WorkOS",
+          "usd": 0,
+          "note": "free tiers at this scale; not used by the runner"
+        }
+      ]
+    },
+    "freeTier": "Cloud Run's free tier (240,000 vCPU-s and 450,000 GiB-s a month) and Cloud Build's 2,500 free build-minutes would cover this whole run; the numbers above are before free tiers.",
+    "totals": {
+      "compute": 0.107081,
+      "storage": 0.017309,
+      "ai": 0.03413,
+      "build": 0.02238,
+      "androidVm": 0,
+      "all": 0.1809
+    }
+  },
+  "cheapestGoodShape": {
+    "shape": "1 vCPU / 2 GiB × 1",
+    "replayPerTest": 0.0000637,
+    "twentyTestsSeconds": 116.5,
+    "runOf20Usd": 0.0028824
+  },
+  "perRunOf20": [
+    {
+      "shape": "1 vCPU / 2 GiB × 1",
+      "good": true,
+      "seconds": 116.5,
+      "usd": 0.0028824
+    },
+    {
+      "shape": "1 vCPU / 2 GiB × 4",
+      "good": false,
+      "seconds": 132.8,
+      "usd": 0.0032676
+    },
+    {
+      "shape": "2 vCPU / 4 GiB × 1",
+      "good": true,
+      "seconds": 125.8,
+      "usd": 0.005855
+    },
+    {
+      "shape": "2 vCPU / 4 GiB × 4",
+      "good": false,
+      "seconds": 136,
+      "usd": 0.006332
+    }
+  ],
+  "styles": [
+    {
+      "fixture": "shop",
+      "style": "tidy",
+      "route": "file",
+      "entries": 11,
+      "lint": {
+        "clean": 11,
+        "warnings": 0,
+        "rejected": 0,
+        "reasons": {}
+      },
+      "authoredPassed": "9/11",
+      "wrongPasses": "0/15",
+      "wrongFails": "13/73",
+      "perTest": {
+        "calls": 11.55,
+        "aiUsd": 0.003264,
+        "aiOffPeakUsd": 0.001632,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.003759
+      },
+      "heal": {
+        "calls": 2.18,
+        "aiUsd": 0.001068,
+        "healedByFixer": 4,
+        "passedOrHealed": "8/11"
+      },
+      "wallMinutes": 2.8
+    },
+    {
+      "fixture": "shop",
+      "style": "terse",
+      "route": "file",
+      "entries": 11,
+      "lint": {
+        "clean": 10,
+        "warnings": 1,
+        "rejected": 0,
+        "reasons": {
+          "warning:expect-not-observable": 1
+        }
+      },
+      "authoredPassed": "6/11",
+      "wrongPasses": "0/15",
+      "wrongFails": "37/73",
+      "perTest": {
+        "calls": 13.45,
+        "aiUsd": 0.006441,
+        "aiOffPeakUsd": 0.00322,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.006936
+      },
+      "heal": {
+        "calls": 1.82,
+        "aiUsd": 0.000984,
+        "healedByFixer": 4,
+        "passedOrHealed": "5/11"
+      },
+      "wallMinutes": 4.5
+    },
+    {
+      "fixture": "shop",
+      "style": "terse",
+      "route": "description",
+      "entries": 11,
+      "lint": {
+        "clean": 10,
+        "warnings": 1,
+        "rejected": 0,
+        "reasons": {
+          "warning:expect-not-observable": 1
+        }
+      },
+      "authoredPassed": "7/11",
+      "wrongPasses": "1/15",
+      "wrongFails": "25/73",
+      "perTest": {
+        "calls": 22.36,
+        "aiUsd": 0.00875,
+        "aiOffPeakUsd": 0.004375,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.009245
+      },
+      "heal": {
+        "calls": 2.09,
+        "aiUsd": 0.000794,
+        "healedByFixer": 2,
+        "passedOrHealed": "8/11"
+      },
+      "wallMinutes": 7.3
+    },
+    {
+      "fixture": "shop",
+      "style": "verbose",
+      "route": "description",
+      "entries": 11,
+      "lint": {
+        "clean": 0,
+        "warnings": 0,
+        "rejected": 11,
+        "reasons": {
+          "warning:NO_STEPS": 11,
+          "warning:TEXT_OUTSIDE_STEPS": 11
+        }
+      },
+      "authoredPassed": "8/11",
+      "wrongPasses": "1/15",
+      "wrongFails": "20/73",
+      "perTest": {
+        "calls": 21.55,
+        "aiUsd": 0.007688,
+        "aiOffPeakUsd": 0.003844,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.008183
+      },
+      "heal": {
+        "calls": 2.27,
+        "aiUsd": 0.001044,
+        "healedByFixer": 2,
+        "passedOrHealed": "8/11"
+      },
+      "wallMinutes": 5.7
+    },
+    {
+      "fixture": "shop",
+      "style": "verbose",
+      "route": "file",
+      "entries": 11,
+      "lint": {
+        "clean": 0,
+        "warnings": 0,
+        "rejected": 11,
+        "reasons": {
+          "warning:NO_STEPS": 11,
+          "warning:TEXT_OUTSIDE_STEPS": 11
+        }
+      },
+      "authoredPassed": "0/11",
+      "wrongPasses": "0/15",
+      "wrongFails": "73/73",
+      "perTest": {
+        "calls": 0.73,
+        "aiUsd": 0.00016,
+        "aiOffPeakUsd": 0.00008,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.000655
+      },
+      "heal": {
+        "calls": 0,
+        "aiUsd": 0,
+        "healedByFixer": 0,
+        "passedOrHealed": "0/11"
+      },
+      "wallMinutes": 0.2
+    },
+    {
+      "fixture": "shop",
+      "style": "acceptance",
+      "route": "description",
+      "entries": 11,
+      "lint": {
+        "clean": 0,
+        "warnings": 0,
+        "rejected": 11,
+        "reasons": {
+          "warning:NO_STEPS": 10,
+          "warning:TEXT_OUTSIDE_STEPS": 11,
+          "error:no-expectations": 1,
+          "warning:destructive-undeclared": 1
+        }
+      },
+      "authoredPassed": "7/11",
+      "wrongPasses": "1/15",
+      "wrongFails": "27/73",
+      "perTest": {
+        "calls": 23.82,
+        "aiUsd": 0.009067,
+        "aiOffPeakUsd": 0.004534,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.009562
+      },
+      "heal": {
+        "calls": 1.73,
+        "aiUsd": 0.00083,
+        "healedByFixer": 2,
+        "passedOrHealed": "7/11"
+      },
+      "wallMinutes": 6.6
+    },
+    {
+      "fixture": "shop",
+      "style": "acceptance",
+      "route": "file",
+      "entries": 11,
+      "lint": {
+        "clean": 0,
+        "warnings": 0,
+        "rejected": 11,
+        "reasons": {
+          "warning:NO_STEPS": 10,
+          "warning:TEXT_OUTSIDE_STEPS": 11,
+          "error:no-expectations": 1,
+          "warning:destructive-undeclared": 1
+        }
+      },
+      "authoredPassed": "0/11",
+      "wrongPasses": "0/15",
+      "wrongFails": "73/73",
+      "perTest": {
+        "calls": 1.55,
+        "aiUsd": 0.000466,
+        "aiOffPeakUsd": 0.000233,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.000961
+      },
+      "heal": {
+        "calls": 0.18,
+        "aiUsd": 0.00009,
+        "healedByFixer": 0,
+        "passedOrHealed": "0/11"
+      },
+      "wallMinutes": 0.4
+    },
+    {
+      "fixture": "shop",
+      "style": "gherkin",
+      "route": "description",
+      "entries": 11,
+      "lint": {
+        "clean": 0,
+        "warnings": 0,
+        "rejected": 11,
+        "reasons": {
+          "warning:NO_STEPS": 11,
+          "warning:TEXT_OUTSIDE_STEPS": 11
+        }
+      },
+      "authoredPassed": "7/11",
+      "wrongPasses": "1/15",
+      "wrongFails": "26/73",
+      "perTest": {
+        "calls": 21.45,
+        "aiUsd": 0.008268,
+        "aiOffPeakUsd": 0.004134,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.008763
+      },
+      "heal": {
+        "calls": 1.73,
+        "aiUsd": 0.000591,
+        "healedByFixer": 2,
+        "passedOrHealed": "8/11"
+      },
+      "wallMinutes": 5.9
+    },
+    {
+      "fixture": "shop",
+      "style": "gherkin",
+      "route": "file",
+      "entries": 11,
+      "lint": {
+        "clean": 0,
+        "warnings": 0,
+        "rejected": 11,
+        "reasons": {
+          "warning:NO_STEPS": 11,
+          "warning:TEXT_OUTSIDE_STEPS": 11
+        }
+      },
+      "authoredPassed": "0/11",
+      "wrongPasses": "0/15",
+      "wrongFails": "73/73",
+      "perTest": {
+        "calls": 0.73,
+        "aiUsd": 0.000158,
+        "aiOffPeakUsd": 0.000079,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.000653
+      },
+      "heal": {
+        "calls": 0,
+        "aiUsd": 0,
+        "healedByFixer": 0,
+        "passedOrHealed": "0/11"
+      },
+      "wallMinutes": 0.2
+    },
+    {
+      "fixture": "shop",
+      "style": "spoken",
+      "route": "description",
+      "entries": 11,
+      "lint": {
+        "clean": 0,
+        "warnings": 0,
+        "rejected": 11,
+        "reasons": {
+          "warning:NO_STEPS": 11,
+          "warning:TEXT_OUTSIDE_STEPS": 11
+        }
+      },
+      "authoredPassed": "7/11",
+      "wrongPasses": "2/15",
+      "wrongFails": "26/73",
+      "perTest": {
+        "calls": 22.73,
+        "aiUsd": 0.008542,
+        "aiOffPeakUsd": 0.004271,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.009037
+      },
+      "heal": {
+        "calls": 2.27,
+        "aiUsd": 0.000933,
+        "healedByFixer": 2,
+        "passedOrHealed": "8/11"
+      },
+      "wallMinutes": 5.9
+    },
+    {
+      "fixture": "shop",
+      "style": "spoken",
+      "route": "file",
+      "entries": 11,
+      "lint": {
+        "clean": 0,
+        "warnings": 0,
+        "rejected": 11,
+        "reasons": {
+          "warning:NO_STEPS": 11,
+          "warning:TEXT_OUTSIDE_STEPS": 11
+        }
+      },
+      "authoredPassed": "0/11",
+      "wrongPasses": "0/15",
+      "wrongFails": "73/73",
+      "perTest": {
+        "calls": 0.73,
+        "aiUsd": 0.000157,
+        "aiOffPeakUsd": 0.000078,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.000652
+      },
+      "heal": {
+        "calls": 0,
+        "aiUsd": 0,
+        "healedByFixer": 0,
+        "passedOrHealed": "0/11"
+      },
+      "wallMinutes": 0.2
+    },
+    {
+      "fixture": "shop",
+      "style": "sloppy",
+      "route": "file",
+      "entries": 11,
+      "lint": {
+        "clean": 11,
+        "warnings": 0,
+        "rejected": 0,
+        "reasons": {}
+      },
+      "authoredPassed": "6/11",
+      "wrongPasses": "0/15",
+      "wrongFails": "33/73",
+      "perTest": {
+        "calls": 10.45,
+        "aiUsd": 0.003082,
+        "aiOffPeakUsd": 0.001541,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.003577
+      },
+      "heal": {
+        "calls": 1.45,
+        "aiUsd": 0.000873,
+        "healedByFixer": 4,
+        "passedOrHealed": "6/11"
+      },
+      "wallMinutes": 2.8
+    },
+    {
+      "fixture": "shop",
+      "style": "mixed",
+      "route": "file",
+      "entries": 11,
+      "lint": {
+        "clean": 11,
+        "warnings": 0,
+        "rejected": 0,
+        "reasons": {}
+      },
+      "authoredPassed": "11/11",
+      "wrongPasses": "0/15",
+      "wrongFails": "1/73",
+      "perTest": {
+        "calls": 11.73,
+        "aiUsd": 0.003159,
+        "aiOffPeakUsd": 0.00158,
+        "computeUsd": 0.000495,
+        "authorUsd": 0.003654
+      },
+      "heal": {
+        "calls": 0.36,
+        "aiUsd": 0.000094,
+        "healedByFixer": 4,
+        "passedOrHealed": "10/11"
+      },
+      "wallMinutes": 2.6
+    }
+  ],
+  "perComplexity": [
+    {
+      "complexity": "medium",
+      "tests": 78,
+      "aiUsd": 0.003067,
+      "aiOffPeakUsd": 0.001533,
+      "computeUsd": 0.000495,
+      "authorUsd": 0.003562
+    },
+    {
+      "complexity": "complex",
+      "tests": 65,
+      "aiUsd": 0.006339,
+      "aiOffPeakUsd": 0.003169,
+      "computeUsd": 0.000495,
+      "authorUsd": 0.006834
+    }
+  ],
+  "android": {
+    "paths": [
+      {
+        "path": "cold",
+        "vmSeconds": 2362.8,
+        "vmSecondsActual": 7585,
+        "phasesSeconds": {
+          "create": 14.5,
+          "sshReady": 44.1,
+          "setup": 433.7,
+          "emulatorColdBoot": 71,
+          "emulatorSnapshotBoot": 5.3,
+          "build": 5.9,
+          "replay": 1864.6
+        },
+        "tests": 42,
+        "perTestAllIn": 0.000971,
+        "perTestMarginal": 0.000766,
+        "vmUsd": 0.040772,
+        "flakiness": {
+          "match": 35,
+          "healed": 5,
+          "needsAi": 2,
+          "mismatch": 0,
+          "tests": 42
+        }
+      },
+      {
+        "path": "image",
+        "vmSeconds": 3022.6,
+        "vmSecondsActual": 8651,
+        "phasesSeconds": {
+          "create": 25.6,
+          "sshReady": 36.9,
+          "setup": null,
+          "emulatorColdBoot": 75.8,
+          "emulatorSnapshotBoot": 4.6,
+          "build": 6,
+          "replay": 2954
+        },
+        "tests": 42,
+        "perTestAllIn": 0.001242,
+        "perTestMarginal": 0.001214,
+        "vmUsd": 0.052157,
+        "flakiness": {
+          "match": 35,
+          "healed": 5,
+          "needsAi": 2,
+          "mismatch": 0,
+          "tests": 42
+        }
+      }
+    ],
+    "corpus": [
+      {
+        "fixture": "android",
+        "style": "tidy",
+        "route": "file",
+        "entries": 4,
+        "lint": {
+          "clean": 4,
+          "warnings": 0,
+          "rejected": 0,
+          "reasons": {}
+        },
+        "authoredPassed": "4/4",
+        "wrongPasses": "0/6",
+        "wrongFails": "0/18",
+        "perTest": {
+          "calls": 10.5,
+          "aiUsd": 0.002842,
+          "aiOffPeakUsd": 0.001421,
+          "computeUsd": 0,
+          "authorUsd": 0.002842
+        },
+        "heal": {
+          "calls": 2.25,
+          "aiUsd": 0.00102,
+          "healedByFixer": 4,
+          "passedOrHealed": "3/4"
+        },
+        "wallMinutes": 3.3
+      },
+      {
+        "fixture": "android",
+        "style": "terse",
+        "route": "file",
+        "entries": 4,
+        "lint": {
+          "clean": 3,
+          "warnings": 1,
+          "rejected": 0,
+          "reasons": {
+            "warning:vague-step": 1
+          }
+        },
+        "authoredPassed": "2/4",
+        "wrongPasses": "0/6",
+        "wrongFails": "10/18",
+        "perTest": {
+          "calls": 11.5,
+          "aiUsd": 0.006103,
+          "aiOffPeakUsd": 0.003052,
+          "computeUsd": 0,
+          "authorUsd": 0.006103
+        },
+        "heal": {
+          "calls": 1,
+          "aiUsd": 0.000354,
+          "healedByFixer": 4,
+          "passedOrHealed": "2/4"
+        },
+        "wallMinutes": 3.8
+      },
+      {
+        "fixture": "android",
+        "style": "spoken",
+        "route": "file",
+        "entries": 4,
+        "lint": {
+          "clean": 0,
+          "warnings": 0,
+          "rejected": 4,
+          "reasons": {
+            "warning:NO_STEPS": 4,
+            "warning:TEXT_OUTSIDE_STEPS": 4
+          }
+        },
+        "authoredPassed": "0/4",
+        "wrongPasses": "0/6",
+        "wrongFails": "18/18",
+        "perTest": {
+          "calls": 0,
+          "aiUsd": 0,
+          "aiOffPeakUsd": 0,
+          "computeUsd": 0,
+          "authorUsd": 0
+        },
+        "heal": {
+          "calls": 0,
+          "aiUsd": 0,
+          "healedByFixer": 0,
+          "passedOrHealed": "0/4"
+        },
+        "wallMinutes": 2.2
+      },
+      {
+        "fixture": "android",
+        "style": "sloppy",
+        "route": "file",
+        "entries": 4,
+        "lint": {
+          "clean": 4,
+          "warnings": 0,
+          "rejected": 0,
+          "reasons": {}
+        },
+        "authoredPassed": "2/4",
+        "wrongPasses": "0/6",
+        "wrongFails": "7/18",
+        "perTest": {
+          "calls": 10,
+          "aiUsd": 0.003199,
+          "aiOffPeakUsd": 0.0016,
+          "computeUsd": 0,
+          "authorUsd": 0.003199
+        },
+        "heal": {
+          "calls": 1.5,
+          "aiUsd": 0.000567,
+          "healedByFixer": 4,
+          "passedOrHealed": "3/4"
+        },
+        "wallMinutes": 5.6
+      }
+    ]
+  },
+  "ai": {
+    "model": "ollama-cloud:deepseek-v4.1-flash",
+    "calls": 2247,
+    "listUsd": 0.821989,
+    "offPeakUsd": 0.410995,
+    "offPeakWindow": "outside 12:00-18:00 UTC on weekdays, and all weekend",
+    "reported": {
+      "ollamaUsageUsd": null
+    }
+  },
+  "idleMonthly": {
+    "total": 0.5124,
+    "items": [
+      {
+        "item": "Staging web app (Cloud Run service)",
+        "usd": 0,
+        "note": "min instances 0: scales to zero, billed only while serving"
+      },
+      {
+        "item": "VM reaper (Cloud Run service + Cloud Scheduler)",
+        "usd": 0.1032,
+        "note": "4383 calls a month × 0.94 s at 1 vCPU / 0.25 GiB (list, inside Cloud Run's free tier); 1 scheduler job(s), 3 free per billing account"
+      },
+      {
+        "item": "Artifact Registry (images that stay)",
+        "usd": 0,
+        "note": "0.25 GiB, first 0.5 GiB-month free; the cost-run repo is deleted"
+      },
+      {
+        "item": "Android image android-vm-20261003-110740",
+        "usd": 0.4092,
+        "note": "7.44 GiB stored at $0.055/GiB-month; deleted after its ttl (7 days)"
+      }
+    ]
+  },
+  "notes": [
+    "Run window for the billing export: 2026-10-03 05:00–09:15 UTC, label cost-run=baseline-20261003 (job, bucket, registry repo, secret, VMs, image). The BigQuery export was enabled during the run; if it does not include that window, compare the console's Billing > Reports view filtered by the label instead.",
+    "Ollama: the usage page shows no per-day breakdown, so compare the month-to-date change. The meter estimates 2,247 calls: $0.82 at the peak list rate, $0.41 at the off-peak rate that applies on a Saturday (the whole run).",
+    "The bill will be higher than the per-test prices: the Android VMs were up 6.71 h in total (about $0.42 at list) against about 1.5 h of measured work. A dropped ssh killed two replays' output (re-run detached on the same VMs), the first cold VM's replay hit a gcloud 502, and two corpus VMs stopped early (a 502 before start, then a missing CLI build) before any AI call. Also 3 failed Cloud Builds (about 5 min) and 1 failed job execution (about 4 min, the evidence copy to the bucket mount) before the fixes.",
+    "Flakiness, kept apart from cost: the web 4-lane shapes had 1 flaky test in 110 on both sizes; Android had 0 mismatches in 84 replays (cold 42, image 42: 35 match, 5 healed, 2 need AI each).",
+    "Wrong passes: 0 on every file-route style; 6 on the description route (drafts that dropped a bug-catching check: checkout-trial on broken-total ×4, create-project on broken-not-saved ×2).",
+    "Not run: the OpenRouter slice (no OpenRouter key supplied)."
+  ]
+}

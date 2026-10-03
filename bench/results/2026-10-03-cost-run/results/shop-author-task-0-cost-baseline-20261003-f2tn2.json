@@ -1,0 +1,237 @@
+{
+  "kind": "cost-measurement",
+  "version": 1,
+  "costRun": "baseline-20261003",
+  "where": "cloud-run",
+  "task": {
+    "index": 0,
+    "count": 1,
+    "execution": "cost-baseline-20261003-f2tn2",
+    "region": "us-east4"
+  },
+  "shape": {
+    "vcpu": 2,
+    "memoryGiB": 4,
+    "parallel": 1
+  },
+  "slice": {
+    "fixture": "shop",
+    "phase": "author",
+    "variants": ["correct"],
+    "evidence": "failures",
+    "reruns": 1,
+    "style": null
+  },
+  "timing": {
+    "startedAt": "2026-10-03T06:32:46.043Z",
+    "containerStartMs": null,
+    "processStartMs": 260,
+    "setupMs": 164,
+    "teardownMs": 7927,
+    "taskWallMs": 129933,
+    "testsWallMs": 119424
+  },
+  "resources": {
+    "cpuSeconds": 42.1,
+    "cpuSource": "machine",
+    "peakMemoryBytes": 263720960,
+    "memorySource": "process"
+  },
+  "tests": [
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "avatar-upload",
+      "verdict": "passed",
+      "durationMs": 12367,
+      "aiCalls": 14,
+      "tokens": {
+        "input": 31484,
+        "output": 1270,
+        "cached": 25216,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.0035556960000000006,
+      "evidenceBytes": 139958,
+      "evidenceFiles": 3
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "billing-zero-due",
+      "verdict": "passed",
+      "durationMs": 9663,
+      "aiCalls": 10,
+      "tokens": {
+        "input": 21729,
+        "output": 767,
+        "cached": 18176,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.0020953559999999996,
+      "evidenceBytes": 17027,
+      "evidenceFiles": 3
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "checkout-trial",
+      "verdict": "passed",
+      "durationMs": 15469,
+      "aiCalls": 15,
+      "tokens": {
+        "input": 34653,
+        "output": 1775,
+        "cached": 27392,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.004472652,
+      "evidenceBytes": 142746,
+      "evidenceFiles": 3
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "create-project",
+      "verdict": "passed",
+      "durationMs": 13457,
+      "aiCalls": 16,
+      "tokens": {
+        "input": 34776,
+        "output": 1400,
+        "cached": 29056,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.003570335999999999,
+      "evidenceBytes": 126083,
+      "evidenceFiles": 3
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "declined-card",
+      "verdict": "passed",
+      "durationMs": 14812,
+      "aiCalls": 16,
+      "tokens": {
+        "input": 35900,
+        "output": 1470,
+        "cached": 29056,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.003991536,
+      "evidenceBytes": 135211,
+      "evidenceFiles": 3
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "delete-account-guard",
+      "verdict": "passed",
+      "durationMs": 11194,
+      "aiCalls": 14,
+      "tokens": {
+        "input": 31651,
+        "output": 1063,
+        "cached": 25472,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.0032821319999999997,
+      "evidenceBytes": 134857,
+      "evidenceFiles": 3
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "login",
+      "verdict": "passed",
+      "durationMs": 6858,
+      "aiCalls": 8,
+      "tokens": {
+        "input": 17355,
+        "output": 645,
+        "cached": 14464,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.001728084,
+      "evidenceBytes": 77718,
+      "evidenceFiles": 3
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "settings-profile",
+      "verdict": "passed",
+      "durationMs": 8987,
+      "aiCalls": 10,
+      "tokens": {
+        "input": 23709,
+        "output": 702,
+        "cached": 17920,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.00268662,
+      "evidenceBytes": 127427,
+      "evidenceFiles": 3
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "signup-email-code",
+      "verdict": "passed",
+      "durationMs": 8728,
+      "aiCalls": 11,
+      "tokens": {
+        "input": 24426,
+        "output": 1070,
+        "cached": 19840,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.0027788400000000003,
+      "evidenceBytes": 73446,
+      "evidenceFiles": 3
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "signup-validation",
+      "verdict": "passed",
+      "durationMs": 5144,
+      "aiCalls": 6,
+      "tokens": {
+        "input": 13134,
+        "output": 589,
+        "cached": 10880,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.00144828,
+      "evidenceBytes": 78540,
+      "evidenceFiles": 3
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "sort-orders",
+      "verdict": "passed",
+      "durationMs": 10020,
+      "aiCalls": 8,
+      "tokens": {
+        "input": 19293,
+        "output": 1598,
+        "cached": 14336,
+        "cacheWrite": 0
+      },
+      "listUsd": 0.0034907159999999996,
+      "evidenceBytes": 134429,
+      "evidenceFiles": 3
+    }
+  ],
+  "model": "ollama-cloud:deepseek-v4.1-flash",
+  "vm": null,
+  "env": {
+    "node": "v24.21.0",
+    "engineVersion": "0.1.0",
+    "commit": null,
+    "os": "linux 6.9.12 (AMD EPYC 7B13, 6 cores)"
+  }
+}
