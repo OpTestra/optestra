@@ -1,0 +1,1555 @@
+{
+  "kind": "cost-measurement",
+  "version": 1,
+  "costRun": "baseline-20261003",
+  "where": "cloud-run",
+  "task": {
+    "index": 0,
+    "count": 2,
+    "execution": "cost-baseline-20261003-nz28h",
+    "region": "us-east4"
+  },
+  "shape": {
+    "vcpu": 2,
+    "memoryGiB": 4,
+    "parallel": 1
+  },
+  "slice": {
+    "fixture": "shop",
+    "phase": "replay",
+    "variants": [
+      "correct",
+      "cosmetic",
+      "broken-signup",
+      "broken-total",
+      "broken-login-redirect",
+      "broken-silent-click",
+      "broken-not-saved",
+      "env-flaky"
+    ],
+    "evidence": "full",
+    "reruns": 1,
+    "style": null
+  },
+  "timing": {
+    "startedAt": "2026-10-03T06:22:06.652Z",
+    "containerStartMs": null,
+    "processStartMs": 289,
+    "setupMs": 180,
+    "teardownMs": 139144,
+    "taskWallMs": 507652,
+    "testsWallMs": 365720
+  },
+  "resources": {
+    "cpuSeconds": 391.2,
+    "cpuSource": "machine",
+    "peakMemoryBytes": 458014720,
+    "memorySource": "process"
+  },
+  "tests": [
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "avatar-upload",
+      "verdict": "passed",
+      "durationMs": 2746,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 613452,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "billing-zero-due",
+      "verdict": "passed",
+      "durationMs": 1319,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 130684,
+      "evidenceFiles": 7
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "checkout-trial",
+      "verdict": "passed",
+      "durationMs": 8284,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 703019,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "create-project",
+      "verdict": "passed",
+      "durationMs": 3509,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 580949,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "declined-card",
+      "verdict": "passed",
+      "durationMs": 3024,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 725509,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "delete-account-guard",
+      "verdict": "passed",
+      "durationMs": 2167,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 617656,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "login",
+      "verdict": "passed",
+      "durationMs": 1345,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 290159,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "settings-profile",
+      "verdict": "passed",
+      "durationMs": 3192,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 716651,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "signup-email-code",
+      "verdict": "passed",
+      "durationMs": 2297,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 441624,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "signup-validation",
+      "verdict": "passed",
+      "durationMs": 1492,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 290147,
+      "evidenceFiles": 9
+    },
+    {
+      "fixture": "shop",
+      "variant": "correct",
+      "test": "sort-orders",
+      "verdict": "passed",
+      "durationMs": 2164,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 419349,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "avatar-upload",
+      "verdict": "healed",
+      "durationMs": 2646,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 572797,
+      "evidenceFiles": 15
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "billing-zero-due",
+      "verdict": "healed",
+      "durationMs": 2073,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 161484,
+      "evidenceFiles": 7
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "checkout-trial",
+      "verdict": "healed",
+      "durationMs": 4064,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 711533,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "create-project",
+      "verdict": "blocked",
+      "durationMs": 3293,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 494361,
+      "evidenceFiles": 15
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "declined-card",
+      "verdict": "healed",
+      "durationMs": 3292,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 738715,
+      "evidenceFiles": 16
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "delete-account-guard",
+      "verdict": "blocked",
+      "durationMs": 2608,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 550726,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "login",
+      "verdict": "healed",
+      "durationMs": 1476,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 283652,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "settings-profile",
+      "verdict": "blocked",
+      "durationMs": 3286,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 467931,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "signup-email-code",
+      "verdict": "healed",
+      "durationMs": 2232,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 433320,
+      "evidenceFiles": 12
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "signup-validation",
+      "verdict": "healed",
+      "durationMs": 1618,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 279895,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "cosmetic",
+      "test": "sort-orders",
+      "verdict": "healed",
+      "durationMs": 3014,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 399113,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "avatar-upload",
+      "verdict": "passed",
+      "durationMs": 2117,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 621306,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "billing-zero-due",
+      "verdict": "passed",
+      "durationMs": 1735,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 164578,
+      "evidenceFiles": 7
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "checkout-trial",
+      "verdict": "failed",
+      "durationMs": 13027,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 707262,
+      "evidenceFiles": 18
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "create-project",
+      "verdict": "passed",
+      "durationMs": 2747,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 567501,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "declined-card",
+      "verdict": "passed",
+      "durationMs": 2418,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 692306,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "delete-account-guard",
+      "verdict": "passed",
+      "durationMs": 1543,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 612363,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "login",
+      "verdict": "passed",
+      "durationMs": 1338,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 295854,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "settings-profile",
+      "verdict": "passed",
+      "durationMs": 2940,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 689999,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "signup-email-code",
+      "verdict": "failed",
+      "durationMs": 12733,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 688454,
+      "evidenceFiles": 20
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "signup-validation",
+      "verdict": "passed",
+      "durationMs": 1237,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 280086,
+      "evidenceFiles": 9
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-signup",
+      "test": "sort-orders",
+      "verdict": "passed",
+      "durationMs": 2027,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 418479,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "avatar-upload",
+      "verdict": "passed",
+      "durationMs": 1917,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 607624,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "billing-zero-due",
+      "verdict": "failed",
+      "durationMs": 14113,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 527392,
+      "evidenceFiles": 16
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "checkout-trial",
+      "verdict": "failed",
+      "durationMs": 17974,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 1596898,
+      "evidenceFiles": 26
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "create-project",
+      "verdict": "passed",
+      "durationMs": 2818,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 570987,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "declined-card",
+      "verdict": "passed",
+      "durationMs": 2314,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 691476,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "delete-account-guard",
+      "verdict": "passed",
+      "durationMs": 1646,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 592558,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "login",
+      "verdict": "passed",
+      "durationMs": 1254,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 292987,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "settings-profile",
+      "verdict": "passed",
+      "durationMs": 2710,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 684301,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "signup-email-code",
+      "verdict": "passed",
+      "durationMs": 1830,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 426724,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "signup-validation",
+      "verdict": "passed",
+      "durationMs": 1216,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 281771,
+      "evidenceFiles": 9
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-total",
+      "test": "sort-orders",
+      "verdict": "passed",
+      "durationMs": 1901,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 417964,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "avatar-upload",
+      "verdict": "failed",
+      "durationMs": 12947,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 703376,
+      "evidenceFiles": 22
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "billing-zero-due",
+      "verdict": "failed",
+      "durationMs": 12903,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 174566,
+      "evidenceFiles": 8
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "checkout-trial",
+      "verdict": "passed",
+      "durationMs": 2279,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 683599,
+      "evidenceFiles": 12
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "create-project",
+      "verdict": "failed",
+      "durationMs": 14224,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 725772,
+      "evidenceFiles": 22
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "declined-card",
+      "verdict": "failed",
+      "durationMs": 13126,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 717485,
+      "evidenceFiles": 22
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "delete-account-guard",
+      "verdict": "failed",
+      "durationMs": 13052,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 723743,
+      "evidenceFiles": 22
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "login",
+      "verdict": "failed",
+      "durationMs": 12597,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 617852,
+      "evidenceFiles": 20
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "settings-profile",
+      "verdict": "failed",
+      "durationMs": 13199,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 174623,
+      "evidenceFiles": 8
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "signup-email-code",
+      "verdict": "passed",
+      "durationMs": 3308,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 465046,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "signup-validation",
+      "verdict": "passed",
+      "durationMs": 1393,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 289107,
+      "evidenceFiles": 9
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-login-redirect",
+      "test": "sort-orders",
+      "verdict": "failed",
+      "durationMs": 12982,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 174911,
+      "evidenceFiles": 8
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "avatar-upload",
+      "verdict": "passed",
+      "durationMs": 1974,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 621368,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "billing-zero-due",
+      "verdict": "passed",
+      "durationMs": 1508,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 162901,
+      "evidenceFiles": 7
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "checkout-trial",
+      "verdict": "passed",
+      "durationMs": 7267,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 691093,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "create-project",
+      "verdict": "failed",
+      "durationMs": 6029,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 721612,
+      "evidenceFiles": 22
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "declined-card",
+      "verdict": "passed",
+      "durationMs": 2728,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 716825,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "delete-account-guard",
+      "verdict": "passed",
+      "durationMs": 1612,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 590366,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "login",
+      "verdict": "passed",
+      "durationMs": 1155,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 288487,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "settings-profile",
+      "verdict": "passed",
+      "durationMs": 2670,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 711396,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "signup-email-code",
+      "verdict": "passed",
+      "durationMs": 1915,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 438093,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "signup-validation",
+      "verdict": "passed",
+      "durationMs": 1285,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 289630,
+      "evidenceFiles": 9
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-silent-click",
+      "test": "sort-orders",
+      "verdict": "passed",
+      "durationMs": 2002,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 418592,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "avatar-upload",
+      "verdict": "passed",
+      "durationMs": 1939,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 624894,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "billing-zero-due",
+      "verdict": "passed",
+      "durationMs": 1567,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 163211,
+      "evidenceFiles": 7
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "checkout-trial",
+      "verdict": "passed",
+      "durationMs": 2158,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 675626,
+      "evidenceFiles": 12
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "create-project",
+      "verdict": "failed",
+      "durationMs": 16568,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 1303204,
+      "evidenceFiles": 30
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "declined-card",
+      "verdict": "passed",
+      "durationMs": 2536,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 702806,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "delete-account-guard",
+      "verdict": "passed",
+      "durationMs": 1700,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 586303,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "login",
+      "verdict": "passed",
+      "durationMs": 1332,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 296034,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "settings-profile",
+      "verdict": "passed",
+      "durationMs": 2974,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 700789,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "signup-email-code",
+      "verdict": "passed",
+      "durationMs": 1927,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 414451,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "signup-validation",
+      "verdict": "passed",
+      "durationMs": 1409,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 296803,
+      "evidenceFiles": 9
+    },
+    {
+      "fixture": "shop",
+      "variant": "broken-not-saved",
+      "test": "sort-orders",
+      "verdict": "passed",
+      "durationMs": 1931,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 417317,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "avatar-upload",
+      "verdict": "passed",
+      "durationMs": 2037,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 633745,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "billing-zero-due",
+      "verdict": "passed",
+      "durationMs": 1437,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 167024,
+      "evidenceFiles": 7
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "checkout-trial",
+      "verdict": "passed",
+      "durationMs": 2136,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 673054,
+      "evidenceFiles": 12
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "create-project",
+      "verdict": "flaky",
+      "durationMs": 9809,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 1141698,
+      "evidenceFiles": 28
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "declined-card",
+      "verdict": "passed",
+      "durationMs": 2554,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 703455,
+      "evidenceFiles": 14
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "delete-account-guard",
+      "verdict": "passed",
+      "durationMs": 1732,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 594036,
+      "evidenceFiles": 13
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "login",
+      "verdict": "passed",
+      "durationMs": 1244,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 288694,
+      "evidenceFiles": 10
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "settings-profile",
+      "verdict": "passed",
+      "durationMs": 2663,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 684279,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "signup-email-code",
+      "verdict": "passed",
+      "durationMs": 1872,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 427543,
+      "evidenceFiles": 11
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "signup-validation",
+      "verdict": "passed",
+      "durationMs": 1220,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 281592,
+      "evidenceFiles": 9
+    },
+    {
+      "fixture": "shop",
+      "variant": "env-flaky",
+      "test": "sort-orders",
+      "verdict": "passed",
+      "durationMs": 2072,
+      "aiCalls": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "cacheWrite": 0
+      },
+      "listUsd": 0,
+      "evidenceBytes": 419021,
+      "evidenceFiles": 10
+    }
+  ],
+  "model": null,
+  "vm": null,
+  "env": {
+    "node": "v24.21.0",
+    "engineVersion": "0.1.0",
+    "commit": null,
+    "os": "linux 6.9.12 (Intel(R) Xeon(R) CPU @ 2.00GHz, 5 cores)"
+  }
+}

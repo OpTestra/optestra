@@ -273,21 +273,41 @@ export async function runSlice(options: SliceOptions): Promise<CostMeasurement> 
   }
   const testsWallMs = Date.now() - testsStarted;
 
-  // Evidence and the measurement go to `out` (the bucket in the cloud).
+  // Evidence and the measurement go to `out` (the bucket in the cloud). A bucket
+  // mount (Cloud Storage FUSE) refuses chmod and utimes, so files are copied as
+  // bytes; a failed upload is recorded, never fatal, so the measurement is kept.
   const teardownStarted = Date.now();
-  mkdirSync(runsOut, { recursive: true });
+  const uploadProblems: string[] = [];
+  const copyTree = (from: string, to: string) => {
+    mkdirSync(to, { recursive: true });
+    for (const entry of readdirSync(from, { withFileTypes: true })) {
+      const source = join(from, entry.name);
+      if (entry.isDirectory()) copyTree(source, join(to, entry.name));
+      else if (entry.isFile()) writeFileSync(join(to, entry.name), readFileSync(source));
+    }
+  };
+  const upload = (what: string, action: () => void) => {
+    try {
+      action();
+    } catch (error) {
+      uploadProblems.push(`${what}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
   for (const runDir of runDirs)
     if (existsSync(runDir))
-      cpSync(runDir, join(runsOut, runDir.split(/[\\/]/).at(-1) ?? "run"), { recursive: true });
+      upload(runDir, () => copyTree(runDir, join(runsOut, runDir.split(/[\\/]/).at(-1) ?? "run")));
   // Option b: what authoring recorded goes next to the results, for replay elsewhere.
   if (slice.phase === "author") {
     const saved = join(options.out, "cost-runs", options.costRun, "recordings");
-    mkdirSync(saved, { recursive: true });
     for (const d of dirs) {
       const data = join(d, "tests", brand.dataDirName);
-      if (!existsSync(data)) continue;
-      for (const f of readdirSync(data))
-        if (f.endsWith(".steps.json")) cpSync(join(data, f), join(saved, f));
+      if (existsSync(data))
+        upload("recordings", () => {
+          mkdirSync(saved, { recursive: true });
+          for (const f of readdirSync(data))
+            if (f.endsWith(".steps.json"))
+              writeFileSync(join(saved, f), readFileSync(join(data, f)));
+        });
     }
   }
   for (const d of dirs) rmSync(d, { recursive: true, force: true });
@@ -326,6 +346,7 @@ export async function runSlice(options: SliceOptions): Promise<CostMeasurement> 
       memorySource: memory.source,
     },
     tests,
+    ...(uploadProblems.length ? { uploadProblems } : {}),
     model: options.model ? `${options.model.provider}:${options.model.model}` : null,
     vm: null,
     env: {

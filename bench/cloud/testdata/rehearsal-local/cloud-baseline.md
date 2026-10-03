@@ -21,12 +21,12 @@ Fixed per-run overhead (the cheapest shape; container start, Node, browser, uplo
 
 ## Per run of N web tests, by shape
 
-| Shape | Phase | 1 test | 10 tests | 50 tests | 100 tests |
-|---|---|---|---|---|---|
-| 2 vCPU / 4 GiB × 1 | replay | $0.00266 | $0.00280 | $0.00342 | $0.00544 |
-| 2 vCPU / 4 GiB × 1 | author | $0.00267 | $0.00295 | $0.00421 | $0.00581 |
-| 2 vCPU / 4 GiB × 1 | heal | $0.00268 | $0.00301 | $0.00474 | $0.00946 |
-| 2 vCPU / 4 GiB × 4 | replay | $0.00266 | $0.00280 | $0.00343 | $0.00422 |
+| Shape | Phase | 1 test | 10 tests | 20 tests | 50 tests | 100 tests |
+|---|---|---|---|---|---|---|
+| 2 vCPU / 4 GiB × 1 | replay | $0.00266 | $0.00280 | $0.00295 | $0.00342 | $0.00544 |
+| 2 vCPU / 4 GiB × 1 | author | $0.00267 | $0.00295 | $0.00327 | $0.00421 | $0.00581 |
+| 2 vCPU / 4 GiB × 1 | heal | $0.00268 | $0.00301 | $0.00338 | $0.00474 | $0.00946 |
+| 2 vCPU / 4 GiB × 4 | replay | $0.00266 | $0.00280 | $0.00296 | $0.00343 | $0.00422 |
 
 ## Shapes
 

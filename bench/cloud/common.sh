@@ -55,7 +55,13 @@ AR_REPO="${AR_REPO:-$BRAND_SLUG-cost}"
 IMAGE_NAME="${IMAGE_NAME:-bench-runner}"
 JOB="${JOB:-cost-$COST_RUN}"
 SERVICE_ACCOUNT_NAME="${SERVICE_ACCOUNT_NAME:-cost-runner}"
-SECRET="${SECRET:-$BRAND_SLUG-anthropic-api-key}"
+# The API key the model's provider reads (option a), and the secret holding it.
+case "${MODEL%%:*}" in
+  ollama-cloud) AI_KEY_ENV=OLLAMA_API_KEY; key_name=ollama ;;
+  openrouter) AI_KEY_ENV=OPENROUTER_API_KEY; key_name=openrouter ;;
+  *) AI_KEY_ENV=ANTHROPIC_API_KEY; key_name=anthropic ;;
+esac
+SECRET="${SECRET:-$BRAND_SLUG-$key_name-api-key}"
 OUT="${OUT:-$CLOUD_DIR/out}"
 RUN_OUT="$OUT/cost-runs/$COST_RUN"
 

@@ -1,0 +1,11 @@
+{
+  "packagesMs": 34250,
+  "kvmMs": 55,
+  "nodeMs": 2652,
+  "gradleMs": 2268,
+  "androidSdkMs": 75833,
+  "buildMs": 126826,
+  "firstBootMs": 140376,
+  "setupTotalMs": 382625,
+  "diskUsedMb": 14579
+}

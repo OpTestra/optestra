@@ -142,3 +142,28 @@ meter reports list prices so the numbers carry over to a paid scale.
   left (`EXECUTIONS=…`). Never re-run a real-model step to get a better number.
 - **Anything left running**: down.sh is safe to run again. The VM deletes
   itself at its time limit.
+
+## What the 2026-10-03 run taught (baseline-20261003)
+
+- **Ollama Cloud, not Sonnet**: the run used `ollama-cloud:deepseek-v4.1-flash` for
+  everything (EVAL-1's winner); `AI_MODE=api` mounts `OLLAMA_API_KEY` from
+  `<slug>-ollama-api-key` (common.sh picks the variable and secret from the model's provider).
+- **The image** needed three fixes found by the first builds: no `xz` in the
+  Playwright base (Node's `.tar.gz`), `/app` owned by root (chowned before
+  `USER`), pnpm's corepack folder created first.
+- **Evidence on the bucket mount**: Cloud Storage FUSE refuses chmod/utimes, so
+  `fs.cpSync` failed with EPERM after all the tests had run and the measurement
+  was lost. Evidence is now copied as bytes and a failed upload is recorded.
+- **Parallel lanes**: 4 lanes on one task gave 1 flaky test in 110 on both
+  sizes; the cheapest shape that kept every verdict was 1 vCPU / 2 GiB, one
+  test at a time.
+- **Android over ssh**: `gcloud compute scp` and `ssh` return transient 502s,
+  and a dropped ssh kills the remote command's output pipe (`tee`), so a long
+  `run.sh` replay can finish without its JSON. Long commands now run detached on
+  the VM (`nohup`, a done marker, polled), copies retry, and a real-AI command
+  is never re-run. (For MOB-3's `run.sh`: the same change there.)
+- **A VM from the image replayed slower** than the cold VM that made it (the
+  disk restored from an image loads lazily on first read). Measure a second run
+  on the same VM before pricing image-based Android runs.
+- **The 3-hour cap** (`--max-run-duration`) is per VM: put a long slice (the
+  Android corpus) on its own VM rather than after a replay.

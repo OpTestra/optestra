@@ -35,6 +35,8 @@ const costRun = env.COST_RUN ?? "<COST_RUN>";
 const region = env.REGION ?? "us-east4";
 const aiMode = env.AI_MODE ?? "local";
 const project = env.PROJECT_ID ?? "<PROJECT_ID>";
+// The model the corpus and the cloud's author / heal use (provider:model); priced from the newest eval of it.
+const aiModel = (env.MODEL ?? "anthropic:claude-sonnet-5-5").replace(/^[^:]+:/, "");
 const prices = bench.loadCloudPrices(join(here, "prices.yaml"));
 const plan = JSON.parse(readFileSync(join(here, "plan.json"), "utf8")) as {
   executions: Execution[];
@@ -82,7 +84,7 @@ const corpus = await bench.estimateCorpus(join(repo, "bench"), {
   fixtures: ["shop", "android"],
   ...(styles ? { styles } : {}),
   ...(tests ? { tests } : {}),
-  model: "claude-sonnet-5-5",
+  model: aiModel,
 });
 const basis = corpus.basis.fixture.shop;
 const cloudAi = runnable
@@ -198,7 +200,7 @@ if (json) {
     `  Cloud Run ${money(cloudRun)} · build ${money(build)} · registry for a day ${money(registryDay)} · storage for a day ${money(storageDay, 5)} · Android VM ${vmHours} h ${money(android)}`,
     `  total ≈ ${money(totals.cloud, 2)}`,
     "",
-    `Expected AI (Sonnet 5.5, list): corpus ${corpus.total.calls} calls ≈ ${money(corpus.total.usd, 2)} (${styles ? styles.join(", ") : "all styles"}${tests ? `; tests ${tests.join(", ")}` : ""})${cloudAi.length ? `; in the cloud ${cloudAi.map((x) => `${x.name} ${x.calls} calls ${money(x.usd, 2)}`).join(", ")}` : ""}`,
+    `Expected AI (${aiModel}, list): corpus ${corpus.total.calls} calls ≈ ${money(corpus.total.usd, 2)} (${styles ? styles.join(", ") : "all styles"}${tests ? `; tests ${tests.join(", ")}` : ""})${cloudAi.length ? `; in the cloud ${cloudAi.map((x) => `${x.name} ${x.calls} calls ${money(x.usd, 2)}`).join(", ")}` : ""}`,
     `  total ≈ ${ai.calls} calls, ${money(ai.usd, 2)}`,
     "",
     "Nothing was created: plan.sh only reads files.",

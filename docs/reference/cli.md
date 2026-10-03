@@ -122,6 +122,7 @@ score the engine on the repository's Bench fixtures: false pass/fail and flake r
 | `--no-cosmetic` | for --corpus: skip the cosmetic heal pass |  |
 | `--meter <path>` | turn cloud-run measurements (a results folder or JSON file) into the cost report, with bench/cloud/prices.yaml |  |
 | `--out <dir>` | for --meter: where to write the report (default bench/results) |  |
+| `--corpus-results <files...>` | for --meter: corpus results (bench --corpus JSON) to fold into the baseline, per style and complexity |  |
 | `--scripted` | run the model evals with a scripted stand-in (no AI; for CI) |  |
 | `--yes` | for --models and --compare: don't ask before the real-model run |  |
 | `--model-budget <usd>` | for --compare: AI budget per model in dollars; a model that reaches it stops (default 50) |  |

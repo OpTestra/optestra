@@ -1,0 +1,103 @@
+{
+  "kind": "android-vm-run",
+  "version": 1,
+  "date": "2026-10-03T08:07:14.043Z",
+  "commit": "99338145fefbca9e0e3f26a3508cb80943388453",
+  "dirty": true,
+  "vm": {
+    "machineType": "n2-standard-4",
+    "zone": "us-east4-a",
+    "provisioning": "spot",
+    "maxRunDuration": "3h",
+    "diskGb": 30,
+    "image": "android-vm-20261003-110740",
+    "fromReusableImage": true,
+    "cpus": 4,
+    "memoryMb": 15985,
+    "cpuModel": "Intel(R) Xeon(R) CPU @ 2.80GHz",
+    "kernel": "7.0.0-1011-gcp"
+  },
+  "phases": {
+    "createMs": 25567,
+    "sshReadyMs": 36935,
+    "setupMs": null,
+    "setup": null,
+    "emulatorColdBootMs": 75831,
+    "emulatorSnapshotBootMs": 4578,
+    "buildMs": 6038,
+    "commandMs": 2954028,
+    "imageCreateMs": null
+  },
+  "command": "pnpm bench:replay:android",
+  "exit": 0,
+  "preempted": false,
+  "replay": {
+    "summary": {
+      "tests": 42,
+      "match": 35,
+      "healed": 5,
+      "needsAi": 2,
+      "mismatch": 0,
+      "aiCalls": 0
+    },
+    "wallMsPerTest": {
+      "n": 42,
+      "mean": 70134,
+      "p50": 58410,
+      "p90": 112263,
+      "max": 144788
+    },
+    "machineCpuMsPerTest": 177575,
+    "evidenceBytes": {
+      "total": 191955603,
+      "perTest": 4570372
+    },
+    "variants": {
+      "correct": {
+        "tests": 7,
+        "machineCpuMs": 1055050,
+        "evidenceBytes": 26472573
+      },
+      "cosmetic": {
+        "tests": 7,
+        "machineCpuMs": 1037330,
+        "evidenceBytes": 27410064
+      },
+      "broken-login": {
+        "tests": 7,
+        "machineCpuMs": 1734360,
+        "evidenceBytes": 46224526
+      },
+      "broken-silent-tap": {
+        "tests": 7,
+        "machineCpuMs": 1146060,
+        "evidenceBytes": 28373428
+      },
+      "broken-not-saved": {
+        "tests": 7,
+        "machineCpuMs": 1179230,
+        "evidenceBytes": 30022051
+      },
+      "broken-crash": {
+        "tests": 7,
+        "machineCpuMs": 1306120,
+        "evidenceBytes": 33452961
+      }
+    },
+    "variantWallMs": {
+      "correct": 408919,
+      "cosmetic": 412284,
+      "broken-login": 702854,
+      "broken-silent-tap": 448406,
+      "broken-not-saved": 464421,
+      "broken-crash": 509861
+    },
+    "mismatches": []
+  },
+  "cost": {
+    "vmSeconds": 8651,
+    "hourlyUsd": null,
+    "usd": null
+  },
+  "note": "Re-run detached on the same VM after a dropped ssh killed the first replay output; fromReusableImage set by hand (the rerun script did not pass ANDROID_VM_IMAGE to report.mjs)."
+}
