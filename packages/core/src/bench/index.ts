@@ -122,6 +122,7 @@ export {
   type EvidenceMode,
   formatBaseline,
   loadCloudPrices,
+  loadRawPrices,
   MEASUREMENT_KIND,
   MEASUREMENT_VERSION,
   type MeasuredTest,
@@ -131,3 +132,14 @@ export {
   withCloudFacts,
 } from "./cost.js";
 export { cpuNow, peakMemory, runSlice, type Slice, type SliceOptions } from "./slice.js";
+export {
+  type AiPricing,
+  type AndroidPath,
+  assembleBaseline,
+  type Complexity,
+  type CostBaselineFile,
+  formatCostBaseline,
+  type IdleFacts,
+  type StyleCost,
+  type VmRun,
+} from "./baseline.js";

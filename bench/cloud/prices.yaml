@@ -19,6 +19,15 @@ cloudRun:
     minimumSecondsPerTask: 60
     requests: 0
   freeTier: { vcpuSeconds: 240000, gibSeconds: 450000 }
+  # Services with request-based billing (staging, the VM reaper): billed only while
+  # serving, plus requests; a minimum instance bills its idle time. Checked 2026-10-03.
+  services:
+    vcpuSecondActive: 0.000024
+    gibSecondActive: 0.0000025
+    vcpuSecondIdleMinInstance: 0.0000025
+    gibSecondIdleMinInstance: 0.0000025
+    requestsPerMillion: 0.4
+    freeTier: { vcpuSeconds: 180000, gibSeconds: 360000, requests: 2000000 }
 
 storage:
   source: https://cloud.google.com/storage/pricing
@@ -59,12 +68,27 @@ compute:
     n2-standard-8: { hour: 0.1152, vcpu: 8, memoryGiB: 32 }
   # pd-balanced, us-east4: $0.000150685 per GiB-hour.
   pdBalancedGibMonth: 0.11
+  # Custom image storage, us-east4: $0.000075342 per GiB-hour (checked 2026-10-03).
+  imageGibMonth: 0.055
+
+cloudScheduler:
+  source: https://cloud.google.com/scheduler/pricing
+  # Per job per month (prorated by day); 3 jobs a month free per billing account. Checked 2026-10-03.
+  jobMonth: 0.1
+  freeJobsPerAccount: 3
 
 # Neon (Postgres) and WorkOS (sign-in): $0 at this scale. Neon's free plan and
 # WorkOS's free tier (up to 1M monthly active users) cover a cost-baseline run;
 # neither is used by the bench runner itself.
 neon: 0
 workos: 0
+
+# Off-peak AI: Ollama Cloud bills the DeepSeek models at half its credit rate outside
+# 12:00-18:00 UTC on weekdays and all weekend (ollama.com/pricing, checked 2026-10-02).
+aiOffPeak:
+  "ollama-cloud:deepseek-v4.1-flash":
+    factor: 0.5
+    window: outside 12:00-18:00 UTC on weekdays, and all weekend
 
 # AI: list API prices from packages/models/prices.yaml (the same file EVAL-0 used),
 # also for calls that went through a subscription CLI.

@@ -160,6 +160,10 @@ export function createProgram(): Command {
       "turn cloud-run measurements (a results folder or JSON file) into the cost report, with bench/cloud/prices.yaml",
     )
     .option("--out <dir>", "for --meter: where to write the report (default bench/results)")
+    .option(
+      "--corpus-results <files...>",
+      "for --meter: corpus results (bench --corpus JSON) to fold into the baseline, per style and complexity",
+    )
     .option("--scripted", "run the model evals with a scripted stand-in (no AI; for CI)")
     .option("--yes", "for --models and --compare: don't ask before the real-model run")
     .option(

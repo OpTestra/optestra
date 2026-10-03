@@ -71,6 +71,8 @@ export interface CostMeasurement {
     memorySource: "cgroup" | "process";
   };
   tests: MeasuredTest[];
+  /** Evidence that couldn't be copied to `out` (the measurement itself is still written). */
+  uploadProblems?: string[];
   model: string | null;
   /** Android VM: the machine's own times (MOB-3's phases.json), when known. */
   vm?: {
@@ -133,6 +135,11 @@ export function loadCloudPrices(path: string): CloudPrices {
       ? value.checked.toISOString().slice(0, 10)
       : String(value.checked);
   return { ...value, checked };
+}
+
+/** The price file as written, for sections the typed loader doesn't model (aiOffPeak). */
+export function loadRawPrices(path: string): Record<string, unknown> {
+  return parseYaml(readFileSync(path, "utf8"), "prices.yaml").value as Record<string, unknown>;
 }
 
 /** Facts about the run that aren't in any task: the image build, its size, retention, secrets. */
@@ -201,7 +208,16 @@ export interface ShapeCost {
   fixedPerRun: number;
   phases: PhaseCost[];
   perRun: Array<{ tests: number; phase: CostPhase; seconds: number; usd: number }>;
+  /** Replays of the unchanged app (correct) on this shape: did every one pass? */
+  verdicts: { correctRuns: number; passed: number; ok: boolean };
+  /** Seconds a run of 20 replays takes on this shape (CI-6: at most 600). */
+  twentyTestsSeconds: number | null;
+  /** Same verdicts and 20 tests within CI-6's 10 minutes. */
+  good: boolean;
 }
+
+/** CI-6: a PR check of 20 tests finishes within 10 minutes. */
+export const CI6_SECONDS_FOR_20 = 600;
 
 export interface CloudBaseline {
   baselineVersion: typeof BASELINE_VERSION;
@@ -354,7 +370,7 @@ function cloudShapes(
           }
     const perRun: ShapeCost["perRun"] = [];
     for (const p of headline(phases.filter((x) => x.fixture === "shop")))
-      for (const n of [1, 10, 50, 100]) {
+      for (const n of [1, 10, 20, 50, 100]) {
         const seconds = billableSeconds(
           (overheadSeconds + n * p.marginalSecondsPerTest) * 1000,
           jobs,
@@ -366,8 +382,25 @@ function cloudShapes(
           usd: round(seconds * rate + n * (p.storage + p.operations + p.ai)),
         });
       }
+    const correct = list
+      .filter((m) => m.slice.phase === "replay" && m.slice.variants.join("+") === "correct")
+      .flatMap((m) => m.tests);
+    const replayCorrect = phases.find(
+      (p) => p.phase === "replay" && p.fixture === "shop" && p.variants === "correct",
+    );
+    const twentyTestsSeconds = replayCorrect
+      ? round(overheadSeconds + 20 * replayCorrect.marginalSecondsPerTest, 1)
+      : null;
+    const verdicts = {
+      correctRuns: correct.length,
+      passed: correct.filter((t) => t.verdict === "passed").length,
+      ok: correct.length > 0 && correct.every((t) => t.verdict === "passed"),
+    };
     out.push({
       shape: key,
+      verdicts,
+      twentyTestsSeconds,
+      good: verdicts.ok && twentyTestsSeconds !== null && twentyTestsSeconds <= CI6_SECONDS_FOR_20,
       vcpu: shape.vcpu,
       memoryGiB: shape.memoryGiB,
       parallel: shape.parallel,
@@ -671,8 +704,8 @@ export function formatBaseline(b: CloudBaseline): string {
     "",
     "## Per run of N web tests, by shape",
     "",
-    "| Shape | Phase | 1 test | 10 tests | 50 tests | 100 tests |",
-    "|---|---|---|---|---|---|",
+    "| Shape | Phase | 1 test | 10 tests | 20 tests | 50 tests | 100 tests |",
+    "|---|---|---|---|---|---|---|",
   ];
   for (const s of b.shapes)
     for (const phase of ["replay", "author", "heal"] as const) {

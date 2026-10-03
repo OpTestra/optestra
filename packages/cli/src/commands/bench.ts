@@ -42,6 +42,8 @@ export interface BenchCommandOptions {
   meter?: string;
   /** For --meter: where to write the report (default bench/results). */
   out?: string;
+  /** For --meter: corpus results (bench --corpus files) to fold into the baseline. */
+  corpusResults?: string[];
 }
 
 const GATED = new Set([
