@@ -89,6 +89,7 @@ export async function runMeterCommand(
   const extra = facts as {
     idle?: Parameters<typeof bench.assembleBaseline>[0]["idle"];
     ollamaUsageUsd?: number;
+    notes?: string[];
   };
   const baseline = bench.assembleBaseline({
     cloud: report,
@@ -100,6 +101,7 @@ export async function runMeterCommand(
     ai: { offPeakFactor: offPeak?.factor ?? null, offPeakWindow: offPeak?.window ?? null },
     idle: extra.idle ?? { staging: null, reaper: null, registryGiB: 0, images: [] },
     ollamaUsageUsd: extra.ollamaUsageUsd ?? null,
+    notes: extra.notes ?? [],
   });
   const md = `${bench.formatCostBaseline(baseline)}${bench
     .formatBaseline(report)

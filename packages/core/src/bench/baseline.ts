@@ -143,6 +143,7 @@ export interface CostBaselineFile {
     reported: { ollamaUsageUsd: number | null };
   };
   idleMonthly: { total: number; items: Array<{ item: string; usd: number; note: string }> };
+  notes: string[];
 }
 
 const round = (n: number, d = 6) => Math.round(n * 10 ** d) / 10 ** d;
@@ -304,6 +305,8 @@ export function assembleBaseline(input: {
   ai: AiPricing;
   idle: IdleFacts;
   ollamaUsageUsd?: number | null;
+  /** Reconciliation and run notes, shown at the end. */
+  notes?: readonly string[];
 }): CostBaselineFile {
   const { cloud, prices } = input;
   const compute = cloudAuthorCompute(cloud);
@@ -313,7 +316,8 @@ export function assembleBaseline(input: {
     .map((s) => styleCost(s, compute, input.ai));
   const androidCorpus = input.corpus
     .flatMap((f) => f.styles)
-    .filter((s) => s.fixture === "android")
+    // Android has no description route (drafting is web only): those rows are empty.
+    .filter((s) => s.fixture === "android" && s.route !== "description")
     .map((s) => styleCost(s, 0, input.ai));
 
   // Per complexity: every web entry's authoring (with its draft), across styles.
@@ -407,6 +411,7 @@ export function assembleBaseline(input: {
       reported: { ollamaUsageUsd: input.ollamaUsageUsd ?? null },
     },
     idleMonthly: idleMonthly(input.idle, prices as never),
+    notes: [...(input.notes ?? [])],
   };
 }
 
@@ -483,11 +488,11 @@ export function formatCostBaseline(b: CostBaselineFile): string {
     "",
     ...(b.android.corpus.length
       ? [
-          "| Android style | Authored passed | Wrong passes | Wrong fails | Calls/test | AI $/test |",
-          "|---|---|---|---|---|---|",
+          "| Android style | Route | Authored passed | Wrong passes | Wrong fails | Calls/test | AI $/test |",
+          "|---|---|---|---|---|---|---|",
           ...b.android.corpus.map(
             (s) =>
-              `| ${s.style} | ${s.authoredPassed} | ${s.wrongPasses} | ${s.wrongFails} | ${s.perTest.calls} | ${usd(s.perTest.aiUsd, 5)} |`,
+              `| ${s.style} | ${s.route} | ${s.authoredPassed} | ${s.wrongPasses} | ${s.wrongFails} | ${s.perTest.calls} | ${usd(s.perTest.aiUsd, 5)} |`,
           ),
           "",
         ]
@@ -497,6 +502,9 @@ export function formatCostBaseline(b: CostBaselineFile): string {
     ...b.idleMonthly.items.map((i) => `- ${i.item}: ${usd(i.usd, 4)} (${i.note})`),
     `- Total: **${usd(b.idleMonthly.total, 4)}**`,
     "",
+    ...(b.notes.length
+      ? ["## Reconciliation and notes", "", ...b.notes.map((n) => `- ${n}`), ""]
+      : []),
     "## The cloud tasks (meter)",
     "",
   ];
