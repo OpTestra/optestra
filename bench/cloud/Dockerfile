@@ -12,10 +12,10 @@ ARG NODE_VERSION=24.21.0
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN arch="$(dpkg --print-architecture)" \
  && case "$arch" in amd64) n=x64 ;; arm64) n=arm64 ;; *) echo "unsupported $arch" >&2; exit 1 ;; esac \
- && file="node-v${NODE_VERSION}-linux-${n}.tar.xz" \
+ && file="node-v${NODE_VERSION}-linux-${n}.tar.gz" \
  && curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/${file}" \
  && curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt" | grep " ${file}\$" | sha256sum -c - \
- && tar -xJf "${file}" -C /usr/local --strip-components=1 --no-same-owner \
+ && tar -xzf "${file}" -C /usr/local --strip-components=1 --no-same-owner \
  && rm "${file}" \
  && node --version
 
@@ -25,9 +25,11 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     CI=1
 
 WORKDIR /app
+RUN chown pwuser:pwuser /app
 COPY --chown=pwuser:pwuser . .
 USER pwuser
-RUN corepack enable --install-directory /home/pwuser/.local/bin \
+RUN mkdir -p /home/pwuser/.local/bin \
+ && corepack enable --install-directory /home/pwuser/.local/bin \
  && export PATH="/home/pwuser/.local/bin:$PATH" \
  && pnpm install --frozen-lockfile \
  && pnpm build \

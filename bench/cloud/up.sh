@@ -45,7 +45,7 @@ gc projects add-iam-policy-binding "$PROJECT_ID" \
 
 secret_flags=()
 if [ "$AI_MODE" = "api" ]; then
-  say "5/7 Secret $SECRET (option a: the Anthropic API key, mounted as ANTHROPIC_API_KEY)"
+  say "5/7 Secret $SECRET (option a: the ${MODEL%%:*} API key, mounted as $AI_KEY_ENV)"
   if ! exists secrets describe "$SECRET"; then
     gc secrets create "$SECRET" --replication-policy user-managed --locations "$REGION" --labels "$LABELS"
   fi
@@ -53,12 +53,12 @@ if [ "$AI_MODE" = "api" ]; then
     --member "serviceAccount:$SERVICE_ACCOUNT" --role roles/secretmanager.secretAccessor
   if [ "$CLOUD_TARGET" = "gcp" ] && [ -z "$DRY_RUN" ] &&
     [ -z "$(gcloud --project "$PROJECT_ID" secrets versions list "$SECRET" --filter state=enabled --format 'value(name)' 2>/dev/null)" ]; then
-    say "The secret has no value yet. Add the key yourself (it is read from your terminal, never stored here):"
-    say "  gcloud --project $PROJECT_ID secrets versions add $SECRET --data-file=-"
+    say "The secret has no value yet. Add the key yourself in your own terminal (read -s: not echoed, not in history):"
+    say "  read -rs KEY && printf '%s' \"\$KEY\" | gcloud --project $PROJECT_ID secrets versions add $SECRET --data-file=- ; unset KEY"
     say "then run up.sh again."
     exit 2
   fi
-  secret_flags=(--set-secrets "ANTHROPIC_API_KEY=$SECRET:latest")
+  secret_flags=(--set-secrets "$AI_KEY_ENV=$SECRET:latest")
 else
   say "5/7 Secret: skipped (AI_MODE=$AI_MODE: authoring runs on this Mac)"
 fi

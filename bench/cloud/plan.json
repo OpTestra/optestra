@@ -1,10 +1,10 @@
 {
-  "$comment": "The cloud cost run's executions (COST-0). plan.sh prices them, run.sh runs them in order (EXECUTIONS=name,name to pick). Each is one Cloud Run Job execution: `tasks` tasks of `cpu` vCPU / `memoryGiB` GiB, each running SLICES[task % length] with `parallel` tests at once. expectedMinutes is per task, from the local rehearsal (bench/cloud/testdata) with ~2x for cloud CPUs. `ai`: needs a model (author, heal).",
+  "$comment": "The cloud cost run's executions (COST-0, run 2026-10-03). plan.sh prices them, run.sh runs them in order (EXECUTIONS=name,name to pick). Each is one Cloud Run Job execution: `tasks` tasks of `cpu` vCPU / `memoryGiB` GiB, each running SLICES[task % length] with `parallel` tests at once in isolated lanes. expectedMinutes is per task. `ai`: needs a model (author, heal).",
   "version": 1,
   "executions": [
     {
-      "name": "replay-correct-p1",
-      "why": "10 replays of correct, one test at a time: replay $/test and the container start",
+      "name": "replay-2cpu-l1",
+      "why": "10 replays of correct (110 test runs) on 2 vCPU / 4 GiB, 1 at a time",
       "slices": [
         {
           "fixture": "shop",
@@ -18,11 +18,11 @@
       "parallel": 1,
       "cpu": 2,
       "memoryGiB": 4,
-      "expectedMinutes": 4
+      "expectedMinutes": 5
     },
     {
-      "name": "replay-correct-p4",
-      "why": "the same 10 replays, 4 tests at a time on the same shape",
+      "name": "replay-2cpu-l4",
+      "why": "10 replays of correct (110 test runs) on 2 vCPU / 4 GiB, 4 at a time",
       "slices": [
         {
           "fixture": "shop",
@@ -36,17 +36,17 @@
       "parallel": 4,
       "cpu": 2,
       "memoryGiB": 4,
-      "expectedMinutes": 2
+      "expectedMinutes": 3
     },
     {
-      "name": "replay-correct-small",
-      "why": "a smaller shape (1 vCPU / 2 GiB), one test at a time, to find the cheapest shape",
+      "name": "replay-1cpu-l1",
+      "why": "10 replays of correct (110 test runs) on 1 vCPU / 2 GiB, 1 at a time",
       "slices": [
         {
           "fixture": "shop",
           "phase": "replay",
           "variants": ["correct"],
-          "reruns": 3,
+          "reruns": 10,
           "evidence": "failures"
         }
       ],
@@ -54,32 +54,54 @@
       "parallel": 1,
       "cpu": 1,
       "memoryGiB": 2,
-      "expectedMinutes": 3
+      "expectedMinutes": 7
     },
     {
-      "name": "replay-variants",
-      "why": "every variant once (failing tests keep more evidence), failures mode",
-      "slices": [{ "fixture": "shop", "phase": "replay", "evidence": "failures" }],
-      "tasks": 1,
-      "parallel": 1,
-      "cpu": 2,
-      "memoryGiB": 4,
-      "expectedMinutes": 4
-    },
-    {
-      "name": "evidence-modes",
-      "why": "evidence bytes by mode: full and minimal, a passing and a failing variant (two tasks in parallel)",
+      "name": "replay-1cpu-l4",
+      "why": "10 replays of correct (110 test runs) on 1 vCPU / 2 GiB, 4 at a time",
       "slices": [
         {
           "fixture": "shop",
           "phase": "replay",
-          "variants": ["correct", "broken-total"],
+          "variants": ["correct"],
+          "reruns": 10,
+          "evidence": "failures"
+        }
+      ],
+      "tasks": 1,
+      "parallel": 4,
+      "cpu": 1,
+      "memoryGiB": 2,
+      "expectedMinutes": 5
+    },
+    {
+      "name": "replay-variants",
+      "why": "every variant once, failures evidence (the default): broken variants' failures and evidence",
+      "slices": [
+        {
+          "fixture": "shop",
+          "phase": "replay",
+          "evidence": "failures"
+        }
+      ],
+      "tasks": 1,
+      "parallel": 1,
+      "cpu": 2,
+      "memoryGiB": 4,
+      "expectedMinutes": 6
+    },
+    {
+      "name": "evidence-modes",
+      "why": "the same full web pass with full and with minimal evidence (two tasks in parallel)",
+      "slices": [
+        {
+          "fixture": "shop",
+          "phase": "replay",
           "evidence": "full"
         },
         {
           "fixture": "shop",
           "phase": "replay",
-          "variants": ["correct", "broken-total"],
           "evidence": "minimal"
         }
       ],
@@ -87,23 +109,35 @@
       "parallel": 1,
       "cpu": 2,
       "memoryGiB": 4,
-      "expectedMinutes": 2
+      "expectedMinutes": 7
     },
     {
       "name": "heal-cosmetic",
-      "why": "one cosmetic heal pass: no-AI heals, and the fixer where the model is in the cloud (AI_MODE=api)",
-      "slices": [{ "fixture": "shop", "phase": "heal", "evidence": "failures" }],
+      "why": "one cosmetic pass with the fixer: no-AI heals first, the model for the rest",
+      "slices": [
+        {
+          "fixture": "shop",
+          "phase": "heal",
+          "evidence": "failures"
+        }
+      ],
       "tasks": 1,
       "parallel": 1,
       "cpu": 2,
       "memoryGiB": 4,
-      "expectedMinutes": 3,
+      "expectedMinutes": 4,
       "ai": true
     },
     {
       "name": "author-gold",
-      "why": "authoring the 11 gold tests in the cloud with the API key (AI_MODE=api only; with AI_MODE=local it runs on this Mac)",
-      "slices": [{ "fixture": "shop", "phase": "author", "evidence": "failures" }],
+      "why": "authoring the 11 gold web tests in the cloud with the model",
+      "slices": [
+        {
+          "fixture": "shop",
+          "phase": "author",
+          "evidence": "failures"
+        }
+      ],
       "tasks": 1,
       "parallel": 1,
       "cpu": 2,
