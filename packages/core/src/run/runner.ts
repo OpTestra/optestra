@@ -31,16 +31,17 @@ import {
   type SecretSource,
 } from "@optestra/config/node";
 import {
+  type AccessibilityReport,
   type ArtifactRef,
   type Attempt,
   type BlockedReason,
   CONTRACT_VERSION,
   type DecisionRecord,
   type Event,
-  type AccessibilityReport,
   type EvidenceRef,
   type FailureCause,
   type HealPolicy,
+  isUlid,
   type MatrixEntry,
   type MockUse,
   type ModelCall,
@@ -100,7 +101,6 @@ import { profileFlowPath, profileLogin, replayProfileFlow } from "./profiles.js"
 import { replayAttempt } from "./replay.js";
 import { type Shard, selectShard } from "./shard.js";
 import { runSpecTest } from "./spec-run.js";
-import { parseViewport } from "./viewport.js";
 import {
   cellLabel,
   engineKey,
@@ -113,6 +113,7 @@ import {
 } from "./target.js";
 import type { ReplayResult, ReplaySession, StepShotType } from "./types.js";
 import { type AttemptRecord, decideVerdict, fallbackCause } from "./verdict.js";
+import { parseViewport } from "./viewport.js";
 
 // runTests (LOOP-4): the whole run. One browser per worker, one fresh session
 // per test attempt (setup hooks first, then the start page), replay with no
@@ -193,6 +194,12 @@ export interface RunTestsOptions {
    */
   node?: string;
   trigger?: Trigger;
+  /**
+   * The run's id (a ULID), when the caller gave the run one before it started
+   * (a cloud run queued by the platform). Default: a new one. Refused if a run
+   * folder with this id exists.
+   */
+  runId?: string;
   /** Every event as it is written, `artifact.written` included. */
   onEvent?: (event: Event) => void;
   /**
@@ -353,8 +360,14 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   const engineVersion = version();
   const loaded = loadProject(projectDir, { environment: options.environment, env });
   const dataDir = join(projectDir, brand.dataDirName);
-  const runId = ulid();
+  if (options.runId !== undefined && !isUlid(options.runId)) {
+    throw new Error(`runId must be a ULID, not "${options.runId}"`);
+  }
+  const runId = options.runId ?? ulid();
   const dir = runDir(dataDir, runId);
+  if (options.runId !== undefined && existsSync(dir)) {
+    throw new Error(`a run folder for ${runId} exists already`);
+  }
   const redactor = defaultRedactor;
   const writer: RunWriter = createRunWriter(dir, {
     scrub: (text) => redactor.redact(text),

@@ -36,6 +36,7 @@ const RUN_TESTS_OPTIONS = [
   "signal",
   "node",
   "trigger",
+  "runId",
   "onEvent",
   "beforeAttempt",
   "secretSources",
@@ -62,6 +63,8 @@ export const ENGINE_CAPABILITIES = {
     matrix: { web: ["browsers", "devices"], android: ["androidVersions", "devices"] },
     /** PERF-0: an AbortSignal stops cleanly (run blocked `aborted`). */
     signal: true,
+    /** CLOUD-2: `runId` gives the run an id chosen before it starts (a queued cloud run). */
+    runId: true,
     /** PERF-0: onEvent receives every event, `artifact.written` included. */
     artifactEvents: true,
     /** EVD-1 / PERF-0: `run.evidence` and `runTests({ evidence })`. */
